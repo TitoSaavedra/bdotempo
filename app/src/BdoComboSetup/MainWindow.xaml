@@ -12,15 +12,44 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Custom title bar: the window content extends into it (AppWindow.TitleBar). -->
         <TitleBar x:Name="AppTitleBar" x:Uid="AppTitleBar" IsBackButtonVisible="False" IsPaneToggleButtonVisible="False" />
 
+        <!-- Update banner: shown when a newer release exists (never installs by itself; the buttons do). -->
+        <InfoBar
+            x:Name="UpdateBar"
+            Grid.Row="1"
+            Margin="12,8,12,0"
+            Severity="Informational"
+            IsClosable="True"
+            IsOpen="{x:Bind Updates.IsBannerOpen, Mode=OneWay}"
+            Title="{x:Bind Updates.BannerTitle, Mode=OneWay}"
+            Message="{x:Bind Updates.BannerMessage, Mode=OneWay}"
+            Closed="UpdateBar_Closed">
+            <!-- The primary action is the InfoBar's action button; the others sit under the message. -->
+            <InfoBar.ActionButton>
+                <Button
+                    Command="{x:Bind Updates.InstallCommand}"
+                    Content="{x:Bind Updates.InstallActionText, Mode=OneWay}"
+                    Style="{StaticResource AccentButtonStyle}" />
+            </InfoBar.ActionButton>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button x:Uid="UpdateBar/NotesButton" Click="UpdateNotes_Click" />
+                <Button
+                    x:Uid="UpdateBar/CancelButton"
+                    Command="{x:Bind Updates.CancelDownloadCommand}"
+                    IsEnabled="{x:Bind Updates.CanCancelDownload, Mode=OneWay}" />
+                <Button x:Uid="UpdateBar/LaterButton" Command="{x:Bind Updates.DismissCommand}" />
+            </StackPanel>
+        </InfoBar>
+
         <NavigationView
             x:Name="Nav"
-            Grid.Row="1"
+            Grid.Row="2"
             PaneDisplayMode="Left"
             IsBackButtonVisible="Collapsed"
             IsSettingsVisible="False"

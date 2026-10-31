@@ -11,6 +11,7 @@ using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.GameData;
 using BdoComboSetup.Core.Logging;
 using BdoComboSetup.Core.Settings;
+using BdoComboSetup.Core.Updates;
 using BdoComboSetup.Core.ViewModels;
 using System.Globalization;
 
@@ -41,7 +42,9 @@ public sealed class AppServices : IDisposable
         ICombosCatalog combos,
         IAssetProvider assets,
         CultureInfo culture,
-        AssetPackLoadResult assetPackLoad)
+        AssetPackLoadResult assetPackLoad,
+        UpdateViewModel updates,
+        HttpClient httpClient)
     {
         Logger = logger;
         Localizer = localizer;
@@ -54,7 +57,11 @@ public sealed class AppServices : IDisposable
         Assets = assets;
         Culture = culture;
         AssetPackLoad = assetPackLoad;
+        Updates = updates;
+        _httpClient = httpClient;
     }
+
+    private readonly HttpClient _httpClient;
 
     public AppLogger Logger { get; }
 
@@ -83,9 +90,17 @@ public sealed class AppServices : IDisposable
     /// <summary>How assets.bdoa was opened. A non-null ErrorCode means the app shows the error page instead of the modules.</summary>
     public AssetPackLoadResult AssetPackLoad { get; }
 
-    public static AppServices Create(StartupOptions startup)
+    /// <summary>The update state: the Settings controls and the banner of the main window.</summary>
+    public UpdateViewModel Updates { get; }
+
+    /// <summary>
+    /// Creates the services. <paramref name="exitApplication"/> closes the app after an installer was started; it is the only
+    /// way the updater leaves the process (the installer replaces the files of the running copy).
+    /// </summary>
+    public static AppServices Create(StartupOptions startup, Action exitApplication)
     {
         ArgumentNullException.ThrowIfNull(startup);
+        ArgumentNullException.ThrowIfNull(exitApplication);
 
         var logger = AppLogger.CreateDefault("app.session");
         var demoFolder = Path.Combine(Path.GetTempPath(), DemoFolderName);
@@ -203,10 +218,56 @@ public sealed class AppServices : IDisposable
 
         var settingsView = new SettingsViewModel(settings, locator, localizer, logger, language);
 
-        return new AppServices(logger, localizer, settings, startup, applyCombo, preview, settingsView, combos, assets, culture, assetPackLoad);
+        // The updater reads the GitHub release of the app. The demo answers from memory (no network): "a newer version exists"
+        // with --demo-update, else "you have the latest". The portable zip (marker file next to the exe) opens the release page.
+        var httpClient = HttpClientUpdateTransport.CreateClient();
+        var transport = new HttpClientUpdateTransport(httpClient);
+        IReleaseFeed releases = startup.DemoData
+            ? new DemoReleaseFeed(AppVersion.Current, startup.DemoUpdate)
+            : new GitHubReleaseFeed(transport, logger, $"BdoComboSetup/{AppVersion.Current}");
+        var installerLogPath = Path.Combine(AppLogger.DefaultLogDirectory, $"update-setup-{DateTime.UtcNow:yyyyMMddTHHmmss}.log");
+        var updateState = new AppSettingsUpdateStateStore(settings);
+        var updateService = new UpdateService(
+            releases,
+            new UpdatePackageDownloader(transport, logger, UpdatePackageDownloader.DefaultWorkDirectory),
+            new ProcessInstallerLauncher(logger),
+            updateState,
+            TimeProvider.System,
+            AppVersion.Current,
+            logger,
+            installerLogPath);
+        var updates = new UpdateViewModel(
+            updateService,
+            updateState,
+            InstallKindDetector.Detect(AppContext.BaseDirectory),
+            new ShellUrlOpener(logger),
+            localizer,
+            logger,
+            culture,
+            AppVersion.Current,
+            exitApplication);
+
+        return new AppServices(
+            logger,
+            localizer,
+            settings,
+            startup,
+            applyCombo,
+            preview,
+            settingsView,
+            combos,
+            assets,
+            culture,
+            assetPackLoad,
+            updates,
+            httpClient);
     }
 
-    public void Dispose() => Logger.Dispose();
+    public void Dispose()
+    {
+        Logger.Dispose();
+        _httpClient.Dispose();
+    }
 
     /// <summary>
     /// The skill class table of the asset pack. A missing or broken table is logged and the classes are unknown until the pack

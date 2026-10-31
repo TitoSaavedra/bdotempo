@@ -44,6 +44,15 @@ public sealed record AppSettings
 
     /// <summary>True when the reminder before writing to a character was turned off ("Don't show again").</summary>
     public bool SkipWriteHint { get; init; }
+
+    /// <summary>Look for a new version when the app starts (at most once every six hours). On by default.</summary>
+    public bool CheckUpdatesOnStartup { get; init; } = true;
+
+    /// <summary>When the last update check ran (UTC), or null when it never ran on this PC.</summary>
+    public DateTimeOffset? LastUpdateCheckUtc { get; init; }
+
+    /// <summary>The newest version the last successful check found, shown in Settings.</summary>
+    public string? LastSeenVersion { get; init; }
 }
 
 /// <summary>The languages the app ships (the .resw files) and how the setting maps to one of them.</summary>

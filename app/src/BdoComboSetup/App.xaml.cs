@@ -23,10 +23,10 @@ public partial class App : Application
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         var options = StartupOptions.Parse(Environment.GetCommandLineArgs());
-        Services = AppServices.Create(options);
+        Services = AppServices.Create(options, static () => Current.Exit());
         Services.Logger.Info("app.started", "Application launched", new Dictionary<string, object?>
         {
-            ["version"] = typeof(App).Assembly.GetName().Version?.ToString(),
+            ["version"] = AppVersion.Current.ToString(),
             ["startup_page"] = options.Page,
             ["startup_layout"] = options.Layout?.ToString(),
         });
@@ -39,6 +39,13 @@ public partial class App : Application
             Services.Dispose();
         };
         _window.Activate();
+
+        // The update check runs in the background, after the window is shown: it never delays the UI. The demo never checks
+        // the network, except --demo-update, which asks the demo feed for a newer version so the banner can be shown.
+        if (!options.DemoData || options.DemoUpdate)
+        {
+            _ = Services.Updates.CheckOnStartupAsync();
+        }
     }
 
     private static void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)

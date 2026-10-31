@@ -88,6 +88,51 @@
                 </ComboBox>
             </StackPanel>
 
+            <!-- Updates: the version, the last check, a manual check, the install button (only when a newer release exists),
+                 the progress of a download, and the switch for the check at startup. Nothing is installed without the button. -->
+            <StackPanel Spacing="8">
+                <TextBlock x:Uid="Settings/UpdatesHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <TextBlock Text="{x:Bind Updates.CurrentVersionLine, Mode=OneWay}" />
+                <TextBlock
+                    Text="{x:Bind Updates.LastCheckLine, Mode=OneWay}"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Uid="Settings/UpdatesCheckButton" Command="{x:Bind Updates.CheckNowCommand}" />
+                    <ProgressRing
+                        Width="20"
+                        Height="20"
+                        IsActive="{x:Bind Updates.IsChecking, Mode=OneWay}"
+                        Visibility="{x:Bind Updates.IsChecking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    <Button
+                        Command="{x:Bind Updates.InstallCommand}"
+                        Content="{x:Bind Updates.InstallActionText, Mode=OneWay}"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Visibility="{x:Bind Updates.HasRelease, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    <Button
+                        x:Uid="Settings/UpdatesCancelButton"
+                        Command="{x:Bind Updates.CancelDownloadCommand}"
+                        Visibility="{x:Bind Updates.CanCancelDownload, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
+                <ProgressBar
+                    Maximum="100"
+                    Value="{x:Bind Updates.DownloadPercent, Mode=OneWay}"
+                    Visibility="{x:Bind Updates.IsDownloading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock
+                    Text="{x:Bind Updates.StatusMessage, Mode=OneWay}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    x:Uid="Settings/UpdatesPortableHint"
+                    TextWrapping="Wrap"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Visibility="{x:Bind Updates.IsPortable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                <ToggleSwitch
+                    x:Uid="Settings/UpdatesStartupToggle"
+                    IsOn="{x:Bind Updates.CheckOnStartup, Mode=OneWay}"
+                    Toggled="UpdatesStartup_Toggled" />
+            </StackPanel>
+
             <!-- The reminder before a write to a character. Turn it on again after "Don't show again". -->
             <StackPanel Spacing="6">
                 <ToggleSwitch

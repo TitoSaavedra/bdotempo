@@ -23,3 +23,6 @@ data/asset-staging/
 app/src/BdoComboSetup/Assets/**/*.png
 app/src/BdoComboSetup/Assets/**/*.webp
 app/src/BdoComboSetup/Assets/**/*.jpg
+
+# Release artifacts (installer, portable zip, SHA256SUMS.txt): built by `mise run package`, never committed.
+dist/

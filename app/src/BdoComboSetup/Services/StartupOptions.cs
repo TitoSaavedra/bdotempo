@@ -9,7 +9,9 @@ namespace BdoComboSetup.Services;
 /// relative to fit). For the Apply page "--class &lt;slug&gt;" and "--spec &lt;id&gt;" (for example --class tamer --spec awakening),
 /// "--demo" (synthetic characters, synthetic layouts and display, a demo applier; used for screenshots, never writes, never
 /// reads the game account), "--demo-review" (the same, and opens the review of the combo at startup) and
-/// "--demo-write-hint" (the same, and asks to write, so the reminder before a write is shown).
+/// "--demo-write-hint" (the same, and asks to write, so the reminder before a write is shown), "--demo-update" (the same, and
+/// the update feed answers "a newer version exists", so the update banner and the Settings controls can be shown; the check
+/// runs at startup in this mode only).
 /// Options given on the command line apply to this run only; they are not saved in the settings.
 /// </summary>
 public sealed record StartupOptions(
@@ -22,7 +24,8 @@ public sealed record StartupOptions(
     bool DemoReview = false,
     bool CooldownDemo = false,
     double? Zoom = null,
-    bool DemoWriteHint = false)
+    bool DemoWriteHint = false,
+    bool DemoUpdate = false)
 {
     public const string ApplyPage = "apply";
     public const string PreviewPage = "preview";
@@ -41,6 +44,7 @@ public sealed record StartupOptions(
         var demoReview = false;
         var cooldownDemo = false;
         var demoWriteHint = false;
+        var demoUpdate = false;
         double? zoom = null;
         for (var i = 1; i < args.Count; i++)
         {
@@ -86,10 +90,14 @@ public sealed record StartupOptions(
                     demoReview = true;
                     demoWriteHint = true;
                     break;
+                case "--demo-update":
+                    demoData = true;
+                    demoUpdate = true;
+                    break;
             }
         }
 
-        return new StartupOptions(page, layout, showHiddenSlots, applyClass, applySpec, demoData, demoReview, cooldownDemo, zoom, demoWriteHint);
+        return new StartupOptions(page, layout, showHiddenSlots, applyClass, applySpec, demoData, demoReview, cooldownDemo, zoom, demoWriteHint, demoUpdate);
     }
 
     private static string ParsePage(string text) => text.ToLowerInvariant() switch
