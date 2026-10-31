@@ -9,7 +9,7 @@ WinUI 3 desktop app (single self-contained .exe) with TWO modules only:
 Focus now: **buffs and combos**. Mobility (`class-mobility`) skills are wanted too but only as a MANUAL pool (user adds them to cooldown slots by hand, never auto-applied). `class-cancels` (Wizard only) also wanted. Everything else (changelog, videos, etc.) later.
 
 ## User rules (must keep)
-- Always back up before writing any BDO file; backups go in `C:\Users\TitoS\OneDrive\Documentos\Black Desert\_backups\<UTC stamp>[-reason]\<pcid>\` (+ manifest.json, SHA-256 verified); abort if backup fails. Memory: `always-backup-bdo-files`.
+- Always back up before writing any BDO file; backups go in `C:\Users\TitoS\OneDrive\Documentos\Black Desert\_backups\<UTC stamp>Z\<account>\<pcid>\` (+ manifest.json, SHA-256 verified); abort if backup fails. Memory: `always-backup-bdo-files`.
 - No before/after Product Owner flow in this repo (memory `bdo-combo-setup-no-po-flow`).
 - WinUI 3 (not MAUI/WPF/WinForms), single-file self-contained exe, mise for all tooling (never `[env]` with `exec` templates: it caused infinite mise recursion and froze the PC), one dotnet process at a time, BelowNormal priority, no background loops.
 - English for code/docs/logs/commits; UI via .resw es (neutral "tú", no voseo) + en-US; structured JSON logs with trace_id/span_id; commit messages end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
