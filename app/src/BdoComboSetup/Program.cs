@@ -1,3 +1,4 @@
+using BdoComboSetup.Cli;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
@@ -14,6 +15,13 @@ public static class Program
     [STAThread]
     private static void Main(string[] args)
     {
+        // Headless mode: assemble the asset parts into assets.bdoa and exit. No window, no WinRT.
+        if (args.Length > 0 && string.Equals(args[0], AssetAssemblyCommand.Switch, StringComparison.Ordinal))
+        {
+            Environment.Exit(AssetAssemblyCommand.Run(args));
+            return;
+        }
+
         Environment.SetEnvironmentVariable(RuntimeBaseDirectoryVariable, AppContext.BaseDirectory);
         WinRT.ComWrappersSupport.InitializeComWrappers();
 

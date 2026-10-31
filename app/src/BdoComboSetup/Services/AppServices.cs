@@ -1,11 +1,11 @@
 using BdoComboSetup.Capture;
 using BdoComboSetup.Core.Assets;
+using BdoComboSetup.Core.Assets.Pack;
 using BdoComboSetup.Core.Backup;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Files;
 using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.GameData;
-using BdoComboSetup.Core.Icons;
 using BdoComboSetup.Core.Logging;
 using BdoComboSetup.Core.Settings;
 using BdoComboSetup.Core.ViewModels;
@@ -31,7 +31,8 @@ public sealed class AppServices : IDisposable
         ApplyComboViewModel applyCombo,
         PreviewViewModel preview,
         ICombosCatalog combos,
-        IAssetProvider assets)
+        IAssetProvider assets,
+        AssetPackLoadResult assetPackLoad)
     {
         Logger = logger;
         Localizer = localizer;
@@ -41,6 +42,7 @@ public sealed class AppServices : IDisposable
         Preview = preview;
         Combos = combos;
         Assets = assets;
+        AssetPackLoad = assetPackLoad;
     }
 
     public AppLogger Logger { get; }
@@ -55,11 +57,14 @@ public sealed class AppServices : IDisposable
 
     public PreviewViewModel Preview { get; }
 
-    /// <summary>Classes and guides read from the embedded asset bundle.</summary>
+    /// <summary>Classes and guides read from the asset pack.</summary>
     public ICombosCatalog Combos { get; }
 
-    /// <summary>Skill and class icons: embedded bundle, then the file catalogs.</summary>
+    /// <summary>Skill and class icons read from the asset pack.</summary>
     public IAssetProvider Assets { get; }
+
+    /// <summary>How assets.bdoa was opened. A non-null ErrorCode means the app shows the error page instead of the modules.</summary>
+    public AssetPackLoadResult AssetPackLoad { get; }
 
     public static AppServices Create(StartupOptions startup)
     {
@@ -82,10 +87,11 @@ public sealed class AppServices : IDisposable
         var layouts = startup.DemoData
             ? DemoGameLayouts.Create()
             : GameUiLayoutReader.Load(GameUiLayoutReader.DefaultPath(settings.Settings.GameAccountFolder), logger);
-        var icons = IconCatalog.Load(settings.Settings.SkillIconRoot, settings.Settings.ClassHubRoot, logger);
-        var embedded = new AssemblyEmbeddedResources(typeof(AppServices).Assembly);
-        var assets = new BundledAssetProvider(embedded, icons, logger);
-        var combos = JsonCombosCatalog.Load(embedded, assets, logger);
+        // Every icon and JSON document comes from the complete pack next to the exe (assets.bdoa). There is no fallback.
+        var assetPackLoad = AssetPackLoader.LoadFile(AssetPackLoader.DefaultPath, logger);
+        var packResources = new AssetPackResources(assetPackLoad.Pack);
+        var assets = new BundledAssetProvider(packResources, logger);
+        var combos = JsonCombosCatalog.Load(packResources, assets, logger);
 
         var files = new LocalFileStore(logger);
         var guard = new GameProcessGuard(logger);
@@ -140,7 +146,7 @@ public sealed class AppServices : IDisposable
             localizer,
             logger);
 
-        return new AppServices(logger, localizer, settings, startup, applyCombo, preview, combos, assets);
+        return new AppServices(logger, localizer, settings, startup, applyCombo, preview, combos, assets, assetPackLoad);
     }
 
     public void Dispose() => Logger.Dispose();

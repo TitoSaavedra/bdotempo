@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.InteropServices;
 using BdoComboSetup.Core.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -8,7 +9,9 @@ namespace BdoComboSetup.Views.Controls;
 
 /// <summary>
 /// Draws one icon. <see cref="IconSource"/> is a <c>Func&lt;Stream?&gt;</c> from the asset provider (a new stream each call);
-/// when it gives no stream, <see cref="Glyph"/> is shown instead. A failed decode is logged and falls back to the glyph.
+/// when it gives no stream, <see cref="Glyph"/> is shown instead. The stream is read off the UI thread, then the bytes
+/// become a <see cref="BitmapImage"/> through an <c>InMemoryRandomAccessStream</c>, cached by content. A failed decode is
+/// logged and falls back to the glyph.
 /// </summary>
 public sealed partial class AssetIcon : UserControl
 {
@@ -65,14 +68,14 @@ public sealed partial class AssetIcon : UserControl
 
         try
         {
-            using var stream = open();
-            if (stream is null)
+            // Reading the pack entry (decryption, decompression) runs off the UI thread; the bitmap is created on it.
+            var bytes = await Task.Run(() => ReadAllBytes(open));
+            if (bytes is null || version != _loadVersion)
             {
                 return;
             }
 
-            var bitmap = new BitmapImage();
-            await bitmap.SetSourceAsync(stream.AsRandomAccessStream());
+            var bitmap = await IconBitmapCache.GetOrCreateAsync(bytes);
             if (version != _loadVersion)
             {
                 return;
@@ -82,12 +85,25 @@ public sealed partial class AssetIcon : UserControl
             IconImage.Visibility = Visibility.Visible;
             GlyphBorder.Visibility = Visibility.Collapsed;
         }
-        catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException or ArgumentException)
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException or ArgumentException or COMException)
         {
             App.Services.Logger.Warn("icon.decode_failed", "An icon could not be decoded; the glyph is shown", new Dictionary<string, object?>
             {
                 ["error"] = ex.GetType().Name,
             });
         }
+    }
+
+    private static byte[]? ReadAllBytes(Func<Stream?> open)
+    {
+        using var stream = open();
+        if (stream is null)
+        {
+            return null;
+        }
+
+        using var memory = new MemoryStream();
+        stream.CopyTo(memory);
+        return memory.ToArray();
     }
 }

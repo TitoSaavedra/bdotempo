@@ -1,63 +1,37 @@
-using BdoComboSetup.Core.Icons;
 using BdoComboSetup.Core.Logging;
 
 namespace BdoComboSetup.Core.Assets;
 
 /// <summary>
-/// The default <see cref="IAssetProvider"/>: the embedded bundle first, then the file catalog (Scrappers export and the
-/// bdoclasshub folder through <see cref="IconCatalog"/>), then null. The source that answered is logged at debug level.
+/// The default <see cref="IAssetProvider"/>: skill and class icons read from the asset pack (through the
+/// <see cref="IEmbeddedResources"/> view of it, see <c>AssetPackResources</c>). No loose files are read: a missing entry
+/// gives null, and the caller draws a glyph. The result of each lookup is logged at debug level.
 /// </summary>
-public sealed class BundledAssetProvider(IEmbeddedResources resources, IconCatalog? fallback, AppLogger logger) : IAssetProvider
+public sealed class BundledAssetProvider(IEmbeddedResources resources, AppLogger logger) : IAssetProvider
 {
     private readonly IEmbeddedResources _resources = resources ?? throw new ArgumentNullException(nameof(resources));
-    private readonly IconCatalog? _fallback = fallback;
     private readonly AppLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
+    /// <param name="className">Not used: every skill icon is in the pack under its skill number.</param>
     public Stream? OpenSkillIcon(int skillNo, string? className = null)
     {
-        var embedded = _resources.Open(BundleResourceNames.SkillIcon(skillNo));
-        if (embedded is not null)
-        {
-            LogSource("skill", skillNo, "embedded");
-            return embedded;
-        }
-
-        var path = _fallback?.GetSkillIcon(skillNo, className);
-        if (path is not null)
-        {
-            LogSource("skill", skillNo, "file");
-            return File.OpenRead(path);
-        }
-
-        LogSource("skill", skillNo, "none");
-        return null;
+        var stream = _resources.Open(BundleResourceNames.SkillIcon(skillNo));
+        LogSource("skill", skillNo, stream);
+        return stream;
     }
 
     public Stream? OpenClassIcon(int classType)
     {
-        var embedded = _resources.Open(BundleResourceNames.ClassIcon(classType));
-        if (embedded is not null)
-        {
-            LogSource("class", classType, "embedded");
-            return embedded;
-        }
-
-        var path = _fallback?.GetClassIcon(classType);
-        if (path is not null)
-        {
-            LogSource("class", classType, "file");
-            return File.OpenRead(path);
-        }
-
-        LogSource("class", classType, "none");
-        return null;
+        var stream = _resources.Open(BundleResourceNames.ClassIcon(classType));
+        LogSource("class", classType, stream);
+        return stream;
     }
 
-    private void LogSource(string kind, int number, string source) =>
+    private void LogSource(string kind, int number, Stream? stream) =>
         _logger.Debug("asset.icon.resolved", "Icon resolved", new Dictionary<string, object?>
         {
             ["kind"] = kind,
             ["number"] = number,
-            ["source"] = source,
+            ["found"] = stream is not null,
         });
 }

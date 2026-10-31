@@ -1,8 +1,8 @@
 namespace BdoComboSetup.Core.Assets;
 
 /// <summary>
-/// Gives the image bytes for skill and class icons. Order: the embedded bundle, then the external catalog
-/// (Scrappers export, bdoclasshub folder), then null. A null answer means the caller draws a glyph.
+/// Gives the image bytes for skill and class icons, read from the asset pack. A null answer (no entry) means the
+/// caller draws a glyph.
 /// </summary>
 public interface IAssetProvider
 {

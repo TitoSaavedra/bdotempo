@@ -56,11 +56,7 @@
     <ProjectReference Include="..\BdoComboSetup.Core\BdoComboSetup.Core.csproj" />
   </ItemGroup>
 
-  <!-- The asset bundle from `mise run build-assets` (git-ignored, copyrighted game art): every file is embedded in the
-       exe under its own file name (catalog.json, skill-<no>.png, ...), so the single-file exe needs no loose files.
-       With no bundle folder the wildcard matches nothing and the app falls back to the file catalogs and glyphs. -->
-  <ItemGroup>
-    <EmbeddedResource Include="Assets\generated\*" LogicalName="%(Filename)%(Extension)" />
-  </ItemGroup>
+  <!-- The app does not embed the icons or the catalog. It opens assets.bdoa from the folder next to the exe at run time;
+       the installer (or the portable zip) puts the assembled file there. See app/docs/asset-pack-format.md. -->
 
 </Project>

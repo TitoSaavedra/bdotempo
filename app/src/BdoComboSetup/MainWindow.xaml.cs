@@ -21,6 +21,18 @@ public sealed partial class MainWindow : Window
         SetTitleBar(AppTitleBar);
         AppWindow.Resize(new SizeInt32(1440, 900));
 
+        // Without a readable assets.bdoa the modules cannot show icons or combos: the window shows the explanation only.
+        if (services.AssetPackLoad.ErrorCode is not null)
+        {
+            Nav.Visibility = Visibility.Collapsed;
+            ContentFrame.Navigate(typeof(AssetPackErrorPage), services.AssetPackLoad);
+            services.Logger.Warn("window.asset_pack_error", "Main window shows the asset pack error page", new Dictionary<string, object?>
+            {
+                ["code"] = services.AssetPackLoad.ErrorCode,
+            });
+            return;
+        }
+
         Nav.SelectedItem = services.Startup.Page == StartupOptions.PreviewPage ? PreviewItem : ApplyItem;
         services.Logger.Info("window.opened", "Main window shown", new Dictionary<string, object?>
         {

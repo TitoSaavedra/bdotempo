@@ -18,8 +18,8 @@ is drawn: no bars, no panels, no labels beyond the key legend.
 - **Hidden slots** (toggle, off by default): panels the game hides (`IsShow=false`) are drawn dimmed with a dashed outline.
 - **Skills**: from the combo being edited on the Apply page (`ComboPreviewSlotSource`). Empty combo: every slot is empty.
 - **Quick keys**: the key bound by the character selected on the Apply page (`ShortcutKey QuickSlotN`), else the default.
-- **Icons**: `skills.json` / `classes.json` of the Scrappers export (`SkillIconRoot`), then the bdoclasshub folder
-  (`ClassHubRoot`), then a two-letter glyph. Icons are matched by skill number, never by file number.
+- **Icons**: read from `assets.bdoa` next to the exe (the asset pack, see `docs/asset-pack-format.md`). A missing icon
+  is drawn as a two-letter glyph. Icons are matched by skill number, never by file number.
 - **Demo** (`--demo`): synthetic layouts and display, the black background (no capture), no game file read or written.
 
 Core types: `IGameScreenSource` (`GameScreenSource` with `IGameWindowLocator` and `IGameFrameCapture`; the app implements
@@ -39,15 +39,17 @@ Core types, in `BdoComboSetup.Core`:
   `ComboStep(Keys, Skills, Extra, Note)`; `ComboNote(Section, Text, Skills)`; `ComboAddon(Section, Skill, Description, Effects)`.
 - `ComboSkill(SkillNo, Name, DescriptionEs, OpenIcon)`: `OpenIcon` is a `Func<Stream?>` for the icon (caller disposes).
 - `IAssetProvider`: `Stream? OpenSkillIcon(int skillNo, string? className)` and `Stream? OpenClassIcon(int classType)`.
-  `BundledAssetProvider` answers from the embedded bundle, then from `IconCatalog` (Scrappers, bdoclasshub), then null.
+  `BundledAssetProvider` answers from the asset pack (`AssetPackResources` over `IAssetPack`), then null.
   Null means: draw the glyph.
-- `IEmbeddedResources` / `AssemblyEmbeddedResources`: the bundle names are in `BundleResourceNames`.
+- `IEmbeddedResources`: the entry names are in `BundleResourceNames`. `AssetPackResources` gives it the pack's entries.
+- `AssetPack` / `AssetPackAssembler` / `AssetPackLoader`: read `assets.bdoa`, join the parts, open the file next to the exe.
 
-`AppServices` builds `Combos` and `Assets`. The Apply and Preview pages still use `MockComboDataSource` (characters and
-the 20 cooldown slots) and the `IconCatalog` path contract; they do not read `Combos` or `Assets` yet.
+`AppServices` builds `Combos` and `Assets` from the pack and keeps `AssetPackLoad` (the error page is shown when it
+failed). The Apply and Preview pages still use `MockComboDataSource` (characters and the 20 cooldown slots).
 
 Tests: `mise run test-real-data` is a Python test of the importer on the real data; the C# tests use synthetic bundle
-fixtures (`Fixtures\bundle\`, embedded in the test assembly).
+fixtures (`Fixtures\bundle\`, embedded in the test assembly) and the synthetic asset pack fixtures
+(`Fixtures\assetpack\`, written by `tests/assetpack_support.py`).
 
 ## Settings
 

@@ -32,7 +32,6 @@
 
             <local:BoolToVisibilityConverter x:Key="BoolToVisibility" />
             <conv:OffsetToMarginConverter x:Key="OffsetToMargin" />
-            <conv:FilePathToImageConverter x:Key="FilePathToImage" />
 
             <!-- Card surface shared by the summary, the detail panel and the preview bars. -->
             <Style x:Key="CardBorderStyle" TargetType="Border">
