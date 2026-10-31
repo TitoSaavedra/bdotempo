@@ -15,7 +15,6 @@ public sealed class AppSettingsStoreTests : IDisposable
     {
         var store = new AppSettingsStore(SettingsPath, _log.Logger);
 
-        Assert.Null(store.Settings.BackgroundImagePath);
         Assert.Equal(AppSettings.DefaultSkillIconRoot, store.Settings.SkillIconRoot);
         Assert.Equal("330", store.Settings.GameAccountFolder);
         Assert.Null(store.Settings.SelectedLayout);
@@ -28,12 +27,10 @@ public sealed class AppSettingsStoreTests : IDisposable
 
         store.Update(settings => settings with
         {
-            BackgroundImagePath = @"C:\shots\bg.png",
             SelectedLayout = "Preset1",
         });
 
         var reloaded = new AppSettingsStore(SettingsPath, _log.Logger).Settings;
-        Assert.Equal(@"C:\shots\bg.png", reloaded.BackgroundImagePath);
         Assert.Equal("Preset1", reloaded.SelectedLayout);
         Assert.False(File.Exists(SettingsPath + ".tmp"));
     }

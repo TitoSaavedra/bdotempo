@@ -57,6 +57,12 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         ManualChains = new ObservableCollection<ComboChainViewModel>();
     }
 
+    /// <summary>
+    /// Raised whenever the content of the working copy changes: a step edited, moved, added or removed, or the guide reset.
+    /// Unlike unsaved changes, it is raised from the first load on. The Preview page follows it.
+    /// </summary>
+    public event EventHandler? ContentChanged;
+
     public int ClassType { get; }
 
     public string SpecId { get; }
@@ -183,6 +189,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     {
         _tracking = false;
         LoadChains(null);
+        ContentChanged?.Invoke(this, EventArgs.Empty);
         _logger.Info("apply.guide.reset_to_base", "Working copy reset to the bdoclasshub guide", new Dictionary<string, object?>
         {
             ["class_type"] = ClassType,
@@ -358,6 +365,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
 
     private void MarkChanged()
     {
+        ContentChanged?.Invoke(this, EventArgs.Empty);
         if (_tracking)
         {
             HasUnsavedChanges = true;

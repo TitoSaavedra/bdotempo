@@ -24,9 +24,6 @@ public sealed record AppSettings
     /// <summary>Default skill table, exported by the Scrappers project.</summary>
     public const string DefaultSkillsJsonPath = @"D:\extracted_bdo\class_skills.json";
 
-    /// <summary>Background chosen by the user, as a file path. Null means the default screenshot (if it exists).</summary>
-    public string? BackgroundImagePath { get; init; }
-
     public string SkillIconRoot { get; init; } = DefaultSkillIconRoot;
 
     public string ClassHubRoot { get; init; } = DefaultClassHubRoot;

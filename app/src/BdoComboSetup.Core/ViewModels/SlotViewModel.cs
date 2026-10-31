@@ -8,57 +8,47 @@ namespace BdoComboSetup.Core.ViewModels;
 public sealed partial class SlotViewModel : PanelViewModel
 {
     private readonly ILocalizer _localizer;
-    private readonly string _classSlug;
 
-    public SlotViewModel(int number, PreviewSlot? data, string classSlug, ILocalizer localizer)
+    public SlotViewModel(int number, PreviewSlot? data, ILocalizer localizer)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(number);
-        ArgumentException.ThrowIfNullOrWhiteSpace(classSlug);
         ArgumentNullException.ThrowIfNull(localizer);
 
         Number = number;
-        Data = data;
-        _classSlug = classSlug;
         _localizer = localizer;
+        Data = data;
     }
 
     /// <summary>Cooldown slot number, 1 to 20.</summary>
     public int Number { get; }
 
-    /// <summary>The skill in the slot, or null when the slot is empty.</summary>
-    public PreviewSlot? Data { get; }
-
-    public bool IsEmpty => Data is null;
+    /// <summary>The skill in the slot, or null when the slot is empty. Replaced when the combo changes.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSkill), nameof(Title), nameof(Glyph), nameof(Icon), nameof(AutomationName), nameof(Memo), nameof(CustomName), nameof(QuickPosition))]
+    private PreviewSlot? _data;
 
     public bool HasSkill => Data is not null;
-
-    public int? SkillNo => Data?.SkillNo;
-
-    public string? SkillName => Data?.SkillName;
-
-    public string Memo => Data?.Memo ?? string.Empty;
-
-    public string CustomName => Data?.CustomName ?? string.Empty;
 
     public string Title => Data is null
         ? _localizer.Get("Preview.Slot.Empty")
         : Data.SkillName ?? _localizer.Format("Preview.Slot.Placeholder", Number);
 
-    /// <summary>Two letters of the skill name, drawn under the icon (visible when the icon is missing).</summary>
-    public string Glyph => GlyphFor(SkillName, Number);
+    public string Memo => Data?.Memo ?? string.Empty;
 
-    public SkillIconRequest? IconRequest => SkillNo is { } skillNo ? new SkillIconRequest(skillNo, _classSlug) : null;
+    public string CustomName => Data?.CustomName ?? string.Empty;
+
+    /// <summary>Quick slot (1-9) that holds this skill, or 0 when the skill is not on the quick bar.</summary>
+    public int QuickPosition => Data?.QuickPosition ?? 0;
+
+    /// <summary>Two letters of the skill name, shown when the icon is missing.</summary>
+    public string Glyph => GlyphFor(Data?.SkillName, Number);
+
+    /// <summary>Opens the skill icon: a <c>Func&lt;Stream?&gt;</c>, or null when the slot has no skill.</summary>
+    public Func<Stream?>? Icon => Data?.OpenIcon;
 
     public string AutomationName => Data is null
         ? _localizer.Format("Preview.Slot.Cooldown.EmptyName", Number)
         : _localizer.Format("Preview.Slot.Cooldown.Name", Number, Title);
-
-    /// <summary>Quick slot (1 to 10) that holds this skill, or 0 when the skill is not on the quick bar.</summary>
-    [ObservableProperty]
-    private int _quickPosition;
-
-    [ObservableProperty]
-    private bool _isSelected;
 
     /// <summary>Remaining fraction of the cooldown shown as a dark sweep. 0 when not cooling down (only the debug demo sets it).</summary>
     [ObservableProperty]

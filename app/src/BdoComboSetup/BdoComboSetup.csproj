@@ -12,6 +12,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- LibraryImport (source-generated P/Invoke) for the window locator and the capture. Only the marshalling is generated. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UseWinUI>true</UseWinUI>
     <DefaultLanguage>en-US</DefaultLanguage>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -46,6 +48,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.4" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.8.3" />
+    <PackageReference Include="Vortice.DXGI" Version="3.8.3" />
   </ItemGroup>
 
   <ItemGroup>

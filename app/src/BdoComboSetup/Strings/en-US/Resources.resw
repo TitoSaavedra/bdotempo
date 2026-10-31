@@ -46,54 +46,6 @@
   <data name="AppTitleBar.Title" xml:space="preserve"><value>BDO Combo Setup</value></data>
   <data name="NavApplyItem.Content" xml:space="preserve"><value>Apply combo</value></data>
   <data name="NavPreviewItem.Content" xml:space="preserve"><value>Preview</value></data>
-  <data name="PreviewTitle.Text" xml:space="preserve"><value>Preview</value></data>
-  <data name="CooldownBarCaption.Text" xml:space="preserve"><value>Cooldown bar</value></data>
-  <data name="QuickBarCaption.Text" xml:space="preserve"><value>Quick slots</value></data>
-  <data name="CustomNameTextBox.Header" xml:space="preserve"><value>Custom name</value></data>
-  <data name="MemoTextBox.Header" xml:space="preserve"><value>Memo</value></data>
-  <data name="QuickPositionComboBox.Header" xml:space="preserve"><value>Quick slot position</value></data>
-  <data name="SaveButton.Content" xml:space="preserve"><value>Save changes</value></data>
-  <data name="ResetButton.Content" xml:space="preserve"><value>Reset</value></data>
-  <data name="Preview_EmptySlot" xml:space="preserve"><value>Empty slot</value></data>
-  <data name="Preview_PlaceholderSkill" xml:space="preserve"><value>Skill {0}</value></data>
-  <data name="Preview_Group_Combo" xml:space="preserve"><value>Combo skill</value></data>
-  <data name="Preview_Group_PriorityBuff" xml:space="preserve"><value>Priority buff</value></data>
-  <data name="Preview_Group_Empty" xml:space="preserve"><value>Empty</value></data>
-  <data name="Preview_KeyLabel" xml:space="preserve"><value>Key {0}</value></data>
-  <data name="Preview_QuickNone" xml:space="preserve"><value>Not on the quick bar</value></data>
-  <data name="Preview_QuickPositionOption" xml:space="preserve"><value>Position {0} ({1})</value><comment>{0} position, {1} input label</comment></data>
-  <data name="Preview_LayoutUnknown" xml:space="preserve"><value>Bar positions are not verified yet. Drag a bar to match your game; the position is saved for each layout.</value></data>
-  <data name="Preview_Layout_FileMissing" xml:space="preserve"><value>gamevariable.xml was not found: the bars use the generic place.</value></data>
-  <data name="Preview_Layout_NoRows" xml:space="preserve"><value>This layout has no UI rows in the game file.</value></data>
-  <data name="Preview_Layout_General" xml:space="preserve"><value>General</value></data>
-  <data name="Preview_Layout_Preset1" xml:space="preserve"><value>Preset 1</value></data>
-  <data name="Preview_Layout_Preset2" xml:space="preserve"><value>Preset 2</value></data>
-  <data name="Preview_Layout_Preset3" xml:space="preserve"><value>Preset 3</value></data>
-  <data name="Preview_LayoutTooltip" xml:space="preserve"><value>Preset 1 to 3 are read from UISettingPreset0 to 2. This mapping is an assumption, not verified in the game.</value></data>
-  <data name="Preview_ShowPanelsTooltip" xml:space="preserve"><value>Outlines every visible UI panel with its index. Chat windows show index.window. Compare with the game to find the bar indices.</value></data>
-  <data name="Preview_LiveTooltip" xml:space="preserve"><value>Coming next</value></data>
-  <data name="Preview_Bar_Cooldown" xml:space="preserve"><value>Cooldown bar</value></data>
-  <data name="Preview_Bar_Quick" xml:space="preserve"><value>Quick slots</value></data>
-  <data name="Preview_Bar_NoteUiData" xml:space="preserve"><value>Position from gamevariable.xml (index {0})</value><comment>{0} UIData index</comment></data>
-  <data name="Preview_Bar_NoteCandidates" xml:space="preserve"><value>Estimated from the candidate panels. Drag the bar to match your game.</value></data>
-  <data name="Preview_Bar_NoteDefault" xml:space="preserve"><value>No index yet: generic place. Drag the bar to match your game.</value></data>
-  <data name="Preview_Bar_NoteManual" xml:space="preserve"><value>Position saved for this layout.</value></data>
-  <data name="Preview_Background_Custom" xml:space="preserve"><value>Background: your image</value></data>
-  <data name="Preview_Background_Default" xml:space="preserve"><value>Background: default screenshot</value></data>
-  <data name="Preview_Background_None" xml:space="preserve"><value>Background: none (gradient)</value></data>
-  <data name="Preview_PickBackgroundTitle" xml:space="preserve"><value>Choose a background screenshot</value></data>
-  <data name="LayoutComboBox.Header" xml:space="preserve"><value>Layout</value></data>
-  <data name="ShowPanelsToggle.Header" xml:space="preserve"><value>Show UI panels</value></data>
-  <data name="LiveToggle.Header" xml:space="preserve"><value>Live</value></data>
-  <data name="ChangeBackgroundButton.Content" xml:space="preserve"><value>Change background</value></data>
-  <data name="DefaultBackgroundButton.Content" xml:space="preserve"><value>Default background</value></data>
-  <data name="ResetBarsButton.Content" xml:space="preserve"><value>Reset bar positions</value></data>
-  <data name="DragHint.Text" xml:space="preserve"><value>Click a slot to select it. Drag a bar to move it when its position is not verified.</value></data>
-  <data name="Preview_Resolution" xml:space="preserve"><value>Game resolution {0} × {1}</value></data>
-  <data name="Preview_Resolution_Unknown" xml:space="preserve"><value>Game resolution unknown: using 16:9</value></data>
-  <data name="Preview_GameWindow_NotConnected" xml:space="preserve"><value>Live view of the game is not connected yet.</value></data>
-  <data name="Preview_GameWindow_NotRunning" xml:space="preserve"><value>The game is not running.</value></data>
-  <data name="Preview_GameWindow_Running" xml:space="preserve"><value>Game window found.</value></data>
   <data name="Apply.Title.Text" xml:space="preserve">
     <value>Apply combo</value>
   </data>
@@ -345,5 +297,77 @@
   </data>
   <data name="Apply.Review.NoChanges" xml:space="preserve">
     <value>The character already has this combo. There is nothing to write.</value>
+  </data>
+  <data name="Preview.LayoutBox.Header" xml:space="preserve">
+    <value>Layout</value>
+  </data>
+  <data name="Preview.HiddenToggle.Header" xml:space="preserve">
+    <value>Show hidden slots</value>
+  </data>
+  <data name="Preview.FitButton.Content" xml:space="preserve">
+    <value>Fit to window</value>
+  </data>
+  <data name="Preview.Layout.Tooltip" xml:space="preserve">
+    <value>The game's interface layout: General or one of the presets (1 to 3).</value>
+  </data>
+  <data name="Preview.Hidden.Tooltip" xml:space="preserve">
+    <value>Draws the slots the game hides, dimmed with a dashed outline.</value>
+  </data>
+  <data name="Preview.Layout.General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="Preview.Layout.Preset1" xml:space="preserve">
+    <value>Preset 1</value>
+  </data>
+  <data name="Preview.Layout.Preset2" xml:space="preserve">
+    <value>Preset 2</value>
+  </data>
+  <data name="Preview.Layout.Preset3" xml:space="preserve">
+    <value>Preset 3</value>
+  </data>
+  <data name="Preview.Layout.FileMissing" xml:space="preserve">
+    <value>gamevariable.xml was not found: the slots are not drawn.</value>
+  </data>
+  <data name="Preview.Layout.NoRows" xml:space="preserve">
+    <value>This layout has no saved rows: the slots are not drawn.</value>
+  </data>
+  <data name="Preview.Layout.MissingPanels" xml:space="preserve">
+    <value>{0} slots are missing in this layout and are not drawn.</value>
+  </data>
+  <data name="Preview.Zoom" xml:space="preserve">
+    <value>{0}%</value>
+  </data>
+  <data name="Preview.Slot.Empty" xml:space="preserve">
+    <value>Empty slot</value>
+  </data>
+  <data name="Preview.Slot.Placeholder" xml:space="preserve">
+    <value>Skill {0}</value>
+  </data>
+  <data name="Preview.Slot.Cooldown.Name" xml:space="preserve">
+    <value>Cooldown slot {0}: {1}</value>
+  </data>
+  <data name="Preview.Slot.Cooldown.EmptyName" xml:space="preserve">
+    <value>Cooldown slot {0}, empty</value>
+  </data>
+  <data name="Preview.Quick.Empty" xml:space="preserve">
+    <value>Empty quick slot</value>
+  </data>
+  <data name="Preview.Quick.NoKey" xml:space="preserve">
+    <value>no key</value>
+  </data>
+  <data name="Preview.Quick.Name" xml:space="preserve">
+    <value>Quick slot {0} ({1}): {2}</value>
+  </data>
+  <data name="Preview.Quick.EmptyName" xml:space="preserve">
+    <value>Quick slot {0} ({1}), empty</value>
+  </data>
+  <data name="Preview.Capture.NotRunning" xml:space="preserve">
+    <value>Game not open: black background.</value>
+  </data>
+  <data name="Preview.Capture.Minimized" xml:space="preserve">
+    <value>Window minimized: black background.</value>
+  </data>
+  <data name="Preview.Capture.Failed" xml:space="preserve">
+    <value>The game window could not be captured: black background.</value>
   </data>
 </root>

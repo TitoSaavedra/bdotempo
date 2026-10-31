@@ -1,20 +1,35 @@
+using System.IO;
+using BdoComboSetup.Core.Game;
+
 namespace BdoComboSetup.Core.Combo;
 
 /// <summary>
-/// One skill as the preview shows it. CooldownNumber is the cooldown slot (1-20) the same skill sits in, when known;
-/// it links a quick slot to its cooldown slot in the detail panel.
+/// One skill as the preview shows it. CooldownNumber is the cooldown slot (1-20) of the same skill and QuickPosition
+/// its quick slot (1-9), when known. OpenIcon returns a new stream of the icon, or null when there is none.
 /// </summary>
-public sealed record PreviewSlot(int? SkillNo, string? SkillName, string? Memo, string? CustomName, int? CooldownNumber = null);
+public sealed record PreviewSlot(
+    int? SkillNo,
+    string? SkillName,
+    string? Memo,
+    string? CustomName,
+    int? CooldownNumber = null,
+    int? QuickPosition = null,
+    Func<Stream?>? OpenIcon = null);
 
 /// <summary>
-/// Where the preview gets the skills of its slots. The Apply page will feed the same contract later; for now
-/// <see cref="ComboPreviewSlotSource"/> reads the combo being edited.
+/// Where the preview gets what its slots show. <see cref="Changed"/> is raised when any of that changes: the combo
+/// being edited on the Apply page, or the character whose quick keys are shown.
 /// </summary>
 public interface IPreviewSlotSource
 {
+    event EventHandler? Changed;
+
     /// <summary>The skill of cooldown slot 1-20, or null when the slot is empty.</summary>
     PreviewSlot? Cooldown(int number);
 
-    /// <summary>The skill of quick slot 1-10, or null when the quick slot is empty. Quick slots 11-20 have no source yet.</summary>
+    /// <summary>The skill of quick slot 1-20, or null when the quick slot is empty. A combo only fills quick slots 1-9.</summary>
     PreviewSlot? Quick(int number);
+
+    /// <summary>The key drawn on quick slot 1-20: the character's bound key, else the default. Null when the slot is unbound.</summary>
+    QuickSlotKey? QuickKey(int number);
 }

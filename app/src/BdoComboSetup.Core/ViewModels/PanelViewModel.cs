@@ -5,14 +5,14 @@ namespace BdoComboSetup.Core.ViewModels;
 
 /// <summary>
 /// One slot panel of the game screen: its placement in game pixels and whether it is drawn.
-/// The view centres the slot art on the placement; sizes are the nominal art size times the UI scale.
+/// Width and Height are the nominal art size times the UI scale; Offset is the top-left corner that centres the
+/// panel on the saved centre. The view draws the art at its nominal size and scales it by <see cref="Scale"/>.
 /// </summary>
 public abstract partial class PanelViewModel : ObservableObject
 {
     /// <summary>Opacity of a slot the game hides. It is only drawn when "show hidden slots" is on.</summary>
     public const double HiddenOpacity = 0.45;
 
-    private double _uiScale = 1;
     private bool _showHiddenSlots;
 
     /// <summary>The placement read from the layout. Null until the layout is resolved.</summary>
@@ -26,6 +26,10 @@ public abstract partial class PanelViewModel : ObservableObject
 
     [ObservableProperty]
     private double _height;
+
+    /// <summary>The game's UI scale. The view scales the nominal art by it.</summary>
+    [ObservableProperty]
+    private double _scale = 1;
 
     /// <summary>False when the layout has no row for this panel: the panel is skipped and logged.</summary>
     [ObservableProperty]
@@ -49,9 +53,9 @@ public abstract partial class PanelViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(placement);
         Placement = placement;
-        _uiScale = uiScale;
         _showHiddenSlots = showHiddenSlots;
-        ApplyPlacement();
+        Scale = uiScale;
+        ApplyPlacement(uiScale);
     }
 
     /// <summary>Changes whether hidden panels are drawn, keeping the placement.</summary>
@@ -60,11 +64,11 @@ public abstract partial class PanelViewModel : ObservableObject
         _showHiddenSlots = showHiddenSlots;
         if (Placement is not null)
         {
-            ApplyPlacement();
+            ApplyPlacement(Scale);
         }
     }
 
-    /// <summary>The one-letter-pair glyph of a skill, or the slot number when the skill has no name.</summary>
+    /// <summary>The two letters of a skill name, or the slot number when the slot has no skill name.</summary>
     protected static string GlyphFor(string? skillName, int number)
     {
         if (skillName is null)
@@ -75,12 +79,12 @@ public abstract partial class PanelViewModel : ObservableObject
         return new string(skillName.Where(char.IsLetter).Take(2).ToArray()).ToUpperInvariant();
     }
 
-    private void ApplyPlacement()
+    private void ApplyPlacement(double uiScale)
     {
         var placement = Placement!;
         var (nominalWidth, nominalHeight) = GameSlotLayoutResolver.NominalSize(placement.Kind);
-        Width = nominalWidth * _uiScale;
-        Height = nominalHeight * _uiScale;
+        Width = nominalWidth * uiScale;
+        Height = nominalHeight * uiScale;
         Offset = new PixelOffset(placement.CentreX - (Width / 2), placement.CentreY - (Height / 2));
 
         IsPresent = placement.Present;

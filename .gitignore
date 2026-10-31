@@ -7,3 +7,6 @@ data/classhub/
 app/src/BdoComboSetup/Assets/generated/
 data/combos/
 reports/
+
+# Screenshots contain game art: keep out of git
+app/docs/screenshots/

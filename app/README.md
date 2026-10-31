@@ -4,25 +4,27 @@ WinUI 3 app (Windows App SDK, .NET 10). Tasks: `mise run build`, `mise run test`
 
 ## Preview page: game screen
 
-The left side draws the game screen in game pixels (`GameOption.txt` width x height, default 3440 x 1440) inside a `Viewbox`,
-so positions are exact at any window size.
+Only the 20 cooldown slots and the 20 quick slots are drawn, each at its saved position, in game pixels
+(`GameOption.txt` width x height, default 3440 x 1440), scaled as a whole by fit and zoom. Nothing else of the game
+is drawn: no bars, no panels, no labels beyond the key legend.
 
-- **Background**: the default screenshot `Documents\Black Desert\ScreenShot\2026-02-15_13735792.PNG` is read in place (never copied).
-  "Change background" stores your choice in the settings. Without any image a dark gradient is shown.
+- **Background**: the live capture of the game window (process `BlackDesert64`, Windows.Graphics.Capture, capture only).
+  It is black when the game is not running, when the window is minimized, or when the capture cannot start. A minimized
+  window is never shown frozen. Polling looks at the window once a second while the page is visible.
 - **Layout selector**: General, Preset 1, Preset 2, Preset 3, read from `UserCache\<account>\gamevariable.xml`.
   - General: the top-level `UIData` rows, each with an anchor (`PendingType`) and offsets. Converted to game pixels by `UiPanelGeometry`.
   - Presets: `UISettingPreset0..2` rows, already `LeftTop` absolute.
-  - **Assumption**: Preset N is `UISettingPreset(N-1)`. The only place that decides it is `GameUiLayoutBlocks` (Core). It is also in the UI tooltip.
-- **Panel overlay** ("Show UI panels"): outlines every visible `UIData` panel with its index (chat windows show `index.window`).
-  Candidate quick-bar panels are gold. Use it with the game to find which index is which bar.
-- **Bars**:
-  - Quick bar: candidates `100, 91-97` (`GameLayoutIndices.DefaultQuickSlotCandidates`) give the 9-slot row. This is an estimate.
-  - Cooldown bar: no index yet (`GameLayoutIndices.CooldownBarIndex = null`), so it sits in a generic place above the quick bar.
-  - A bar without a verified index can be dragged. The position is stored per layout as a fraction of the screen
-    (`ManualBarPositions` in the settings), and "Reset bar positions" removes it.
+  - **Assumption**: Preset N is `UISettingPreset(N-1)`. The only place that decides it is `GameUiLayoutBlocks` (Core).
+- **Hidden slots** (toggle, off by default): panels the game hides (`IsShow=false`) are drawn dimmed with a dashed outline.
+- **Skills**: from the combo being edited on the Apply page (`ComboPreviewSlotSource`). Empty combo: every slot is empty.
+- **Quick keys**: the key bound by the character selected on the Apply page (`ShortcutKey QuickSlotN`), else the default.
 - **Icons**: `skills.json` / `classes.json` of the Scrappers export (`SkillIconRoot`), then the bdoclasshub folder
   (`ClassHubRoot`), then a two-letter glyph. Icons are matched by skill number, never by file number.
-- **Live**: disabled ("coming next").
+- **Demo** (`--demo`): synthetic layouts and display, the black background (no capture), no game file read or written.
+
+Core types: `IGameScreenSource` (`GameScreenSource` with `IGameWindowLocator` and `IGameFrameCapture`; the app implements
+the locator and the capture; `BlackGameScreenSource` for the demo). The state machine is covered by `GameScreenSourceTests`
+with fakes.
 
 ## Combo data and assets (contract)
 
@@ -49,12 +51,12 @@ fixtures (`Fixtures\bundle\`, embedded in the test assembly).
 
 ## Settings
 
-`%LOCALAPPDATA%\BdoComboSetup\settings.json` (created on the first change). Keys: `BackgroundImagePath`, `SkillIconRoot`,
-`ClassHubRoot`, `GameAccountFolder` (default `330`), `CooldownRows`/`CooldownColumns` (2 x 10), `SelectedLayout`, `ManualBarPositions`.
+`%LOCALAPPDATA%\BdoComboSetup\settings.json` (created on the first change). Keys: `SkillIconRoot`,
+`ClassHubRoot`, `GameAccountFolder` (default `330`), `CooldownRows`/`CooldownColumns` (2 x 10), `SelectedLayout`.
 
 ## Command line
 
-`--page apply|preview`, `--layout general|preset1|preset2|preset3`, `--panels`, `--class <slug> --spec <id>` (the Apply page starts
+`--page apply|preview`, `--layout general|preset1|preset2|preset3`, `--hidden-slots`, `--cooldown-demo` (debug), `--zoom <n>`, `--class <slug> --spec <id>` (the Apply page starts
 on that guide, for example `--class tamer --spec awakening`), `--demo` (synthetic characters and a demo applier that reads and
 writes nothing), `--demo-review` (the same, and opens the review of the combo at startup). `mise run screenshots` uses `--demo`.
 Options given on the command line are not saved.

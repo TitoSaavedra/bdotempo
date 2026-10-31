@@ -25,7 +25,8 @@ description = "Publish ONE self-contained single-file BdoComboSetup.exe (Release
 run = "dotnet publish src/BdoComboSetup/BdoComboSetup.csproj -c Release -r win-x64 -p:Platform=x64"
 
 [tasks.screenshots]
-description = "Launch the published exe once per image and save only the app window (Apply, Preview per layout, panel overlay) to docs/screenshots"
+description = "Publish, then launch the exe once per image (demo data) and save only the app window (Apply, Preview per layout, hidden slots) to docs/screenshots (git-ignored)"
+depends = ["publish"]
 run = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/capture-screenshots.ps1"
 
 [tasks.check]

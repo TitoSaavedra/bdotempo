@@ -1,4 +1,5 @@
 # Launches the published BdoComboSetup.exe once per screenshot (synthetic data, --demo) and saves ONLY the app window to docs\screenshots.
+# The folder is git-ignored (game art): the images are generated locally and never committed.
 # The window is rendered by the app itself (PrintWindow with PW_RENDERFULLCONTENT), so other windows that cover it
 # never appear in the image. The frame is cropped to the visible bounds reported by DWM (no invisible shadow border).
 # Windows PowerShell 5.1 (System.Drawing is available there). Run through `mise run screenshots`.
@@ -21,12 +22,18 @@ if (-not $OutDir) {
     $OutDir = Join-Path $appRoot 'docs\screenshots'
 }
 
-# One entry per image: the command-line options that open the page. --demo gives synthetic characters, so the
-# images never show the game account. The preview images are not taken here (the Preview page is being rebuilt).
+# One entry per image: the command-line options that open the page. --demo gives synthetic characters, synthetic layouts and
+# a synthetic 3440 x 1440 display, so the images never show the game account, its character names or its files.
 $shots = @(
-    @{ File = 'apply-combo.png';       Arguments = @('--page', 'apply', '--demo') },
-    @{ File = 'apply-combo-shai.png';  Arguments = @('--page', 'apply', '--demo', '--class', 'shai', '--spec', 'talent') },
-    @{ File = 'apply-combo-review.png'; Arguments = @('--page', 'apply', '--demo-review') }
+    @{ File = 'apply-combo.png';        Arguments = @('--page', 'apply', '--demo') },
+    @{ File = 'apply-combo-shai.png';   Arguments = @('--page', 'apply', '--demo', '--class', 'shai', '--spec', 'talent') },
+    @{ File = 'apply-combo-review.png'; Arguments = @('--page', 'apply', '--demo-review') },
+    @{ File = 'preview-general.png';    Arguments = @('--page', 'preview', '--demo', '--layout', 'general') },
+    @{ File = 'preview-preset-1.png';   Arguments = @('--page', 'preview', '--demo', '--layout', 'preset1') },
+    @{ File = 'preview-preset-2.png';   Arguments = @('--page', 'preview', '--demo', '--layout', 'preset2') },
+    @{ File = 'preview-preset-3.png';   Arguments = @('--page', 'preview', '--demo', '--layout', 'preset3') },
+    @{ File = 'preview-hidden-slots.png'; Arguments = @('--page', 'preview', '--demo', '--layout', 'general', '--hidden-slots') },
+    @{ File = 'preview-cooldown-demo.png'; Arguments = @('--page', 'preview', '--demo', '--layout', 'general', '--cooldown-demo') }
 )
 
 Add-Type @'
@@ -201,9 +208,11 @@ foreach ($shot in $shots) {
     }
 }
 
-# The previous single preview image is replaced by the per-layout images.
-$obsolete = Join-Path $OutDir 'preview.png'
-if (Test-Path -LiteralPath $obsolete) {
-    Remove-Item -LiteralPath $obsolete
-    Write-Output 'removed the obsolete preview.png'
+# Images of earlier versions of this script that are no longer produced.
+foreach ($name in @('preview.png', 'preview-general-panels.png')) {
+    $obsolete = Join-Path $OutDir $name
+    if (Test-Path -LiteralPath $obsolete) {
+        Remove-Item -LiteralPath $obsolete
+        Write-Output "removed the obsolete $name"
+    }
 }
