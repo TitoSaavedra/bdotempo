@@ -9,7 +9,10 @@ Output folder, the JSON staging of the asset pack (flat: each file becomes one p
   for every skill that ``<combos>/tooltips.json`` has (cooldown, cost, damage, PvP and features).
 * ``skill-<skillNo>.png``: the skill icons, copied as they are (the client icons are 40 to 50 px).
 * ``class-<classType>.png``: the 32 class icons.
-* ``skill_classes.json``: skill number -> classes that can use it (see ``skill_classes.py``), built from the skill table.
+* ``skill_classes.json``: skill number -> classes that can use it (see ``skill_classes.py``), when a skill table is given.
+* ``slot-quickslot-bg.png`` and ``slot-cooldown-sweep.png``: the slot art of the game UI, copied from the client's
+  ``ui_probe/slot_art`` folder when a slot art folder is given. Their sizes are checked exactly (44 x 44 and 520 x 520).
+  A missing file is reported and left out: the app then draws no background and the procedural sweep.
 
 Icons larger than 64 px are refused: there is no image library in the standard library to
 resize them. A referenced skill without an icon in the client export is reported and left out;
@@ -35,6 +38,12 @@ SKILLS_RESOURCE = "skills.json"
 ICON_MAX_SIDE = 64
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
+# Slot art: bundle name -> (file in the client's slot_art folder, the exact size the app expects).
+SLOT_ART: dict[str, tuple[str, tuple[int, int]]] = {
+    "slot-quickslot-bg.png": ("quickslot_bg.png", (44, 44)),
+    "slot-cooldown-sweep.png": ("cooldown_candidate_radial_mask.png", (520, 520)),
+}
+
 
 class BundleError(ValueError):
     """The bundle cannot be built: a required file is missing, or an icon is not usable."""
@@ -50,6 +59,8 @@ class BundleStats:
     skills_described: int = 0
     skills_with_tooltip: int = 0
     missing_skill_icons: list[int] = field(default_factory=list)
+    slot_art: int = 0
+    missing_slot_art: list[str] = field(default_factory=list)
 
 
 def guide_resource(key: str) -> str:
@@ -69,6 +80,7 @@ def build_bundle(
     client: ClientExport,
     out_dir: Path,
     skill_table: dict[str, Any] | None = None,
+    slot_art_dir: Path | None = None,
 ) -> BundleStats:
     with log.span("guides.bundle", combos_dir=str(combos_dir), out_dir=str(out_dir), skill_table=skill_table is not None):
         catalog = _read_json(combos_dir / "catalog.json")
@@ -92,6 +104,8 @@ def build_bundle(
         _write_skills_lookup(out_dir, skill_refs, client, stats, tooltips)
         _copy_skill_icons(out_dir, sorted(skill_refs), client, stats)
         _copy_class_icons(out_dir, client, stats)
+        if slot_art_dir is not None:
+            _copy_slot_art(out_dir, slot_art_dir, stats)
         if skill_table is not None:
             _write_json(out_dir / SKILL_CLASSES_RESOURCE, build_skill_class_table(skill_table), stats)
 
@@ -103,6 +117,8 @@ def build_bundle(
             class_icons=stats.class_icons,
             guides=stats.guides,
             missing_skill_icons=len(stats.missing_skill_icons),
+            slot_art=stats.slot_art,
+            missing_slot_art=len(stats.missing_slot_art),
         )
         return stats
 
@@ -183,6 +199,22 @@ def _copy_class_icons(out_dir: Path, client: ClientExport, stats: BundleStats) -
         stats.class_icons += 1
 
 
+def _copy_slot_art(out_dir: Path, slot_art_dir: Path, stats: BundleStats) -> None:
+    for name, (source_name, expected) in SLOT_ART.items():
+        source = slot_art_dir / source_name
+        if not source.is_file():
+            stats.missing_slot_art.append(source_name)
+            log.warn("slot art missing; the app draws without it", file=source_name)
+            continue
+        data = source.read_bytes()
+        size = _png_size(data, source)
+        if size != expected:
+            raise BundleError(f"{source_name} is {size[0]}x{size[1]}; the app expects {expected[0]}x{expected[1]}")
+        (out_dir / name).write_bytes(data)
+        _count(stats, len(data))
+        stats.slot_art += 1
+
+
 def _copy_png(source: Path, target: Path, stats: BundleStats) -> None:
     data = source.read_bytes()
     width, height = _png_size(data, source)
@@ -212,7 +244,7 @@ def _count(stats: BundleStats, size: int) -> None:
 
 def _remove_stale(out_dir: Path) -> None:
     """Remove files this bundle wrote before, so renamed or dropped skills do not stay embedded."""
-    for pattern in ("skill-*.png", "class-*.png", "guide-*.json", CATALOG_RESOURCE, SKILLS_RESOURCE, SKILL_CLASSES_RESOURCE):
+    for pattern in ("skill-*.png", "class-*.png", "slot-*.png", "guide-*.json", CATALOG_RESOURCE, SKILLS_RESOURCE, SKILL_CLASSES_RESOURCE):
         for path in out_dir.glob(pattern):
             path.unlink()
 

@@ -1,12 +1,16 @@
 namespace BdoComboSetup.Core.ViewModels;
 
 /// <summary>
-/// Zoom and pan math of the game screen canvas. The fit scale makes the whole game screen fit the viewport;
-/// the zoom factor is relative to that fit (1 = fit, 2 = twice as big on screen).
+/// Zoom and pan math of the game screen canvas. The fit scale makes the frame of the slots fit the viewport;
+/// the zoom factor is relative to that fit (1 = fit, 2 = twice as big on screen, 0.1 = the whole screen is far smaller).
 /// </summary>
 public static class CanvasZoom
 {
-    public const double MinZoom = 1;
+    /// <summary>The default zoom: the slots fill the viewport (the frame of the slots, see <c>PreviewViewModel.Frame</c>).</summary>
+    public const double FitZoom = 1;
+
+    /// <summary>Zooming out below the frame of the slots reaches the whole game screen; this is the lowest zoom.</summary>
+    public const double MinZoom = 0.1;
 
     public const double MaxZoom = 8;
 

@@ -145,9 +145,6 @@
   <data name="Apply.AddSkillButton.Content" xml:space="preserve">
     <value>Añadir habilidad</value>
   </data>
-  <data name="Apply.AddSkillSearch.PlaceholderText" xml:space="preserve">
-    <value>Busca por nombre o número</value>
-  </data>
   <data name="Apply.StateUnsaved" xml:space="preserve">
     <value>Cambios sin guardar</value>
   </data>
@@ -299,7 +296,7 @@
     <value>Mostrar slots ocultos</value>
   </data>
   <data name="Preview.FitButton.Content" xml:space="preserve">
-    <value>Ajustar a la ventana</value>
+    <value>Ajustar a los slots</value>
   </data>
   <data name="Preview.Layout.Tooltip" xml:space="preserve">
     <value>Disposición de la interfaz del juego: General o un preajuste (1 a 3).</value>
@@ -371,7 +368,6 @@
   <data name="Settings.RestartButton.Content" xml:space="preserve"><value>Reiniciar ahora</value></data>
   <data name="Settings.AccountHeader.Text" xml:space="preserve"><value>Cuenta</value></data>
   <data name="Settings.AccountHint.Text" xml:space="preserve"><value>Carpetas numéricas dentro de UserCache que tienen una carpeta 11. Tu elección se recuerda entre sesiones.</value></data>
-  <data name="Settings.AccountBox.Header" xml:space="preserve"><value>Cuenta a usar</value></data>
   <data name="Settings.FolderHeader.Text" xml:space="preserve"><value>Carpeta de Black Desert</value></data>
   <data name="Settings.FolderHint.Text" xml:space="preserve"><value>La carpeta que contiene UserCache y _backups. Debe contener una carpeta UserCache.</value></data>
   <data name="Settings.FolderBox.Header" xml:space="preserve"><value>Carpeta</value></data>
@@ -395,7 +391,6 @@
   <data name="Apply.StatusCharacterInvalid" xml:space="preserve"><value>Esa clase no está en el catálogo. No se guardó nada.</value></data>
   <data name="Apply.StatusCharacterSaved" xml:space="preserve"><value>Personaje guardado.</value></data>
   <data name="Apply.StatusCharacterFailed" xml:space="preserve"><value>No se pudo guardar el personaje.</value></data>
-  <data name="Apply.EditCharacterButton.ToolTipService.ToolTip" xml:space="preserve"><value>Editar nombre y clase</value></data>
   <data name="Characters.UnknownFallback" xml:space="preserve"><value>Personaje {0}</value></data>
   <data name="Characters.ClassFallback" xml:space="preserve"><value>{0} {1}</value></data>
   <data name="Characters.EditTitle" xml:space="preserve"><value>Editar personaje</value></data>
@@ -425,5 +420,47 @@
   </data>
   <data name="AssetPack.Error.Detail" xml:space="preserve">
     <value>Código de error: {0}. Archivo: {1}</value>
+  </data>
+  <data name="SearchableList.Search.PlaceholderText" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="SearchableList.Empty.Text" xml:space="preserve">
+    <value>Ningún resultado coincide con la búsqueda.</value>
+  </data>
+  <data name="SearchablePicker.Placeholder.Text" xml:space="preserve">
+    <value>Elige una opción</value>
+  </data>
+  <data name="Apply.ClassSearch.PlaceholderText" xml:space="preserve">
+    <value>Buscar clase</value>
+  </data>
+  <data name="Apply.ClassSearchEmpty.Text" xml:space="preserve">
+    <value>Ninguna clase coincide con la búsqueda.</value>
+  </data>
+  <data name="Characters.EditClassChosen" xml:space="preserve">
+    <value>Clase: {0}</value>
+  </data>
+  <data name="Preview.Cooldown.Hours" xml:space="preserve">
+    <value>{0}h</value>
+  </data>
+  <data name="Preview.Cooldown.Minutes" xml:space="preserve">
+    <value>{0}m</value>
+  </data>
+  <data name="Preview.Cooldown.Seconds" xml:space="preserve">
+    <value>{0}s</value>
+  </data>
+  <data name="Settings.CharactersHeader.Text" xml:space="preserve">
+    <value>Personajes</value>
+  </data>
+  <data name="Settings.CharactersHint.Text" xml:space="preserve">
+    <value>Los personajes de la cuenta activa. El nombre y la clase que pongas se guardan en la app; el juego no cambia.</value>
+  </data>
+  <data name="Settings.EditCharacterButton.Content" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="Settings.ResetCharacterButton.Content" xml:space="preserve">
+    <value>Restablecer</value>
+  </data>
+  <data name="Settings.CharacterClassUnknown" xml:space="preserve">
+    <value>Clase desconocida</value>
   </data>
 </root>

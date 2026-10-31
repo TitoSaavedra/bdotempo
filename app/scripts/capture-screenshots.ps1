@@ -29,6 +29,8 @@ $shots = @(
     @{ File = 'apply-combo-shai.png';   Arguments = @('--page', 'apply', '--demo', '--class', 'shai', '--spec', 'talent') },
     @{ File = 'apply-combo-review.png'; Arguments = @('--page', 'apply', '--demo-review') },
     @{ File = 'apply-combo-write-hint.png'; Arguments = @('--page', 'apply', '--demo-write-hint') },
+    @{ File = 'apply-character-picker-closed.png'; Arguments = @('--page', 'apply', '--demo', '--demo-characters', '35') },
+    @{ File = 'apply-character-picker-open.png'; Arguments = @('--page', 'apply', '--demo', '--demo-characters', '35', '--demo-character-picker') },
     @{ File = 'settings.png';           Arguments = @('--page', 'settings', '--demo') },
     @{ File = 'preview-general.png';    Arguments = @('--page', 'preview', '--demo', '--layout', 'general') },
     @{ File = 'preview-preset-1.png';   Arguments = @('--page', 'preview', '--demo', '--layout', 'preset1') },

@@ -25,6 +25,7 @@ DEFAULT_REPORT = REPO_ROOT / "reports" / "unresolved_skills.txt"
 DEFAULT_KINDS_REPORT = REPO_ROOT / "reports" / "chain_kinds.txt"
 DEFAULT_BUNDLE_DIR = REPO_ROOT / "data" / "asset-staging"
 DEFAULT_SKILL_TABLE = Path(r"D:\extracted_bdo\class_skills.json")
+DEFAULT_SLOT_ART_DIR = Path(r"D:\extracted_bdo\client\ui_probe\slot_art")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -43,6 +44,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--client-dir", type=Path, default=None, help="client export folder (env BDO_CLIENT_DIR)")
     p.add_argument("--out-dir", type=Path, default=None, help="staging folder (default data/asset-staging)")
     p.add_argument("--skill-table", type=Path, default=None, help="Scrappers class_skills.json (default: the file in the extracted_bdo folder on D:)")
+    p.add_argument("--slot-art-dir", type=Path, default=None, help="client slot art folder (env BDO_SLOT_ART_DIR; default ui_probe/slot_art on D:)")
 
     for command in sub.choices.values():
         command.add_argument("--log-file", default=None, help="also append JSON logs to this file (env BDO_LOG_FILE)")
@@ -104,10 +106,12 @@ def _bundle(args: argparse.Namespace) -> int:
     out_dir = args.out_dir or DEFAULT_BUNDLE_DIR
 
     skill_table = load_skill_table(args.skill_table or DEFAULT_SKILL_TABLE)
-    stats = build_bundle(combos_dir, ClientExport(client_dir), out_dir, skill_table)
+    slot_art_dir = _path(args.slot_art_dir, "BDO_SLOT_ART_DIR", DEFAULT_SLOT_ART_DIR)
+    stats = build_bundle(combos_dir, ClientExport(client_dir), out_dir, skill_table, slot_art_dir=slot_art_dir)
     print(f"bundle {out_dir}: {stats.files} files, {stats.total_bytes} bytes")
     print(f"skill icons {stats.skill_icons}, class icons {stats.class_icons}, guides {stats.guides}")
     print(f"skills described {stats.skills_described}, missing skill icons {len(stats.missing_skill_icons)}")
+    print(f"slot art {stats.slot_art}, missing slot art {len(stats.missing_slot_art)}")
     return 0
 
 

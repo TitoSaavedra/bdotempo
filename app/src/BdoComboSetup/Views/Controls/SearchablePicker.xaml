@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="BdoComboSetup.Views.Controls.SearchablePicker"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:BdoComboSetup.Views.Controls">
+
+    <!--
+        A selector for lists longer than about six items: a button that shows the selected item (SelectedTemplate) and opens
+        a flyout with a SearchableList. Choosing an item closes the flyout and raises Chosen.
+    -->
+    <Button x:Name="Trigger" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="10,6">
+        <Button.Flyout>
+            <Flyout x:Name="PickerFlyout" Opened="PickerFlyout_Opened">
+                <controls:SearchableList x:Name="List" ItemChosen="List_ItemChosen" />
+            </Flyout>
+        </Button.Flyout>
+        <Grid>
+            <TextBlock
+                x:Name="PlaceholderText"
+                x:Uid="SearchablePicker/Placeholder"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                VerticalAlignment="Center" />
+            <ContentPresenter x:Name="SelectedPresenter" VerticalAlignment="Center" />
+        </Grid>
+    </Button>
+</UserControl>

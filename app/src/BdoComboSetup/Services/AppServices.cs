@@ -111,7 +111,7 @@ public sealed class AppServices : IDisposable
         if (startup.DemoData)
         {
             // The demo's own game data folder: synthetic accounts and characters, written only under the temporary folder.
-            DemoGameFiles.Write(demoRoot, skillClasses, logger);
+            DemoGameFiles.Write(demoRoot, skillClasses, logger, startup.DemoCharacters);
             settings.Update(current => current with
             {
                 GameDataRoot = demoRoot,

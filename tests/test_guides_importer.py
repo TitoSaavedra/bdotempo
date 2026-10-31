@@ -322,6 +322,51 @@ class BundleTests(SyntheticTreeTestCase):
         self.assertEqual(sum(path.stat().st_size for path in self.out.iterdir()), stats.total_bytes)
 
 
+    def test_slot_art_is_copied_under_the_bundle_names_when_given(self):
+        art = self.tmp / "slot_art"
+        art.mkdir()
+        (art / "quickslot_bg.png").write_bytes(png_bytes(44, 44))
+        (art / "cooldown_candidate_radial_mask.png").write_bytes(png_bytes(520, 520))
+        with quiet_logs():
+            stats = build_bundle(self.combos, self.client, self.out, slot_art_dir=art)
+
+        self.assertEqual(2, stats.slot_art)
+        self.assertEqual([], stats.missing_slot_art)
+        self.assertTrue((self.out / "slot-quickslot-bg.png").is_file())
+        self.assertTrue((self.out / "slot-cooldown-sweep.png").is_file())
+
+    def test_slot_art_with_the_wrong_size_is_refused(self):
+        art = self.tmp / "slot_art_wrong"
+        art.mkdir()
+        (art / "quickslot_bg.png").write_bytes(png_bytes(45, 44))
+        (art / "cooldown_candidate_radial_mask.png").write_bytes(png_bytes(520, 520))
+
+        with self.assertRaisesRegex(BundleError, "quickslot_bg.png is 45x44; the app expects 44x44"):
+            self.build_with_art(art)
+
+    def test_missing_slot_art_is_reported_and_the_bundle_still_builds(self):
+        art = self.tmp / "slot_art_empty"
+        art.mkdir()
+        with quiet_logs():
+            stats = build_bundle(self.combos, self.client, self.out, slot_art_dir=art)
+
+        self.assertEqual(0, stats.slot_art)
+        self.assertEqual(["quickslot_bg.png", "cooldown_candidate_radial_mask.png"], stats.missing_slot_art)
+        self.assertTrue((self.out / "catalog.json").is_file())
+
+    def test_slot_art_files_from_an_earlier_bundle_are_removed(self):
+        self.out.mkdir(parents=True, exist_ok=True)
+        (self.out / "slot-old.png").write_bytes(png_bytes(44, 44))
+        with quiet_logs():
+            build_bundle(self.combos, self.client, self.out)
+
+        self.assertFalse((self.out / "slot-old.png").exists())
+
+    def build_with_art(self, art: Path):
+        with quiet_logs():
+            return build_bundle(self.combos, self.client, self.out, slot_art_dir=art)
+
+
 class GuidesCliTests(SyntheticTreeTestCase):
     def run_cli(self, argv: list[str]) -> tuple[int, str]:
         out = io.StringIO()
@@ -332,6 +377,8 @@ class GuidesCliTests(SyntheticTreeTestCase):
     def test_import_then_bundle_run_end_to_end(self):
         generated = self.tmp / "generated"
         kinds_report = self.tmp / "reports" / "chain_kinds.txt"
+        art = self.tmp / "slot_art_cli"
+        art.mkdir()
         code_import, printed = self.run_cli([
             "import",
             "--classhub-dir", str(self.classhub),
@@ -350,6 +397,7 @@ class GuidesCliTests(SyntheticTreeTestCase):
             "--client-dir", str(self.client.root),
             "--out-dir", str(generated),
             "--skill-table", str(skill_table),
+            "--slot-art-dir", str(art),
         ])
 
         self.assertEqual(0, code_import)

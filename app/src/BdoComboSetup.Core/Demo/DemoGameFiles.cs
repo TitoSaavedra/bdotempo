@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using BdoComboSetup.Core.Characters;
 using BdoComboSetup.Core.GameData;
@@ -28,10 +29,27 @@ public static class DemoGameFiles
     public const int ShaiClass = 17;
 
     private const int SkillsPerCharacter = 8;
+
+    /// <summary>Upper bound of the crowd (the picker is for a few dozen characters; more is refused, not written).</summary>
+    public const int MaxCrowd = 200;
     private static readonly UTF8Encoding Utf8 = new(encoderShouldEmitUTF8Identifier: false);
 
+    /// <summary>The classes of the crowd characters, in turn (the demo's own classes, so the icons and the search have something to match).</summary>
+    private static readonly int[] CrowdClasses = [16, 0, 17, 9, 20, 6, 11, 3];
+
+    /// <summary>The names of the crowd characters, in turn; a second round gets a number after the name.</summary>
+    private static readonly string[] CrowdNames =
+    [
+        "Lola", "Ana", "Bruno", "Celia", "Dario", "Elena", "Fabio", "Gala", "Hugo", "Irene", "Jorge", "Karla", "Luis",
+        "Marta", "Nico", "Olga", "Pablo", "Rocio", "Sergio", "Tania", "Ulises", "Vera", "Wilmer", "Yara", "Zoe",
+    ];
+
+    /// <summary>The pcid of the crowd character with this index (17 digits, like the game's). Used only in the demo.</summary>
+    public static string CrowdPcid(int index) => "1000000000000" + (100 + index).ToString("D4", CultureInfo.InvariantCulture);
+
     /// <summary>Creates the demo data folder under <paramref name="dataRoot"/>. Existing files of the same names are replaced.</summary>
-    public static void Write(string dataRoot, SkillClassTable skills, AppLogger logger)
+    /// <param name="crowd">Extra characters on the main account (the character picker and its search need many to show).</param>
+    public static void Write(string dataRoot, SkillClassTable skills, AppLogger logger, int crowd = 0)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(dataRoot);
         ArgumentNullException.ThrowIfNull(skills);
@@ -41,15 +59,29 @@ public static class DemoGameFiles
         var userCache = Path.Combine(dataRoot, "UserCache");
 
         var main = Path.Combine(userCache, AccountMain);
-        WriteAccount(main,
-            order: [(PcidTamer, 0), (PcidWarrior, 1), (PcidShai, 2), (PcidUnnamed, 3), ("10000000000000099", 4)],
-            labels: [(PcidTamer, "Demo Tamer"), (PcidShai, "Demo Shai")],
-            characters: [
-                (PcidTamer, SkillsOf(skills, TamerClass)),
-                (PcidWarrior, SkillsOf(skills, WarriorClass)),
-                (PcidShai, SkillsOf(skills, ShaiClass)),
-                (PcidUnnamed, []),
-            ]);
+        var order = new List<(string Pcid, int Order)>
+        {
+            (PcidTamer, 0), (PcidWarrior, 1), (PcidShai, 2), (PcidUnnamed, 3), ("10000000000000099", 4),
+        };
+        var labels = new List<(string Pcid, string Label)> { (PcidTamer, "Demo Tamer"), (PcidShai, "Demo Shai") };
+        var characters = new List<(string Pcid, IReadOnlyList<int> Skills)>
+        {
+            (PcidTamer, SkillsOf(skills, TamerClass)),
+            (PcidWarrior, SkillsOf(skills, WarriorClass)),
+            (PcidShai, SkillsOf(skills, ShaiClass)),
+            (PcidUnnamed, []),
+        };
+        for (var index = 0; index < Math.Clamp(crowd, 0, MaxCrowd); index++)
+        {
+            var pcid = CrowdPcid(index);
+            var name = CrowdNames[index % CrowdNames.Length];
+            var round = index / CrowdNames.Length;
+            order.Add((pcid, 5 + index));
+            labels.Add((pcid, round == 0 ? name : $"{name} {round + 1}"));
+            characters.Add((pcid, SkillsOf(skills, CrowdClasses[index % CrowdClasses.Length])));
+        }
+
+        WriteAccount(main, order: order, labels: labels, characters: characters);
         WriteIgnoredFolders(main);
 
         var alt = Path.Combine(userCache, AccountAlt);

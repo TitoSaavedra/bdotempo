@@ -4,15 +4,28 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Radial cooldown sweep over a 42 x 42 icon area, approximated: the remaining part is darkened clockwise from 12 o'clock. -->
+    <!--
+        The radial sweep and the remaining time of a cooldown slot, in the 42 x 42 area of the icon. The sweep is the game's
+        frame (CooldownSweepArt); without the art, a procedural wedge with the same meaning is drawn. The time is centred;
+        a dark copy one pixel down and right keeps it readable on a bright icon.
+    -->
     <Grid>
+        <Image x:Name="SweepImage" Stretch="Fill" Visibility="Collapsed" />
         <Path x:Name="SweepPath" Fill="#A6000000" />
+        <TextBlock
+            x:Name="ShadowText"
+            Margin="1,1,0,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            FontFamily="Segoe UI Semibold"
+            FontSize="16"
+            Foreground="#CC000000" />
         <TextBlock
             x:Name="NumberText"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
-            FontSize="15"
-            FontWeight="SemiBold"
+            FontFamily="Segoe UI Semibold"
+            FontSize="16"
             Foreground="#FFF5EAD0" />
     </Grid>
 </UserControl>

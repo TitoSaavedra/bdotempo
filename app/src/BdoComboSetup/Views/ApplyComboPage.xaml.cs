@@ -1,6 +1,8 @@
 using BdoComboSetup.Core.Characters;
 using BdoComboSetup.Core.Combo;
+using BdoComboSetup.Core.Search;
 using BdoComboSetup.Core.ViewModels;
+using BdoComboSetup.Views.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -21,7 +23,12 @@ public sealed partial class ApplyComboPage : Page
     {
         ViewModel = App.Services.ApplyCombo;
         InitializeComponent();
+        CharacterPicker.SetFields(item => ViewModel.CharacterSearchTexts((CharacterOption)item));
     }
+
+    /// <summary>The texts a skill is searched by in the "Add skill" list: both names and the number.</summary>
+    public static Func<object, IEnumerable<string?>> SkillSearchFields { get; } =
+        item => SearchFields.ForSkill((SkillOption)item);
 
     public ApplyComboViewModel ViewModel { get; }
 
@@ -59,9 +66,16 @@ public sealed partial class ApplyComboPage : Page
                 await ViewModel.ApplyCommand.ExecuteAsync(null);
             }
 
+            if (startup.DemoCharacterPicker)
+            {
+                // Demo only: opens the character picker so it can be shown (the list, the search box).
+                Loaded += DemoCharacterPicker_Loaded;
+            }
+
             if (startup.DemoWriteHint)
             {
                 // Demo only: asks to write, so the reminder before a write is shown. The demo applier writes nothing.
+                // (The reminder's dialog needs the window, so it waits for the page: see DemoWriteHint_Loaded.)
                 // Waits for the page to load: the reminder's dialog needs the window's XamlRoot, which exists only then.
                 Loaded += DemoWriteHint_Loaded;
             }
@@ -86,84 +100,20 @@ public sealed partial class ApplyComboPage : Page
         await ViewModel.ConfirmWriteCommand.ExecuteAsync(null);
     }
 
-    private void CharacterList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    /// <summary>Demo only: opens the character picker once the page is loaded.</summary>
+    private void DemoCharacterPicker_Loaded(object sender, RoutedEventArgs e)
     {
-        if (e.AddedItems.Count > 0 && e.AddedItems[0] is CharacterOption option && !ReferenceEquals(option, ViewModel.SelectedCharacter))
+        Loaded -= DemoCharacterPicker_Loaded;
+        CharacterPicker.Open();
+    }
+
+    /// <summary>Chooses the character picked in the searchable picker (the view model selects its class too).</summary>
+    private void CharacterPicker_Chosen(object? sender, object item)
+    {
+        if (item is CharacterOption option)
         {
             ViewModel.SelectCharacterCommand.Execute(option);
         }
-    }
-
-    /// <summary>
-    /// Opens the editor of one character: the name and the class, set once and remembered. The name box starts from the
-    /// name the character has now; a name left unchanged is not saved, so it keeps following the game.
-    /// </summary>
-    private void EditCharacter_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { DataContext: CharacterOption option } button)
-        {
-            return;
-        }
-
-        var localizer = App.Services.Localizer;
-        var entry = ViewModel.EntryOf(option);
-        var nameBox = new TextBox
-        {
-            Header = localizer.Get("Characters.EditNameHeader"),
-            PlaceholderText = localizer.Get("Characters.EditNamePlaceholder"),
-            Text = entry?.Name ?? option.Name,
-            MaxLength = CharacterOverrideStore.MaxNameLength,
-        };
-        var automatic = new CheckBox
-        {
-            Content = localizer.Get("Characters.EditAutomaticClass"),
-            IsChecked = entry?.ClassSource != ClassSource.Custom,
-        };
-        var classList = new ListView
-        {
-            SelectionMode = ListViewSelectionMode.Single,
-            ItemsSource = ViewModel.ClassChoices,
-            ItemTemplate = (DataTemplate)Resources["ClassChoiceTemplate"],
-            Height = 260,
-            IsEnabled = automatic.IsChecked != true,
-        };
-        classList.SelectedItem = ViewModel.ClassChoices.FirstOrDefault(choice => choice.ClassType == entry?.ClassType);
-        automatic.Checked += (_, _) => classList.IsEnabled = false;
-        automatic.Unchecked += (_, _) => classList.IsEnabled = true;
-
-        var save = new Button { Content = localizer.Get("Characters.EditSave") };
-        var reset = new Button { Content = localizer.Get("Characters.EditReset") };
-        var flyout = new Flyout();
-        save.Click += async (_, _) =>
-        {
-            flyout.Hide();
-            var typed = nameBox.Text.Trim();
-            var keepAutomaticName = entry is not null && entry.NameSource != NameSource.Custom && typed == entry.Name;
-            var name = keepAutomaticName ? null : typed;
-            var classType = automatic.IsChecked == true ? null : (classList.SelectedItem as ClassChoice)?.ClassType;
-            await ViewModel.SaveCharacterEditAsync(option, name, classType);
-        };
-        reset.Click += async (_, _) =>
-        {
-            flyout.Hide();
-            await ViewModel.ResetCharacterEditAsync(option);
-        };
-
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        buttons.Children.Add(save);
-        buttons.Children.Add(reset);
-        var panel = new StackPanel { Spacing = 10, Width = 360 };
-        panel.Children.Add(new TextBlock
-        {
-            Text = localizer.Get("Characters.EditTitle"),
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-        });
-        panel.Children.Add(nameBox);
-        panel.Children.Add(automatic);
-        panel.Children.Add(classList);
-        panel.Children.Add(buttons);
-        flyout.Content = panel;
-        flyout.ShowAt(button);
     }
 
     private void Step_ItemClick(object sender, ItemClickEventArgs e)
@@ -182,12 +132,13 @@ public sealed partial class ApplyComboPage : Page
         }
     }
 
-    /// <summary>Adds the clicked skill to the chain the picker was opened from (the list's Tag).</summary>
-    private void AddSkill_ItemClick(object sender, ItemClickEventArgs e)
+    /// <summary>Adds the picked skill to the chain the list was opened from (the list's Tag), then clears the search for the next one.</summary>
+    private void AddSkill_ItemChosen(object? sender, object item)
     {
-        if (sender is FrameworkElement { Tag: ComboChainViewModel chain } && e.ClickedItem is SkillOption option)
+        if (sender is SearchableList { Tag: ComboChainViewModel chain } list && item is SkillOption option)
         {
             chain.AddSkillCommand.Execute(option);
+            list.Reset();
         }
     }
 

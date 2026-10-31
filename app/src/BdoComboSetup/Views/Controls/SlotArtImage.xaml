@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="BdoComboSetup.Views.Controls.SlotArtImage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- One slot art file from the asset bundle, drawn at the size of the control (the game's own pixels). Nothing when the bundle has no file. -->
+    <Image x:Name="ArtImage" Stretch="Fill" />
+</UserControl>

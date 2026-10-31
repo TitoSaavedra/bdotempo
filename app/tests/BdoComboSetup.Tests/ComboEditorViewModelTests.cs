@@ -1,3 +1,4 @@
+using BdoComboSetup.Core.Search;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.ViewModels;
 
@@ -260,14 +261,14 @@ public sealed class ComboEditorViewModelTests : IDisposable
         var editor = Create();
         var damage = Damage(editor);
 
-        damage.SkillSearch = "moon";
-        Assert.Equal([200], damage.FilteredSkills.Select(option => option.SkillNo));
+        IReadOnlyList<int> Matches(string query) => SearchText
+            .Filter(damage.AvailableSkills, query, SearchFields.ForSkill)
+            .Select(option => option.SkillNo)
+            .ToList();
 
-        damage.SkillSearch = "300";
-        Assert.Equal([300], damage.FilteredSkills.Select(option => option.SkillNo));
-
-        damage.SkillSearch = string.Empty;
-        Assert.Equal(editor.AvailableSkills.Count, damage.FilteredSkills.Count);
+        Assert.Equal([200], Matches("moon"));
+        Assert.Equal([300], Matches("300"));
+        Assert.Equal(editor.AvailableSkills.Count, Matches(string.Empty).Count);
     }
 
     [Fact]

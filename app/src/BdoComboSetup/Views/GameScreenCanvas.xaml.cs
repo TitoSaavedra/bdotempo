@@ -28,6 +28,9 @@ public sealed partial class GameScreenCanvas : UserControl
     /// <summary>Scroll offsets to restore after the next layout pass, so a wheel zoom keeps the pointer's point still.</summary>
     private (double Horizontal, double Vertical)? _pendingOffset;
 
+    /// <summary>True when the scroll position should move to the frame of the slots once the new size is laid out.</summary>
+    private bool _frameRequested;
+
     public GameScreenCanvas()
     {
         InitializeComponent();
@@ -44,10 +47,17 @@ public sealed partial class GameScreenCanvas : UserControl
             _viewModel.PropertyChanged -= OnViewModelChanged;
         }
 
+        if (_viewModel is not null)
+        {
+            _viewModel.FrameRequested -= OnFrameRequested;
+        }
+
         _viewModel = args.NewValue as PreviewViewModel;
         if (_viewModel is not null)
         {
             _viewModel.PropertyChanged += OnViewModelChanged;
+            _viewModel.FrameRequested += OnFrameRequested;
+            _frameRequested = true;
             ApplyScale();
         }
     }
@@ -204,15 +214,42 @@ public sealed partial class GameScreenCanvas : UserControl
             CanvasZoom.AnchoredOffset(vertical, pointer.Y, oldScale, newScale));
     }
 
-    /// <summary>Applies the scroll offset that a wheel zoom asked for, once the new size is laid out.</summary>
-    private void OnScreenLayoutUpdated(object? sender, object e)
+    /// <summary>The view model asks for the frame of the slots (fit button, a new layout): move there now, or once laid out.</summary>
+    private void OnFrameRequested(object? sender, EventArgs e)
     {
-        if (_pendingOffset is not { } offset)
+        _frameRequested = true;
+        ApplyScale();
+        ScreenHost.UpdateLayout();
+        ApplyFrame();
+    }
+
+    /// <summary>Scrolls to the top-left of the frame of the slots at the current scale. Waits until the viewport has a size.</summary>
+    private void ApplyFrame()
+    {
+        if (_viewModel is not { ViewportKnown: true } viewModel)
         {
             return;
         }
 
-        _pendingOffset = null;
-        Viewport.ChangeView(offset.Horizontal, offset.Vertical, null, disableAnimation: true);
+        var scale = viewModel.ScreenScale;
+        var frame = viewModel.Frame;
+        _frameRequested = false;
+        Viewport.ChangeView(frame.Left * scale, frame.Top * scale, null, disableAnimation: true);
+    }
+
+    /// <summary>Applies the scroll offset that a wheel zoom asked for, or the frame, once the new size is laid out.</summary>
+    private void OnScreenLayoutUpdated(object? sender, object e)
+    {
+        if (_pendingOffset is { } offset)
+        {
+            _pendingOffset = null;
+            Viewport.ChangeView(offset.Horizontal, offset.Vertical, null, disableAnimation: true);
+            return;
+        }
+
+        if (_frameRequested)
+        {
+            ApplyFrame();
+        }
     }
 }

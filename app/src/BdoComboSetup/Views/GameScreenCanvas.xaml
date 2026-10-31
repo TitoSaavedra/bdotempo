@@ -8,10 +8,9 @@
     >
 
     <UserControl.Resources>
-        <!-- The quick slot legend is #40D7FD for a skill and #626262 when empty; the shade behind the icon is semi-transparent. -->
+        <!-- The key legend of a quick slot: #40D7FD for a skill, #626262 when empty (items are not in the combo, so no #88DF00). -->
         <SolidColorBrush x:Key="LegendSkillBrush" Color="#FF40D7FD" />
         <SolidColorBrush x:Key="LegendEmptyBrush" Color="#FF626262" />
-        <SolidColorBrush x:Key="SlotShadeBrush" Color="#83000000" />
         <SolidColorBrush x:Key="HiddenOutlineBrush" Color="#CCFFFFFF" />
 
         <!-- Every slot is a child of one grid, placed by its margin (game pixels, top-left corner of the panel). -->
@@ -19,7 +18,7 @@
             <Grid />
         </ItemsPanelTemplate>
 
-        <!-- Cooldown slot: 50 x 50, no frame; the 42 x 42 icon at (4, 7); radial sweep and number while cooling down. -->
+        <!-- Cooldown slot: 50 x 50, no frame, no background; the 42 x 42 icon at (4, 7); the sweep and the time at (3, 6) while cooling down. -->
         <DataTemplate x:Key="CooldownSlotTemplate" x:DataType="core:SlotViewModel">
             <Grid
                 Width="50"
@@ -43,7 +42,7 @@
                     IconSource="{x:Bind Icon, Mode=OneWay}"
                     Visibility="{x:Bind HasSkill, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                 <controls:CooldownSweep
-                    Margin="4,7,0,0"
+                    Margin="3,6,0,0"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
                     Label="{x:Bind CooldownText, Mode=OneWay}"
@@ -59,7 +58,8 @@
             </Grid>
         </DataTemplate>
 
-        <!-- Quick slot: 50 x 65. The legend sits on top (strip of 21 px); the shade is 44 x 44 at (3, 21); the icon 42 x 42 at (4, 22). -->
+        <!-- Quick slot: 50 x 65, no frame. The game's semi-transparent background (44 x 44 at (3, 21)), the 42 x 42 icon at
+             (4, 22), and the key legend centred on top with its text top at y = 10. The handle strip is only shown on hover in the game. -->
         <DataTemplate x:Key="QuickSlotTemplate" x:DataType="core:QuickSlotViewModel">
             <Grid
                 Width="50"
@@ -73,13 +73,13 @@
                 <Grid.RenderTransform>
                     <ScaleTransform ScaleX="{x:Bind Scale, Mode=OneWay}" ScaleY="{x:Bind Scale, Mode=OneWay}" />
                 </Grid.RenderTransform>
-                <Border
+                <controls:SlotArtImage
                     Width="44"
                     Height="44"
                     Margin="3,21,0,0"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
-                    Background="{StaticResource SlotShadeBrush}" />
+                    Art="QuickSlotBackground" />
                 <controls:AssetIcon
                     Width="42"
                     Height="42"
@@ -91,22 +91,24 @@
                     Visibility="{x:Bind HasSkill, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                 <TextBlock
                     Width="50"
-                    Height="21"
+                    Height="20"
+                    Margin="0,10,0,0"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
+                    FontFamily="Segoe UI Semibold"
                     FontSize="14"
-                    FontWeight="SemiBold"
                     TextAlignment="Center"
                     Text="{x:Bind KeyLabel, Mode=OneWay}"
                     Foreground="{StaticResource LegendSkillBrush}"
                     Visibility="{x:Bind HasSkill, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                 <TextBlock
                     Width="50"
-                    Height="21"
+                    Height="20"
+                    Margin="0,10,0,0"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
+                    FontFamily="Segoe UI Semibold"
                     FontSize="14"
-                    FontWeight="SemiBold"
                     TextAlignment="Center"
                     Text="{x:Bind KeyLabel, Mode=OneWay}"
                     Foreground="{StaticResource LegendEmptyBrush}"
