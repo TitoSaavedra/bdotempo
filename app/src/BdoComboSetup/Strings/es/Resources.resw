@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="AppTitle" xml:space="preserve"><value>BDO Combo Setup</value></data>
+  <data name="AppTitleBar.Title" xml:space="preserve"><value>BDO Combo Setup</value></data>
+
+  <data name="NavApplyItem.Content" xml:space="preserve"><value>Aplicar combo</value></data>
+  <data name="NavPreviewItem.Content" xml:space="preserve"><value>Vista previa</value></data>
+
+  <data name="ApplyTitle.Text" xml:space="preserve"><value>Aplicar combo</value></data>
+  <data name="CharacterComboBox.Header" xml:space="preserve"><value>Personaje</value></data>
+  <data name="ClassComboBox.Header" xml:space="preserve"><value>Clase</value></data>
+  <data name="ModeHeader.Text" xml:space="preserve"><value>Modo</value></data>
+  <data name="ModeSuccessionRadio.Content" xml:space="preserve"><value>Sucesión</value></data>
+  <data name="ModeAwakeningRadio.Content" xml:space="preserve"><value>Despertar</value></data>
+  <data name="CooldownBarCheckBox.Content" xml:space="preserve"><value>Barra de enfriamiento</value></data>
+  <data name="MemosCheckBox.Content" xml:space="preserve"><value>Notas</value></data>
+  <data name="QuickSlotsCheckBox.Content" xml:space="preserve"><value>Ranuras rápidas</value></data>
+  <data name="BackupInfoBar.Message" xml:space="preserve"><value>Se hace una copia de seguridad antes de escribir. Después de aplicar, sal del personaje (sin cerrar el cliente) y vuelve a entrar.</value></data>
+  <data name="ApplyButton.Content" xml:space="preserve"><value>Aplicar combo</value></data>
+  <data name="DryRunButton.Content" xml:space="preserve"><value>Simulación</value></data>
+
+  <data name="PreviewTitle.Text" xml:space="preserve"><value>Vista previa</value></data>
+  <data name="CooldownBarCaption.Text" xml:space="preserve"><value>Barra de enfriamiento</value></data>
+  <data name="QuickBarCaption.Text" xml:space="preserve"><value>Ranuras rápidas</value></data>
+  <data name="CustomNameTextBox.Header" xml:space="preserve"><value>Nombre personalizado</value></data>
+  <data name="MemoTextBox.Header" xml:space="preserve"><value>Memo</value></data>
+  <data name="QuickPositionComboBox.Header" xml:space="preserve"><value>Posición en la barra rápida</value></data>
+  <data name="SaveButton.Content" xml:space="preserve"><value>Guardar cambios</value></data>
+  <data name="ResetButton.Content" xml:space="preserve"><value>Restablecer</value></data>
+
+  <data name="Apply_SummaryTitle" xml:space="preserve"><value>{0} · {1}</value><comment>{0} class name, {1} mode label</comment></data>
+  <data name="Apply_SourceFormat" xml:space="preserve"><value>Fuente: {0}</value><comment>{0} host name</comment></data>
+  <data name="Apply_ComboSkillsCount" xml:space="preserve"><value>{0} habilidades de combo</value></data>
+  <data name="Apply_PriorityBuffsCount" xml:space="preserve"><value>{0} buffs prioritarios</value></data>
+  <data name="Apply_QuickSlotsCount" xml:space="preserve"><value>{0} ranuras rápidas</value></data>
+  <data name="Mode_Succession" xml:space="preserve"><value>Sucesión</value></data>
+  <data name="Mode_Awakening" xml:space="preserve"><value>Despertar</value></data>
+  <data name="Apply_Status_NotConnected" xml:space="preserve"><value>Aún no está conectado: el aplicador de combos no está disponible en esta versión. No se escribió nada.</value></data>
+  <data name="Apply_Status_Failed" xml:space="preserve"><value>La operación falló. Revisa el log para ver los detalles.</value></data>
+
+  <data name="Preview_EmptySlot" xml:space="preserve"><value>Ranura vacía</value></data>
+  <data name="Preview_PlaceholderSkill" xml:space="preserve"><value>Habilidad {0}</value></data>
+  <data name="Preview_Group_Combo" xml:space="preserve"><value>Habilidad de combo</value></data>
+  <data name="Preview_Group_PriorityBuff" xml:space="preserve"><value>Buff prioritario</value></data>
+  <data name="Preview_Group_Empty" xml:space="preserve"><value>Vacía</value></data>
+  <data name="Preview_KeyLabel" xml:space="preserve"><value>Tecla {0}</value></data>
+  <data name="Preview_QuickNone" xml:space="preserve"><value>Fuera de la barra rápida</value></data>
+  <data name="Preview_QuickPositionOption" xml:space="preserve"><value>Posición {0} ({1})</value><comment>{0} position, {1} input label</comment></data>
+  <data name="Preview_LayoutUnknown" xml:space="preserve"><value>Las posiciones de las barras aún no están verificadas. Arrastra una barra para igualar tu juego; la posición se guarda para cada diseño.</value></data>
+  <data name="Preview_Layout_FileMissing" xml:space="preserve"><value>No se encontró gamevariable.xml: las barras usan la posición genérica.</value></data>
+  <data name="Preview_Layout_NoRows" xml:space="preserve"><value>Este diseño no tiene filas de UI en el archivo del juego.</value></data>
+  <data name="Preview_Layout_General" xml:space="preserve"><value>General</value></data>
+  <data name="Preview_Layout_Preset1" xml:space="preserve"><value>Preset 1</value></data>
+  <data name="Preview_Layout_Preset2" xml:space="preserve"><value>Preset 2</value></data>
+  <data name="Preview_Layout_Preset3" xml:space="preserve"><value>Preset 3</value></data>
+  <data name="Preview_LayoutTooltip" xml:space="preserve"><value>Preset 1 a 3 se leen de UISettingPreset0 a 2. Esta asignación es una suposición, no está verificada en el juego.</value></data>
+  <data name="Preview_ShowPanelsTooltip" xml:space="preserve"><value>Dibuja el contorno de cada panel visible de la UI con su índice. Las ventanas de chat muestran índice.ventana. Compara con el juego para identificar los índices de las barras.</value></data>
+  <data name="Preview_LiveTooltip" xml:space="preserve"><value>Próximamente</value></data>
+  <data name="Preview_Bar_Cooldown" xml:space="preserve"><value>Barra de enfriamiento</value></data>
+  <data name="Preview_Bar_Quick" xml:space="preserve"><value>Ranuras rápidas</value></data>
+  <data name="Preview_Bar_NoteUiData" xml:space="preserve"><value>Posición de gamevariable.xml (índice {0})</value><comment>{0} UIData index</comment></data>
+  <data name="Preview_Bar_NoteCandidates" xml:space="preserve"><value>Estimada a partir de los paneles candidatos. Arrastra la barra para igualar tu juego.</value></data>
+  <data name="Preview_Bar_NoteDefault" xml:space="preserve"><value>Sin índice todavía: posición genérica. Arrastra la barra para igualar tu juego.</value></data>
+  <data name="Preview_Bar_NoteManual" xml:space="preserve"><value>Posición guardada para este diseño.</value></data>
+  <data name="Preview_Background_Custom" xml:space="preserve"><value>Fondo: tu imagen</value></data>
+  <data name="Preview_Background_Default" xml:space="preserve"><value>Fondo: captura por defecto</value></data>
+  <data name="Preview_Background_None" xml:space="preserve"><value>Fondo: ninguno (degradado)</value></data>
+  <data name="Preview_PickBackgroundTitle" xml:space="preserve"><value>Elige una captura de fondo</value></data>
+  <data name="LayoutComboBox.Header" xml:space="preserve"><value>Diseño</value></data>
+  <data name="ShowPanelsToggle.Header" xml:space="preserve"><value>Mostrar paneles de la UI</value></data>
+  <data name="LiveToggle.Header" xml:space="preserve"><value>En vivo</value></data>
+  <data name="ChangeBackgroundButton.Content" xml:space="preserve"><value>Cambiar fondo</value></data>
+  <data name="DefaultBackgroundButton.Content" xml:space="preserve"><value>Fondo por defecto</value></data>
+  <data name="ResetBarsButton.Content" xml:space="preserve"><value>Restablecer posiciones</value></data>
+  <data name="DragHint.Text" xml:space="preserve"><value>Haz clic en una ranura para seleccionarla. Arrastra una barra para moverla si su posición no está verificada.</value></data>
+  <data name="Preview_Resolution" xml:space="preserve"><value>Resolución del juego {0} × {1}</value></data>
+  <data name="Preview_Resolution_Unknown" xml:space="preserve"><value>Resolución del juego desconocida: se usa 16:9</value></data>
+  <data name="Preview_GameWindow_NotConnected" xml:space="preserve"><value>La vista en vivo del juego aún no está conectada.</value></data>
+  <data name="Preview_GameWindow_NotRunning" xml:space="preserve"><value>El juego no está abierto.</value></data>
+  <data name="Preview_GameWindow_Running" xml:space="preserve"><value>Ventana del juego encontrada.</value></data>
+</root>

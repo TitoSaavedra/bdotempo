@@ -1,0 +1,34 @@
+{
+  "schema": 2,
+  "class": "tamer",
+  "classId": 16,
+  "spec": "awakening",
+  "source": "https://bdoclasshub.com/classes/tamer/awakening/index.html",
+  "description": "LBD Dragon damage combo",
+  "status": "verified-in-game 2026-10-29 (AhrinSong)",
+  "layout": {
+    "combo": [0, 11],
+    "priorityBuffs": [12, 14],
+    "otherBuffs": [15, 19]
+  },
+  "slots": [
+    {"skill": "Flow: Intimidation", "skillName": "Flujo: Intimidación", "skillNo": 1937, "memo": "R 1"},
+    {"skill": "Legendary Beast Dance: Echo", "skillName": "Baile de la Bestia Legendaria: Resonancia", "skillNo": 2555, "memo": "SH + Q"},
+    {"skill": "Allround Spinner", "skillName": "Aguja giratoria completa", "skillNo": 1921, "memo": "SH + DER"},
+    {"skill": "Flow: Soaring Strike", "skillName": "Flujo: Golpe Inmenso", "skillNo": 1939, "memo": "DER"},
+    {"skill": "Flow: Full Moon", "skillName": "Flujo: Luna Llena", "skillNo": 1940, "memo": "IZQ"},
+    {"skill": "Skybound Stab", "skillName": "Garuda", "skillNo": 1912, "memo": "F (mantener)"},
+    {"skill": "Flow: Ascension", "skillName": "Flujo: Ascenso", "skillNo": 1934, "memo": "F"},
+    {"skill": "Celestial Slam", "skillName": "Nube Destrozada", "skillNo": 6454, "memo": "SH + F"},
+    {"skill": "Legendary Beast Dance", "skillName": "Baile de la Bestia Legendaria", "skillNo": 1926, "memo": "A + DER"},
+    {"skill": "Jolt Stab", "skillName": "Onda de Tumbo", "skillNo": 17, "memo": "SH + Z"},
+    {"skill": "Dark Gaoler", "skillName": "Guardiacárcel Negro", "skillNo": 1306, "memo": "F", "optional": true},
+    {"skill": "Moonlight Strike", "skillName": "Golpe de la Luna", "skillNo": 1932, "memo": "R 2"}
+  ],
+  "priorityBuffs": [
+    {"skill": "Summon Heuklang", "skillName": "Invocar a Heuklang", "skillNo": 1347, "memo": ""},
+    {"skill": "Absorb Heuklang", "skillName": "Absorción de Heuklang", "skillNo": 231, "memo": "E"},
+    {"skill": "Legendary Beast Dance", "skillName": "Baile de la Bestia Legendaria", "skillNo": 1926, "memo": ""}
+  ],
+  "otherBuffs": []
+}

@@ -1,0 +1,33 @@
+[tools]
+dotnet = "10.0.401"
+
+[tasks.restore]
+description = "Restore NuGet packages for the app, the core and the tests"
+run = [
+  "dotnet restore src/BdoComboSetup/BdoComboSetup.csproj -p:Platform=x64",
+  "dotnet restore tests/BdoComboSetup.Tests/BdoComboSetup.Tests.csproj",
+]
+
+[tasks.build]
+description = "Build the WinUI app and the core (Debug, x64)"
+run = "dotnet build src/BdoComboSetup/BdoComboSetup.csproj -c Debug -p:Platform=x64"
+
+[tasks.run]
+description = "Build and launch the app from the Debug output"
+run = "dotnet run --project src/BdoComboSetup/BdoComboSetup.csproj -c Debug -p:Platform=x64"
+
+[tasks.test]
+description = "Run the xUnit tests for the core (view models, parsers, logger)"
+run = "dotnet test tests/BdoComboSetup.Tests/BdoComboSetup.Tests.csproj"
+
+[tasks.publish]
+description = "Publish ONE self-contained single-file BdoComboSetup.exe (Release, win-x64)"
+run = "dotnet publish src/BdoComboSetup/BdoComboSetup.csproj -c Release -r win-x64 -p:Platform=x64"
+
+[tasks.screenshots]
+description = "Launch the published exe once per image and save only the app window (Apply, Preview per layout, panel overlay) to docs/screenshots"
+run = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/capture-screenshots.ps1"
+
+[tasks.check]
+description = "Build the app, then run the tests"
+depends = ["build", "test"]

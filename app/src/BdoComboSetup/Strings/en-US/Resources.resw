@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="AppTitle" xml:space="preserve"><value>BDO Combo Setup</value></data>
+  <data name="AppTitleBar.Title" xml:space="preserve"><value>BDO Combo Setup</value></data>
+
+  <data name="NavApplyItem.Content" xml:space="preserve"><value>Apply combo</value></data>
+  <data name="NavPreviewItem.Content" xml:space="preserve"><value>Preview</value></data>
+
+  <data name="ApplyTitle.Text" xml:space="preserve"><value>Apply combo</value></data>
+  <data name="CharacterComboBox.Header" xml:space="preserve"><value>Character</value></data>
+  <data name="ClassComboBox.Header" xml:space="preserve"><value>Class</value></data>
+  <data name="ModeHeader.Text" xml:space="preserve"><value>Mode</value></data>
+  <data name="ModeSuccessionRadio.Content" xml:space="preserve"><value>Succession</value></data>
+  <data name="ModeAwakeningRadio.Content" xml:space="preserve"><value>Awakening</value></data>
+  <data name="CooldownBarCheckBox.Content" xml:space="preserve"><value>Cooldown bar</value></data>
+  <data name="MemosCheckBox.Content" xml:space="preserve"><value>Memos</value></data>
+  <data name="QuickSlotsCheckBox.Content" xml:space="preserve"><value>Quick slots</value></data>
+  <data name="BackupInfoBar.Message" xml:space="preserve"><value>A backup is taken before writing. After applying, leave the character (without closing the client) and enter again.</value></data>
+  <data name="ApplyButton.Content" xml:space="preserve"><value>Apply combo</value></data>
+  <data name="DryRunButton.Content" xml:space="preserve"><value>Dry run</value></data>
+
+  <data name="PreviewTitle.Text" xml:space="preserve"><value>Preview</value></data>
+  <data name="CooldownBarCaption.Text" xml:space="preserve"><value>Cooldown bar</value></data>
+  <data name="QuickBarCaption.Text" xml:space="preserve"><value>Quick slots</value></data>
+  <data name="CustomNameTextBox.Header" xml:space="preserve"><value>Custom name</value></data>
+  <data name="MemoTextBox.Header" xml:space="preserve"><value>Memo</value></data>
+  <data name="QuickPositionComboBox.Header" xml:space="preserve"><value>Quick slot position</value></data>
+  <data name="SaveButton.Content" xml:space="preserve"><value>Save changes</value></data>
+  <data name="ResetButton.Content" xml:space="preserve"><value>Reset</value></data>
+
+  <data name="Apply_SummaryTitle" xml:space="preserve"><value>{0} · {1}</value><comment>{0} class name, {1} mode label</comment></data>
+  <data name="Apply_SourceFormat" xml:space="preserve"><value>Source: {0}</value><comment>{0} host name</comment></data>
+  <data name="Apply_ComboSkillsCount" xml:space="preserve"><value>{0} combo skills</value></data>
+  <data name="Apply_PriorityBuffsCount" xml:space="preserve"><value>{0} priority buffs</value></data>
+  <data name="Apply_QuickSlotsCount" xml:space="preserve"><value>{0} quick slots</value></data>
+  <data name="Mode_Succession" xml:space="preserve"><value>Succession</value></data>
+  <data name="Mode_Awakening" xml:space="preserve"><value>Awakening</value></data>
+  <data name="Apply_Status_NotConnected" xml:space="preserve"><value>Not connected yet: the combo applier is not available in this build. Nothing was written.</value></data>
+  <data name="Apply_Status_Failed" xml:space="preserve"><value>The request failed. Check the log for details.</value></data>
+
+  <data name="Preview_EmptySlot" xml:space="preserve"><value>Empty slot</value></data>
+  <data name="Preview_PlaceholderSkill" xml:space="preserve"><value>Skill {0}</value></data>
+  <data name="Preview_Group_Combo" xml:space="preserve"><value>Combo skill</value></data>
+  <data name="Preview_Group_PriorityBuff" xml:space="preserve"><value>Priority buff</value></data>
+  <data name="Preview_Group_Empty" xml:space="preserve"><value>Empty</value></data>
+  <data name="Preview_KeyLabel" xml:space="preserve"><value>Key {0}</value></data>
+  <data name="Preview_QuickNone" xml:space="preserve"><value>Not on the quick bar</value></data>
+  <data name="Preview_QuickPositionOption" xml:space="preserve"><value>Position {0} ({1})</value><comment>{0} position, {1} input label</comment></data>
+  <data name="Preview_LayoutUnknown" xml:space="preserve"><value>Bar positions are not verified yet. Drag a bar to match your game; the position is saved for each layout.</value></data>
+  <data name="Preview_Layout_FileMissing" xml:space="preserve"><value>gamevariable.xml was not found: the bars use the generic place.</value></data>
+  <data name="Preview_Layout_NoRows" xml:space="preserve"><value>This layout has no UI rows in the game file.</value></data>
+  <data name="Preview_Layout_General" xml:space="preserve"><value>General</value></data>
+  <data name="Preview_Layout_Preset1" xml:space="preserve"><value>Preset 1</value></data>
+  <data name="Preview_Layout_Preset2" xml:space="preserve"><value>Preset 2</value></data>
+  <data name="Preview_Layout_Preset3" xml:space="preserve"><value>Preset 3</value></data>
+  <data name="Preview_LayoutTooltip" xml:space="preserve"><value>Preset 1 to 3 are read from UISettingPreset0 to 2. This mapping is an assumption, not verified in the game.</value></data>
+  <data name="Preview_ShowPanelsTooltip" xml:space="preserve"><value>Outlines every visible UI panel with its index. Chat windows show index.window. Compare with the game to find the bar indices.</value></data>
+  <data name="Preview_LiveTooltip" xml:space="preserve"><value>Coming next</value></data>
+  <data name="Preview_Bar_Cooldown" xml:space="preserve"><value>Cooldown bar</value></data>
+  <data name="Preview_Bar_Quick" xml:space="preserve"><value>Quick slots</value></data>
+  <data name="Preview_Bar_NoteUiData" xml:space="preserve"><value>Position from gamevariable.xml (index {0})</value><comment>{0} UIData index</comment></data>
+  <data name="Preview_Bar_NoteCandidates" xml:space="preserve"><value>Estimated from the candidate panels. Drag the bar to match your game.</value></data>
+  <data name="Preview_Bar_NoteDefault" xml:space="preserve"><value>No index yet: generic place. Drag the bar to match your game.</value></data>
+  <data name="Preview_Bar_NoteManual" xml:space="preserve"><value>Position saved for this layout.</value></data>
+  <data name="Preview_Background_Custom" xml:space="preserve"><value>Background: your image</value></data>
+  <data name="Preview_Background_Default" xml:space="preserve"><value>Background: default screenshot</value></data>
+  <data name="Preview_Background_None" xml:space="preserve"><value>Background: none (gradient)</value></data>
+  <data name="Preview_PickBackgroundTitle" xml:space="preserve"><value>Choose a background screenshot</value></data>
+  <data name="LayoutComboBox.Header" xml:space="preserve"><value>Layout</value></data>
+  <data name="ShowPanelsToggle.Header" xml:space="preserve"><value>Show UI panels</value></data>
+  <data name="LiveToggle.Header" xml:space="preserve"><value>Live</value></data>
+  <data name="ChangeBackgroundButton.Content" xml:space="preserve"><value>Change background</value></data>
+  <data name="DefaultBackgroundButton.Content" xml:space="preserve"><value>Default background</value></data>
+  <data name="ResetBarsButton.Content" xml:space="preserve"><value>Reset bar positions</value></data>
+  <data name="DragHint.Text" xml:space="preserve"><value>Click a slot to select it. Drag a bar to move it when its position is not verified.</value></data>
+  <data name="Preview_Resolution" xml:space="preserve"><value>Game resolution {0} × {1}</value></data>
+  <data name="Preview_Resolution_Unknown" xml:space="preserve"><value>Game resolution unknown: using 16:9</value></data>
+  <data name="Preview_GameWindow_NotConnected" xml:space="preserve"><value>Live view of the game is not connected yet.</value></data>
+  <data name="Preview_GameWindow_NotRunning" xml:space="preserve"><value>The game is not running.</value></data>
+  <data name="Preview_GameWindow_Running" xml:space="preserve"><value>Game window found.</value></data>
+</root>

@@ -1,0 +1,6 @@
+backups/
+__pycache__/
+.venv/
+*.pyc
+*.bdo-combo.tmp
+data/classhub/

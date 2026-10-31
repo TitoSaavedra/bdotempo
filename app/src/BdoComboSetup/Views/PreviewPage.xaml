@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="BdoComboSetup.Views.PreviewPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:BdoComboSetup.Views"
+    >
+
+    <Grid Padding="32,24" RowSpacing="12" ColumnSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="260" />
+        </Grid.ColumnDefinitions>
+
+        <TextBlock x:Uid="PreviewTitle" Style="{StaticResource TitleLargeTextBlockStyle}" Grid.ColumnSpan="2" />
+
+        <!-- Toolbar of the game screen: layout selector, debug overlay, live toggle (not available yet). -->
+        <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="16">
+            <ComboBox
+                x:Name="LayoutBox"
+                x:Uid="LayoutComboBox"
+                MinWidth="180"
+                VerticalAlignment="Bottom"
+                ItemsSource="{x:Bind ViewModel.LayoutOptions, Mode=OneWay}"
+                DisplayMemberPath="Label"
+                SelectedItem="{x:Bind ViewModel.SelectedLayoutOption, Mode=TwoWay}" />
+            <ToggleSwitch
+                x:Name="PanelsToggle"
+                x:Uid="ShowPanelsToggle"
+                IsOn="{x:Bind ViewModel.ShowUiPanels, Mode=TwoWay}" />
+            <ToggleSwitch
+                x:Name="LiveToggle"
+                x:Uid="LiveToggle"
+                IsEnabled="False" />
+        </StackPanel>
+
+        <!-- Left: the game screen surface. -->
+        <local:GameScreenCanvas
+            Grid.Row="2"
+            Grid.Column="0"
+            DataContext="{x:Bind ViewModel}" />
+
+        <!-- Right, top: background and bar reset (260 px). -->
+        <StackPanel Grid.Row="1" Grid.Column="1" Spacing="8" VerticalAlignment="Bottom">
+            <Button x:Uid="ChangeBackgroundButton" HorizontalAlignment="Stretch" Click="ChangeBackground_Click" />
+            <Button x:Uid="DefaultBackgroundButton" HorizontalAlignment="Stretch" Click="DefaultBackground_Click" />
+            <Button x:Uid="ResetBarsButton" HorizontalAlignment="Stretch" Click="ResetBars_Click" />
+        </StackPanel>
+
+        <!-- Right: detail of the selected slot (260 px). -->
+        <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CardBorderStyle}" VerticalAlignment="Top">
+            <StackPanel Spacing="12">
+                <TextBlock
+                    Text="{x:Bind ViewModel.SelectedSlot.Title, Mode=OneWay}"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.SelectedSlot.GroupLabel, Mode=OneWay}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Opacity="0.7" />
+
+                <TextBox
+                    x:Uid="CustomNameTextBox"
+                    IsReadOnly="True"
+                    Text="{x:Bind ViewModel.SelectedSlot.CustomName, Mode=OneWay}" />
+                <TextBox
+                    x:Uid="MemoTextBox"
+                    IsReadOnly="True"
+                    Text="{x:Bind ViewModel.SelectedSlot.Memo, Mode=OneWay}" />
+
+                <ComboBox
+                    x:Uid="QuickPositionComboBox"
+                    HorizontalAlignment="Stretch"
+                    IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                    ItemsSource="{x:Bind ViewModel.QuickPositionOptions, Mode=OneWay}"
+                    DisplayMemberPath="Label"
+                    SelectedValuePath="Position"
+                    SelectedValue="{x:Bind ViewModel.DraftQuickPosition, Mode=TwoWay}" />
+
+                <Button
+                    x:Uid="SaveButton"
+                    HorizontalAlignment="Stretch"
+                    Style="{StaticResource AccentButtonStyle}"
+                    Command="{x:Bind ViewModel.SaveChangesCommand}" />
+                <Button
+                    x:Uid="ResetButton"
+                    HorizontalAlignment="Stretch"
+                    Command="{x:Bind ViewModel.ResetCommand}" />
+            </StackPanel>
+        </Border>
+
+        <!-- Status under the screen, outside the scaled surface so it stays readable. -->
+        <StackPanel Grid.Row="3" Grid.Column="0" Spacing="2">
+            <TextBlock
+                Text="{x:Bind ViewModel.LayoutStatusText, Mode=OneWay}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Opacity="0.8"
+                TextWrapping="Wrap" />
+            <TextBlock
+                Text="{x:Bind ViewModel.BackgroundStatusText, Mode=OneWay}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Opacity="0.7" />
+            <TextBlock
+                x:Uid="DragHint"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Opacity="0.7" />
+        </StackPanel>
+    </Grid>
+</Page>

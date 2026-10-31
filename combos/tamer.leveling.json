@@ -1,0 +1,76 @@
+{
+  "schema": 2,
+  "class": "tamer",
+  "classId": 16,
+  "spec": "leveling",
+  "source": "user-provided note: temporary leveling setup (not a bdoclasshub guide); keys as stated in the note, not verified",
+  "description": "Temporary leveling combo while the character is below awakening: Void Lightning to pull, Bolt Wave + Jolt Wave held, Trample to finish, Flash chain for SP",
+  "status": "temporary, for leveling only",
+  "layout": {
+    "combo": [
+      0,
+      11
+    ],
+    "priorityBuffs": [
+      12,
+      14
+    ],
+    "otherBuffs": [
+      15,
+      19
+    ]
+  },
+  "slots": [
+    {
+      "skill": "Void Lightning",
+      "skillName": "Relámpago del Vacío",
+      "skillNo": 1229,
+      "memo": "SH + Q"
+    },
+    {
+      "skill": "Bolt Wave",
+      "skillName": "Onda de Rayo",
+      "skillNo": 14,
+      "memo": "SH + IZQ"
+    },
+    {
+      "skill": "Jolt Wave",
+      "skillName": "Onda de Tumbo",
+      "skillNo": 17,
+      "memo": "SH + IZQ + DER"
+    },
+    {
+      "skill": "Trample",
+      "skillName": "Pisoteo",
+      "skillNo": 1231,
+      "memo": "ESP"
+    },
+    {
+      "skill": "Flash",
+      "skillName": "Destello",
+      "skillNo": 1226,
+      "memo": "S + IZQ"
+    },
+    {
+      "skill": "Flash Pole Thrust",
+      "skillName": "Destello: Estocada",
+      "skillNo": 87,
+      "memo": "S + IZQ"
+    },
+    {
+      "skill": "Flash Stance Shift",
+      "skillName": "Destello : Cambio de Postura",
+      "skillNo": 42,
+      "memo": "S + IZQ"
+    }
+  ],
+  "priorityBuffs": [
+    {
+      "skill": "Summon Heuklang",
+      "skillName": "Invocar a Heuklang",
+      "skillNo": 1347,
+      "memo": ""
+    }
+  ],
+  "otherBuffs": []
+}

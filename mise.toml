@@ -1,0 +1,49 @@
+[tools]
+python = "3.12"
+
+[env]
+PYTHONPATH = "{{config_root}}/src"
+PYTHONUTF8 = "1"
+
+[tasks.test]
+description = "Run unit tests (synthetic fixtures only, no real game data)"
+run = "python -m unittest discover -s tests -v"
+
+[tasks.check]
+description = "Byte-compile sources and sanity-check the combo files"
+run = [
+  "python -m compileall -q src tests scripts",
+  "python -c \"import json,pathlib; [json.loads(p.read_text(encoding='utf-8')) for p in pathlib.Path('combos').glob('*.json')]; print('combo files: valid JSON')\"",
+]
+
+[tasks.fetch-classhub]
+description = "Download bdoclasshub.com class pages into data/classhub/ (pass --force to download again)"
+run = "python scripts/fetch_classhub.py"
+
+[tasks.validate]
+description = "Cross-check the tamer awakening combo against class_skills.json"
+run = "python -m bdo_combo validate --combo combos/tamer.awakening.json"
+
+[tasks.list-characters]
+description = "List characters of the detected (or --account) account, read-only"
+run = "python -m bdo_combo list-characters"
+
+[tasks.dry-run]
+description = "Show the diff for the tamer awakening combo; writes nothing (pass --pcid X)"
+run = "python -m bdo_combo apply --dry-run --combo combos/tamer.awakening.json"
+
+[tasks.apply]
+description = "Apply the tamer awakening combo (dry-run unless --write; pass --pcid X)"
+run = "python -m bdo_combo apply --combo combos/tamer.awakening.json"
+
+[tasks.backup]
+description = "Back up gameVariable.xml of --pcid X or --all"
+run = "python -m bdo_combo backup"
+
+[tasks.list-backups]
+description = "List backups with their manifest summary"
+run = "python -m bdo_combo list-backups"
+
+[tasks.restore]
+description = "Restore a backup (pass --backup TIMESTAMP; dry-run unless --write)"
+run = "python -m bdo_combo restore"
