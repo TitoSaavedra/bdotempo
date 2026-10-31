@@ -20,8 +20,7 @@ public sealed record ComboApplyRequest(
     IReadOnlyList<QuickSlotAssignment> QuickSlots,
     bool WriteCooldownBar = true,
     bool WriteMemos = true,
-    bool WriteQuickSlots = true,
-    bool ForceWhileGameRuns = false);
+    bool WriteQuickSlots = true);
 
 public enum MemoStatus
 {

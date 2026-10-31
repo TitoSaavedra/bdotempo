@@ -107,4 +107,52 @@ public sealed class ResourceParityTests
             Assert.True(spanish.Keys.Any(key => key.StartsWith(prefix, StringComparison.Ordinal)), $"No Spanish key for {uid}");
         }
     }
+
+    private static readonly Regex NewPrefixKeyLiteral = new("\"((?:Settings|Characters|Apply)\\.[A-Za-z0-9.]+)\"", RegexOptions.CultureInvariant);
+    private static readonly Regex SettingsUidLiteral = new("x:Uid=\"(Settings/[A-Za-z0-9/]+)\"", RegexOptions.CultureInvariant);
+
+    [Fact]
+    public void Every_Settings_Characters_and_write_reminder_key_used_by_code_exists_in_both_languages()
+    {
+        var english = Values("en-US");
+        var spanish = Values("es");
+        var roots = new[]
+        {
+            Path.Combine("src", "BdoComboSetup.Core"),
+            Path.Combine("src", "BdoComboSetup"),
+        };
+        var used = roots
+            .SelectMany(root => CodeFiles(root, "*.cs"))
+            .SelectMany(path => NewPrefixKeyLiteral.Matches(File.ReadAllText(path)).Select(match => match.Groups[1].Value))
+            .Where(key => key.StartsWith("Settings.", StringComparison.Ordinal)
+                || key.StartsWith("Characters.", StringComparison.Ordinal)
+                || key.StartsWith("Apply.WriteHint.", StringComparison.Ordinal)
+                || key.StartsWith("Apply.NoAccount", StringComparison.Ordinal)
+                || key.StartsWith("Apply.ActiveAccount", StringComparison.Ordinal))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        Assert.NotEmpty(used);
+        var missingEnglish = used.Where(key => !english.ContainsKey(key)).ToList();
+        var missingSpanish = used.Where(key => !spanish.ContainsKey(key)).ToList();
+        Assert.Empty(missingEnglish);
+        Assert.Empty(missingSpanish);
+    }
+
+    [Fact]
+    public void Every_x_Uid_on_the_Settings_page_has_its_properties_in_both_languages()
+    {
+        var english = Values("en-US");
+        var spanish = Values("es");
+        var xaml = File.ReadAllText(Path.Combine(AppRoot(), "src", "BdoComboSetup", "Views", "SettingsPage.xaml"));
+        var uids = SettingsUidLiteral.Matches(xaml).Select(match => match.Groups[1].Value).Distinct(StringComparer.Ordinal).ToList();
+
+        Assert.NotEmpty(uids);
+        foreach (var uid in uids)
+        {
+            var prefix = uid.Replace('/', '.') + ".";
+            Assert.True(english.Keys.Any(key => key.StartsWith(prefix, StringComparison.Ordinal)), $"No English key for {uid}");
+            Assert.True(spanish.Keys.Any(key => key.StartsWith(prefix, StringComparison.Ordinal)), $"No Spanish key for {uid}");
+        }
+    }
 }

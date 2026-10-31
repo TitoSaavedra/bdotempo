@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="BdoComboSetup.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:BdoComboSetup.Core.ViewModels"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <ScrollViewer Padding="24,16,24,16" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="22" MaxWidth="720" HorizontalAlignment="Left">
+            <TextBlock x:Uid="Settings/Title" Style="{ThemeResource TitleTextBlockStyle}" />
+
+            <!-- Changes that only take effect after a restart (language, data folder, Preview account). -->
+            <InfoBar
+                x:Uid="Settings/RestartBar"
+                IsOpen="{x:Bind ViewModel.RestartRequired, Mode=OneWay}"
+                Severity="Warning"
+                IsClosable="False">
+                <InfoBar.ActionButton>
+                    <Button x:Uid="Settings/RestartButton" Click="Restart_Click" />
+                </InfoBar.ActionButton>
+            </InfoBar>
+
+            <!-- Account: the numeric folders under UserCache that have an 11 folder. The one chosen here is remembered. -->
+            <StackPanel Spacing="6">
+                <TextBlock x:Uid="Settings/AccountHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <TextBlock
+                    x:Uid="Settings/AccountHint"
+                    TextWrapping="Wrap"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <ComboBox
+                    x:Name="AccountBox"
+                    x:Uid="Settings/AccountBox"
+                    MinWidth="320"
+                    ItemsSource="{x:Bind ViewModel.Accounts, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.SelectedAccount, Mode=OneWay}"
+                    SelectionChanged="AccountBox_SelectionChanged">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:AccountChoice">
+                            <TextBlock Text="{x:Bind Label, Mode=OneTime}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+
+            <!-- Black Desert folder: browse, or type a path and save it. A folder without UserCache is refused. -->
+            <StackPanel Spacing="6">
+                <TextBlock x:Uid="Settings/FolderHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <TextBlock
+                    x:Uid="Settings/FolderHint"
+                    TextWrapping="Wrap"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox
+                        x:Uid="Settings/FolderBox"
+                        Text="{x:Bind ViewModel.DataRootText, Mode=TwoWay}" />
+                    <Button Grid.Column="1" x:Uid="Settings/FolderBrowseButton" Click="Browse_Click" />
+                    <Button
+                        Grid.Column="2"
+                        x:Uid="Settings/FolderSaveButton"
+                        Click="SaveFolder_Click"
+                        Style="{StaticResource AccentButtonStyle}" />
+                </Grid>
+            </StackPanel>
+
+            <!-- Language: es or en-US. Takes effect after a restart. -->
+            <StackPanel Spacing="6">
+                <TextBlock x:Uid="Settings/LanguageHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <ComboBox
+                    x:Name="LanguageBox"
+                    x:Uid="Settings/LanguageBox"
+                    MinWidth="320"
+                    ItemsSource="{x:Bind ViewModel.Languages, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=OneWay}"
+                    SelectionChanged="LanguageBox_SelectionChanged">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LanguageChoice">
+                            <TextBlock Text="{x:Bind Name, Mode=OneTime}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+
+            <!-- The reminder before a write to a character. Turn it on again after "Don't show again". -->
+            <StackPanel Spacing="6">
+                <ToggleSwitch
+                    x:Uid="Settings/ShowWriteHintToggle"
+                    IsOn="{x:Bind ViewModel.ShowWriteHint, Mode=OneWay}"
+                    Toggled="ShowWriteHint_Toggled" />
+                <TextBlock
+                    x:Uid="Settings/ShowWriteHintHint"
+                    TextWrapping="Wrap"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+
+            <InfoBar
+                x:Name="StatusBar"
+                IsOpen="{x:Bind ViewModel.IsStatusOpen, Mode=TwoWay}"
+                Severity="{x:Bind ToInfoBarSeverity(ViewModel.StatusSeverity), Mode=OneWay}"
+                Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                IsClosable="True" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -9,6 +9,7 @@ Output folder (flat, so each file is an EmbeddedResource with the same name):
   for every skill that ``<combos>/tooltips.json`` has (cooldown, cost, damage, PvP and features).
 * ``skill-<skillNo>.png``: the skill icons, copied as they are (the client icons are 40 to 50 px).
 * ``class-<classType>.png``: the 32 class icons.
+* ``skill_classes.json``: skill number -> classes that can use it (see ``skill_classes.py``), when a skill table is given.
 
 Icons larger than 64 px are refused: there is no image library in the standard library to
 resize them. A referenced skill without an icon in the client export is reported and left out;
@@ -26,6 +27,8 @@ from typing import Any
 from .. import log
 from .client import ClientExport, clean_description, clean_name
 from .importer import TOOLTIPS_FILE, iter_skill_refs
+from .skill_classes import RESOURCE_NAME as SKILL_CLASSES_RESOURCE
+from .skill_classes import build_skill_class_table
 
 CATALOG_RESOURCE = "catalog.json"
 SKILLS_RESOURCE = "skills.json"
@@ -61,8 +64,13 @@ def class_resource(class_type: int) -> str:
     return f"class-{class_type}.png"
 
 
-def build_bundle(combos_dir: Path, client: ClientExport, out_dir: Path) -> BundleStats:
-    with log.span("guides.bundle", combos_dir=str(combos_dir), out_dir=str(out_dir)):
+def build_bundle(
+    combos_dir: Path,
+    client: ClientExport,
+    out_dir: Path,
+    skill_table: dict[str, Any] | None = None,
+) -> BundleStats:
+    with log.span("guides.bundle", combos_dir=str(combos_dir), out_dir=str(out_dir), skill_table=skill_table is not None):
         catalog = _read_json(combos_dir / "catalog.json")
         guides = {
             path.stem: _read_json(path)
@@ -84,6 +92,8 @@ def build_bundle(combos_dir: Path, client: ClientExport, out_dir: Path) -> Bundl
         _write_skills_lookup(out_dir, skill_refs, client, stats, tooltips)
         _copy_skill_icons(out_dir, sorted(skill_refs), client, stats)
         _copy_class_icons(out_dir, client, stats)
+        if skill_table is not None:
+            _write_json(out_dir / SKILL_CLASSES_RESOURCE, build_skill_class_table(skill_table), stats)
 
         log.info(
             "asset bundle written",
@@ -202,7 +212,7 @@ def _count(stats: BundleStats, size: int) -> None:
 
 def _remove_stale(out_dir: Path) -> None:
     """Remove files this bundle wrote before, so renamed or dropped skills do not stay embedded."""
-    for pattern in ("skill-*.png", "class-*.png", "guide-*.json", CATALOG_RESOURCE, SKILLS_RESOURCE):
+    for pattern in ("skill-*.png", "class-*.png", "guide-*.json", CATALOG_RESOURCE, SKILLS_RESOURCE, SKILL_CLASSES_RESOURCE):
         for path in out_dir.glob(pattern):
             path.unlink()
 

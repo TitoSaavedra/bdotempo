@@ -1,5 +1,7 @@
 using System.Globalization;
+using BdoComboSetup.Core.Characters;
 using BdoComboSetup.Core.Combo;
+using BdoComboSetup.Core.Confirmation;
 using BdoComboSetup.Core.Localization;
 using BdoComboSetup.Core.Logging;
 
@@ -43,4 +45,54 @@ internal sealed class TempLogger : IDisposable
 internal static class TestCombos
 {
     public static ComboDefinition Tamer() => new MockComboDataSource().GetCombo("Tamer", ComboMode.Awakening);
+}
+
+/// <summary>A character source with fixed characters (the same three the old mock had). Records the saved overrides.</summary>
+internal sealed class FakeCharacterSource : ICharacterSource
+{
+    /// <summary>The account the fake reports as active. Null means no account can be found.</summary>
+    public string? AccountName { get; set; } = "330";
+
+    public List<CharacterEntry> Entries { get; } =
+    [
+        new CharacterEntry("10000000000000011", 0, "Demo Tamer", NameSource.Label, 16, ClassSource.Inferred),
+        new CharacterEntry("10000000000000001", 1, "Demo Warrior", NameSource.Label, 0, ClassSource.Inferred),
+        new CharacterEntry("10000000000000002", 2, "Demo Shai", NameSource.Label, 17, ClassSource.Inferred),
+    ];
+
+    public List<(string Account, string Pcid, string? Name, int? ClassType)> Saved { get; } = [];
+
+    public string? ActiveAccount() => AccountName;
+
+    public IReadOnlyList<CharacterEntry> Load(string account) => account == AccountName ? Entries.ToList() : [];
+
+    public void SaveOverride(string account, string pcid, string? name, int? classType) => Saved.Add((account, pcid, name, classType));
+}
+
+/// <summary>The reminder before a write: answers with the given answer and counts how often it was shown.</summary>
+internal sealed class FakeConfirmationPrompt(WriteHintAnswer answer) : IConfirmationPrompt
+{
+    public int Shown { get; private set; }
+
+    public Task<WriteHintAnswer> ShowWriteHintAsync()
+    {
+        Shown++;
+        return Task.FromResult(answer);
+    }
+}
+
+/// <summary>The "don't show again" flag kept in memory.</summary>
+internal sealed class FakeWriteHintSetting : IWriteHintSetting
+{
+    public bool SkipWriteHint { get; set; }
+
+    public void SetSkipWriteHint(bool skip) => SkipWriteHint = skip;
+}
+
+/// <summary>Write confirmations for the view model tests.</summary>
+internal static class TestConfirmation
+{
+    /// <summary>A confirmation whose reminder is answered with Continue, and not "don't show again".</summary>
+    public static WriteConfirmation Accepting(AppLogger logger) =>
+        new(new FakeWriteHintSetting(), new FakeConfirmationPrompt(new WriteHintAnswer(Continue: true, DontShowAgain: false)), logger);
 }

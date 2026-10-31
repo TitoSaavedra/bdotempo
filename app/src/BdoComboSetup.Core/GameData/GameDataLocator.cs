@@ -8,9 +8,23 @@ public sealed record AccountInfo(string Account, int CharacterCount, DateTime Ne
 
 public sealed record CharacterInfo(string Pcid, string FilePath, DateTime LastWriteUtc);
 
+/// <summary>What a Black Desert data folder looks like. Used by the settings to validate a folder before it is saved.</summary>
+public enum DataRootState
+{
+    /// <summary>The folder does not exist.</summary>
+    Missing,
+
+    /// <summary>The folder exists, but it has no UserCache folder (not a Black Desert data folder).</summary>
+    NoUserCache,
+
+    /// <summary>The folder has a UserCache folder.</summary>
+    Ok,
+}
+
 /// <summary>
 /// Finds the game's UserCache, the account folders and the character folders (port of the Python tool's config.py).
 /// Layout: DataRoot\UserCache\&lt;account&gt;\11\&lt;pcid&gt;\gameVariable.xml. Only reads the folder tree.
+/// The data folder and the chosen account are read on every call, so a change in the settings applies at once.
 /// </summary>
 public sealed class GameDataLocator
 {
@@ -18,22 +32,38 @@ public sealed class GameDataLocator
 
     private static readonly Regex DigitsRe = new("\\A[0-9]+\\z");
 
+    private readonly Func<string> _dataRoot;
+    private readonly Func<string?> _explicitAccount;
     private readonly AppLogger _logger;
 
     public GameDataLocator(string dataRoot, string? explicitAccount, AppLogger logger)
+        : this(() => dataRoot, () => explicitAccount, logger)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(dataRoot);
+    }
+
+    public GameDataLocator(Func<string> dataRoot, Func<string?> explicitAccount, AppLogger logger)
+    {
+        ArgumentNullException.ThrowIfNull(dataRoot);
+        ArgumentNullException.ThrowIfNull(explicitAccount);
         ArgumentNullException.ThrowIfNull(logger);
 
-        DataRoot = dataRoot;
-        ExplicitAccount = string.IsNullOrWhiteSpace(explicitAccount) ? null : explicitAccount.Trim();
+        _dataRoot = dataRoot;
+        _explicitAccount = explicitAccount;
         _logger = logger;
     }
 
-    public string DataRoot { get; }
+    /// <summary>The Black Desert data folder (the one that holds UserCache and _backups).</summary>
+    public string DataRoot => _dataRoot();
 
     /// <summary>The account chosen in the settings, or null for auto-detection.</summary>
-    public string? ExplicitAccount { get; }
+    public string? ExplicitAccount
+    {
+        get
+        {
+            var value = _explicitAccount();
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+    }
 
     public string UserCacheDir => Path.Combine(DataRoot, "UserCache");
 
@@ -42,7 +72,21 @@ public sealed class GameDataLocator
     public string CharacterFilePath(string account, string pcid) =>
         Path.Combine(UserCacheDir, account, "11", pcid, CharacterFileName);
 
-    /// <summary>Numeric account folders under UserCache that contain an "11" folder, with their character counts.</summary>
+    /// <summary>Checks a candidate data folder. Reads the folder tree only.</summary>
+    public static DataRootState CheckDataRoot(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+        {
+            return DataRootState.Missing;
+        }
+
+        return Directory.Exists(Path.Combine(path, "UserCache")) ? DataRootState.Ok : DataRootState.NoUserCache;
+    }
+
+    /// <summary>
+    /// Numeric account folders under UserCache that contain an "11" folder, with their character counts. The "-1" folder
+    /// and any non-numeric folder are ignored.
+    /// </summary>
     public IReadOnlyList<AccountInfo> FindAccounts()
     {
         if (!Directory.Exists(UserCacheDir))
@@ -101,26 +145,27 @@ public sealed class GameDataLocator
 
     /// <summary>
     /// The account to use: the explicit one when set, else the only account, else the one whose characters were
-    /// modified most recently (logged as a warning).
+    /// modified most recently (logged as a warning). Throws <see cref="OperationRefusedException"/> when there is none.
     /// </summary>
     public string ResolveAccount()
     {
-        if (ExplicitAccount is not null)
+        var explicitAccount = ExplicitAccount;
+        if (explicitAccount is not null)
         {
-            if (!IsDigits(ExplicitAccount))
+            if (!IsDigits(explicitAccount))
             {
                 throw new OperationRefusedException(OperationProblem.InvalidRequest, "account must be numeric");
             }
 
-            if (!Directory.Exists(Path.Combine(UserCacheDir, ExplicitAccount, "11")))
+            if (!Directory.Exists(Path.Combine(UserCacheDir, explicitAccount, "11")))
             {
                 throw new OperationRefusedException(
                     OperationProblem.AccountNotFound,
-                    $"account {ExplicitAccount} has no '11' folder under UserCache");
+                    $"account {explicitAccount} has no '11' folder under UserCache");
             }
 
-            _logger.Info("locator.account_explicit", "Account selected in the settings", new Dictionary<string, object?> { ["account"] = ExplicitAccount });
-            return ExplicitAccount;
+            _logger.Info("locator.account_explicit", "Account selected in the settings", new Dictionary<string, object?> { ["account"] = explicitAccount });
+            return explicitAccount;
         }
 
         var accounts = FindAccounts();
@@ -147,5 +192,27 @@ public sealed class GameDataLocator
                 ["chosen"] = chosen.Account,
             });
         return chosen.Account;
+    }
+
+    /// <summary>
+    /// The active account, or null when none can be found (no UserCache, no account folder, or the chosen one is missing).
+    /// The reason is logged; nothing is thrown.
+    /// </summary>
+    public string? TryResolveAccount()
+    {
+        try
+        {
+            return ResolveAccount();
+        }
+        catch (OperationRefusedException ex)
+        {
+            _logger.Warn("locator.no_account", ex.Message);
+            return null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.Error("locator.read_failed", "The game folders could not be read", ex);
+            return null;
+        }
     }
 }

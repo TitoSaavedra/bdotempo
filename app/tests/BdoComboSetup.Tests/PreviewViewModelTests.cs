@@ -37,9 +37,10 @@ public sealed class PreviewViewModelTests : IDisposable
     private ApplyComboViewModel Apply() => new(
         FakeCombosCatalog.Sample(),
         new NoIconAssets(),
-        new MockComboDataSource(),
+        new FakeCharacterSource(),
         _profiles.Store,
         new RecordingApplier(),
+        TestConfirmation.Accepting(_log.Logger),
         new KeyLocalizer(),
         ApplyTestHelpers.Culture,
         _log.Logger);
@@ -119,9 +120,10 @@ public sealed class PreviewViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Quick_slots_show_the_bound_key_of_the_character_and_the_default_otherwise()
+    public async Task Quick_slots_show_the_bound_key_of_the_character_and_the_default_otherwise()
     {
         var apply = Apply();
+        await apply.RefreshCharactersAsync();
         var keys = new Dictionary<string, IReadOnlyDictionary<int, int>>
         {
             [TamerPcid] = new Dictionary<int, int> { [1] = 53 },
@@ -134,9 +136,10 @@ public sealed class PreviewViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Changing_the_character_reads_its_quick_keys_again()
+    public async Task Changing_the_character_reads_its_quick_keys_again()
     {
         var apply = Apply();
+        await apply.RefreshCharactersAsync();
         var keys = new Dictionary<string, IReadOnlyDictionary<int, int>>
         {
             [TamerPcid] = new Dictionary<int, int> { [1] = 53 },

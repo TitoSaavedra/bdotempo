@@ -51,14 +51,46 @@ fixtures (`Fixtures\bundle\`, embedded in the test assembly).
 
 ## Settings
 
-`%LOCALAPPDATA%\BdoComboSetup\settings.json` (created on the first change). Keys: `SkillIconRoot`,
-`ClassHubRoot`, `GameAccountFolder` (default `330`), `CooldownRows`/`CooldownColumns` (2 x 10), `SelectedLayout`.
+The **Settings** page (footer of the navigation) changes `%LOCALAPPDATA%\BdoComboSetup\settings.json`, created on the first change:
+
+- **Account** (`GameAccount`): the numeric folders under `UserCache` that have an `11` folder. `-1` and non-numeric folders
+  are ignored. The chosen account is remembered; with only one account it is used without asking.
+- **Black Desert folder** (`GameDataRoot`): browse or type it, then save. A folder without `UserCache` is refused.
+- **Language** (`Language`): `es` or `en-US`. The app restarts to apply it (the button starts a new copy of the app).
+- **Reminder before writing** (`SkipWriteHint`): "Don't show again" turns the reminder off; the toggle turns it on again.
+
+Other keys: `SkillIconRoot`, `ClassHubRoot`, `CooldownRows`/`CooldownColumns` (2 x 10), `SelectedLayout`, `BackupsRoot`,
+`SkillsJsonPath`. The Preview page reads its layouts and quick keys of the active account at startup, so a change of
+account or folder shows there after a restart.
+
+## Characters (Apply page)
+
+The character row lists only the live characters of the active account: the pcids of `CharacterOrderList` in
+`UserCache\<account>\gamevariable.xml` (in game order) that also have a 17-digit folder with a `gameVariable.xml` under `11`.
+Sidecar files (`gamevariable-*.xml`) and stale folders are ignored. Only the name and the class icon are shown, never the pcid.
+
+- **Name**: the name you set, then the in-game label (`CharacterMemo` in `gameVariable_lobby.xml`), then `<Class> N`.
+- **Class**: the class you set, then a vote over the skill numbers of the cooldown bar, the cooldown memos and the quick bar,
+  against `Assets\generated\skill_classes.json`, then unknown (a neutral icon). The table holds only skill groups with at most
+  nine classes; `mise run build-assets` builds it from `D:\extracted_bdo\class_skills.json`.
+- **Pencil**: sets the name and the class once, and they are remembered per account in
+  `%LOCALAPPDATA%\BdoComboSetup\characters.json`. An empty name and "Class decided by the game files" hand the choice back.
+
+The class grid is never filtered by the account. Game files are only read; a file that the game is writing is retried
+up to three times.
+
+## Writing to a character
+
+The review comes first. "Write to character" then asks to be on the character selection screen (the reminder can be
+turned off). Cancel writes nothing. An open game does not block the write: the state is logged (`write.game_decision`)
+and a verified backup is taken first, as always.
 
 ## Command line
 
-`--page apply|preview`, `--layout general|preset1|preset2|preset3`, `--hidden-slots`, `--cooldown-demo` (debug), `--zoom <n>`, `--class <slug> --spec <id>` (the Apply page starts
+`--page apply|preview|settings`, `--layout general|preset1|preset2|preset3`, `--hidden-slots`, `--cooldown-demo` (debug), `--zoom <n>`, `--class <slug> --spec <id>` (the Apply page starts
 on that guide, for example `--class tamer --spec awakening`), `--demo` (synthetic characters and a demo applier that reads and
-writes nothing), `--demo-review` (the same, and opens the review of the combo at startup). `mise run screenshots` uses `--demo`.
+writes nothing), `--demo-review` (the same, and opens the review of the combo at startup), `--demo-write-hint` (the same, and
+asks to write, so the reminder before a write is shown). `mise run screenshots` uses `--demo`.
 Options given on the command line are not saved.
 
 ## Logs

@@ -49,9 +49,6 @@
   <data name="Apply.Title.Text" xml:space="preserve">
     <value>Apply combo</value>
   </data>
-  <data name="Apply.CharacterBox.Header" xml:space="preserve">
-    <value>Character to apply to</value>
-  </data>
   <data name="Apply.IncludeCooldownBarCheck.Content" xml:space="preserve">
     <value>Cooldown bar</value>
   </data>
@@ -150,9 +147,6 @@
   </data>
   <data name="Apply.AddSkillSearch.PlaceholderText" xml:space="preserve">
     <value>Search by name or number</value>
-  </data>
-  <data name="Apply.PcidFormat" xml:space="preserve">
-    <value>Character ID {0}</value>
   </data>
   <data name="Apply.StateUnsaved" xml:space="preserve">
     <value>Unsaved changes</value>
@@ -370,4 +364,54 @@
   <data name="Preview.Capture.Failed" xml:space="preserve">
     <value>The game window could not be captured: black background.</value>
   </data>
+  <data name="NavSettingsItem.Content" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings.Title.Text" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings.RestartBar.Title" xml:space="preserve"><value>Restart to apply the changes</value></data>
+  <data name="Settings.RestartBar.Message" xml:space="preserve"><value>The language, the data folder and the account of the Preview page take effect after restarting the app.</value></data>
+  <data name="Settings.RestartButton.Content" xml:space="preserve"><value>Restart now</value></data>
+  <data name="Settings.AccountHeader.Text" xml:space="preserve"><value>Account</value></data>
+  <data name="Settings.AccountHint.Text" xml:space="preserve"><value>Numeric folders under UserCache that have an 11 folder. Your choice is remembered between sessions.</value></data>
+  <data name="Settings.AccountBox.Header" xml:space="preserve"><value>Account to use</value></data>
+  <data name="Settings.FolderHeader.Text" xml:space="preserve"><value>Black Desert folder</value></data>
+  <data name="Settings.FolderHint.Text" xml:space="preserve"><value>The folder that holds UserCache and _backups. It must contain a UserCache folder.</value></data>
+  <data name="Settings.FolderBox.Header" xml:space="preserve"><value>Folder</value></data>
+  <data name="Settings.FolderBox.PlaceholderText" xml:space="preserve"><value>Path to the Black Desert folder</value></data>
+  <data name="Settings.FolderBrowseButton.Content" xml:space="preserve"><value>Browse...</value></data>
+  <data name="Settings.FolderSaveButton.Content" xml:space="preserve"><value>Save folder</value></data>
+  <data name="Settings.LanguageHeader.Text" xml:space="preserve"><value>Language</value></data>
+  <data name="Settings.LanguageBox.Header" xml:space="preserve"><value>Interface language</value></data>
+  <data name="Settings.LanguageSpanish" xml:space="preserve"><value>Spanish</value></data>
+  <data name="Settings.LanguageEnglish" xml:space="preserve"><value>English (United States)</value></data>
+  <data name="Settings.FolderMissing" xml:space="preserve"><value>The folder does not exist.</value></data>
+  <data name="Settings.FolderNoUserCache" xml:space="preserve"><value>This folder has no UserCache folder. Choose the Black Desert data folder.</value></data>
+  <data name="Settings.FolderOk" xml:space="preserve"><value>Folder OK. {0} account(s) found.</value></data>
+  <data name="Settings.NoAccounts" xml:space="preserve"><value>The folder is valid, but it has no account with a character folder yet.</value></data>
+  <data name="Settings.PickerFailed" xml:space="preserve"><value>The folder picker could not be opened. Type the folder and save it.</value></data>
+  <data name="Apply.NoAccount" xml:space="preserve"><value>No account found</value></data>
+  <data name="Apply.ActiveAccount" xml:space="preserve"><value>Account {0}</value></data>
+  <data name="Apply.NoCharacters" xml:space="preserve"><value>This account has no live characters yet. Log in to the game once so the character list is written.</value></data>
+  <data name="Apply.StatusCharactersFailed" xml:space="preserve"><value>The characters could not be read. The game may be writing the files; try again.</value></data>
+  <data name="Apply.StatusCharacterNoAccount" xml:space="preserve"><value>Choose an account in Settings first.</value></data>
+  <data name="Apply.StatusCharacterInvalid" xml:space="preserve"><value>That class is not in the catalog. Nothing was saved.</value></data>
+  <data name="Apply.StatusCharacterSaved" xml:space="preserve"><value>Character saved.</value></data>
+  <data name="Apply.StatusCharacterFailed" xml:space="preserve"><value>The character could not be saved.</value></data>
+  <data name="Apply.EditCharacterButton.ToolTipService.ToolTip" xml:space="preserve"><value>Edit name and class</value></data>
+  <data name="Characters.UnknownFallback" xml:space="preserve"><value>Character {0}</value></data>
+  <data name="Characters.ClassFallback" xml:space="preserve"><value>{0} {1}</value></data>
+  <data name="Characters.EditTitle" xml:space="preserve"><value>Edit character</value></data>
+  <data name="Characters.EditNameHeader" xml:space="preserve"><value>Name</value></data>
+  <data name="Characters.EditNamePlaceholder" xml:space="preserve"><value>Name in the app</value></data>
+  <data name="Characters.EditAutomaticClass" xml:space="preserve"><value>Class decided by the game files</value></data>
+  <data name="Characters.EditSave" xml:space="preserve"><value>Save</value></data>
+  <data name="Characters.EditReset" xml:space="preserve"><value>Reset</value></data>
+  <data name="Apply.WriteHint.Title" xml:space="preserve"><value>Before you write</value></data>
+  <data name="Apply.WriteHint.Message" xml:space="preserve"><value>You need to be on the character selection screen for the game to read the changes.</value></data>
+  <data name="Apply.WriteHint.Continue" xml:space="preserve"><value>Continue</value></data>
+  <data name="Apply.WriteHint.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Apply.WriteHint.DontShowAgain" xml:space="preserve"><value>Don't show again</value></data>
+  <data name="Settings.ShowWriteHintHint.Text" xml:space="preserve"><value>Shows a reminder to be on the character selection screen before each write to a character.</value></data>
+  <data name="Settings.ShowWriteHintToggle.Header" xml:space="preserve"><value>Show the reminder before writing</value></data>
+  <data name="Settings.ShowWriteHintToggle.OnContent" xml:space="preserve"><value>Shown before each write</value></data>
+  <data name="Settings.ShowWriteHintToggle.OffContent" xml:space="preserve"><value>Hidden</value></data>
+  <data name="Settings.AccountItem" xml:space="preserve"><value>Account {0}</value></data>
 </root>

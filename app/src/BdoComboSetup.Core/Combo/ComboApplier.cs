@@ -78,7 +78,6 @@ public sealed class ComboApplier : IComboApplier
             ["write_cooldown_bar"] = request.WriteCooldownBar,
             ["write_memos"] = request.WriteMemos,
             ["write_quick_slots"] = request.WriteQuickSlots,
-            ["force"] = request.ForceWhileGameRuns,
         });
 
         var warnings = new List<string>();
@@ -113,7 +112,7 @@ public sealed class ComboApplier : IComboApplier
         var path = _locator.CharacterFilePath(account, request.Pcid);
         if (!_files.Exists(path))
         {
-            throw new OperationRefusedException(OperationProblem.CharacterNotFound, $"character {request.Pcid} not found under account {account}");
+            throw new OperationRefusedException(OperationProblem.CharacterNotFound, "the character was not found under the account in the settings");
         }
 
         var original = _files.ReadAllBytes(path);
@@ -183,10 +182,9 @@ public sealed class ComboApplier : IComboApplier
             return Result(OperationOutcome.Unchanged, OperationProblem.None, null, diff, null, null, warnings);
         }
 
-        WriteGuard.Check(
+        WriteGuard.Record(
             _guard,
             [new GuardTarget(request.Pcid, path, _files.GetLastWriteUtc(path))],
-            request.ForceWhileGameRuns,
             _utcNow(),
             _logger);
 

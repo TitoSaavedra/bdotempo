@@ -15,6 +15,7 @@ from .. import log
 from .bundle import BundleError, build_bundle
 from .client import ClientExport, ClientExportError
 from .importer import import_guides, write_outputs
+from .skill_classes import SkillClassesError, load_skill_table
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CLASSHUB_DIR = REPO_ROOT / "data" / "classhub"
@@ -23,6 +24,7 @@ DEFAULT_COMBOS_DIR = REPO_ROOT / "data" / "combos"
 DEFAULT_REPORT = REPO_ROOT / "reports" / "unresolved_skills.txt"
 DEFAULT_KINDS_REPORT = REPO_ROOT / "reports" / "chain_kinds.txt"
 DEFAULT_BUNDLE_DIR = REPO_ROOT / "app" / "src" / "BdoComboSetup" / "Assets" / "generated"
+DEFAULT_SKILL_TABLE = Path(r"D:\extracted_bdo\class_skills.json")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -40,6 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--combos-dir", type=Path, default=None, help="output folder of import (default data/combos)")
     p.add_argument("--client-dir", type=Path, default=None, help="client export folder (env BDO_CLIENT_DIR)")
     p.add_argument("--out-dir", type=Path, default=None, help="bundle folder (default app/src/BdoComboSetup/Assets/generated)")
+    p.add_argument("--skill-table", type=Path, default=None, help="Scrappers class_skills.json (default: the file in the extracted_bdo folder on D:)")
 
     for command in sub.choices.values():
         command.add_argument("--log-file", default=None, help="also append JSON logs to this file (env BDO_LOG_FILE)")
@@ -62,7 +65,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.command == "import":
                 return _import(args)
             return _bundle(args)
-    except (ClientExportError, BundleError, FileNotFoundError, ValueError) as exc:
+    except (ClientExportError, BundleError, SkillClassesError, FileNotFoundError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     finally:
@@ -100,7 +103,8 @@ def _bundle(args: argparse.Namespace) -> int:
     combos_dir = args.combos_dir or DEFAULT_COMBOS_DIR
     out_dir = args.out_dir or DEFAULT_BUNDLE_DIR
 
-    stats = build_bundle(combos_dir, ClientExport(client_dir), out_dir)
+    skill_table = load_skill_table(args.skill_table or DEFAULT_SKILL_TABLE)
+    stats = build_bundle(combos_dir, ClientExport(client_dir), out_dir, skill_table)
     print(f"bundle {out_dir}: {stats.files} files, {stats.total_bytes} bytes")
     print(f"skill icons {stats.skill_icons}, class icons {stats.class_icons}, guides {stats.guides}")
     print(f"skills described {stats.skills_described}, missing skill icons {len(stats.missing_skill_icons)}")

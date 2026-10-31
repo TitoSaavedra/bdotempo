@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using BdoComboSetup.Core.Logging;
 
@@ -15,9 +16,6 @@ public sealed record AppSettings
     /// <summary>Fallback icon root: the bdoclasshub pages downloaded by the scraper. Configurable.</summary>
     public const string DefaultClassHubRoot = @"X:\Github\Personal\bdo-combo-setup\data\classhub\classes";
 
-    /// <summary>Account folder under UserCache that holds gamevariable.xml.</summary>
-    public const string DefaultGameAccountFolder = "330";
-
     /// <summary>Default Black Desert data folder (the one that holds UserCache and _backups).</summary>
     public const string DefaultGameDataRoot = @"C:\Users\TitoS\OneDrive\Documentos\Black Desert";
 
@@ -28,12 +26,13 @@ public sealed record AppSettings
 
     public string ClassHubRoot { get; init; } = DefaultClassHubRoot;
 
-    public string GameAccountFolder { get; init; } = DefaultGameAccountFolder;
-
     /// <summary>Black Desert data folder (the one with UserCache). Character files are written under it.</summary>
     public string GameDataRoot { get; init; } = DefaultGameDataRoot;
 
-    /// <summary>Account used by the apply page. Null means auto-detection (the only account, else the most recently played).</summary>
+    /// <summary>
+    /// The account the app works with, as chosen in the settings (a numeric folder under UserCache). Null means
+    /// auto-detection: the only account, else the most recently played one.
+    /// </summary>
     public string? GameAccount { get; init; }
 
     /// <summary>Where backup sets are written. Null means "_backups" inside <see cref="GameDataRoot"/>.</summary>
@@ -49,6 +48,40 @@ public sealed record AppSettings
 
     /// <summary>Last layout selected on the Preview page (GameUiLayoutId name), or null for General.</summary>
     public string? SelectedLayout { get; init; }
+
+    /// <summary>The interface language: "es" or "en-US". Null means the Windows language, when the app supports it.</summary>
+    public string? Language { get; init; }
+
+    /// <summary>True when the reminder before writing to a character was turned off ("Don't show again").</summary>
+    public bool SkipWriteHint { get; init; }
+}
+
+/// <summary>The languages the app ships (the .resw files) and how the setting maps to one of them.</summary>
+public static class AppLanguages
+{
+    public const string Spanish = "es";
+    public const string English = "en-US";
+
+    public static IReadOnlyList<string> Supported { get; } = [Spanish, English];
+
+    /// <summary>The supported language of a setting (case-insensitive), or null when the setting is empty or unsupported.</summary>
+    public static string? Normalize(string? language)
+    {
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            return null;
+        }
+
+        return Supported.FirstOrDefault(supported => string.Equals(supported, language.Trim(), StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>The language to run in: the setting when valid, else Spanish for a Spanish Windows language, else English.</summary>
+    public static string Resolve(string? setting, CultureInfo systemUiCulture)
+    {
+        ArgumentNullException.ThrowIfNull(systemUiCulture);
+        return Normalize(setting)
+            ?? (systemUiCulture.TwoLetterISOLanguageName == "es" ? Spanish : English);
+    }
 }
 
 /// <summary>Loads and saves <see cref="AppSettings"/>. Every change is written at once (temporary file, then move).</summary>

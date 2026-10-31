@@ -3,6 +3,8 @@ using BdoComboSetup.Core.GameData;
 using BdoComboSetup.Core.Operations;
 using BdoComboSetup.Core.ViewModels;
 
+using BdoComboSetup.Core.Confirmation;
+
 namespace BdoComboSetup.Tests;
 
 /// <summary>
@@ -26,12 +28,13 @@ public sealed class ApplyComboWriteTests : IDisposable
         _log.Dispose();
     }
 
-    private ApplyComboViewModel Create(RecordingApplier applier) => new(
+    private ApplyComboViewModel Create(RecordingApplier applier, WriteConfirmation? confirmation = null) => new(
         FakeCombosCatalog.Sample(),
         new NoIconAssets(),
-        new MockComboDataSource(),
+        new FakeCharacterSource(),
         _profiles.Store,
         applier,
+        confirmation ?? TestConfirmation.Accepting(_log.Logger),
         new KeyLocalizer(),
         ApplyTestHelpers.Culture,
         _log.Logger);
@@ -246,9 +249,10 @@ public sealed class ApplyComboWriteTests : IDisposable
         var vm = new ApplyComboViewModel(
             catalog,
             new NoIconAssets(),
-            new MockComboDataSource(),
+            new FakeCharacterSource(),
             _profiles.Store,
             applier,
+            TestConfirmation.Accepting(_log.Logger),
             new KeyLocalizer(),
             ApplyTestHelpers.Culture,
             _log.Logger);
@@ -309,5 +313,53 @@ public sealed class ApplyComboWriteTests : IDisposable
         Assert.Equal(OperationOutcome.Refused, write.Outcome);
         Assert.Null(write.BackupPath);
         Assert.Null(write.Diff);
+    }
+
+    [Fact]
+    public async Task Cancel_in_the_reminder_writes_nothing_and_keeps_the_review_open()
+    {
+        var applier = new RecordingApplier(DryRunResult(changed: true));
+        var prompt = new FakeConfirmationPrompt(new WriteHintAnswer(Continue: false, DontShowAgain: true));
+        var setting = new FakeWriteHintSetting();
+        var vm = Create(applier, new WriteConfirmation(setting, prompt, _log.Logger));
+        await vm.InitializeAsync("tamer", "awakening");
+        await vm.ApplyCommand.ExecuteAsync(null);
+
+        await vm.ConfirmWriteCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, prompt.Shown);
+        Assert.Empty(applier.Writes);
+        Assert.True(vm.IsReviewOpen);
+        Assert.False(setting.SkipWriteHint);
+    }
+
+    [Fact]
+    public async Task Continue_in_the_reminder_writes_the_reviewed_changes_once()
+    {
+        var applier = new RecordingApplier(DryRunResult(changed: true));
+        var prompt = new FakeConfirmationPrompt(new WriteHintAnswer(Continue: true, DontShowAgain: false));
+        var vm = Create(applier, new WriteConfirmation(new FakeWriteHintSetting(), prompt, _log.Logger));
+        await vm.InitializeAsync("tamer", "awakening");
+        await vm.ApplyCommand.ExecuteAsync(null);
+
+        await vm.ConfirmWriteCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, prompt.Shown);
+        Assert.Single(applier.Writes);
+    }
+
+    [Fact]
+    public async Task With_the_skip_flag_the_write_goes_on_without_the_reminder()
+    {
+        var applier = new RecordingApplier(DryRunResult(changed: true));
+        var prompt = new FakeConfirmationPrompt(new WriteHintAnswer(Continue: false, DontShowAgain: false));
+        var vm = Create(applier, new WriteConfirmation(new FakeWriteHintSetting { SkipWriteHint = true }, prompt, _log.Logger));
+        await vm.InitializeAsync("tamer", "awakening");
+        await vm.ApplyCommand.ExecuteAsync(null);
+
+        await vm.ConfirmWriteCommand.ExecuteAsync(null);
+
+        Assert.Equal(0, prompt.Shown);
+        Assert.Single(applier.Writes);
     }
 }

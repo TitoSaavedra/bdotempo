@@ -83,7 +83,7 @@ public sealed class BackupService : IBackupService
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    private readonly string _backupsRoot;
+    private readonly Func<string> _backupsRootOf;
     private readonly GameDataLocator _locator;
     private readonly IFileStore _files;
     private readonly IGameProcessGuard _guard;
@@ -97,14 +97,27 @@ public sealed class BackupService : IBackupService
         IGameProcessGuard guard,
         AppLogger logger,
         Func<DateTimeOffset>? clock = null)
+        : this(() => backupsRoot, locator, files, guard, logger, clock)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(backupsRoot);
+    }
+
+    /// <param name="backupsRoot">Read on every operation, so a change of the backups folder in the settings applies at once.</param>
+    public BackupService(
+        Func<string> backupsRoot,
+        GameDataLocator locator,
+        IFileStore files,
+        IGameProcessGuard guard,
+        AppLogger logger,
+        Func<DateTimeOffset>? clock = null)
+    {
+        ArgumentNullException.ThrowIfNull(backupsRoot);
         ArgumentNullException.ThrowIfNull(locator);
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(guard);
         ArgumentNullException.ThrowIfNull(logger);
 
-        _backupsRoot = backupsRoot;
+        _backupsRootOf = backupsRoot;
         _locator = locator;
         _files = files;
         _guard = guard;
@@ -112,7 +125,7 @@ public sealed class BackupService : IBackupService
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
     }
 
-    public string BackupsRoot => _backupsRoot;
+    public string BackupsRoot => _backupsRootOf();
 
     public static string Sha256Hex(byte[] data) => Convert.ToHexStringLower(SHA256.HashData(data));
 
@@ -199,13 +212,13 @@ public sealed class BackupService : IBackupService
     public IReadOnlyList<BackupSummary> List()
     {
         using var scope = _logger.BeginOperation("backup.list");
-        if (!Directory.Exists(_backupsRoot))
+        if (!Directory.Exists(BackupsRoot))
         {
             return [];
         }
 
         var summaries = new List<BackupSummary>();
-        foreach (var folder in Directory.EnumerateDirectories(_backupsRoot).OrderBy(p => p, StringComparer.Ordinal))
+        foreach (var folder in Directory.EnumerateDirectories(BackupsRoot).OrderBy(p => p, StringComparer.Ordinal))
         {
             var name = Path.GetFileName(folder);
             if (!FolderNameRe.IsMatch(name))
@@ -352,7 +365,7 @@ public sealed class BackupService : IBackupService
             throw new OperationRefusedException(OperationProblem.InvalidRequest, "backup must be a backup folder name such as 20261031T120000Z");
         }
 
-        var folder = Path.Combine(_backupsRoot, backupName);
+        var folder = Path.Combine(BackupsRoot, backupName);
         if (!Directory.Exists(folder))
         {
             throw new OperationRefusedException(OperationProblem.InvalidRequest, $"backup {backupName} not found");
@@ -364,12 +377,12 @@ public sealed class BackupService : IBackupService
     /// <summary>Creates the folder of the current UTC second, or of the next free second. Existing backups are never overwritten.</summary>
     private string ReserveFolder()
     {
-        Directory.CreateDirectory(_backupsRoot);
+        Directory.CreateDirectory(BackupsRoot);
         var start = _clock().ToUniversalTime();
         for (var attempt = 0; attempt < 600; attempt++)
         {
             var stamp = start.AddSeconds(attempt).ToString("yyyyMMdd'T'HHmmss'Z'", CultureInfo.InvariantCulture);
-            var folder = Path.Combine(_backupsRoot, stamp);
+            var folder = Path.Combine(BackupsRoot, stamp);
             if (!Directory.Exists(folder))
             {
                 Directory.CreateDirectory(folder);

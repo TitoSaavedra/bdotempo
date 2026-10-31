@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using BdoComboSetup.Core.Assets;
+using BdoComboSetup.Core.Characters;
+using BdoComboSetup.Core.Confirmation;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Localization;
 using BdoComboSetup.Core.Logging;
@@ -31,6 +33,8 @@ public enum StatusSeverity
 public sealed partial class ApplyComboViewModel : ObservableObject
 {
     private readonly ICombosCatalog _catalog;
+    private readonly ICharacterSource _characters;
+    private readonly WriteConfirmation _confirmation;
     private readonly IComboProfileStore _profiles;
     private readonly IComboApplier _applier;
     private readonly ILocalizer _localizer;
@@ -40,6 +44,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     private ComboEditorViewModel? _observedEditor;
     private int _loadVersion;
     private bool _initialized;
+    private Dictionary<string, CharacterEntry> _entries = new(StringComparer.Ordinal);
 
     /// <summary>The request that the open review was computed for, and its signature, to refuse a write after an edit.</summary>
     private ComboApplyRequest? _reviewedRequest;
@@ -48,38 +53,62 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     public ApplyComboViewModel(
         ICombosCatalog catalog,
         IAssetProvider assets,
-        IComboDataSource data,
+        ICharacterSource characters,
         IComboProfileStore profiles,
         IComboApplier applier,
+        WriteConfirmation confirmation,
         ILocalizer localizer,
         CultureInfo culture,
         AppLogger logger)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(assets);
-        ArgumentNullException.ThrowIfNull(data);
+        ArgumentNullException.ThrowIfNull(characters);
         ArgumentNullException.ThrowIfNull(profiles);
         ArgumentNullException.ThrowIfNull(applier);
+        ArgumentNullException.ThrowIfNull(confirmation);
         ArgumentNullException.ThrowIfNull(localizer);
         ArgumentNullException.ThrowIfNull(culture);
         ArgumentNullException.ThrowIfNull(logger);
 
         _catalog = catalog;
+        _characters = characters;
+        _confirmation = confirmation;
         _profiles = profiles;
         _applier = applier;
         _localizer = localizer;
         _culture = culture;
         _logger = logger;
 
-        Characters = new ObservableCollection<CharacterOption>(data.GetCharacters());
+        Characters = new ObservableCollection<CharacterOption>();
         Classes = new ObservableCollection<ClassOptionViewModel>(
             catalog.Classes.Select(info => new ClassOptionViewModel(info, culture, assets, option => SelectClassAsync(option))));
+        ClassChoices = catalog.Classes
+            .Select(info => new ClassChoice(info.ClassType, info.Name.For(culture), () => assets.OpenClassIcon(info.ClassType)))
+            .ToList();
         Specs = new ObservableCollection<SpecOptionViewModel>();
         ReviewLines = new ObservableCollection<string>();
-        _selectedCharacter = Characters.FirstOrDefault();
     }
 
+    /// <summary>The live characters of the active account, in the game's order. Filled by RefreshCharactersAsync.</summary>
     public ObservableCollection<CharacterOption> Characters { get; }
+
+    /// <summary>Every class that can be picked in the character editor (all classes with a guide, in classType order).</summary>
+    public IReadOnlyList<ClassChoice> ClassChoices { get; }
+
+    /// <summary>The account the character list comes from. Null when no account can be found.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ActiveAccountText))]
+    private string? _activeAccount;
+
+    /// <summary>The label in the page header: the active account, or "No account found".</summary>
+    public string ActiveAccountText => ActiveAccount is null
+        ? _localizer.Get("Apply.NoAccount")
+        : _localizer.Format("Apply.ActiveAccount", ActiveAccount);
+
+    /// <summary>Why the character list is empty (no account, or no live character). Empty when there are characters.</summary>
+    [ObservableProperty]
+    private string _charactersMessage = string.Empty;
 
     /// <summary>Every class that has a guide, in classType order.</summary>
     public ObservableCollection<ClassOptionViewModel> Classes { get; }
@@ -91,7 +120,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     public ObservableCollection<string> ReviewLines { get; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CharacterPcidText), nameof(CanRun))]
+    [NotifyPropertyChangedFor(nameof(CanRun))]
     [NotifyCanExecuteChangedFor(nameof(ApplyCommand), nameof(DryRunCommand))]
     private CharacterOption? _selectedCharacter;
 
@@ -166,10 +195,6 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 
     public string SpecName => SelectedSpec?.Label ?? string.Empty;
 
-    public string CharacterPcidText => SelectedCharacter is null
-        ? string.Empty
-        : _localizer.Format("Apply.PcidFormat", SelectedCharacter.Pcid);
-
     /// <summary>Which copy is on screen: unsaved changes, the user's saved combo, or the bdoclasshub guide. Empty without a guide.</summary>
     public string ProfileStateText
     {
@@ -194,10 +219,12 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     {
         if (_initialized)
         {
+            await RefreshCharactersAsync();
             return;
         }
 
         _initialized = true;
+        await RefreshCharactersAsync();
         ClassOptionViewModel? option = null;
         if (!string.IsNullOrWhiteSpace(classSlug))
         {
@@ -224,6 +251,103 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 
         await SelectClassAsync(option, specId);
     }
+
+    /// <summary>
+    /// Reloads the live characters of the active account (the account can change in the settings, and a name or class can
+    /// change in the editor). The selected character is kept when it is still there; its class follows it when it changed.
+    /// </summary>
+    public async Task RefreshCharactersAsync()
+    {
+        string? account = null;
+        IReadOnlyList<CharacterEntry> entries = [];
+        try
+        {
+            account = _characters.ActiveAccount();
+            if (account is not null)
+            {
+                // On the UI thread: the names come from the resource loader, which is used from the UI thread only.
+                entries = _characters.Load(account);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.Error("apply.characters.failed", "The characters could not be read", ex);
+            ShowStatus(StatusSeverity.Error, "Apply.StatusCharactersFailed");
+        }
+
+        var previous = SelectedCharacter?.Pcid;
+        ActiveAccount = account;
+        _entries = entries.ToDictionary(entry => entry.Pcid, StringComparer.Ordinal);
+        Characters.Clear();
+        foreach (var entry in entries)
+        {
+            Characters.Add(new CharacterOption(entry.Name, entry.Pcid, entry.ClassType));
+        }
+
+        CharactersMessage = account is null
+            ? _localizer.Get("Apply.NoAccount")
+            : entries.Count == 0 ? _localizer.Get("Apply.NoCharacters") : string.Empty;
+
+        var kept = Characters.FirstOrDefault(item => item.Pcid == previous) ?? Characters.FirstOrDefault();
+        SelectedCharacter = kept;
+        if (kept is not null && kept.Pcid != previous && kept.ClassType is int classType)
+        {
+            var target = Classes.FirstOrDefault(item => item.ClassType == classType);
+            if (target is not null && !ReferenceEquals(target, SelectedClass))
+            {
+                await SelectClassAsync(target);
+            }
+        }
+
+        _logger.Info("apply.characters.refreshed", "Character list refreshed", new Dictionary<string, object?>
+        {
+            ["characters"] = Characters.Count,
+            ["account_found"] = account is not null,
+        });
+    }
+
+    /// <summary>What the editor starts from for a character: the resolved name and class, and where each one comes from.</summary>
+    public CharacterEntry? EntryOf(CharacterOption option) => _entries.GetValueOrDefault(option.Pcid);
+
+    /// <summary>
+    /// Saves the name and class the user set for a character. A null name or class clears that part, so the roster falls
+    /// back to the in-game label and the inferred class. The class must be one of ClassChoices.
+    /// </summary>
+    public async Task SaveCharacterEditAsync(CharacterOption option, string? name, int? classType)
+    {
+        ArgumentNullException.ThrowIfNull(option);
+        var account = ActiveAccount;
+        if (account is null)
+        {
+            ShowStatus(StatusSeverity.Warning, "Apply.StatusCharacterNoAccount");
+            return;
+        }
+
+        if (classType is int chosen && ClassChoices.All(choice => choice.ClassType != chosen))
+        {
+            _logger.Warn("apply.character.class_unknown", "The chosen class is not in the catalog; nothing saved");
+            ShowStatus(StatusSeverity.Warning, "Apply.StatusCharacterInvalid");
+            return;
+        }
+
+        try
+        {
+            _characters.SaveOverride(account, option.Pcid, name, classType);
+            _logger.Info("apply.character.saved", "Character name or class saved from the editor");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            _logger.Error("apply.character.save_failed", "The character name or class could not be saved", ex);
+            ShowStatus(StatusSeverity.Error, "Apply.StatusCharacterFailed");
+            return;
+        }
+
+        ShowStatus(StatusSeverity.Success, "Apply.StatusCharacterSaved");
+        await RefreshCharactersAsync();
+    }
+
+    /// <summary>Clears the name and class the user set for a character: the game files decide them again.</summary>
+    public Task ResetCharacterEditAsync(CharacterOption option) => SaveCharacterEditAsync(option, null, null);
 
     /// <summary>Chooses a character. When the character's class is known, that class is selected too.</summary>
     [RelayCommand]
@@ -332,6 +456,13 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         IsBusy = true;
         try
         {
+            // The reminder comes first: Cancel writes nothing and keeps the review open.
+            if (!await _confirmation.ConfirmAsync())
+            {
+                _logger.Info("apply.write.declined", "The write was not confirmed; nothing was written");
+                return;
+            }
+
             _logger.Info("apply.write.requested", "User confirmed the write to the character", new Dictionary<string, object?>
             {
                 ["class_type"] = editor.ClassType,
@@ -753,3 +884,6 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         IsStatusOpen = true;
     }
 }
+
+/// <summary>A class in the character editor's picker: its id, its name in the page language, and its icon.</summary>
+public sealed record ClassChoice(int ClassType, string Name, Func<Stream?> OpenIcon);

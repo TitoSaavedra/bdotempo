@@ -10,6 +10,51 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
+        <!-- One character of the account: class icon and name. The pencil opens the editor (code-behind). -->
+        <DataTemplate x:Key="CharacterTemplate" x:DataType="combo:CharacterOption">
+            <Grid ColumnSpacing="8" Padding="4,2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <controls:AssetIcon
+                    Width="28"
+                    Height="28"
+                    IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
+                    Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
+                <TextBlock
+                    Grid.Column="1"
+                    Text="{x:Bind Name, Mode=OneTime}"
+                    FontWeight="SemiBold"
+                    MaxWidth="200"
+                    VerticalAlignment="Center"
+                    TextTrimming="CharacterEllipsis" />
+                <Button
+                    Grid.Column="2"
+                    Width="30"
+                    Height="30"
+                    Padding="0"
+                    VerticalAlignment="Center"
+                    Click="EditCharacter_Click"
+                    x:Uid="Apply/EditCharacterButton">
+                    <FontIcon Glyph="&#xE70F;" FontSize="12" />
+                </Button>
+            </Grid>
+        </DataTemplate>
+
+        <!-- One class of the character editor's picker: its icon and its name. -->
+        <DataTemplate x:Key="ClassChoiceTemplate" x:DataType="vm:ClassChoice">
+            <StackPanel Orientation="Horizontal" Spacing="10" Padding="2">
+                <controls:AssetIcon
+                    Width="24"
+                    Height="24"
+                    IconSource="{x:Bind OpenIcon, Mode=OneTime}"
+                    />
+                <TextBlock Text="{x:Bind Name, Mode=OneTime}" VerticalAlignment="Center" />
+            </StackPanel>
+        </DataTemplate>
+
         <!-- One step of a chain. The order of the list is the order of the combo. -->
         <DataTemplate x:Key="StepTemplate" x:DataType="vm:ComboStepViewModel">
             <Border
@@ -230,6 +275,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -251,30 +297,44 @@
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </StackPanel>
 
-            <StackPanel Grid.Column="1" Spacing="4" MinWidth="300">
-                <ComboBox
-                    x:Uid="Apply/CharacterBox"
-                    HorizontalAlignment="Stretch"
-                    ItemsSource="{x:Bind ViewModel.Characters, Mode=OneWay}"
-                    SelectedItem="{x:Bind ViewModel.SelectedCharacter, Mode=OneWay}"
-                    SelectionChanged="CharacterBox_SelectionChanged">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="combo:CharacterOption">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="{x:Bind Name, Mode=OneTime}" />
-                                <TextBlock
-                                    Text="{x:Bind Pcid, Mode=OneTime}"
-                                    FontSize="11"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-            </StackPanel>
+            <!-- The account the characters come from. Changed in the Settings page. -->
+            <TextBlock
+                Grid.Column="1"
+                Text="{x:Bind ViewModel.ActiveAccountText, Mode=OneWay}"
+                VerticalAlignment="Top"
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </Grid>
 
-        <!-- Row 1: the specs of the class, as pills, and which copy of the guide is on screen. -->
-        <Grid Grid.Row="1" ColumnSpacing="16">
+        <!-- Row 1: the live characters of the active account (name and class icon). Only this list depends on the account. -->
+        <StackPanel Grid.Row="1" Spacing="4">
+            <ListView
+                x:Name="CharacterList"
+                SelectionMode="Single"
+                IsItemClickEnabled="False"
+                ScrollViewer.HorizontalScrollMode="Enabled"
+                ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                ScrollViewer.VerticalScrollMode="Disabled"
+                ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                Height="72"
+                ItemsSource="{x:Bind ViewModel.Characters, Mode=OneWay}"
+                SelectedItem="{x:Bind ViewModel.SelectedCharacter, Mode=OneWay}"
+                ItemTemplate="{StaticResource CharacterTemplate}"
+                SelectionChanged="CharacterList_SelectionChanged">
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <ItemsStackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+            </ListView>
+            <TextBlock
+                Text="{x:Bind ViewModel.CharactersMessage, Mode=OneWay}"
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+
+        <!-- Row 2: the specs of the class, as pills, and which copy of the guide is on screen. -->
+        <Grid Grid.Row="2" ColumnSpacing="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -294,8 +354,8 @@
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </Grid>
 
-        <!-- Row 2: the write options and the actions. Only "Write to character" in the review writes to the file. -->
-        <Grid Grid.Row="2" ColumnSpacing="12">
+        <!-- Row 3: the write options and the actions. Only "Write to character" in the review writes to the file. -->
+        <Grid Grid.Row="3" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -316,8 +376,8 @@
             </StackPanel>
         </Grid>
 
-        <!-- Row 3: the review of the character file. Shown after "Apply to character" or "Preview changes". -->
-        <Border Grid.Row="3"
+        <!-- Row 4: the review of the character file. Shown after "Apply to character" or "Preview changes". -->
+        <Border Grid.Row="4"
             Padding="16"
             CornerRadius="8"
             BorderThickness="1"
@@ -346,15 +406,15 @@
             </StackPanel>
         </Border>
 
-        <!-- Row 4: the outcome of the last action. -->
-        <InfoBar Grid.Row="4"
+        <!-- Row 5: the outcome of the last action. -->
+        <InfoBar Grid.Row="5"
             IsOpen="{x:Bind ViewModel.IsStatusOpen, Mode=TwoWay}"
             Severity="{x:Bind ToInfoBarSeverity(ViewModel.StatusSeverity), Mode=OneWay}"
             Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
             IsClosable="True" />
 
-        <!-- Row 5: the class grid, the combo, and the detail of the selected step. -->
-        <Grid Grid.Row="5" ColumnSpacing="16">
+        <!-- Row 6: the class grid, the combo, and the detail of the selected step. -->
+        <Grid Grid.Row="6" ColumnSpacing="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="260" />
                 <ColumnDefinition Width="*" />

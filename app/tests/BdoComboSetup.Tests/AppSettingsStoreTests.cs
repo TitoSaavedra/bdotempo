@@ -16,7 +16,8 @@ public sealed class AppSettingsStoreTests : IDisposable
         var store = new AppSettingsStore(SettingsPath, _log.Logger);
 
         Assert.Equal(AppSettings.DefaultSkillIconRoot, store.Settings.SkillIconRoot);
-        Assert.Equal("330", store.Settings.GameAccountFolder);
+        Assert.Null(store.Settings.GameAccount);
+        Assert.Null(store.Settings.Language);
         Assert.Null(store.Settings.SelectedLayout);
     }
 
@@ -42,6 +43,6 @@ public sealed class AppSettingsStoreTests : IDisposable
 
         var store = new AppSettingsStore(SettingsPath, _log.Logger);
 
-        Assert.Equal(AppSettings.DefaultGameAccountFolder, store.Settings.GameAccountFolder);
+        Assert.Equal(AppSettings.DefaultGameDataRoot, store.Settings.GameDataRoot);
     }
 }

@@ -24,9 +24,10 @@ public sealed class ComboPreviewSlotSourceTests : IDisposable
     private ApplyComboViewModel Apply() => new(
         FakeCombosCatalog.Sample(),
         new NoIconAssets(),
-        new MockComboDataSource(),
+        new FakeCharacterSource(),
         _profiles.Store,
         new RecordingApplier(),
+        TestConfirmation.Accepting(_log.Logger),
         new KeyLocalizer(),
         ApplyTestHelpers.Culture,
         _log.Logger);

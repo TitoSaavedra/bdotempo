@@ -8,7 +8,8 @@ namespace BdoComboSetup.Services;
 /// the game hides, dimmed), "--cooldown-demo" (a 60% cooldown on the first cooldown slot, debug), "--zoom &lt;n&gt;" (zoom
 /// relative to fit). For the Apply page "--class &lt;slug&gt;" and "--spec &lt;id&gt;" (for example --class tamer --spec awakening),
 /// "--demo" (synthetic characters, synthetic layouts and display, a demo applier; used for screenshots, never writes, never
-/// reads the game account) and "--demo-review" (the same, and opens the review of the combo at startup).
+/// reads the game account), "--demo-review" (the same, and opens the review of the combo at startup) and
+/// "--demo-write-hint" (the same, and asks to write, so the reminder before a write is shown).
 /// Options given on the command line apply to this run only; they are not saved in the settings.
 /// </summary>
 public sealed record StartupOptions(
@@ -20,10 +21,12 @@ public sealed record StartupOptions(
     bool DemoData = false,
     bool DemoReview = false,
     bool CooldownDemo = false,
-    double? Zoom = null)
+    double? Zoom = null,
+    bool DemoWriteHint = false)
 {
     public const string ApplyPage = "apply";
     public const string PreviewPage = "preview";
+    public const string SettingsPage = "settings";
 
     public static StartupOptions Parse(IReadOnlyList<string> args)
     {
@@ -37,13 +40,14 @@ public sealed record StartupOptions(
         var demoData = false;
         var demoReview = false;
         var cooldownDemo = false;
+        var demoWriteHint = false;
         double? zoom = null;
         for (var i = 1; i < args.Count; i++)
         {
             switch (args[i])
             {
                 case "--page" when i + 1 < args.Count:
-                    page = string.Equals(args[i + 1], PreviewPage, StringComparison.OrdinalIgnoreCase) ? PreviewPage : ApplyPage;
+                    page = ParsePage(args[i + 1]);
                     i++;
                     break;
                 case "--layout" when i + 1 < args.Count:
@@ -77,11 +81,23 @@ public sealed record StartupOptions(
                     demoData = true;
                     demoReview = true;
                     break;
+                case "--demo-write-hint":
+                    demoData = true;
+                    demoReview = true;
+                    demoWriteHint = true;
+                    break;
             }
         }
 
-        return new StartupOptions(page, layout, showHiddenSlots, applyClass, applySpec, demoData, demoReview, cooldownDemo, zoom);
+        return new StartupOptions(page, layout, showHiddenSlots, applyClass, applySpec, demoData, demoReview, cooldownDemo, zoom, demoWriteHint);
     }
+
+    private static string ParsePage(string text) => text.ToLowerInvariant() switch
+    {
+        PreviewPage => PreviewPage,
+        SettingsPage => SettingsPage,
+        _ => ApplyPage,
+    };
 
     private static GameUiLayoutId? ParseLayout(string text) => text.ToLowerInvariant() switch
     {

@@ -1,3 +1,4 @@
+using BdoComboSetup.Core.Characters;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.ViewModels;
 using Microsoft.UI.Xaml;
@@ -57,6 +58,13 @@ public sealed partial class ApplyComboPage : Page
                 // Demo only: opens the review at startup so it can be shown (the demo applier writes nothing).
                 await ViewModel.ApplyCommand.ExecuteAsync(null);
             }
+
+            if (startup.DemoWriteHint)
+            {
+                // Demo only: asks to write, so the reminder before a write is shown. The demo applier writes nothing.
+                // Waits for the page to load: the reminder's dialog needs the window's XamlRoot, which exists only then.
+                Loaded += DemoWriteHint_Loaded;
+            }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -64,12 +72,98 @@ public sealed partial class ApplyComboPage : Page
         }
     }
 
-    private void CharacterBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    /// <summary>The class icon of a character. Null (the glyph is drawn) when the class is unknown.</summary>
+    public static Func<Stream?> ClassIconOf(int? classType) =>
+        () => classType is int value ? App.Services.Assets.OpenClassIcon(value) : null;
+
+    /// <summary>The glyph drawn in place of the icon: a question mark for an unknown class.</summary>
+    public static string ClassGlyphOf(int? classType) => classType is null ? "?" : string.Empty;
+
+    /// <summary>Demo only: asks to write once the page is loaded, so the reminder has its window.</summary>
+    private async void DemoWriteHint_Loaded(object sender, RoutedEventArgs e)
+    {
+        Loaded -= DemoWriteHint_Loaded;
+        await ViewModel.ConfirmWriteCommand.ExecuteAsync(null);
+    }
+
+    private void CharacterList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (e.AddedItems.Count > 0 && e.AddedItems[0] is CharacterOption option && !ReferenceEquals(option, ViewModel.SelectedCharacter))
         {
             ViewModel.SelectCharacterCommand.Execute(option);
         }
+    }
+
+    /// <summary>
+    /// Opens the editor of one character: the name and the class, set once and remembered. The name box starts from the
+    /// name the character has now; a name left unchanged is not saved, so it keeps following the game.
+    /// </summary>
+    private void EditCharacter_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: CharacterOption option } button)
+        {
+            return;
+        }
+
+        var localizer = App.Services.Localizer;
+        var entry = ViewModel.EntryOf(option);
+        var nameBox = new TextBox
+        {
+            Header = localizer.Get("Characters.EditNameHeader"),
+            PlaceholderText = localizer.Get("Characters.EditNamePlaceholder"),
+            Text = entry?.Name ?? option.Name,
+            MaxLength = CharacterOverrideStore.MaxNameLength,
+        };
+        var automatic = new CheckBox
+        {
+            Content = localizer.Get("Characters.EditAutomaticClass"),
+            IsChecked = entry?.ClassSource != ClassSource.Custom,
+        };
+        var classList = new ListView
+        {
+            SelectionMode = ListViewSelectionMode.Single,
+            ItemsSource = ViewModel.ClassChoices,
+            ItemTemplate = (DataTemplate)Resources["ClassChoiceTemplate"],
+            Height = 260,
+            IsEnabled = automatic.IsChecked != true,
+        };
+        classList.SelectedItem = ViewModel.ClassChoices.FirstOrDefault(choice => choice.ClassType == entry?.ClassType);
+        automatic.Checked += (_, _) => classList.IsEnabled = false;
+        automatic.Unchecked += (_, _) => classList.IsEnabled = true;
+
+        var save = new Button { Content = localizer.Get("Characters.EditSave") };
+        var reset = new Button { Content = localizer.Get("Characters.EditReset") };
+        var flyout = new Flyout();
+        save.Click += async (_, _) =>
+        {
+            flyout.Hide();
+            var typed = nameBox.Text.Trim();
+            var keepAutomaticName = entry is not null && entry.NameSource != NameSource.Custom && typed == entry.Name;
+            var name = keepAutomaticName ? null : typed;
+            var classType = automatic.IsChecked == true ? null : (classList.SelectedItem as ClassChoice)?.ClassType;
+            await ViewModel.SaveCharacterEditAsync(option, name, classType);
+        };
+        reset.Click += async (_, _) =>
+        {
+            flyout.Hide();
+            await ViewModel.ResetCharacterEditAsync(option);
+        };
+
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        buttons.Children.Add(save);
+        buttons.Children.Add(reset);
+        var panel = new StackPanel { Spacing = 10, Width = 360 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = localizer.Get("Characters.EditTitle"),
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+        });
+        panel.Children.Add(nameBox);
+        panel.Children.Add(automatic);
+        panel.Children.Add(classList);
+        panel.Children.Add(buttons);
+        flyout.Content = panel;
+        flyout.ShowAt(button);
     }
 
     private void Step_ItemClick(object sender, ItemClickEventArgs e)

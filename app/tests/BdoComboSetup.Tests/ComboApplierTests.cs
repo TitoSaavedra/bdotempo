@@ -83,7 +83,7 @@ public sealed class ComboApplierTests : IDisposable
     }
 
     [Fact]
-    public async Task Game_running_and_a_fresh_file_refuses_the_write()
+    public async Task Game_running_does_not_block_the_write_and_the_backup_is_still_taken()
     {
         var original = Utf8(SyntheticSave.Text());
         _rig.WriteCharacter(original);
@@ -91,26 +91,14 @@ public sealed class ComboApplierTests : IDisposable
 
         var result = await _rig.Applier.ApplyAsync(Request());
 
-        Assert.Equal(OperationOutcome.Refused, result.Outcome);
-        Assert.Equal(OperationProblem.GameRunning, result.Problem);
-        Assert.Equal(original, _rig.ReadCharacter());
-        Assert.Empty(_rig.BackupFolders());
-    }
-
-    [Fact]
-    public async Task Forcing_the_write_while_the_game_runs_writes_anyway()
-    {
-        _rig.WriteCharacter(SyntheticSave.Text());
-        _rig.Guard.Running = true;
-        var request = new ComboApplyRequest(ComboTestRig.DefaultPcid, 16, TamerSlots.Six(), [], ForceWhileGameRuns: true);
-
-        var result = await _rig.Applier.ApplyAsync(request);
-
         Assert.Equal(OperationOutcome.Written, result.Outcome);
+        Assert.NotEqual(original, _rig.ReadCharacter());
+        Assert.Single(_rig.BackupFolders());
+        Assert.True(_rig.Guard.Calls > 0);
     }
 
     [Fact]
-    public async Task A_file_older_than_the_window_is_not_checked_against_the_game()
+    public async Task A_file_older_than_the_window_writes_normally()
     {
         _rig.WriteCharacter(SyntheticSave.Text());
         _rig.AgeCharacterFile();
@@ -119,7 +107,6 @@ public sealed class ComboApplierTests : IDisposable
         var result = await _rig.Applier.ApplyAsync(Request());
 
         Assert.Equal(OperationOutcome.Written, result.Outcome);
-        Assert.Equal(0, _rig.Guard.Calls);
     }
 
     [Fact]

@@ -21,7 +21,12 @@ public sealed partial class MainWindow : Window
         SetTitleBar(AppTitleBar);
         AppWindow.Resize(new SizeInt32(1440, 900));
 
-        Nav.SelectedItem = services.Startup.Page == StartupOptions.PreviewPage ? PreviewItem : ApplyItem;
+        Nav.SelectedItem = services.Startup.Page switch
+        {
+            StartupOptions.PreviewPage => PreviewItem,
+            StartupOptions.SettingsPage => SettingsItem,
+            _ => ApplyItem,
+        };
         services.Logger.Info("window.opened", "Main window shown", new Dictionary<string, object?>
         {
             ["page"] = services.Startup.Page,
@@ -31,7 +36,12 @@ public sealed partial class MainWindow : Window
     private void Nav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
         var tag = args.SelectedItemContainer?.Tag as string;
-        Type target = tag == "preview" ? typeof(PreviewPage) : typeof(ApplyComboPage);
+        Type target = tag switch
+        {
+            StartupOptions.PreviewPage => typeof(PreviewPage),
+            StartupOptions.SettingsPage => typeof(SettingsPage),
+            _ => typeof(ApplyComboPage),
+        };
 
         if (ContentFrame.CurrentSourcePageType == target)
         {

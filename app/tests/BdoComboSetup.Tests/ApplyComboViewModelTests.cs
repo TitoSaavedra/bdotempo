@@ -23,9 +23,10 @@ public sealed class ApplyComboViewModelTests : IDisposable
     private ApplyComboViewModel Create(IComboApplier? applier = null, ICombosCatalog? catalog = null, ComboProfileStore? store = null) => new(
         catalog ?? FakeCombosCatalog.Sample(),
         new NoIconAssets(),
-        new MockComboDataSource(),
+        new FakeCharacterSource(),
         store ?? _profiles.Store,
         applier ?? new RecordingApplier(),
+        TestConfirmation.Accepting(_log.Logger),
         new KeyLocalizer(),
         ApplyTestHelpers.Culture,
         _log.Logger);

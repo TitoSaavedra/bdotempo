@@ -52,12 +52,33 @@ public sealed class GameProcessGuard(AppLogger logger) : IGameProcessGuard
     }
 }
 
-/// <summary>The write safety rule: refuse while the game runs and a target changed in the last 10 seconds.</summary>
+/// <summary>What the guard saw before a write: whether the game runs and whether a target changed recently.</summary>
+public sealed record GameWriteDecision(bool GameRunning, bool RecentWrite);
+
+/// <summary>The write safety rule of the restore: refuse while the game runs and a target changed in the last 10 seconds.</summary>
 public static class WriteGuard
 {
     public static readonly TimeSpan RecentWriteWindow = TimeSpan.FromSeconds(10);
 
-    /// <summary>Throws <see cref="OperationRefusedException"/> (GameRunning) unless <paramref name="force"/> is set.</summary>
+    /// <summary>
+    /// The apply flow records what the guard sees and writes anyway. Logs whether the game runs and whether a target was
+    /// written in the last <see cref="RecentWriteWindow"/>; nothing is refused.
+    /// </summary>
+    public static GameWriteDecision Record(IGameProcessGuard guard, IReadOnlyList<GuardTarget> targets, DateTime utcNow, AppLogger logger)
+    {
+        var recent = targets.Any(target => utcNow - target.LastWriteUtc <= RecentWriteWindow);
+        var running = guard.IsGameRunning();
+        var decision = new GameWriteDecision(running, recent);
+        logger.Info("write.game_decision", "Game state recorded before the write; the write continues", new Dictionary<string, object?>
+        {
+            ["game_running"] = running,
+            ["recent_write"] = recent,
+            ["proceeding"] = true,
+        });
+        return decision;
+    }
+
+    /// <summary>Throws <see cref="OperationRefusedException"/> (GameRunning) unless <paramref name="force"/> is set. Used by the restore only.</summary>
     public static void Check(IGameProcessGuard guard, IReadOnlyList<GuardTarget> targets, bool force, DateTime utcNow, AppLogger logger)
     {
         bool? running = null;
