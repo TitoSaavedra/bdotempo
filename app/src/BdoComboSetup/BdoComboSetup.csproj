@@ -17,6 +17,8 @@
     <UseWinUI>true</UseWinUI>
     <DefaultLanguage>en-US</DefaultLanguage>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- The exe icon (Explorer, taskbar). Original art, see app/assets/icon/ (rebuild with mise run build-icon). -->
+    <ApplicationIcon>..\..\assets\icon\app-icon.ico</ApplicationIcon>
 
     <!-- Unpackaged: no MSIX identity, no installer. The tooling flag is required by the single-file targets
          so that resources.pri (the .resw strings) is embedded in the exe. -->
@@ -56,7 +58,14 @@
     <ProjectReference Include="..\BdoComboSetup.Core\BdoComboSetup.Core.csproj" />
   </ItemGroup>
 
-  <!-- The app does not embed the icons or the catalog. It opens assets.bdoa from the folder next to the exe at run time;
+  <!-- The window icon (AppWindow.SetIcon and the title bar) is embedded: the single-file exe has no loose files next to it.
+       WindowIcon.cs writes these copies to %LOCALAPPDATA%\BdoComboSetup\icon at run time, because SetIcon takes a path. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\assets\icon\app-icon.ico" LogicalName="BdoComboSetup.app-icon.ico" />
+    <EmbeddedResource Include="..\..\assets\icon\app-icon-256.png" LogicalName="BdoComboSetup.app-icon-256.png" />
+  </ItemGroup>
+
+  <!-- The app does not embed the game art. It opens assets.bdoa from the folder next to the exe at run time;
        the installer (or the portable zip) puts the assembled file there. See app/docs/asset-pack-format.md. -->
 
 </Project>
