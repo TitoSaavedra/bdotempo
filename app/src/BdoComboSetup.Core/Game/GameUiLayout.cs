@@ -26,6 +26,7 @@ public readonly record struct UiRect(double Left, double Top, double Width, doub
 
 /// <summary>
 /// One UIData row (a UI panel). Position is as stored: offsets from <see cref="Anchor"/>, not screen coordinates.
+/// RelativeX/RelativeY are the panel centre divided by the screen size (stored next to PosX/PosY).
 /// Use <see cref="UiPanelGeometry"/> to turn it into game pixels.
 /// </summary>
 public sealed record UiPanel(
@@ -36,21 +37,24 @@ public sealed record UiPanel(
     double? PosX,
     double? PosY,
     double? SizeX,
-    double? SizeY)
+    double? SizeY,
+    double? RelativeX = null,
+    double? RelativeY = null)
 {
     public bool HasPosition => Anchor is not null && PosX is not null && PosY is not null;
 
     public bool HasSize => SizeX is > 0 && SizeY is > 0;
+
+    /// <summary>True when the stored centre is usable. A (0, 0) centre is what the game writes for some stale rows.</summary>
+    public bool HasRelativeCentre => RelativeX is not null && RelativeY is not null && (RelativeX != 0 || RelativeY != 0);
 }
 
 /// <summary>Converts the stored anchor offsets to game pixels for a screen of the given size.</summary>
 public static class UiPanelGeometry
 {
     /// <summary>
-    /// Top-left corner of the panel in game pixels, or null when the row has no position.
+    /// Top-left (left and top edge) of the panel in game pixels, or null when the row has no position.
     /// LeftTop: (PosX, PosY). LeftBottom: (PosX, H - PosY). RightTop: (W - PosX, PosY). RightBottom: (W - PosX, H - PosY).
-    /// The rule matches the RelativePosX/RelativePosY stored in the same rows: they are the panel centre divided by the screen size
-    /// (checked on the 3440x1440 sample with SizeX/SizeY, see GameUiLayoutReaderTests).
     /// </summary>
     public static UiPoint? TopLeft(UiPanel panel, double gameWidth, double gameHeight)
     {

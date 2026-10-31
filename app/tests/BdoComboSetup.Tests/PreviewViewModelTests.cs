@@ -1,6 +1,6 @@
+using System.Globalization;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Game;
-using BdoComboSetup.Core.Icons;
 using BdoComboSetup.Core.Settings;
 using BdoComboSetup.Core.ViewModels;
 
@@ -8,51 +8,85 @@ namespace BdoComboSetup.Tests;
 
 public sealed class PreviewViewModelTests : IDisposable
 {
+    private const double W = 3440;
+    private const double H = 1440;
+
     private readonly TempLogger _log = new();
 
     public void Dispose() => _log.Dispose();
 
-    private string SettingsPath => Path.Combine(_log.Directory, "settings.json");
+    private AppSettingsStore Store() => new(Path.Combine(_log.Directory, "settings.json"), _log.Logger);
 
-    private AppSettingsStore Store() => new(SettingsPath, _log.Logger);
-
-    private IconCatalog EmptyIcons() => IconCatalog.Load(Path.Combine(_log.Directory, "none"), Path.Combine(_log.Directory, "none"), _log.Logger);
-
-    private PreviewViewModel CreateViewModel(
-        GameDisplaySettings? display = null,
-        GameLayoutIndices? indices = null,
+    private PreviewViewModel Create(
         GameUiLayoutSet? layouts = null,
-        AppSettingsStore? store = null,
-        IconCatalog? icons = null,
-        GameUiLayoutId? initialLayout = null) => new(
-            TestCombos.Tamer(),
-            indices ?? GameLayoutIndices.Default,
-            display,
+        IReadOnlyDictionary<int, int>? quickKeys = null,
+        PreviewStartup? startup = null,
+        AppSettingsStore? store = null) => new(
+            new ComboPreviewSlotSource(TestCombos.Tamer()),
+            "Tamer",
+            new GameDisplaySettings(3440, 1440, Windowed: true, UiScale: 1.0),
             new StubGameWindowSource(),
             layouts,
-            icons ?? EmptyIcons(),
+            quickKeys,
             store ?? Store(),
-            initialLayout,
-            initialShowUiPanels: false,
+            startup ?? new PreviewStartup(GameUiLayoutId.General, ShowHiddenSlots: false, CooldownDemo: false, Zoom: null),
             new KeyLocalizer(),
             _log.Logger);
 
-    private static GameUiLayoutSet Layouts() => GameUiLayoutReader.Parse(UiLayoutFixtures.Sample);
+    /// <summary>A layout with every slot panel of the General block (all visible), except the indices in <paramref name="omit"/>.</summary>
+    private static GameUiLayoutSet FullLayouts(IEnumerable<int>? omit = null, int? hiddenCooldown = null)
+    {
+        var skip = omit?.ToHashSet() ?? [];
+        var rows = new List<string>();
+        for (var number = 1; number <= 20; number++)
+        {
+            var index = GameSlotIndices.CooldownPanelIndex(number);
+            if (!skip.Contains(index))
+            {
+                rows.Add(Row(index, show: number != hiddenCooldown, number));
+            }
+        }
+
+        for (var number = 1; number <= 20; number++)
+        {
+            var index = GameSlotIndices.QuickPanelIndex(number);
+            if (!skip.Contains(index))
+            {
+                rows.Add(Row(index, show: true, 20 + number));
+            }
+        }
+
+        return Parse("<UIData Version=\"2\">\n" + string.Join("\n", rows) + "\n</UIData>\n");
+    }
+
+    private static string Row(int index, bool show, int seed)
+    {
+        // A grid of synthetic positions; the centre is stored the way the game stores it.
+        var column = seed % 10;
+        var row = seed / 10;
+        var centreX = 900 + (column * 80);
+        var centreY = 500 + (row * 80);
+        return string.Create(CultureInfo.InvariantCulture,
+            $"\t<UIData Index=\"{index}\" IsShow=\"{(show ? "true" : "false")}\" PendingType=\"LeftTop\" PosX=\"{centreX - 25}\" PosY=\"{centreY - 25}\" RelativePosX=\"{centreX / W:R}\" RelativePosY=\"{centreY / H:R}\"/>");
+    }
+
+    private static GameUiLayoutSet Parse(string text) => GameUiLayoutReader.Parse(text);
 
     [Fact]
-    public void Starts_with_20_cooldown_slots_and_9_quick_positions()
+    public void Starts_with_twenty_cooldown_and_twenty_quick_slots()
     {
-        var vm = CreateViewModel();
+        var vm = Create();
 
         Assert.Equal(20, vm.CooldownSlots.Count);
-        Assert.Equal(9, vm.QuickSlots.Count);
-        Assert.Equal(Enumerable.Range(1, 20), vm.CooldownSlots.Select(slot => slot.Index));
+        Assert.Equal(20, vm.QuickSlots.Count);
+        Assert.Equal(Enumerable.Range(1, 20), vm.CooldownSlots.Select(slot => slot.Number));
+        Assert.Equal(Enumerable.Range(1, 20), vm.QuickSlots.Select(slot => slot.Position));
     }
 
     [Fact]
-    public void Initial_selection_is_the_first_filled_slot()
+    public void Initial_selection_is_the_first_slot_with_a_skill()
     {
-        var vm = CreateViewModel();
+        var vm = Create();
 
         Assert.Same(vm.CooldownSlots[0], vm.SelectedSlot);
         Assert.True(vm.SelectedSlot!.IsSelected);
@@ -61,365 +95,224 @@ public sealed class PreviewViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Selecting_a_slot_moves_the_selection_and_the_draft_position()
+    public void Slots_are_drawn_at_their_saved_positions()
     {
-        var vm = CreateViewModel();
+        var vm = Create(FullLayouts());
 
-        vm.SelectSlotCommand.Execute(vm.CooldownSlots[1]);
-
-        Assert.Same(vm.CooldownSlots[1], vm.SelectedSlot);
-        Assert.False(vm.CooldownSlots[0].IsSelected);
-        Assert.True(vm.CooldownSlots[1].IsSelected);
-        Assert.Equal(8, vm.DraftQuickPosition);
+        // Synthetic grid: seed 1 is column 1, so the centre is 900 + 80.
+        var cooldown = vm.CooldownSlots[0];
+        Assert.True(cooldown.IsPresent);
+        Assert.True(cooldown.IsDrawn);
+        Assert.Equal(980, cooldown.Placement!.CentreX, precision: 6);
+        Assert.Equal(955, cooldown.Offset.Left, precision: 6);   // centre minus half of the 50 px art
+        Assert.Equal(50, cooldown.Width, precision: 6);
+        Assert.Equal(65, vm.QuickSlots[0].Height, precision: 6);
     }
 
     [Fact]
-    public void Selecting_an_empty_slot_selects_it_but_disables_editing()
+    public void Hidden_slots_are_not_drawn_by_default_and_are_dimmed_when_shown()
     {
-        var vm = CreateViewModel();
+        var vm = Create(FullLayouts(hiddenCooldown: 3));
+        var hidden = vm.CooldownSlots[2];
 
-        vm.SelectSlotCommand.Execute(vm.CooldownSlots[19]);
+        Assert.True(hidden.IsHiddenPanel);
+        Assert.False(hidden.IsDrawn);
+        Assert.False(hidden.ShowsDashedOutline);
 
-        Assert.True(vm.CooldownSlots[19].IsEmpty);
-        Assert.Same(vm.CooldownSlots[19], vm.SelectedSlot);
-        Assert.False(vm.CanEdit);
-        Assert.False(vm.SaveChangesCommand.CanExecute(null));
+        vm.ShowHiddenSlots = true;
+
+        Assert.True(hidden.IsDrawn);
+        Assert.True(hidden.ShowsDashedOutline);
+        Assert.Equal(PanelViewModel.HiddenOpacity, hidden.Opacity);
+        Assert.Equal(1, vm.CooldownSlots[0].Opacity);
     }
 
     [Fact]
-    public void Quick_bar_maps_each_position_to_the_slot_that_holds_it()
+    public void Missing_rows_are_skipped_and_reported_in_the_status()
     {
-        var vm = CreateViewModel();
+        var vm = Create(FullLayouts(omit: [GameSlotIndices.CooldownPanelIndex(2)]));
 
-        Assert.Same(vm.CooldownSlots[12], vm.QuickSlots[0].Slot);  // position 1: slot 13
-        Assert.Same(vm.CooldownSlots[13], vm.QuickSlots[1].Slot);  // position 2: slot 14
-        Assert.Same(vm.CooldownSlots[2], vm.QuickSlots[2].Slot);   // position 3: slot 3
-        Assert.Same(vm.CooldownSlots[0], vm.QuickSlots[6].Slot);   // position 7: slot 1
-        Assert.Same(vm.CooldownSlots[1], vm.QuickSlots[7].Slot);   // position 8: slot 2
-        Assert.Same(vm.CooldownSlots[8], vm.QuickSlots[8].Slot);   // position 9: slot 9
+        Assert.False(vm.CooldownSlots[1].IsPresent);
+        Assert.False(vm.CooldownSlots[1].IsDrawn);
+        Assert.Equal("Preview.Layout.MissingPanels(1)", vm.LayoutStatusText);
     }
 
     [Fact]
-    public void Quick_bar_labels_follow_the_mouse_and_key_layout()
+    public void Without_a_layout_file_the_status_says_so_and_nothing_is_drawn()
     {
-        var vm = CreateViewModel();
+        var vm = Create(layouts: null);
 
-        Assert.Equal(new[] { "M1", "M2", "M3", "M4", "Preview_KeyLabel(5)", "Preview_KeyLabel(6)", "M5", "M6", "Preview_KeyLabel(9)" },
-            vm.QuickSlots.Select(quick => quick.Label));
+        Assert.Equal("Preview.Layout.FileMissing", vm.LayoutStatusText);
+        Assert.All(vm.QuickSlots, quick => Assert.False(quick.IsDrawn));
     }
 
     [Fact]
-    public void Clicking_a_quick_position_selects_its_slot()
+    public void Presets_read_their_own_block_and_general_has_no_rows_for_them()
     {
-        var vm = CreateViewModel();
-        vm.SelectSlotCommand.Execute(vm.CooldownSlots[5]);
+        var text = "<UISettingPreset Version=\"1\">\n"
+            + "\t<UISettingPreset0 Index=\"128\" IsShow=\"true\" PendingType=\"LeftTop\" PosX=\"1953\" PosY=\"696\" RelativePosX=\"0.575\" RelativePosY=\"0.500347\"/>\n"
+            + "</UISettingPreset>\n";
+        var layouts = Parse(text);
+
+        var general = Create(layouts, startup: new PreviewStartup(GameUiLayoutId.General, false, false, null));
+        Assert.False(general.CooldownSlots[0].IsPresent);
+
+        general.SelectLayout(GameUiLayoutId.Preset1);
+
+        Assert.Equal(GameUiLayoutId.Preset1, general.SelectedLayout);
+        Assert.True(general.CooldownSlots[0].IsPresent);
+    }
+
+    [Fact]
+    public void Quick_slot_legends_come_from_the_bound_keys_or_the_defaults()
+    {
+        var bound = new Dictionary<int, int> { [1] = 57 };
+
+        var vm = Create(quickKeys: bound);
+
+        Assert.Equal("9", vm.QuickSlots[0].KeyLabel);
+        Assert.Equal("M2", vm.QuickSlots[1].KeyLabel);
+        Assert.Equal("M1", Create().QuickSlots[0].KeyLabel);
+        Assert.Equal(string.Empty, vm.QuickSlots[10].KeyLabel);
+    }
+
+    [Fact]
+    public void Quick_slots_come_from_the_combo_quick_positions()
+    {
+        var vm = Create();
+
+        Assert.Equal("Invocar a Heuklang", vm.QuickSlots[0].SkillName);    // position 1 holds cooldown slot 13
+        Assert.Equal(13, vm.QuickSlots[0].CooldownNumber);
+        Assert.False(vm.QuickSlots[10].HasSkill);                          // quick slots 11-20 have no source yet
+    }
+
+    [Fact]
+    public void Cooldown_slots_know_their_quick_position()
+    {
+        var vm = Create();
+
+        Assert.Equal(7, vm.CooldownSlots[0].QuickPosition);
+        Assert.Equal(1, vm.CooldownSlots[12].QuickPosition);
+        Assert.Equal(0, vm.CooldownSlots[6].QuickPosition);
+    }
+
+    [Fact]
+    public void Selecting_a_quick_slot_selects_it_without_the_quick_editor()
+    {
+        var vm = Create();
 
         vm.SelectQuickSlotCommand.Execute(vm.QuickSlots[1]);
 
-        Assert.Same(vm.CooldownSlots[13], vm.SelectedSlot);
+        Assert.Same(vm.QuickSlots[1], vm.SelectedQuickSlot);
+        Assert.Null(vm.SelectedSlot);
+        Assert.False(vm.IsEditorVisible);
+        Assert.True(vm.QuickSlots[1].IsSelected);
     }
 
     [Fact]
-    public void Saving_a_new_position_moves_the_quick_bar_entry()
+    public void Saving_a_position_held_by_another_skill_swaps_them()
     {
-        var vm = CreateViewModel();
-        vm.SelectSlotCommand.Execute(vm.CooldownSlots[4]);   // slot 5, no quick position
-        vm.DraftQuickPosition = 4;
-
-        Assert.True(vm.HasPendingChanges);
-        Assert.True(vm.SaveChangesCommand.CanExecute(null));
-
-        vm.SaveChangesCommand.Execute(null);
-
-        Assert.Equal(4, vm.CooldownSlots[4].QuickPosition);
-        Assert.False(vm.HasPendingChanges);
-        Assert.Same(vm.CooldownSlots[4], vm.QuickSlots[3].Slot);
-    }
-
-    [Fact]
-    public void Saving_a_position_held_by_another_slot_swaps_them()
-    {
-        var vm = CreateViewModel();
-        vm.SelectSlotCommand.Execute(vm.CooldownSlots[0]);   // slot 1, position 7
+        var vm = Create();
+        vm.SelectSlotCommand.Execute(vm.CooldownSlots[0]);   // slot 1, quick position 7
         vm.DraftQuickPosition = 1;                            // slot 13 holds position 1
 
         vm.SaveChangesCommand.Execute(null);
 
         Assert.Equal(1, vm.CooldownSlots[0].QuickPosition);
         Assert.Equal(7, vm.CooldownSlots[12].QuickPosition);
-        Assert.Same(vm.CooldownSlots[0], vm.QuickSlots[0].Slot);
-        Assert.Same(vm.CooldownSlots[12], vm.QuickSlots[6].Slot);
+        Assert.Equal("Flujo: Intimidación", vm.QuickSlots[0].SkillName);
+        Assert.Equal(13, vm.QuickSlots[6].CooldownNumber);
+        Assert.False(vm.HasPendingChanges);
     }
 
     [Fact]
-    public void Saving_none_removes_the_slot_from_the_quick_bar()
+    public void Clearing_a_quick_position_removes_the_skill_from_the_bar()
     {
-        var vm = CreateViewModel();
-        vm.SelectSlotCommand.Execute(vm.CooldownSlots[1]);   // slot 2, position 8
+        var vm = Create();
+        vm.SelectSlotCommand.Execute(vm.CooldownSlots[0]);
         vm.DraftQuickPosition = 0;
 
         vm.SaveChangesCommand.Execute(null);
 
-        Assert.Equal(0, vm.CooldownSlots[1].QuickPosition);
-        Assert.Null(vm.QuickSlots[7].Slot);
-        Assert.False(vm.QuickSlots[7].HasSlot);
+        Assert.Equal(0, vm.CooldownSlots[0].QuickPosition);
+        Assert.False(vm.QuickSlots[6].HasSkill);
     }
 
     [Fact]
-    public void Reset_discards_the_draft_and_keeps_the_saved_position()
+    public void An_empty_cooldown_slot_cannot_be_edited()
     {
-        var vm = CreateViewModel();
-        vm.SelectSlotCommand.Execute(vm.CooldownSlots[0]);
-        vm.DraftQuickPosition = 2;
-        Assert.True(vm.HasPendingChanges);
+        var vm = Create();
 
-        vm.ResetCommand.Execute(null);
+        vm.SelectSlotCommand.Execute(vm.CooldownSlots[19]);
 
-        Assert.Equal(7, vm.DraftQuickPosition);
-        Assert.False(vm.HasPendingChanges);
-        Assert.Equal(7, vm.CooldownSlots[0].QuickPosition);
+        Assert.True(vm.CooldownSlots[19].IsEmpty);
+        Assert.False(vm.CanEdit);
+        Assert.False(vm.SaveChangesCommand.CanExecute(null));
     }
 
     [Fact]
-    public void Game_pixel_canvas_uses_the_game_option_resolution()
+    public void Zoom_starts_at_fit_and_wheel_steps_change_it_but_never_below_fit()
     {
-        var vm = CreateViewModel(new GameDisplaySettings(3440, 1440, Windowed: true, UiScale: 1.0));
+        var vm = Create();
+        vm.SetViewport(1720, 720);
 
-        Assert.Equal(3440.0, vm.GameWidth);
-        Assert.Equal(1440.0, vm.GameHeight);
-        Assert.Equal(3440.0 / 1440.0, vm.CanvasAspectRatio, precision: 9);
-        Assert.Equal(1.0, vm.UiScale);
+        Assert.Equal(0.5, vm.FitScale, precision: 9);
+        Assert.Equal(0.5, vm.ScreenScale, precision: 9);
+
+        vm.ZoomBy(2);
+        Assert.Equal(0.5 * CanvasZoom.StepFactor * CanvasZoom.StepFactor, vm.ScreenScale, precision: 9);
+
+        vm.ZoomBy(-10);
+        Assert.Equal(0.5, vm.ScreenScale, precision: 9);
+
+        vm.ZoomBy(3);
+        vm.FitToView();
+        Assert.Equal(1, vm.Zoom);
     }
 
     [Fact]
-    public void Canvas_falls_back_to_1920_by_1080_without_game_option()
+    public void Startup_zoom_is_clamped_to_the_allowed_range()
     {
-        var vm = CreateViewModel(display: null);
+        var vm = Create(startup: new PreviewStartup(GameUiLayoutId.General, false, false, Zoom: 100));
 
-        Assert.Equal(PreviewViewModel.FallbackGameWidth, vm.GameWidth);
-        Assert.Equal(PreviewViewModel.FallbackGameHeight, vm.GameHeight);
-        Assert.Null(vm.DisplaySettings);
+        Assert.Equal(CanvasZoom.MaxZoom, vm.Zoom);
     }
 
     [Fact]
-    public void Default_indices_leave_the_bars_unverified_with_quick_candidates()
+    public void Cooldown_demo_marks_the_first_slot_with_a_skill_only_when_on()
     {
-        var vm = CreateViewModel(display: new GameDisplaySettings(3440, 1440, Windowed: true, UiScale: 1.0), layouts: Layouts());
+        var vm = Create();
+        Assert.False(vm.CooldownSlots[0].IsCoolingDown);
 
-        Assert.Null(vm.CooldownBar.IndexUsed);
-        Assert.Equal(BarSource.Candidates, vm.QuickBar.Source);
-        Assert.False(vm.IsLayoutVerified);
-        Assert.True(vm.CooldownBar.IsDraggable);
-        Assert.True(vm.QuickBar.IsDraggable);
-        Assert.Equal("Preview_LayoutUnknown", vm.LayoutStatusText);
+        vm.CooldownDemo = true;
+
+        var demo = vm.CooldownSlots[0];
+        Assert.True(demo.IsCoolingDown);
+        Assert.Equal(PreviewViewModel.DemoCooldownRatio, demo.CooldownRatio);
+        Assert.Equal(PreviewViewModel.DemoCooldownText, demo.CooldownText);
+        Assert.False(vm.CooldownSlots[1].IsCoolingDown);
+
+        vm.CooldownDemo = false;
+        Assert.False(demo.IsCoolingDown);
     }
 
     [Fact]
-    public void Without_a_layout_file_the_quick_bar_uses_the_generic_place()
+    public void Background_falls_back_to_none_when_no_screenshot_exists()
     {
-        var vm = CreateViewModel(layouts: null);
+        var vm = Create();
 
-        Assert.Equal(BarSource.Default, vm.QuickBar.Source);
+        var expected = File.Exists(PreviewViewModel.DefaultBackgroundPath) ? BackgroundKind.Default : BackgroundKind.None;
+        Assert.Equal(expected, vm.BackgroundKind);
     }
 
     [Fact]
-    public void Missing_layout_file_is_reported()
-    {
-        var vm = CreateViewModel(layouts: null);
-
-        Assert.Equal("Preview_Layout_FileMissing", vm.LayoutStatusText);
-        Assert.Empty(vm.UiPanels);
-    }
-
-    [Fact]
-    public void Layout_file_fills_the_panel_overlay_for_the_selected_layout()
-    {
-        var vm = CreateViewModel(layouts: Layouts());
-
-        Assert.Contains(vm.UiPanels, panel => panel.Label == "91" && panel.IsCandidate);
-        Assert.DoesNotContain(vm.UiPanels, panel => panel.Label == "21");
-    }
-
-    [Fact]
-    public void Selecting_a_layout_changes_the_panels_and_is_remembered()
+    public void Layout_choice_is_saved_for_the_next_run()
     {
         var store = Store();
-        var vm = CreateViewModel(layouts: Layouts(), store: store);
-        var generalCount = vm.UiPanels.Count;
+        var vm = Create(store: store);
 
-        vm.SelectLayout(GameUiLayoutId.Preset1);
+        vm.SelectLayout(GameUiLayoutId.Preset2);
 
-        Assert.Equal(GameUiLayoutId.Preset1, vm.SelectedLayout);
-        Assert.Equal("Preset1", Store().Settings.SelectedLayout);
-        Assert.DoesNotContain(vm.UiPanels, panel => panel.Label == "2");
-        Assert.NotEqual(generalCount, vm.UiPanels.Count);
-    }
-
-    [Fact]
-    public void Layout_chosen_at_startup_is_not_written_to_the_settings()
-    {
-        var store = Store();
-
-        var vm = CreateViewModel(store: store, initialLayout: GameUiLayoutId.Preset2);
-
-        Assert.Equal(GameUiLayoutId.Preset2, vm.SelectedLayout);
-        Assert.Null(store.Settings.SelectedLayout);
-    }
-
-    [Fact]
-    public void Verified_indices_make_the_bars_exact_and_locked()
-    {
-        var indices = new GameLayoutIndices(CooldownBarIndex: 13, QuickSlotBarIndex: 91, QuickSlotBarCandidates: []);
-
-        var vm = CreateViewModel(
-            display: new GameDisplaySettings(3440, 1440, Windowed: true, UiScale: 1.0),
-            layouts: Layouts(),
-            indices: indices);
-
-        Assert.True(vm.IsLayoutVerified);
-        Assert.Equal(BarSource.UiData, vm.CooldownBar.Source);
-        Assert.Equal(new PixelOffset(1524, 1264), vm.CooldownBar.Offset);
-        Assert.False(vm.CooldownBar.IsDraggable);
-        Assert.Equal(string.Empty, vm.LayoutStatusText);
-
-        vm.MoveBarTo(BarKind.Cooldown, 10, 10);
-        Assert.Equal(new PixelOffset(1524, 1264), vm.CooldownBar.Offset);
-    }
-
-    [Fact]
-    public void Dragged_bar_is_clamped_to_the_screen_and_its_slots_follow()
-    {
-        var vm = CreateViewModel(display: new GameDisplaySettings(3440, 1440, Windowed: true, UiScale: 1.0));
-
-        vm.MoveBarTo(BarKind.Cooldown, 5000, -40);
-
-        Assert.Equal(new PixelOffset(3440 - vm.CooldownBar.Width, 0), vm.CooldownBar.Offset);
-
-        // Slot offsets are relative to the bar, which the view moves; they only change with the grid.
-        Assert.Equal(new PixelOffset(0, 0), vm.CooldownSlots[0].Offset);
-        Assert.Equal(vm.CooldownBar.PitchX, vm.CooldownSlots[1].Offset.Left, precision: 6);
-        Assert.Equal(vm.CooldownBar.PitchY, vm.CooldownSlots[10].Offset.Top, precision: 6);
-    }
-
-    [Fact]
-    public void Quick_slots_follow_the_quick_bar_pitch()
-    {
-        var vm = CreateViewModel();
-
-        vm.MoveBarTo(BarKind.Quick, 100, 200);
-
-        Assert.Equal(new PixelOffset(100, 200), vm.QuickBar.Offset);
-        Assert.Equal(new PixelOffset(3 * 72, 0), vm.QuickSlots[3].Offset);
-    }
-
-    [Fact]
-    public void Committed_position_is_saved_for_the_layout_and_restored_by_a_new_view_model()
-    {
-        var display = new GameDisplaySettings(3440, 1440, Windowed: true, UiScale: 1.0);
-        var store = Store();
-        var vm = CreateViewModel(display: display, store: store);
-        vm.MoveBarTo(BarKind.Cooldown, 1000, 500);
-
-        vm.CommitBarPosition(BarKind.Cooldown);
-
-        Assert.Equal(BarSource.Manual, vm.CooldownBar.Source);
-        Assert.Equal(1000.0, vm.CooldownBar.Offset.Left, precision: 6);
-        Assert.Equal(500.0, vm.CooldownBar.Offset.Top, precision: 6);
-        Assert.True(Store().Settings.ManualBarPositions.ContainsKey("General.Cooldown"));
-
-        var restarted = CreateViewModel(display: display, store: Store());
-        Assert.Equal(BarSource.Manual, restarted.CooldownBar.Source);
-        Assert.Equal(1000.0 / 3440.0, Store().Settings.ManualBarPositions["General.Cooldown"].X, precision: 9);
-        Assert.Equal(1000.0, restarted.CooldownBar.Offset.Left, precision: 6);
-        Assert.Equal(500.0, restarted.CooldownBar.Offset.Top, precision: 6);
-    }
-
-    [Fact]
-    public void Saved_position_belongs_to_one_layout_only()
-    {
-        var store = Store();
-        var vm = CreateViewModel(store: store, layouts: Layouts());
-        vm.MoveBarTo(BarKind.Quick, 300, 300);
-        vm.CommitBarPosition(BarKind.Quick);
-
-        vm.SelectLayout(GameUiLayoutId.Preset1);
-
-        Assert.Equal(BarSource.Candidates, vm.QuickBar.Source);
-        Assert.NotEqual(new PixelOffset(300, 300), vm.QuickBar.Offset);
-    }
-
-    [Fact]
-    public void Reset_bar_position_forgets_the_saved_position()
-    {
-        var store = Store();
-        var vm = CreateViewModel(store: store);
-        vm.MoveBarTo(BarKind.Cooldown, 1000, 500);
-        vm.CommitBarPosition(BarKind.Cooldown);
-
-        vm.ResetBarPosition(BarKind.Cooldown);
-
-        Assert.Equal(BarSource.Default, vm.CooldownBar.Source);
-        Assert.False(Store().Settings.ManualBarPositions.ContainsKey("General.Cooldown"));
-    }
-
-    [Fact]
-    public void Chosen_background_must_exist_and_is_remembered()
-    {
-        var store = Store();
-        var vm = CreateViewModel(store: store);
-        var picture = Path.Combine(_log.Directory, "picked.png");
-        File.WriteAllBytes(picture, [0x89, 0x50, 0x4E, 0x47]);
-
-        Assert.False(vm.SetBackgroundPath(Path.Combine(_log.Directory, "missing.png")));
-        Assert.True(vm.SetBackgroundPath(picture));
-
-        Assert.Equal(BackgroundKind.Custom, vm.BackgroundKind);
-        Assert.Equal(picture, vm.BackgroundPath);
-        Assert.Equal(picture, Store().Settings.BackgroundImagePath);
-    }
-
-    [Fact]
-    public void Resetting_the_background_forgets_the_choice()
-    {
-        var store = Store();
-        var vm = CreateViewModel(store: store);
-        var picture = Path.Combine(_log.Directory, "picked.png");
-        File.WriteAllBytes(picture, [0x89, 0x50, 0x4E, 0x47]);
-        vm.SetBackgroundPath(picture);
-
-        vm.ResetBackground();
-
-        Assert.Null(Store().Settings.BackgroundImagePath);
-        Assert.NotEqual(BackgroundKind.Custom, vm.BackgroundKind);
-    }
-
-    [Fact]
-    public void Skill_icon_comes_from_the_catalog_and_missing_icons_leave_the_glyph()
-    {
-        var root = Path.Combine(_log.Directory, "output");
-        Directory.CreateDirectory(Path.Combine(root, "icons", "skills", "Tamer"));
-        File.WriteAllText(Path.Combine(root, "skills.json"),
-            """{ "1937": { "class_id": "16", "class_table_name": "Tamer", "icon_path": "icons/skills/Tamer/pbw_skill_1937.webp" } }""");
-        File.WriteAllBytes(Path.Combine(root, "icons", "skills", "Tamer", "pbw_skill_1937.webp"), [0x52, 0x49, 0x46, 0x46]);
-        var icons = IconCatalog.Load(root, Path.Combine(_log.Directory, "none"), _log.Logger);
-
-        var vm = CreateViewModel(icons: icons);
-
-        Assert.Equal(Path.Combine(root, "icons", "skills", "Tamer", "pbw_skill_1937.webp"), vm.CooldownSlots[0].IconPath);
-        Assert.True(vm.CooldownSlots[0].HasIcon);
-        Assert.Null(vm.CooldownSlots[1].IconPath);   // skill 1926 is not in the catalog
-    }
-
-    [Fact]
-    public void Cooldown_slots_fill_the_rows_and_extra_slots_are_hidden()
-    {
-        var store = Store();
-        store.Update(settings => settings with { CooldownRows = 1, CooldownColumns = 10 });
-
-        var vm = CreateViewModel(store: store);
-
-        Assert.True(vm.CooldownSlots[9].IsPlaced);
-        Assert.False(vm.CooldownSlots[10].IsPlaced);
-        Assert.Equal(vm.CooldownSlots[0].Offset.Top, vm.CooldownSlots[9].Offset.Top);
+        Assert.Equal("Preset2", store.Settings.SelectedLayout);
     }
 }

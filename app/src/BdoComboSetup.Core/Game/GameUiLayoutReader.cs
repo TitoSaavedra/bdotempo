@@ -188,7 +188,9 @@ public static partial class GameUiLayoutReader
             PosX: TryDouble(attributes, "PosX"),
             PosY: TryDouble(attributes, "PosY"),
             SizeX: TryDouble(attributes, "SizeX"),
-            SizeY: TryDouble(attributes, "SizeY"));
+            SizeY: TryDouble(attributes, "SizeY"),
+            RelativeX: TryDouble(attributes, "RelativePosX"),
+            RelativeY: TryDouble(attributes, "RelativePosY"));
     }
 
     private static Dictionary<string, string> ReadAttributes(string line)

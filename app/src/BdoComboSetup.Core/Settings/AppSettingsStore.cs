@@ -1,5 +1,4 @@
 using System.Text.Json;
-using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.Logging;
 
 namespace BdoComboSetup.Core.Settings;
@@ -28,21 +27,8 @@ public sealed record AppSettings
 
     public string GameAccountFolder { get; init; } = DefaultGameAccountFolder;
 
-    /// <summary>Rows and columns of the cooldown bar. The default is 2 x 10 (20 slots).</summary>
-    public int CooldownRows { get; init; } = 2;
-
-    public int CooldownColumns { get; init; } = 10;
-
     /// <summary>Last layout selected on the Preview page (GameUiLayoutId name), or null for General.</summary>
     public string? SelectedLayout { get; init; }
-
-    /// <summary>
-    /// Bars the user dragged, keyed by "&lt;layout&gt;.&lt;bar&gt;" (for example "General.Cooldown").
-    /// Positions are fractions of the game screen, so they keep working at any resolution.
-    /// </summary>
-    public Dictionary<string, NormalizedPosition> ManualBarPositions { get; init; } = new(StringComparer.Ordinal);
-
-    public static string ManualBarKey(GameUiLayoutId layout, BarKind bar) => $"{layout}.{bar}";
 }
 
 /// <summary>Loads and saves <see cref="AppSettings"/>. Every change is written at once (temporary file, then move).</summary>
