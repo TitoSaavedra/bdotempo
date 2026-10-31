@@ -15,6 +15,7 @@ from guides_support import (
     page,
     skill_step,
     tamer_awakening_page,
+    tips_aside,
 )
 
 
@@ -161,6 +162,64 @@ class ClassPageHelpersTests(unittest.TestCase):
     def test_expert_link_gives_the_path_of_that_expert(self):
         self.assertEqual("talent", has_expert_link(self.root, "shai", "azminek"))
         self.assertIsNone(has_expert_link(self.root, "shai", "ninja"))
+
+
+def note_list_section(section_id: str, title: str, heading: str, items: list[tuple[int, str, str]]) -> str:
+    """A section written as a list of notes (as the cancels and spiritforging sections are): one aside, one list."""
+    rows = "".join(
+        f'<li>{text} <span class="skill-inline"><img class="skill-inline-icon" '
+        f'src="../skills/icons/{number}_{name.lower().replace(" ", "_")}.webp" alt="" />{name}</span>.</li>'
+        for number, name, text in items
+    )
+    aside = f'<aside class="combo-notes"><h3 class="combo-notes-title">{heading}</h3><ul>{rows}</ul></aside>'
+    return combo_section(section_id, title, aside, kicker="Notes")
+
+
+class NoteListSectionTests(unittest.TestCase):
+    def test_cancels_section_becomes_one_chain_with_a_step_per_note(self):
+        html = page(note_list_section(
+            "class-cancels",
+            "Cancels & Input Traps",
+            "Notable Cancels",
+            [(2239, "Hellfire", "Magma Bomb is faster after"), (6464, "Magma Bomb", "Hellfire goes faster into")],
+        ))
+
+        guide = parse_guide(parse_html(html))
+
+        self.assertEqual(1, len(guide.chains))
+        cancels = guide.chains[0]
+        self.assertEqual("class-cancels", cancels["section"])
+        self.assertEqual("Cancels & Input Traps", cancels["title"])
+        self.assertEqual(["Notable Cancels", "Notable Cancels"], [step["extra"] for step in cancels["steps"]])
+        self.assertEqual([2239, 6464], [step["skills"][0]["skillNo"] for step in cancels["steps"]])
+        self.assertEqual("Hellfire", cancels["steps"][0]["skills"][0]["nameEn"])
+        self.assertIsNone(cancels["steps"][0]["keys"])
+        self.assertEqual([], guide.notes)
+
+    def test_spiritforging_section_is_kept_as_a_chain_so_its_skills_keep_their_numbers(self):
+        html = page(note_list_section(
+            "spiritforging",
+            "Spiritforging",
+            "Losing Spiritforged State",
+            [(7365, "Foxflare Ambush", "Spiritforged state is lost when you stop")],
+        ))
+
+        guide = parse_guide(parse_html(html))
+
+        self.assertEqual("spiritforging", guide.chains[0]["section"])
+        self.assertEqual(7365, guide.chains[0]["steps"][0]["skills"][0]["skillNo"])
+
+    def test_tips_box_of_a_normal_section_stays_a_note(self):
+        html = page(combo_section(
+            "skill-rotation",
+            "Tamer Awakening",
+            chain("DPS", [skill_step("F", [(1347, "Summon Heuklang")])]) + tips_aside(["Core DPS first."]),
+        ))
+
+        guide = parse_guide(parse_html(html))
+
+        self.assertEqual(["Core DPS first."], [note["text"] for note in guide.notes])
+        self.assertEqual([], [chain_ for chain_ in guide.chains if chain_["section"] == "class-cancels"])
 
 
 if __name__ == "__main__":

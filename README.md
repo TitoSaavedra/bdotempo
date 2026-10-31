@@ -206,13 +206,36 @@ mise run build-assets    # runs import-guides, then copies what the guides refer
 - `data/combos/catalog.json`: the 32 classes with their names (English, Spanish) and the specs that have a guide.
   Shai's three experts (Azminek, Talent, Wootaru) share the Talent guide.
 - `data/combos/guides/<class>.<spec>.json`: one guide per key, with chains (title, steps with keys, skills, extra
-  and note), tips, and add-ons. Each skill is `{skillNo, nameEn, nameEs}`. The skill number is the numeric prefix
-  of the icon file name on the site.
-- `reports/unresolved_skills.txt`: skills the guides name but `skills_es.json` does not have (their `nameEs` stays
-  null), skills with no icon in the export, and the specs that have no saved guide.
-- The bundle holds only what the guides reference: `catalog.json`, `skills.json` (names and Spanish descriptions,
-  game markup removed), `guide-<class>.<spec>.json`, `skill-<skillNo>.png` and the 32 `class-<classType>.png`.
-  Icons above 64 px are refused.
+  and note), tips, add-ons and `manualPool`. Each skill is `{skillNo, nameEn, nameEs}`. The skill number is the
+  numeric prefix of the icon file name on the site.
+- Every chain has a `kind`, decided by `src/bdo_combo/guides/kinds.py` (first matching rule wins):
+  - `buff`: a buff or stance activation (`Self Buff`, `Prebuff / Debuff`...), or steps that all carry buff markers.
+    Applied automatically.
+  - `combo`: a rotation or filler of a combo section (`skill-rotation`, `dps-priority`...). Applied automatically.
+  - `mobility`: the `class-mobility` section, or a movement title in a combo section. Manual only.
+  - `cancels`: the `class-cancels` section (Wizard only). Manual only.
+  - `other`: reference sections (`class-specifics`, `spiritforging`, videos, further reading), and a buff list with
+    no key presses in a reference section. Shown collapsed, never applied.
+- `manualPool` (guide level): the skills of the mobility and cancels chains, each once, in guide order. These are
+  the skills the user places on the cooldown bar by hand; they are never part of the automatic combo.
+- `reports/chain_kinds.txt`: every chain with its kind, the rule that gave it and its confidence. The low
+  confidence chains come first: those rest on the section alone, or on a title with no keyword.
+- `reports/unresolved_skills.txt`: skills the guides name but `skills_es.json` does not have (their `nameEn` stays
+  null), skills with no icon in the export, skills without tooltip data, tooltip names that differ from the guide,
+  and the specs that have no saved guide.
+- `data/combos/tooltips.json` (from `data/classhub/data/skills`): the tooltip of every skill the guides reference,
+  keyed by skillNo. Language order: Mexican Spanish, Spanish, then English, one entry at a time. A tooltip is
+  `{name, lang, keys, level, cost, cooldownSec, damage, pvpPercent, protection, extras, features}`; text is plain,
+  numbers are numbers. The skill's map entry depends on the page kind (`awakening` or `succession`), so the same
+  skill number can have another tooltip on another page; the first guide in key order decides and the rest are
+  reported as conflicts.
+- The bundle holds only what the guides reference: `catalog.json`, `skills.json` (names, Spanish descriptions,
+  game markup removed, and the `tooltip` of each skill), `guide-<class>.<spec>.json`, `skill-<skillNo>.png` and the
+  32 `class-<classType>.png`. Icons above 64 px are refused.
+
+Schema: `catalog.json` and the guide files are schema 1. The kinds, the manual pool and the tooltips were added to
+schema 1 as optional fields: a reader must treat a missing `kind` as `other`, a missing `manualPool` as empty and a
+missing `tooltip` as none. The C# reader (`app/src/BdoComboSetup.Core/Combo/Catalog`) does exactly that.
 
 The app embeds the bundle (`EmbeddedResource`, one file name per resource), so the single-file exe needs no loose
 files. Without a bundle the app still builds and runs, with glyphs for the icons.

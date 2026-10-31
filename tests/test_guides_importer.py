@@ -9,7 +9,8 @@ from pathlib import Path
 
 from bdo_combo.guides.bundle import BundleError, build_bundle, guide_resource
 from bdo_combo.guides.client import ClientExport
-from bdo_combo.guides.importer import import_guides, iter_skill_refs, write_outputs
+from bdo_combo.guides.importer import TOOLTIPS_FILE, import_guides, iter_skill_refs, write_outputs
+from bdo_combo.guides.kinds import KINDS
 from bdo_combo.guides.__main__ import main as guides_main
 from guides_support import (
     chain,
@@ -173,6 +174,22 @@ class ImportGuidesTests(SyntheticTreeTestCase):
         self.assertGreater(stats["unique_skills"], 10)
         self.assertEqual(0, stats["unresolved_skills"])
 
+    def test_every_chain_has_a_kind_and_every_guide_a_manual_pool(self):
+        for key, guide in self.result.guides.items():
+            with self.subTest(guide=key):
+                self.assertTrue(all(chain_["kind"] in KINDS for chain_ in guide["chains"]))
+                self.assertEqual([], guide["manualPool"])
+
+    def test_tamer_self_buff_is_a_buff_and_the_damage_chain_a_combo(self):
+        kinds = {chain_["title"]: chain_["kind"] for chain_ in self.result.guides["tamer.awakening"]["chains"]}
+
+        self.assertEqual("buff", kinds["Self Buff"])
+        self.assertEqual("combo", kinds["Damage Combo (Dragon LBD)"])
+
+    def test_without_skill_files_no_tooltip_is_built_and_each_class_is_listed(self):
+        self.assertEqual({}, self.result.tooltips.tooltips)
+        self.assertEqual(["archer", "shai", "tamer"], sorted(self.result.tooltips.missing_class_files))
+
     def test_iter_skill_refs_covers_steps_notes_and_addons(self):
         numbers = [ref["skillNo"] for ref in iter_skill_refs(self.result.guides["tamer.awakening"])]
 
@@ -194,6 +211,18 @@ class WriteOutputsTests(SyntheticTreeTestCase):
         self.assertEqual(16, guide["classType"])
         self.assertEqual("https://bdoclasshub.com/classes/tamer/awakening/index.html", guide["source"])
         self.assertIn("dosa/antido: no saved page", self.report.read_text(encoding="utf-8"))
+
+    def test_writes_tooltips_file_and_chain_kinds_report(self):
+        result = import_guides(self.classhub, self.client)
+        kinds_report = self.tmp / "reports" / "chain_kinds.txt"
+
+        with quiet_logs():
+            write_outputs(result, self.combos, self.report, kinds_report)
+
+        self.assertEqual({}, json.loads((self.combos / TOOLTIPS_FILE).read_text(encoding="utf-8")))
+        text = kinds_report.read_text(encoding="utf-8")
+        self.assertIn("tamer.awakening | skill-rotation | buff | high | title:self buff | 3 | Self Buff", text)
+        self.assertIn("LOW CONFIDENCE (", text)
 
     def test_stale_guide_files_are_removed(self):
         (self.combos / "guides").mkdir(parents=True)
@@ -302,12 +331,14 @@ class GuidesCliTests(SyntheticTreeTestCase):
 
     def test_import_then_bundle_run_end_to_end(self):
         generated = self.tmp / "generated"
+        kinds_report = self.tmp / "reports" / "chain_kinds.txt"
         code_import, printed = self.run_cli([
             "import",
             "--classhub-dir", str(self.classhub),
             "--client-dir", str(self.client.root),
             "--combos-dir", str(self.combos),
             "--report", str(self.report),
+            "--kinds-report", str(kinds_report),
         ])
         code_bundle, _ = self.run_cli([
             "bundle",
@@ -319,15 +350,19 @@ class GuidesCliTests(SyntheticTreeTestCase):
         self.assertEqual(0, code_import)
         self.assertEqual(0, code_bundle)
         self.assertIn("classes 3, specs 6, guides 4", printed)
+        self.assertIn("manual pool skills 0", printed)
         self.assertTrue((generated / "catalog.json").is_file())
+        self.assertTrue(kinds_report.is_file())
 
     def test_missing_classhub_is_an_error_exit_not_a_traceback(self):
+        # Every path is passed explicitly: a test must never write the repository's own reports or data.
         code, _ = self.run_cli([
             "import",
             "--classhub-dir", str(self.tmp / "nope"),
             "--client-dir", str(self.client.root),
             "--combos-dir", str(self.combos),
             "--report", str(self.report),
+            "--kinds-report", str(self.tmp / "reports" / "chain_kinds.txt"),
         ])
 
         self.assertEqual(1, code)

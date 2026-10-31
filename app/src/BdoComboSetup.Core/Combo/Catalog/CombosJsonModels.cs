@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 namespace BdoComboSetup.Core.Combo;
 
 // JSON shapes written by bdo_combo.guides (schema 1). Internal: the public types are the records in ComboGuideModels.cs.
+// Schema 1 grew by additive fields only: chain "kind", guide "manualPool" and skill entry "tooltip". A file without
+// them still reads: the kind is other, the manual pool is empty and the skill has no tooltip.
 
 internal sealed class CatalogJson
 {
@@ -71,6 +73,9 @@ internal sealed class GuideJson
 
     [JsonPropertyName("addons")]
     public List<AddonJson>? Addons { get; set; }
+
+    [JsonPropertyName("manualPool")]
+    public List<SkillRefJson>? ManualPool { get; set; }
 }
 
 internal sealed class ChainJson
@@ -80,6 +85,10 @@ internal sealed class ChainJson
 
     [JsonPropertyName("title")]
     public string? Title { get; set; }
+
+    /// <summary>"buff", "combo", "mobility", "cancels" or "other". Null in files written before the kinds existed.</summary>
+    [JsonPropertyName("kind")]
+    public string? Kind { get; set; }
 
     [JsonPropertyName("notes")]
     public List<string>? Notes { get; set; }
@@ -151,7 +160,7 @@ internal sealed class SkillRefJson
     public string? NameEs { get; set; }
 }
 
-/// <summary>An entry of skills.json: the lookup for names and descriptions, keyed by skillNo in the file.</summary>
+/// <summary>An entry of skills.json: the lookup for names, descriptions and the tooltip, keyed by skillNo in the file.</summary>
 internal sealed class SkillEntryJson
 {
     [JsonPropertyName("nameEn")]
@@ -162,4 +171,71 @@ internal sealed class SkillEntryJson
 
     [JsonPropertyName("descriptionEs")]
     public string? DescriptionEs { get; set; }
+
+    [JsonPropertyName("tooltip")]
+    public TooltipJson? Tooltip { get; set; }
+}
+
+/// <summary>The "tooltip" of a skills.json entry, written from the bdoclasshub skill data.</summary>
+internal sealed class TooltipJson
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("lang")]
+    public string? Lang { get; set; }
+
+    [JsonPropertyName("keys")]
+    public List<string>? Keys { get; set; }
+
+    [JsonPropertyName("level")]
+    public int? Level { get; set; }
+
+    [JsonPropertyName("cost")]
+    public List<TooltipCostJson>? Cost { get; set; }
+
+    [JsonPropertyName("cooldownSec")]
+    public double? CooldownSec { get; set; }
+
+    [JsonPropertyName("damage")]
+    public List<TooltipDamageJson>? Damage { get; set; }
+
+    [JsonPropertyName("pvpPercent")]
+    public double? PvpPercent { get; set; }
+
+    [JsonPropertyName("protection")]
+    public List<string>? Protection { get; set; }
+
+    [JsonPropertyName("extras")]
+    public List<string>? Extras { get; set; }
+
+    [JsonPropertyName("features")]
+    public List<string>? Features { get; set; }
+}
+
+internal sealed class TooltipCostJson
+{
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
+
+    [JsonPropertyName("label")]
+    public string? Label { get; set; }
+
+    [JsonPropertyName("value")]
+    public string? Value { get; set; }
+}
+
+internal sealed class TooltipDamageJson
+{
+    [JsonPropertyName("label")]
+    public string? Label { get; set; }
+
+    [JsonPropertyName("percent")]
+    public double Percent { get; set; }
+
+    [JsonPropertyName("hits")]
+    public int Hits { get; set; }
+
+    [JsonPropertyName("maxHits")]
+    public int? MaxHits { get; set; }
 }

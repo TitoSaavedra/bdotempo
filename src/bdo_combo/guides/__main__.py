@@ -21,6 +21,7 @@ DEFAULT_CLASSHUB_DIR = REPO_ROOT / "data" / "classhub"
 DEFAULT_CLIENT_DIR = Path(r"D:\extracted_bdo\client")
 DEFAULT_COMBOS_DIR = REPO_ROOT / "data" / "combos"
 DEFAULT_REPORT = REPO_ROOT / "reports" / "unresolved_skills.txt"
+DEFAULT_KINDS_REPORT = REPO_ROOT / "reports" / "chain_kinds.txt"
 DEFAULT_BUNDLE_DIR = REPO_ROOT / "app" / "src" / "BdoComboSetup" / "Assets" / "generated"
 
 
@@ -33,6 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--client-dir", type=Path, default=None, help="client export folder (env BDO_CLIENT_DIR)")
     p.add_argument("--combos-dir", type=Path, default=None, help="output folder (default data/combos)")
     p.add_argument("--report", type=Path, default=None, help="unresolved skills report (default reports/unresolved_skills.txt)")
+    p.add_argument("--kinds-report", type=Path, default=None, help="chain kinds report (default reports/chain_kinds.txt)")
 
     p = sub.add_parser("bundle", help="copy the referenced icons and JSON into the app's Assets/generated folder")
     p.add_argument("--combos-dir", type=Path, default=None, help="output folder of import (default data/combos)")
@@ -72,14 +74,24 @@ def _import(args: argparse.Namespace) -> int:
     client_dir = _path(args.client_dir, "BDO_CLIENT_DIR", DEFAULT_CLIENT_DIR)
     combos_dir = args.combos_dir or DEFAULT_COMBOS_DIR
     report = args.report or DEFAULT_REPORT
+    kinds_report = args.kinds_report or DEFAULT_KINDS_REPORT
 
     result = import_guides(classhub_dir, ClientExport(client_dir))
-    write_outputs(result, combos_dir, report)
+    write_outputs(result, combos_dir, report, kinds_report)
     stats = result.stats()
     print(f"classes {stats['classes']}, specs {stats['specs']}, guides {stats['guides']}")
     print(f"chains {stats['chains']}, steps {stats['steps']}, unique skills {stats['unique_skills']}")
+    print(
+        "chain kinds: "
+        + ", ".join(f"{kind} {stats[f'chains_{kind}']}" for kind in ("buff", "combo", "mobility", "cancels", "other"))
+        + f", low confidence {stats['chains_low_confidence']}, manual pool skills {stats['manual_pool_skills']}"
+    )
+    print(
+        f"tooltips {stats['tooltips']}, without tooltip data {stats['tooltips_no_data']}, "
+        f"name mismatches {stats['tooltip_name_mismatches']}"
+    )
     print(f"unresolved skills {stats['unresolved_skills']}, icons missing {stats['icons_missing']}, problems {stats['problems']}")
-    print(f"written to {combos_dir} and {report}")
+    print(f"written to {combos_dir}, {report} and {kinds_report}")
     return 0
 
 
