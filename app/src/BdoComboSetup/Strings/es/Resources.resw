@@ -85,9 +85,6 @@
   <data name="Apply.EmptyTitle.Text" xml:space="preserve">
     <value>Elige una clase y una guía</value>
   </data>
-  <data name="Apply.GuideChoiceTitle.Text" xml:space="preserve">
-    <value>Elige una guía</value>
-  </data>
   <data name="Apply.EmptyBody.Text" xml:space="preserve">
     <value>Aquí aparece el combo de la guía: primero buffs y combos. Las habilidades de movilidad son un grupo manual al final.</value>
   </data>

@@ -85,9 +85,6 @@
   <data name="Apply.EmptyTitle.Text" xml:space="preserve">
     <value>Choose a class and a guide</value>
   </data>
-  <data name="Apply.GuideChoiceTitle.Text" xml:space="preserve">
-    <value>Choose a guide</value>
-  </data>
   <data name="Apply.EmptyBody.Text" xml:space="preserve">
     <value>The combo of the guide appears here: buffs and combos first. Mobility skills are a manual pool at the bottom.</value>
   </data>
