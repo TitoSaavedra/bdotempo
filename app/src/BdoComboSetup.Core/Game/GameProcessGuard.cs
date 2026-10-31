@@ -100,7 +100,7 @@ public static class WriteGuard
             {
                 throw new OperationRefusedException(
                     OperationProblem.GameRunning,
-                    $"PCID {target.Pcid} was modified {Math.Round(age.TotalSeconds):0}s ago while {GameProcessGuard.ProcessName}.exe is running; " +
+                    $"a character file was modified {Math.Round(age.TotalSeconds):0}s ago while {GameProcessGuard.ProcessName}.exe is running; " +
                     "close the game or force the write");
             }
 

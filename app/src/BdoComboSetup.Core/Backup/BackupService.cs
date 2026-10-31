@@ -156,7 +156,7 @@ public sealed class BackupService : IBackupService
 
             if (targets.Any(target => !GameDataLocator.IsDigits(target.Pcid)))
             {
-                throw new OperationRefusedException(OperationProblem.InvalidRequest, "PCID must be digits");
+                throw new OperationRefusedException(OperationProblem.InvalidRequest, "the character id must be digits");
             }
 
             var folder = ReserveFolder();
@@ -175,7 +175,7 @@ public sealed class BackupService : IBackupService
                     {
                         throw new OperationRefusedException(
                             OperationProblem.BackupFailed,
-                            $"backup copy of PCID {target.Pcid} does not match the original");
+                            "a backup copy of a character does not match the original");
                     }
 
                     files.Add(new BackupFile(target.Pcid, RelativeCopyPath(account, target.Pcid), originalHash, original.LongLength));
@@ -271,7 +271,7 @@ public sealed class BackupService : IBackupService
             {
                 if (!entries.ContainsKey(pcid))
                 {
-                    throw new OperationRefusedException(OperationProblem.InvalidRequest, $"PCID {pcid} is not in backup {backupName}");
+                    throw new OperationRefusedException(OperationProblem.InvalidRequest, $"the character is not in backup {backupName}");
                 }
             }
 
@@ -313,7 +313,7 @@ public sealed class BackupService : IBackupService
                 {
                     throw new OperationRefusedException(
                         OperationProblem.WriteFailed,
-                        $"restore verification failed for PCID {payload.Pcid}; the previous state is in backup {preRestore.Name}");
+                        $"restore verification failed for a character; the previous state is in backup {preRestore.Name}");
                 }
             }
 
@@ -348,13 +348,13 @@ public sealed class BackupService : IBackupService
         var folder = ResolveBackupFolder(backupName);
         var manifest = ReadManifest(folder);
         var entry = manifest.Files.FirstOrDefault(f => f.Pcid == pcid)
-            ?? throw new OperationRefusedException(OperationProblem.InvalidRequest, $"PCID {pcid} is not in backup {backupName}");
+            ?? throw new OperationRefusedException(OperationProblem.InvalidRequest, $"the character is not in backup {backupName}");
 
         var data = ReadVerifiedCopy(folder, manifest, entry);
         _files.AtomicReplace(destinationPath, data);
         if (Sha256Hex(_files.ReadAllBytes(destinationPath)) != entry.Sha256)
         {
-            throw new OperationRefusedException(OperationProblem.RollbackFailed, $"restored file for PCID {pcid} does not match the backup");
+            throw new OperationRefusedException(OperationProblem.RollbackFailed, "a restored file does not match the backup");
         }
     }
 
@@ -416,7 +416,7 @@ public sealed class BackupService : IBackupService
 
         throw new OperationRefusedException(
             OperationProblem.BackupFailed,
-            $"manifest of backup {Path.GetFileName(folder)} has an unexpected path for PCID {entry.Pcid}");
+            $"manifest of backup {Path.GetFileName(folder)} has an unexpected path for a character");
     }
 
     /// <summary>Reads one copy and refuses it unless its SHA-256 matches the manifest.</summary>
@@ -425,7 +425,7 @@ public sealed class BackupService : IBackupService
         var data = _files.ReadAllBytes(ResolveCopyPath(folder, manifest, entry));
         if (Sha256Hex(data) != entry.Sha256)
         {
-            throw new OperationRefusedException(OperationProblem.BackupFailed, $"backup file for PCID {entry.Pcid} does not match its manifest");
+            throw new OperationRefusedException(OperationProblem.BackupFailed, "a backup file does not match its manifest");
         }
 
         return data;
@@ -518,7 +518,7 @@ public sealed class BackupService : IBackupService
 
         if (entries.Select(e => e.Pcid).Distinct(StringComparer.Ordinal).Count() != entries.Count)
         {
-            throw Invalid("lists a PCID more than once");
+            throw Invalid("lists a character more than once");
         }
 
         return new Manifest(account, Text(root, "tool_version", "toolVersion"), Text(root, "reason"), entries);

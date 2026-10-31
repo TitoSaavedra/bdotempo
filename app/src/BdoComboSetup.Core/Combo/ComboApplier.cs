@@ -224,7 +224,7 @@ public sealed class ComboApplier : IComboApplier
     {
         if (!GameDataLocator.IsDigits(request.Pcid))
         {
-            throw new OperationRefusedException(OperationProblem.InvalidRequest, "PCID must be digits");
+            throw new OperationRefusedException(OperationProblem.InvalidRequest, "the character id must be digits");
         }
 
         if (request.ClassId <= 0)
