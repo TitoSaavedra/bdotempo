@@ -58,6 +58,8 @@ internal sealed class NoIconAssets : IAssetProvider
     public Stream? OpenSkillIcon(int skillNo, string? className = null) => null;
 
     public Stream? OpenClassIcon(int classType) => null;
+
+    public Stream? OpenSlotArt(SlotArt art) => null;
 }
 
 /// <summary>Helpers shared by the Apply tests.</summary>

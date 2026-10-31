@@ -25,6 +25,8 @@ internal sealed class RecordingAssets : IAssetProvider
     }
 
     public Stream? OpenClassIcon(int classType) => null;
+
+    public Stream? OpenSlotArt(SlotArt art) => null;
 }
 
 public sealed class ComboCatalogTests : IDisposable

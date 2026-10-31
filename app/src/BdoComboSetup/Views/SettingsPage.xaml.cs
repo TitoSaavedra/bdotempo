@@ -1,5 +1,9 @@
 using System.Diagnostics;
+using BdoComboSetup.Core.Characters;
+using BdoComboSetup.Core.Combo;
+using BdoComboSetup.Core.Search;
 using BdoComboSetup.Core.ViewModels;
+using BdoComboSetup.Views.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -17,6 +21,13 @@ public sealed partial class SettingsPage : Page
     {
         ViewModel = App.Services.SettingsView;
         InitializeComponent();
+        AccountPicker.SetFields(item => SearchFields.ForAccount(((AccountChoice)item).Account));
+
+        // The characters are the Apply page's roster: the same list, the same edit and reset rules.
+        var apply = App.Services.ApplyCombo;
+        CharacterList.ItemsSource = apply.Characters;
+        CharacterList.ItemTemplate = (DataTemplate)Resources["CharacterRowTemplate"];
+        CharacterList.SetFields(item => apply.CharacterSearchTexts((CharacterOption)item));
     }
 
     public SettingsViewModel ViewModel { get; }
@@ -35,11 +46,129 @@ public sealed partial class SettingsPage : Page
         base.OnNavigatedTo(e);
         // The folders may have changed while another page was open.
         ViewModel.Refresh();
+        _ = RefreshCharactersAsync();
     }
 
-    private void AccountBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    /// <summary>The class of a character in the current language, or the "unknown class" text when it has none.</summary>
+    public static string ClassNameOf(int? classType)
     {
-        if (e.AddedItems.Count > 0 && e.AddedItems[0] is AccountChoice choice && !ReferenceEquals(choice, ViewModel.SelectedAccount))
+        var app = App.Services;
+        var choice = classType is int value ? app.ApplyCombo.ClassChoices.FirstOrDefault(item => item.ClassType == value) : null;
+        return choice?.Name ?? app.Localizer.Get("Settings.CharacterClassUnknown");
+    }
+
+    /// <summary>Reloads the active account's characters (a change in the data folder or account applies here too).</summary>
+    private async Task RefreshCharactersAsync()
+    {
+        try
+        {
+            await App.Services.ApplyCombo.RefreshCharactersAsync();
+            CharactersMessageText.Text = App.Services.ApplyCombo.CharactersMessage;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            App.Services.Logger.Error("settings.characters.refresh_failed", "The characters could not be refreshed", ex);
+        }
+    }
+
+    /// <summary>Resets the name and class the user set for a character: the game files decide them again.</summary>
+    private async void ResetCharacter_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: CharacterOption option })
+        {
+            await App.Services.ApplyCombo.ResetCharacterEditAsync(option);
+        }
+    }
+
+    /// <summary>
+    /// Opens the editor of one character: the name and the class, set once and remembered in the app (the game does not change).
+    /// The name box starts from the name the character has now; a name left unchanged is not saved, so it keeps following the game.
+    /// </summary>
+    private void EditCharacter_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: CharacterOption option } button)
+        {
+            return;
+        }
+
+        var apply = App.Services.ApplyCombo;
+        var localizer = App.Services.Localizer;
+        var entry = apply.EntryOf(option);
+        var nameBox = new TextBox
+        {
+            Header = localizer.Get("Characters.EditNameHeader"),
+            PlaceholderText = localizer.Get("Characters.EditNamePlaceholder"),
+            Text = entry?.Name ?? option.Name,
+            MaxLength = CharacterOverrideStore.MaxNameLength,
+        };
+        var automatic = new CheckBox
+        {
+            Content = localizer.Get("Characters.EditAutomaticClass"),
+            IsChecked = entry?.ClassSource != ClassSource.Custom,
+        };
+        var classList = new Controls.SearchableList
+        {
+            ItemsSource = apply.ClassChoices,
+            ItemTemplate = (DataTemplate)Resources["ClassChoiceTemplate"],
+            IsEnabled = automatic.IsChecked != true,
+        };
+        classList.SetFields(item => SearchFields.ForNames(((ClassChoice)item).Names));
+        var chosenClass = apply.ClassChoices.FirstOrDefault(choice => choice.ClassType == entry?.ClassType);
+        var chosenText = new TextBlock
+        {
+            Text = chosenClass is null ? string.Empty : localizer.Format("Characters.EditClassChosen", chosenClass.Name),
+            FontSize = 12,
+        };
+        classList.ItemChosen += (_, item) =>
+        {
+            chosenClass = (ClassChoice)item;
+            chosenText.Text = localizer.Format("Characters.EditClassChosen", chosenClass.Name);
+        };
+        automatic.Checked += (_, _) => classList.IsEnabled = false;
+        automatic.Unchecked += (_, _) => classList.IsEnabled = true;
+
+        var save = new Button { Content = localizer.Get("Characters.EditSave") };
+        var reset = new Button { Content = localizer.Get("Characters.EditReset") };
+        var flyout = new Flyout();
+        save.Click += async (_, _) =>
+        {
+            flyout.Hide();
+            var typed = nameBox.Text.Trim();
+            var keepAutomaticName = entry is not null && entry.NameSource != NameSource.Custom && typed == entry.Name;
+            var name = keepAutomaticName ? null : typed;
+            var classType = automatic.IsChecked == true ? null : chosenClass?.ClassType;
+            await apply.SaveCharacterEditAsync(option, name, classType);
+        };
+        reset.Click += async (_, _) =>
+        {
+            flyout.Hide();
+            await apply.ResetCharacterEditAsync(option);
+        };
+
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        buttons.Children.Add(save);
+        buttons.Children.Add(reset);
+        var panel = new StackPanel { Spacing = 10, Width = 360 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = localizer.Get("Characters.EditTitle"),
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+        });
+        panel.Children.Add(nameBox);
+        panel.Children.Add(automatic);
+        panel.Children.Add(chosenText);
+        panel.Children.Add(classList);
+        panel.Children.Add(buttons);
+        flyout.Content = panel;
+        flyout.ShowAt(button);
+    }
+
+    /// <summary>Opens the folder picker. A cancelled picker changes nothing; the chosen folder is validated by the view model.</summary>
+
+    /// <summary>Saves the account picked in the searchable picker (the numbers of the accounts are what the search matches).</summary>
+    private void AccountPicker_Chosen(object? sender, object item)
+    {
+        if (item is AccountChoice choice)
         {
             ViewModel.ChooseAccount(choice.Account);
         }
@@ -61,7 +190,6 @@ public sealed partial class SettingsPage : Page
         }
     }
 
-    /// <summary>Opens the folder picker. A cancelled picker changes nothing; the chosen folder is validated by the view model.</summary>
     private async void Browse_Click(object sender, RoutedEventArgs e)
     {
         var window = App.MainWindow;

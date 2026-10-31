@@ -10,13 +10,12 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
-        <!-- One character of the account: class icon and name. The pencil opens the editor (code-behind). -->
+        <!-- One character of the account in the picker: class icon and name only. Name and class are edited in Settings. -->
         <DataTemplate x:Key="CharacterTemplate" x:DataType="combo:CharacterOption">
             <Grid ColumnSpacing="8" Padding="4,2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <controls:AssetIcon
                     Width="28"
@@ -27,20 +26,21 @@
                     Grid.Column="1"
                     Text="{x:Bind Name, Mode=OneTime}"
                     FontWeight="SemiBold"
-                    MaxWidth="200"
                     VerticalAlignment="Center"
                     TextTrimming="CharacterEllipsis" />
-                <Button
-                    Grid.Column="2"
-                    Width="30"
-                    Height="30"
-                    Padding="0"
-                    VerticalAlignment="Center"
-                    Click="EditCharacter_Click"
-                    x:Uid="Apply/EditCharacterButton">
-                    <FontIcon Glyph="&#xE70F;" FontSize="12" />
-                </Button>
             </Grid>
+        </DataTemplate>
+
+        <!-- The character shown on the picker button: class icon and name only (no pencil, no pcid). -->
+        <DataTemplate x:Key="SelectedCharacterTemplate" x:DataType="combo:CharacterOption">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <controls:AssetIcon
+                    Width="28"
+                    Height="28"
+                    IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
+                    Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
+                <TextBlock Text="{x:Bind Name, Mode=OneTime}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
         </DataTemplate>
 
         <!-- One class of the character editor's picker: its icon and its name. -->
@@ -189,19 +189,13 @@
                     <Button Grid.Column="2" x:Uid="Apply/AddSkillButton" VerticalAlignment="Center">
                         <Button.Flyout>
                             <Flyout>
-                                <StackPanel Width="320" Spacing="8">
-                                    <TextBox
-                                        x:Uid="Apply/AddSkillSearch"
-                                        Text="{x:Bind SkillSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                    <ListView
-                                        Tag="{x:Bind}"
-                                        MaxHeight="320"
-                                        ItemsSource="{x:Bind FilteredSkills, Mode=OneWay}"
-                                        ItemTemplate="{StaticResource SkillOptionTemplate}"
-                                        SelectionMode="None"
-                                        IsItemClickEnabled="True"
-                                        ItemClick="AddSkill_ItemClick" />
-                                </StackPanel>
+                                <controls:SearchableList
+                                    Tag="{x:Bind}"
+                                    Width="320"
+                                    ItemsSource="{x:Bind AvailableSkills, Mode=OneWay}"
+                                    ItemTemplate="{StaticResource SkillOptionTemplate}"
+                                    FieldsOf="{x:Bind local:ApplyComboPage.SkillSearchFields, Mode=OneTime}"
+                                    ItemChosen="AddSkill_ItemChosen" />
                             </Flyout>
                         </Button.Flyout>
                     </Button>
@@ -306,27 +300,17 @@
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </Grid>
 
-        <!-- Row 1: the live characters of the active account (name and class icon). Only this list depends on the account. -->
+        <!-- Row 1: the live characters of the active account, as a searchable selector (name and class icon; the pencil edits them). -->
         <StackPanel Grid.Row="1" Spacing="4">
-            <ListView
-                x:Name="CharacterList"
-                SelectionMode="Single"
-                IsItemClickEnabled="False"
-                ScrollViewer.HorizontalScrollMode="Enabled"
-                ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                ScrollViewer.VerticalScrollMode="Disabled"
-                ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                Height="72"
+            <controls:SearchablePicker
+                x:Name="CharacterPicker"
+                MinWidth="320"
+                HorizontalAlignment="Left"
                 ItemsSource="{x:Bind ViewModel.Characters, Mode=OneWay}"
-                SelectedItem="{x:Bind ViewModel.SelectedCharacter, Mode=OneWay}"
                 ItemTemplate="{StaticResource CharacterTemplate}"
-                SelectionChanged="CharacterList_SelectionChanged">
-                <ListView.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <ItemsStackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ListView.ItemsPanel>
-            </ListView>
+                SelectedItem="{x:Bind ViewModel.SelectedCharacter, Mode=OneWay}"
+                SelectedTemplate="{StaticResource SelectedCharacterTemplate}"
+                Chosen="CharacterPicker_Chosen" />
             <TextBlock
                 Text="{x:Bind ViewModel.CharactersMessage, Mode=OneWay}"
                 FontSize="12"
@@ -421,20 +405,31 @@
                 <ColumnDefinition Width="340" />
             </Grid.ColumnDefinitions>
 
-            <!-- Class grid -->
+            <!-- Class grid, with a quick filter above it (the class name in Spanish or English). -->
             <Border
                 CornerRadius="8"
                 BorderThickness="1"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 Padding="10">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Classes, Mode=OneWay}" ItemTemplate="{StaticResource ClassTemplate}">
-                        <ItemsRepeater.Layout>
-                            <UniformGridLayout MinItemWidth="74" MinItemHeight="78" MinRowSpacing="6" MinColumnSpacing="6" />
-                        </ItemsRepeater.Layout>
-                    </ItemsRepeater>
-                </ScrollViewer>
+                <StackPanel Spacing="8">
+                    <TextBox
+                        x:Uid="Apply/ClassSearch"
+                        Text="{x:Bind ViewModel.ClassSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock
+                        x:Uid="Apply/ClassSearchEmpty"
+                        TextWrapping="Wrap"
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Visibility="{x:Bind ViewModel.NoClassMatches, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.FilteredClasses, Mode=OneWay}" ItemTemplate="{StaticResource ClassTemplate}">
+                            <ItemsRepeater.Layout>
+                                <UniformGridLayout MinItemWidth="74" MinItemHeight="78" MinRowSpacing="6" MinColumnSpacing="6" />
+                            </ItemsRepeater.Layout>
+                        </ItemsRepeater>
+                    </ScrollViewer>
+                </StackPanel>
             </Border>
 
             <!-- Combo: buff and combo chains, then the mobility pool -->

@@ -220,15 +220,17 @@ public sealed class PreviewViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Zoom_starts_at_fit_and_never_goes_below_it()
+    public void Zoom_starts_at_the_frame_of_the_slots_and_zooms_out_to_the_whole_screen()
     {
         var vm = Create(Apply());
         vm.SetViewport(1720, 720);
 
-        Assert.Equal(0.5, vm.FitScale, 6);
-        Assert.Equal(0.5, vm.ScreenScale, 6);
+        // The frame of the slots is smaller than the game screen, so it is scaled up to fill the viewport.
+        Assert.Equal(CanvasZoom.FitZoom, vm.Zoom);
+        Assert.Equal(vm.FitScale, vm.ScreenScale, 9);
+        Assert.True(vm.FitScale > CanvasZoom.FitScale(1720, 720, vm.GameWidth, vm.GameHeight));
 
-        vm.ZoomBy(-3);
+        vm.ZoomBy(-40);
         Assert.Equal(CanvasZoom.MinZoom, vm.Zoom);
 
         vm.ZoomBy(2);
@@ -236,7 +238,45 @@ public sealed class PreviewViewModelTests : IDisposable
         Assert.Equal(vm.FitScale * vm.Zoom, vm.ScreenScale, 9);
 
         vm.FitToView();
-        Assert.Equal(CanvasZoom.MinZoom, vm.Zoom);
+        Assert.Equal(CanvasZoom.FitZoom, vm.Zoom);
+    }
+
+    [Fact]
+    public void The_frame_holds_every_drawn_slot_with_a_margin_and_stays_on_the_screen()
+    {
+        var vm = Create(Apply());
+        var frame = vm.Frame;
+
+        foreach (var slot in vm.CooldownSlots.Cast<PanelViewModel>().Concat(vm.QuickSlots))
+        {
+            if (!slot.IsDrawn)
+            {
+                continue;
+            }
+
+            Assert.True(slot.Offset.Left >= frame.Left);
+            Assert.True(slot.Offset.Top >= frame.Top);
+            Assert.True(slot.Offset.Left + slot.Width <= frame.Left + frame.Width);
+            Assert.True(slot.Offset.Top + slot.Height <= frame.Top + frame.Height);
+        }
+
+        Assert.True(frame.Left >= 0 && frame.Top >= 0);
+        Assert.True(frame.Left + frame.Width <= vm.GameWidth);
+        Assert.True(frame.Top + frame.Height <= vm.GameHeight);
+        Assert.True(frame.Width < vm.GameWidth, "the slots do not cover the whole screen, so the frame is smaller");
+    }
+
+    [Fact]
+    public void Fit_to_slots_and_a_new_layout_ask_the_view_to_move_to_the_frame()
+    {
+        var vm = Create(Apply());
+        var requests = 0;
+        vm.FrameRequested += (_, _) => requests++;
+
+        vm.FitToView();
+        vm.SelectLayout(GameUiLayoutId.Preset1);
+
+        Assert.Equal(2, requests);
     }
 
     [Fact]

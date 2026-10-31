@@ -1,4 +1,5 @@
 using System.Globalization;
+using BdoComboSetup.Core.Demo;
 using BdoComboSetup.Core.Game;
 
 namespace BdoComboSetup.Services;
@@ -22,7 +23,9 @@ public sealed record StartupOptions(
     bool DemoReview = false,
     bool CooldownDemo = false,
     double? Zoom = null,
-    bool DemoWriteHint = false)
+    bool DemoWriteHint = false,
+    int DemoCharacters = 0,
+    bool DemoCharacterPicker = false)
 {
     public const string ApplyPage = "apply";
     public const string PreviewPage = "preview";
@@ -42,6 +45,8 @@ public sealed record StartupOptions(
         var cooldownDemo = false;
         var demoWriteHint = false;
         double? zoom = null;
+        var demoCharacters = 0;
+        var demoCharacterPicker = false;
         for (var i = 1; i < args.Count; i++)
         {
             switch (args[i])
@@ -86,10 +91,34 @@ public sealed record StartupOptions(
                     demoReview = true;
                     demoWriteHint = true;
                     break;
+                case "--demo-characters" when i + 1 < args.Count:
+                    demoData = true;
+                    demoCharacters = int.TryParse(args[i + 1], NumberStyles.None, CultureInfo.InvariantCulture, out var count)
+                        && count is >= 0 and <= DemoGameFiles.MaxCrowd
+                        ? count
+                        : 0;
+                    i++;
+                    break;
+                case "--demo-character-picker":
+                    demoData = true;
+                    demoCharacterPicker = true;
+                    break;
             }
         }
 
-        return new StartupOptions(page, layout, showHiddenSlots, applyClass, applySpec, demoData, demoReview, cooldownDemo, zoom, demoWriteHint);
+        return new StartupOptions(
+            page,
+            layout,
+            showHiddenSlots,
+            applyClass,
+            applySpec,
+            demoData,
+            demoReview,
+            cooldownDemo,
+            zoom,
+            demoWriteHint,
+            demoCharacters,
+            demoCharacterPicker);
     }
 
     private static string ParsePage(string text) => text.ToLowerInvariant() switch

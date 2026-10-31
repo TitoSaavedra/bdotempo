@@ -34,8 +34,6 @@ public sealed partial class ComboChainViewModel : ObservableObject
         _localizer = localizer;
 
         Steps = new ObservableCollection<ComboStepViewModel>(steps);
-        FilteredSkills = new ObservableCollection<SkillOption>();
-        RefreshFilter();
         RenumberSteps();
 
         // Subscribed after the first fill, so building a chain is not counted as an edit.
@@ -60,13 +58,8 @@ public sealed partial class ComboChainViewModel : ObservableObject
         ? _localizer.Get("Apply.StepCountOne")
         : _localizer.Format("Apply.StepCountMany", Steps.Count.ToString(CultureInfo.InvariantCulture));
 
-    /// <summary>The "Add skill" list, filtered by <see cref="SkillSearch"/>.</summary>
-    public ObservableCollection<SkillOption> FilteredSkills { get; }
-
-    [ObservableProperty]
-    private string _skillSearch = string.Empty;
-
-    partial void OnSkillSearchChanged(string value) => RefreshFilter();
+    /// <summary>Every skill the "Add skill" picker can add. The picker filters it with the shared search (name and number).</summary>
+    public IReadOnlyList<SkillOption> AvailableSkills => _availableSkills;
 
     /// <summary>Adds a skill the user chose at the end of this chain.</summary>
     [RelayCommand]
@@ -78,7 +71,6 @@ public sealed partial class ComboChainViewModel : ObservableObject
         }
 
         _owner.AddSkill(this, option);
-        SkillSearch = string.Empty;
     }
 
     internal void RenumberSteps()
@@ -98,18 +90,4 @@ public sealed partial class ComboChainViewModel : ObservableObject
         _owner.NotifyStepsChanged();
     }
 
-    private void RefreshFilter()
-    {
-        var query = SkillSearch.Trim();
-        FilteredSkills.Clear();
-        foreach (var option in _availableSkills)
-        {
-            if (query.Length == 0
-                || option.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || option.SkillNo.ToString(CultureInfo.InvariantCulture).Contains(query, StringComparison.Ordinal))
-            {
-                FilteredSkills.Add(option);
-            }
-        }
-    }
 }

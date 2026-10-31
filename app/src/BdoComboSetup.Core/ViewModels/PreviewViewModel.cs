@@ -21,11 +21,14 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
     /// <summary>Game size used when GameOption.txt cannot be read.</summary>
     public const double FallbackGameHeight = 1080;
 
-    /// <summary>Debug cooldown: the dark sweep covers this fraction of the slot.</summary>
+    /// <summary>Debug cooldown: the remaining part of the sweep is this fraction of the cooldown.</summary>
     public const double DemoCooldownRatio = 0.6;
 
-    /// <summary>Number drawn on the debug cooldown.</summary>
-    public const string DemoCooldownText = "12";
+    /// <summary>Debug cooldown: seconds left (60% of a 20 second cooldown), drawn as text on the slot.</summary>
+    public const int DemoCooldownSeconds = 12;
+
+    /// <summary>Game pixels of empty space kept around the slots in the frame the preview opens on.</summary>
+    public const double FrameMargin = 12;
 
     private readonly IPreviewSlotSource _slots;
     private readonly ILocalizer _localizer;
@@ -34,6 +37,8 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
     private readonly AppSettingsStore _settings;
     private GameUiLayoutId _layoutId;
     private int _missingPanelCount;
+    private double _viewportWidth;
+    private double _viewportHeight;
     private bool _disposed;
 
     public PreviewViewModel(
@@ -66,7 +71,7 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         _layoutId = startup.Layout ?? ParseLayout(settings.Settings.SelectedLayout) ?? GameUiLayoutId.General;
         _showHiddenSlots = startup.ShowHiddenSlots;
         _cooldownDemo = startup.CooldownDemo;
-        _zoom = CanvasZoom.ClampZoom(startup.Zoom ?? CanvasZoom.MinZoom);
+        _zoom = CanvasZoom.ClampZoom(startup.Zoom ?? CanvasZoom.FitZoom);
 
         CooldownSlots = new ObservableCollection<SlotViewModel>(
             Enumerable.Range(1, SlotAssignment.CooldownSlotCount)
@@ -120,15 +125,30 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>Set by the mouse wheel and the zoom button. 1 = fit to the window.</summary>
+    /// <summary>
+    /// Set by the mouse wheel and the fit button. 1 = fit: the frame of the slots fills the viewport; below 1 the whole
+    /// game screen comes into view.
+    /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ScreenScale), nameof(ZoomText))]
-    private double _zoom = CanvasZoom.MinZoom;
+    private double _zoom = CanvasZoom.FitZoom;
 
-    /// <summary>Scale at which the whole game screen fits the viewport. Set by the view.</summary>
+    /// <summary>Scale at which the frame of the slots fits the viewport. Recomputed when the viewport or the frame changes.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ScreenScale), nameof(ZoomText))]
     private double _fitScale = 1;
+
+    /// <summary>
+    /// The area of the game screen that holds the drawn slots, with a margin, in game pixels. The preview opens on it, so
+    /// the slots are as large as the viewport allows. Empty layouts frame the whole screen.
+    /// </summary>
+    public SlotFrame Frame { get; private set; }
+
+    /// <summary>True once the view has reported a viewport with a size (until then the fit is not known).</summary>
+    public bool ViewportKnown => _viewportWidth > 0 && _viewportHeight > 0;
+
+    /// <summary>Raised when the view should move the scroll position to <see cref="Frame"/> (the fit button, a new layout).</summary>
+    public event EventHandler? FrameRequested;
 
     /// <summary>The scale of the canvas on screen: fit times zoom. The view applies it as a render transform.</summary>
     public double ScreenScale => FitScale * Zoom;
@@ -186,12 +206,15 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         Recompute();
         OnPropertyChanged(nameof(SelectedLayout));
         OnPropertyChanged(nameof(SelectedLayoutOption));
+        FrameRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>The view reports its viewport size; the fit scale follows it.</summary>
     public void SetViewport(double width, double height)
     {
-        FitScale = CanvasZoom.FitScale(width, height, GameWidth, GameHeight);
+        _viewportWidth = width;
+        _viewportHeight = height;
+        UpdateFitScale();
     }
 
     /// <summary>Zooms by mouse-wheel notches (positive zooms in). Never below fit.</summary>
@@ -208,11 +231,12 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>Back to fit: the whole game screen in the window.</summary>
+    /// <summary>Back to fit: the slots fill the window (the frame of the slots, not the whole game screen).</summary>
     public void FitToView()
     {
-        Zoom = CanvasZoom.MinZoom;
-        _logger.Debug("preview.zoom.fit", "Fit to the window");
+        Zoom = CanvasZoom.FitZoom;
+        _logger.Debug("preview.zoom.fit", "Fit to the slots");
+        FrameRequested?.Invoke(this, EventArgs.Empty);
     }
 
     public void Dispose()
@@ -265,6 +289,7 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         }
 
         _missingPanelCount = missing.Count;
+        UpdateFrame();
         if (missing.Count > 0)
         {
             _logger.Warn("preview.layout.panels_missing", "Some slot panels have no row in this layout and are not drawn", new Dictionary<string, object?>
@@ -301,8 +326,23 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
             return;
         }
 
-        CooldownSlots.FirstOrDefault(slot => slot.HasSkill)?.SetCooldownDemo(DemoCooldownRatio, DemoCooldownText);
+        CooldownSlots.FirstOrDefault(slot => slot.HasSkill)?.SetCooldownDemo(
+            DemoCooldownRatio,
+            CooldownTimeText.Format(DemoCooldownSeconds, _localizer));
     }
+
+    /// <summary>Recomputes the frame of the slots from the panels that are drawn, and the fit that goes with it.</summary>
+    private void UpdateFrame()
+    {
+        var drawn = AllPanels()
+            .Where(panel => panel.IsDrawn)
+            .Select(panel => new SlotFrame(panel.Offset.Left, panel.Offset.Top, panel.Width, panel.Height));
+        Frame = SlotFrame.Around(drawn, FrameMargin, GameWidth, GameHeight);
+        UpdateFitScale();
+        OnPropertyChanged(nameof(Frame));
+    }
+
+    private void UpdateFitScale() => FitScale = CanvasZoom.FitScale(_viewportWidth, _viewportHeight, Frame.Width, Frame.Height);
 
     private IEnumerable<PanelViewModel> AllPanels() => CooldownSlots.Cast<PanelViewModel>().Concat(QuickSlots);
 
@@ -316,6 +356,8 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         {
             panel.UpdateVisibility(value);
         }
+
+        UpdateFrame();
 
         _logger.Info("preview.show_hidden.changed", "Hidden slots shown or hidden", new Dictionary<string, object?>
         {

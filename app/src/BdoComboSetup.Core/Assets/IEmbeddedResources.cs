@@ -33,4 +33,12 @@ public static class BundleResourceNames
     public static string SkillIcon(int skillNo) => $"skill-{skillNo.ToString(CultureInfo.InvariantCulture)}.png";
 
     public static string ClassIcon(int classType) => $"class-{classType.ToString(CultureInfo.InvariantCulture)}.png";
+
+    /// <summary>The bundle file of a slot art. The names are fixed: the bundle builder writes them under the same names.</summary>
+    public static string SlotArtFile(SlotArt art) => art switch
+    {
+        SlotArt.QuickSlotBackground => "slot-quickslot-bg.png",
+        SlotArt.CooldownSweep => "slot-cooldown-sweep.png",
+        _ => throw new ArgumentOutOfRangeException(nameof(art), art, "Unknown slot art."),
+    };
 }

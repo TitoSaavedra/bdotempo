@@ -8,6 +8,7 @@ using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Localization;
 using BdoComboSetup.Core.Logging;
 using BdoComboSetup.Core.Operations;
+using BdoComboSetup.Core.Search;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -84,8 +85,10 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         Classes = new ObservableCollection<ClassOptionViewModel>(
             catalog.Classes.Select(info => new ClassOptionViewModel(info, culture, assets, option => SelectClassAsync(option))));
         ClassChoices = catalog.Classes
-            .Select(info => new ClassChoice(info.ClassType, info.Name.For(culture), () => assets.OpenClassIcon(info.ClassType)))
+            .Select(info => new ClassChoice(info.ClassType, info.Name.For(culture), () => assets.OpenClassIcon(info.ClassType), info.Name))
             .ToList();
+        FilteredClasses = new ObservableCollection<ClassOptionViewModel>();
+        RefreshClassFilter();
         Specs = new ObservableCollection<SpecOptionViewModel>();
         ReviewLines = new ObservableCollection<string>();
     }
@@ -112,6 +115,42 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 
     /// <summary>Every class that has a guide, in classType order.</summary>
     public ObservableCollection<ClassOptionViewModel> Classes { get; }
+
+    /// <summary>The class grid's quick filter text. Matches the class name in Spanish or English.</summary>
+    [ObservableProperty]
+    private string _classSearchText = string.Empty;
+
+    /// <summary>The classes that match <see cref="ClassSearchText"/>, in classType order (the grid shows these).</summary>
+    public ObservableCollection<ClassOptionViewModel> FilteredClasses { get; }
+
+    partial void OnClassSearchTextChanged(string value) => RefreshClassFilter();
+
+    /// <summary>True when the class grid's search matches no class (the grid shows the empty-state text).</summary>
+    public bool NoClassMatches => FilteredClasses.Count == 0;
+
+    private void RefreshClassFilter()
+    {
+        FilteredClasses.Clear();
+        foreach (var option in SearchText.Filter(Classes, ClassSearchText, option => SearchFields.ForClass(option.Info)))
+        {
+            FilteredClasses.Add(option);
+        }
+
+        OnPropertyChanged(nameof(NoClassMatches));
+    }
+
+    /// <summary>
+    /// The texts a character is searched by: its name and its class in both languages. The class comes from the catalog,
+    /// so the search finds "Tamer" and "Domadora" alike whatever the UI language is.
+    /// </summary>
+    public IEnumerable<string?> CharacterSearchTexts(CharacterOption character)
+    {
+        ArgumentNullException.ThrowIfNull(character);
+        var classInfo = character.ClassType is int classType
+            ? Classes.FirstOrDefault(option => option.ClassType == classType)?.Info
+            : null;
+        return SearchFields.ForCharacter(character, classInfo);
+    }
 
     /// <summary>The specs of the selected class. Each one has its own guide.</summary>
     public ObservableCollection<SpecOptionViewModel> Specs { get; }
@@ -886,4 +925,4 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 }
 
 /// <summary>A class in the character editor's picker: its id, its name in the page language, and its icon.</summary>
-public sealed record ClassChoice(int ClassType, string Name, Func<Stream?> OpenIcon);
+public sealed record ClassChoice(int ClassType, string Name, Func<Stream?> OpenIcon, BilingualText Names);

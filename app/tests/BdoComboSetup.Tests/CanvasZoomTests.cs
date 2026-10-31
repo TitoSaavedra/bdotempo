@@ -23,7 +23,7 @@ public sealed class CanvasZoomTests
     [Fact]
     public void Zoom_never_goes_below_fit_or_above_the_maximum()
     {
-        Assert.Equal(CanvasZoom.MinZoom, CanvasZoom.ClampZoom(0.2));
+        Assert.Equal(CanvasZoom.MinZoom, CanvasZoom.ClampZoom(0.01));
         Assert.Equal(CanvasZoom.MaxZoom, CanvasZoom.ClampZoom(100));
         Assert.Equal(CanvasZoom.MinZoom, CanvasZoom.ClampZoom(double.NaN));
         Assert.Equal(CanvasZoom.MinZoom, CanvasZoom.Step(CanvasZoom.MinZoom, -5));

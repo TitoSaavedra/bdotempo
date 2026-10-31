@@ -53,6 +53,17 @@ public sealed class BundledAssetProvider(IEmbeddedResources resources, IconCatal
         return null;
     }
 
+    public Stream? OpenSlotArt(SlotArt art)
+    {
+        var embedded = _resources.Open(BundleResourceNames.SlotArtFile(art));
+        _logger.Debug("asset.slot_art.resolved", "Slot art resolved", new Dictionary<string, object?>
+        {
+            ["art"] = art.ToString(),
+            ["source"] = embedded is null ? "none" : "embedded",
+        });
+        return embedded;
+    }
+
     private void LogSource(string kind, int number, string source) =>
         _logger.Debug("asset.icon.resolved", "Icon resolved", new Dictionary<string, object?>
         {
