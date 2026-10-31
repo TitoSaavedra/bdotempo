@@ -36,7 +36,7 @@ Common options (CLI flag, or the environment variable in brackets):
 | `--data-dir` [`BDO_DATA_DIR`] | `C:\Users\TitoS\OneDrive\Documentos\Black Desert` |
 | `--account` [`BDO_ACCOUNT`] | auto-detected (see below) |
 | `--skills-json` [`BDO_SKILLS_JSON`] | `D:\extracted_bdo\class_skills.json` |
-| `--backups-dir` [`BDO_BACKUPS_DIR`] | `backups/` in this repo |
+| `--backups-dir` [`BDO_BACKUPS_DIR`] | `_backups` inside the data folder (`<data-dir>\_backups`) |
 | `--log-file` [`BDO_LOG_FILE`] | none (logs always go to stderr) |
 | `--verbose` | off (adds debug logs and unchanged entries to the diff) |
 
@@ -96,20 +96,30 @@ It exits non-zero on any mismatch.
 - `apply` is a dry run unless `--write` is given. `--dry-run` is accepted and
   is the default. Applying to every character is not allowed: `--pcid` is
   required.
-- With `--write`, a backup of the targeted files is taken first, into
-  `backups/<UTC timestamp>/` with a `manifest.json` (tool version, account,
+- Backups go to `_backups` inside the Black Desert data folder, as
+  `_backups\<UTC timestamp>\` with a `manifest.json` (tool version, account,
   reason, SHA-256 of each original). Backup folders are never overwritten.
+- No game file is written without a verified backup. With `--write`, each
+  backup copy is read back and its SHA-256 compared with the original, then
+  the manifest is re-checked. If anything fails, the partial backup folder is
+  removed, the command exits with code 1 and nothing is written.
+- A game file is replaced only if its backup copy is intact and matches the
+  file's current bytes. A file the game changed after the backup is refused.
 - Writes are refused while `BlackDesert64.exe` is running and the file was
   modified in the last 10 seconds (the game rewrites it). `--force` overrides
   this.
 - After writing, the file is read back and validated (only the two sections
-  changed, 20 slots, no duplicate memos, CRLF kept). On failure the original
-  is restored from the backup and the command exits with code 3.
+  changed, 20 slots, no duplicate memos, CRLF kept). On failure the bad
+  content is backed up (`pre-rollback`), the original is restored from the
+  backup and the command exits with code 3.
 - `restore` is a dry run unless `--write`. Before restoring, it takes a
   `pre-restore` backup of the current files, and it applies the same game
   guard.
-- Exit codes: 0 success, 1 error or refusal (including a validation mismatch),
-  3 post-write validation failed and the original was restored.
+- Backups kept in the old `backups/` folder of this repo are not used any
+  more. To restore one, copy its folder into `_backups` first.
+- Exit codes: 0 success, 1 error or refusal (including a validation mismatch
+  and a backup that could not be made or verified), 3 post-write validation
+  failed and the original was restored.
 
 ## Logs
 

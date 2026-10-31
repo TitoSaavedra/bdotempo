@@ -13,6 +13,7 @@ from support import (
     PCID_B,
     CharacterFixture,
     combo_document,
+    corrupting_copy,
     entry,
     game_file_text,
     game_not_running,
@@ -162,6 +163,68 @@ class ApplyCliTest(unittest.TestCase):
         code, _, err = run_cli(["apply", "--combo", str(self.combo), "--pcid", PCID_B, *self.fx.cli_args()])
         self.assertEqual(1, code)
         self.assertIn("not found", err)
+
+    def test_failed_backup_aborts_with_nothing_written(self) -> None:
+        with game_not_running(), mock.patch.object(backup, "_write_copy", side_effect=corrupting_copy), \
+                mock.patch.object(backup, "atomic_write") as write:
+            code, _, err = run_cli(self.apply_args("--write"))
+        self.assertEqual(1, code)
+        self.assertIn("nothing was written", err)
+        write.assert_not_called()
+        self.assertEqual(self.original, self.path.read_bytes())
+        self.assertEqual([], list(self.fx.backups_dir.iterdir()))
+
+    def test_backup_io_error_aborts_with_nothing_written(self) -> None:
+        with game_not_running(), mock.patch.object(backup, "_write_copy", side_effect=OSError("disk full")), \
+                mock.patch.object(backup, "atomic_write") as write:
+            code, _, err = run_cli(self.apply_args("--write"))
+        self.assertEqual(1, code)
+        self.assertIn("cannot write backup copy", err)
+        write.assert_not_called()
+        self.assertEqual(self.original, self.path.read_bytes())
+
+    def test_unwritable_backups_folder_aborts_with_nothing_written(self) -> None:
+        blocker = self.root / "blocker"
+        blocker.write_bytes(b"a file, not a folder")
+        self.fx.backups_dir = blocker / "_backups"
+        with game_not_running(), mock.patch.object(backup, "atomic_write") as write:
+            code, _, err = run_cli(self.apply_args("--write"))
+        self.assertEqual(1, code)
+        self.assertIn("cannot create the backups folder", err)
+        write.assert_not_called()
+        self.assertEqual(self.original, self.path.read_bytes())
+
+    def test_rollback_backs_up_the_bad_content_before_restoring(self) -> None:
+        real_write = backup.atomic_write
+        calls: list[int] = []
+
+        def corrupt_first_write(path, data):
+            if not calls:
+                calls.append(1)
+                real_write(path, data + b"X")
+                return
+            real_write(path, data)
+
+        with game_not_running(), mock.patch.object(backup, "atomic_write", side_effect=corrupt_first_write):
+            code, _, _ = run_cli(self.apply_args("--write"))
+        self.assertEqual(3, code)
+        self.assertEqual(self.original, self.path.read_bytes())
+        reasons = sorted(json.loads((f / "manifest.json").read_text(encoding="utf-8"))["reason"]
+                         for f in self.fx.backups_dir.iterdir())
+        self.assertEqual(["pre-apply", "pre-rollback"], reasons)
+
+    def test_failed_rollback_reports_the_backup_to_use(self) -> None:
+        real_write = backup.atomic_write
+
+        def corrupt_write(path, data):
+            real_write(path, data + b"X")
+
+        with game_not_running(), mock.patch.object(backup, "atomic_write", side_effect=corrupt_write), \
+                mock.patch.object(backup, "restore_file", side_effect=ToolError("disk gone")):
+            code, _, err = run_cli(self.apply_args("--write"))
+        self.assertEqual(3, code)
+        self.assertIn("the rollback failed (disk gone)", err)
+        self.assertIn("the original is in backup", err)
 
 
 class ValidateCliTest(unittest.TestCase):

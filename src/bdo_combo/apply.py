@@ -497,7 +497,12 @@ def run_apply(
                 print(f"PCID {result.pcid}: already identical, not written")
                 continue
             with log.span("apply.write", pcid=result.pcid):
-                backup.atomic_write(result.path, result.new_bytes)
+                try:
+                    backup.write_game_file(
+                        result.path, result.new_bytes, guard=backup_dir, account=account, pcid=result.pcid
+                    )
+                except ToolError as exc:
+                    raise ToolError(f"{exc}; the backup taken before writing is {backup_dir}") from exc
                 written = result.path.read_bytes()
                 if written != result.new_bytes:
                     problems = ["file on disk differs from the computed result"]
@@ -511,10 +516,26 @@ def run_apply(
                 if problems:
                     for problem in problems:
                         log.error("post-write validation failed", pcid=result.pcid, problem=problem, exc_info=False)
-                    backup.restore_file(backup_dir, account, result.pcid, result.path)
-                    raise PostWriteValidationError(
-                        f"post-write validation failed for PCID {result.pcid}; "
-                        "the original file was restored from the backup"
-                    )
+                    message = f"post-write validation failed for PCID {result.pcid}"
+                    try:
+                        _roll_back(result, backup_dir, account, settings.backups_dir)
+                    except ToolError as exc:
+                        log.error("rollback failed", pcid=result.pcid, error=str(exc))
+                        raise PostWriteValidationError(
+                            f"{message} and the rollback failed ({exc}); the original is in backup {backup_dir}"
+                        ) from exc
+                    raise PostWriteValidationError(f"{message}; the original file was restored from the backup")
                 print(f"PCID {result.pcid}: written and validated")
     return EXIT_OK
+
+
+def _roll_back(result: CharacterResult, backup_dir: Path, account: str, backups_dir: Path) -> None:
+    """Put the original bytes back. The bad content is backed up first, like any other write."""
+    with log.span("apply.rollback", pcid=result.pcid):
+        pre = backup.create_backup(
+            [backup.BackupTarget(result.pcid, result.path)],
+            account=account,
+            backups_dir=backups_dir,
+            reason="pre-rollback",
+        )
+        backup.restore_file(backup_dir, account, result.pcid, result.path, guard=pre)
