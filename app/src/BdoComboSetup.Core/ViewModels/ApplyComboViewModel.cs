@@ -164,18 +164,27 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     private CharacterOption? _selectedCharacter;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ClassName))]
+    [NotifyPropertyChangedFor(nameof(ClassName), nameof(HasSelectedClass), nameof(NeedsGuideChoice))]
     [NotifyCanExecuteChangedFor(nameof(ApplyCommand), nameof(DryRunCommand))]
     private ClassOptionViewModel? _selectedClass;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SpecName))]
+    [NotifyPropertyChangedFor(nameof(SpecName), nameof(NeedsGuideChoice))]
     [NotifyCanExecuteChangedFor(nameof(ApplyCommand), nameof(DryRunCommand))]
     private SpecOptionViewModel? _selectedSpec;
 
+    /// <summary>True when a class is picked (its guide choices are shown, and the class tile is highlighted).</summary>
+    public bool HasSelectedClass => SelectedClass is not null;
+
+    /// <summary>
+    /// True when a class is picked but no guide is loaded yet: the page asks the user to choose one of the class's guides.
+    /// A class with a single guide never gets here, because that guide is loaded at once.
+    /// </summary>
+    public bool NeedsGuideChoice => SelectedClass is not null && Editor is null;
+
     /// <summary>The working copy of the selected guide. Null while loading or when the catalog has no guide for it.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasEditor), nameof(IsGuideMissing), nameof(ProfileStateText), nameof(CanRun))]
+    [NotifyPropertyChangedFor(nameof(HasEditor), nameof(IsGuideMissing), nameof(ProfileStateText), nameof(CanRun), nameof(NeedsGuideChoice))]
     [NotifyCanExecuteChangedFor(nameof(ApplyCommand), nameof(DryRunCommand), nameof(SaveProfileCommand), nameof(RestoreBaseCommand))]
     private ComboEditorViewModel? _editor;
 
@@ -538,8 +547,18 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 
     private bool CanCancelReview() => IsReviewOpen && !IsBusy;
 
+    /// <summary>
+    /// Picks a class. The class's guide choices (its specs) are listed as pills; no guide is loaded until the user picks one.
+    /// The exceptions are a startup spec that the class has, and a class with a single guide, which is loaded at once. Picking
+    /// another class clears the loaded guide. Picking the class that is already picked keeps its guide.
+    /// </summary>
     private async Task SelectClassAsync(ClassOptionViewModel option, string? preferredSpecId = null)
     {
+        if (ReferenceEquals(option, SelectedClass) && preferredSpecId is null)
+        {
+            return;
+        }
+
         foreach (var item in Classes)
         {
             item.IsSelected = ReferenceEquals(item, option);
@@ -552,13 +571,16 @@ public sealed partial class ApplyComboViewModel : ObservableObject
             Specs.Add(new SpecOptionViewModel(info, _culture, spec => SelectSpecAsync(spec)));
         }
 
-        var spec = Specs.FirstOrDefault(item => string.Equals(item.Id, preferredSpecId, StringComparison.Ordinal)) ?? Specs.FirstOrDefault();
+        var spec = Specs.FirstOrDefault(item => string.Equals(item.Id, preferredSpecId, StringComparison.Ordinal))
+            ?? (Specs.Count == 1 ? Specs[0] : null);
         SetSelectedSpec(spec);
         _logger.Info("apply.class.selected", "Class selected", new Dictionary<string, object?>
         {
             ["class_type"] = option.ClassType,
             ["specs"] = Specs.Count,
+            ["guide_loaded"] = spec is not null,
         });
+        // With no spec chosen this clears the working copy: the user picks one of the guides (see NeedsGuideChoice).
         await LoadEditorAsync();
     }
 

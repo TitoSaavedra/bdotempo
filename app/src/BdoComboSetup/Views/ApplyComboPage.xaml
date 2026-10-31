@@ -438,7 +438,15 @@
                     <StackPanel
                         Spacing="8"
                         Visibility="{x:Bind ViewModel.HasEditor, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-                        <TextBlock x:Uid="Apply/EmptyTitle" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        <!-- No class yet: choose a class and a guide. A class is picked but no guide: choose one of its guides (the pills above). -->
+                        <TextBlock
+                            x:Uid="Apply/EmptyTitle"
+                            Style="{ThemeResource SubtitleTextBlockStyle}"
+                            Visibility="{x:Bind ViewModel.HasSelectedClass, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                        <TextBlock
+                            x:Uid="Apply/GuideChoiceTitle"
+                            Style="{ThemeResource SubtitleTextBlockStyle}"
+                            Visibility="{x:Bind ViewModel.NeedsGuideChoice, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         <TextBlock
                             x:Uid="Apply/EmptyBody"
                             TextWrapping="Wrap"
