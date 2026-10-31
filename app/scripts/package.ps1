@@ -85,6 +85,37 @@ function New-Portable {
     Write-Host "Written $zip"
 }
 
+# Inno Setup records where it is installed in the Uninstall keys (per machine, 32-bit view, per user). winget installs
+# that way too, into a folder of its own choice, so the standard folders alone do not find it.
+function Find-IsccInRegistry {
+    $roots = @(
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',
+        'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall',
+        'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+    )
+    foreach ($root in $roots) {
+        if (-not (Test-Path -LiteralPath $root)) {
+            continue
+        }
+        foreach ($key in Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue) {
+            $entry = Get-ItemProperty -LiteralPath $key.PSPath -ErrorAction SilentlyContinue
+            if (-not $entry -or $entry.DisplayName -notlike 'Inno Setup*') {
+                continue
+            }
+            if ($entry.InstallLocation) {
+                Join-Path $entry.InstallLocation.TrimEnd('\') 'ISCC.exe'
+            }
+            if ($entry.UninstallString) {
+                # The uninstaller sits next to the compiler: "C:\...\Inno Setup 6\unins000.exe" (quoted, maybe with arguments).
+                $uninstaller = [regex]::Match([string]$entry.UninstallString, '^\s*"?([^"]+?\.exe)"?').Groups[1].Value
+                if ($uninstaller) {
+                    Join-Path (Split-Path -Parent $uninstaller) 'ISCC.exe'
+                }
+            }
+        }
+    }
+}
+
 function Find-Iscc {
     $candidates = New-Object System.Collections.Generic.List[string]
     if ($env:INNO_SETUP_COMPILER) {
@@ -98,6 +129,9 @@ function Find-Iscc {
         if ($root) {
             $candidates.Add((Join-Path $root 'Inno Setup 6\ISCC.exe'))
         }
+    }
+    foreach ($registered in @(Find-IsccInRegistry)) {
+        $candidates.Add($registered)
     }
     foreach ($candidate in $candidates) {
         if ($candidate -and (Test-Path -LiteralPath $candidate -PathType Leaf)) {
