@@ -112,29 +112,41 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasUnsavedChanges;
 
-    /// <summary>The cooldown slot of the selected step, as the ComboBox sees it. Setting it applies the swap rule.</summary>
+    /// <summary>
+    /// The cooldown slot of the selected step, as the ComboBox sees it. Setting it applies the swap rule. The ComboBox two-way
+    /// binding writes back what it shows, so a write is applied only when it is a real choice (a null is the ComboBox having no
+    /// item yet, and "none" is an item of its own) and the value differs: otherwise the change notification would set the
+    /// ComboBox again and loop.
+    /// </summary>
     public SlotOption? SelectedCooldownOption
     {
         get => SelectedStep is null ? null : CooldownOptions.First(option => option.Slot == SelectedStep.CooldownSlot);
         set
         {
-            if (SelectedStep is { } step)
+            if (value is null || SelectedStep is not { } step || value.Slot == step.CooldownSlot)
             {
-                AssignCooldown(step, value?.Slot);
+                return;
             }
+
+            AssignCooldown(step, value.Slot);
         }
     }
 
-    /// <summary>The quick position of the selected step, as the ComboBox sees it. Setting it applies the swap rule.</summary>
+    /// <summary>
+    /// The quick position of the selected step, as the ComboBox sees it. Setting it applies the swap rule. Same write-back
+    /// rule as <see cref="SelectedCooldownOption"/>: null and an unchanged value are ignored.
+    /// </summary>
     public SlotOption? SelectedQuickOption
     {
         get => SelectedStep is null ? null : QuickOptions.First(option => option.Slot == SelectedStep.QuickPosition);
         set
         {
-            if (SelectedStep is { } step)
+            if (value is null || SelectedStep is not { } step || value.Slot == step.QuickPosition)
             {
-                AssignQuick(step, value?.Slot);
+                return;
             }
+
+            AssignQuick(step, value.Slot);
         }
     }
 
