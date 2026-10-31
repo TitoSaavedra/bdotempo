@@ -1,6 +1,6 @@
-"""Builds the asset bundle the app embeds: only what the combo guides reference.
+"""Builds the staging folder of the asset pack: only what the combo guides reference, plus the skill class table.
 
-Output folder (flat, so each file is an EmbeddedResource with the same name):
+Output folder, the JSON staging of the asset pack (flat: each file becomes one pack entry with the same name):
 
 * ``catalog.json``: the combo catalog (copy of ``<combos>/catalog.json``).
 * ``guide-<class>.<spec>.json``: one per guide, copied from ``<combos>/guides``.
@@ -9,7 +9,7 @@ Output folder (flat, so each file is an EmbeddedResource with the same name):
   for every skill that ``<combos>/tooltips.json`` has (cooldown, cost, damage, PvP and features).
 * ``skill-<skillNo>.png``: the skill icons, copied as they are (the client icons are 40 to 50 px).
 * ``class-<classType>.png``: the 32 class icons.
-* ``skill_classes.json``: skill number -> classes that can use it (see ``skill_classes.py``), when a skill table is given.
+* ``skill_classes.json``: skill number -> classes that can use it (see ``skill_classes.py``), built from the skill table.
 
 Icons larger than 64 px are refused: there is no image library in the standard library to
 resize them. A referenced skill without an icon in the client export is reported and left out;

@@ -23,7 +23,7 @@ DEFAULT_CLIENT_DIR = Path(r"D:\extracted_bdo\client")
 DEFAULT_COMBOS_DIR = REPO_ROOT / "data" / "combos"
 DEFAULT_REPORT = REPO_ROOT / "reports" / "unresolved_skills.txt"
 DEFAULT_KINDS_REPORT = REPO_ROOT / "reports" / "chain_kinds.txt"
-DEFAULT_BUNDLE_DIR = REPO_ROOT / "app" / "src" / "BdoComboSetup" / "Assets" / "generated"
+DEFAULT_BUNDLE_DIR = REPO_ROOT / "data" / "asset-staging"
 DEFAULT_SKILL_TABLE = Path(r"D:\extracted_bdo\class_skills.json")
 
 
@@ -38,10 +38,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--report", type=Path, default=None, help="unresolved skills report (default reports/unresolved_skills.txt)")
     p.add_argument("--kinds-report", type=Path, default=None, help="chain kinds report (default reports/chain_kinds.txt)")
 
-    p = sub.add_parser("bundle", help="copy the referenced icons and JSON into the app's Assets/generated folder")
+    p = sub.add_parser("bundle", help="write the JSON staging bundle (input of the asset pack, not embedded directly)")
     p.add_argument("--combos-dir", type=Path, default=None, help="output folder of import (default data/combos)")
     p.add_argument("--client-dir", type=Path, default=None, help="client export folder (env BDO_CLIENT_DIR)")
-    p.add_argument("--out-dir", type=Path, default=None, help="bundle folder (default app/src/BdoComboSetup/Assets/generated)")
+    p.add_argument("--out-dir", type=Path, default=None, help="staging folder (default data/asset-staging)")
     p.add_argument("--skill-table", type=Path, default=None, help="Scrappers class_skills.json (default: the file in the extracted_bdo folder on D:)")
 
     for command in sub.choices.values():

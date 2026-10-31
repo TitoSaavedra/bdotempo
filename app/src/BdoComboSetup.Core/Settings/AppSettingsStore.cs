@@ -10,21 +10,11 @@ namespace BdoComboSetup.Core.Settings;
 /// </summary>
 public sealed record AppSettings
 {
-    /// <summary>Default icon root: the skill and class icons exported by the Scrappers project. Configurable.</summary>
-    public const string DefaultSkillIconRoot = @"X:\Github\Personal\Scrappers\output";
-
-    /// <summary>Fallback icon root: the bdoclasshub pages downloaded by the scraper. Configurable.</summary>
-    public const string DefaultClassHubRoot = @"X:\Github\Personal\bdo-combo-setup\data\classhub\classes";
-
     /// <summary>Default Black Desert data folder (the one that holds UserCache and _backups).</summary>
     public const string DefaultGameDataRoot = @"C:\Users\TitoS\OneDrive\Documentos\Black Desert";
 
     /// <summary>Default skill table, exported by the Scrappers project.</summary>
     public const string DefaultSkillsJsonPath = @"D:\extracted_bdo\class_skills.json";
-
-    public string SkillIconRoot { get; init; } = DefaultSkillIconRoot;
-
-    public string ClassHubRoot { get; init; } = DefaultClassHubRoot;
 
     /// <summary>Black Desert data folder (the one with UserCache). Character files are written under it.</summary>
     public string GameDataRoot { get; init; } = DefaultGameDataRoot;

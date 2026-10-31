@@ -10,3 +10,16 @@ reports/
 
 # Screenshots contain game art: keep out of git
 app/docs/screenshots/
+
+# Asset pack. The parts (app/assets/parts/assets.partNN.bdoa) are committed: they are encrypted game art
+# split into stable pieces. The assembled assets.bdoa is a build output, never committed. The synthetic test
+# fixtures (fake images) are the only other .bdoa allowed in git.
+*.bdoa
+*.bdoa.tmp
+!app/assets/parts/assets.part*.bdoa
+!app/tests/BdoComboSetup.Tests/Fixtures/assetpack/**/*.bdoa
+data/asset-staging/
+# Loose images are never committed: art is packed, not kept as files.
+app/src/BdoComboSetup/Assets/**/*.png
+app/src/BdoComboSetup/Assets/**/*.webp
+app/src/BdoComboSetup/Assets/**/*.jpg

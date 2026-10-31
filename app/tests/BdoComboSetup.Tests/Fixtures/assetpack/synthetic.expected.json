@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "keyMaterial": "default",
+  "entries": [
+    {
+      "key": "catalog.json",
+      "compression": "deflate",
+      "originalLength": 118,
+      "sha256": "c38085af6c3e7de2e7a7187947906bf3fba1b63d3f4664e785f54b1bd275382c"
+    },
+    {
+      "key": "class-99.png",
+      "compression": "none",
+      "originalLength": 252,
+      "sha256": "d2b69991d8dd27ff8e5946e061f73186dc25631c816772436cd92557db3c2f87"
+    },
+    {
+      "key": "guide-synthetic.awakening.json",
+      "compression": "deflate",
+      "originalLength": 64,
+      "sha256": "a8dc14c557fad343ee8d889e49181370b57e1eb136e342c214b6b6478785296d"
+    },
+    {
+      "key": "skill-1.png",
+      "compression": "none",
+      "originalLength": 121,
+      "sha256": "56c564c6ca4399073559ac7f258c048369f2663eab269fc5890f0f53410365f6"
+    },
+    {
+      "key": "skill-10.png",
+      "compression": "brotli",
+      "originalLength": 252,
+      "sha256": "74f9484904a9bed7e900e6a3a601e10e9bf763d84686daa0bec3d2e19109d5f1"
+    },
+    {
+      "key": "skill-17.png",
+      "compression": "deflate",
+      "originalLength": 149,
+      "sha256": "6d0715ca39ccce791fff66071e0a52244e090bdeaec6bb8bd03593b676a8c864"
+    },
+    {
+      "key": "skill-2.png",
+      "compression": "deflate",
+      "originalLength": 176,
+      "sha256": "65ae50d043a505b7f88a92670389338942c1353ffa0df5386748452e6abf3c5b"
+    },
+    {
+      "key": "skills.json",
+      "compression": "deflate",
+      "originalLength": 124,
+      "sha256": "d3fc6bc82095eb0840992bba873a733b2250d0e38fed13d04765e8a4dc452754"
+    },
+    {
+      "key": "slot-cooldown-bg.png",
+      "compression": "none",
+      "originalLength": 473,
+      "sha256": "a80fcb5f2564c49ac8db21f69ae2514d8ff0e6cef6435f486843a7c342f29adc"
+    }
+  ]
+}

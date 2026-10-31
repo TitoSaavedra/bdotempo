@@ -414,4 +414,16 @@
   <data name="Settings.ShowWriteHintToggle.OnContent" xml:space="preserve"><value>Se muestra antes de cada escritura</value></data>
   <data name="Settings.ShowWriteHintToggle.OffContent" xml:space="preserve"><value>Oculto</value></data>
   <data name="Settings.AccountItem" xml:space="preserve"><value>Cuenta {0}</value></data>
+  <data name="AssetPack.Error.Title" xml:space="preserve">
+    <value>Paquete de recursos no disponible</value>
+  </data>
+  <data name="AssetPack.Error.Missing" xml:space="preserve">
+    <value>Falta el archivo assets.bdoa en la carpeta junto al programa. Vuelve a instalar la aplicación o ejecuta de nuevo el instalador. Los iconos y los combos no se pueden mostrar hasta que esté.</value>
+  </data>
+  <data name="AssetPack.Error.Invalid" xml:space="preserve">
+    <value>El archivo assets.bdoa junto al programa está dañado o no corresponde a esta versión de la aplicación. Vuelve a instalar la aplicación para restaurarlo.</value>
+  </data>
+  <data name="AssetPack.Error.Detail" xml:space="preserve">
+    <value>Código de error: {0}. Archivo: {1}</value>
+  </data>
 </root>

@@ -199,8 +199,8 @@ the app embeds. Two inputs, one run each:
 
 ```bash
 mise run import-guides   # saved class pages + client names -> data/combos/ and reports/unresolved_skills.txt
-mise run build-assets    # runs import-guides, then copies what the guides reference into
-                         # app/src/BdoComboSetup/Assets/generated/ (git-ignored: it holds game art)
+mise run build-assets    # runs import-guides, then writes the JSON staging (data/asset-staging/, git-ignored)
+                         # and packs the icons into app/assets/parts/ (committed as encrypted parts)
 ```
 
 - `data/combos/catalog.json`: the 32 classes with their names (English, Spanish) and the specs that have a guide.
@@ -237,8 +237,8 @@ Schema: `catalog.json` and the guide files are schema 1. The kinds, the manual p
 schema 1 as optional fields: a reader must treat a missing `kind` as `other`, a missing `manualPool` as empty and a
 missing `tooltip` as none. The C# reader (`app/src/BdoComboSetup.Core/Combo/Catalog`) does exactly that.
 
-The app embeds the bundle (`EmbeddedResource`, one file name per resource), so the single-file exe needs no loose
-files. Without a bundle the app still builds and runs, with glyphs for the icons.
+The app does not embed the bundle. It opens `assets.bdoa` from the folder next to the exe (the assembled asset pack, see
+`app/docs/asset-pack-format.md`). Without that file it shows the asset pack error page instead of the modules.
 
 Import and bundle are standard library Python. The client export is read as UTF-8 only.
 

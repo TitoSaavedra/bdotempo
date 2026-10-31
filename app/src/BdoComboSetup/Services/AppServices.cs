@@ -1,5 +1,6 @@
 using BdoComboSetup.Capture;
 using BdoComboSetup.Core.Assets;
+using BdoComboSetup.Core.Assets.Pack;
 using BdoComboSetup.Core.Backup;
 using BdoComboSetup.Core.Characters;
 using BdoComboSetup.Core.Confirmation;
@@ -8,7 +9,6 @@ using BdoComboSetup.Core.Demo;
 using BdoComboSetup.Core.Files;
 using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.GameData;
-using BdoComboSetup.Core.Icons;
 using BdoComboSetup.Core.Logging;
 using BdoComboSetup.Core.Settings;
 using BdoComboSetup.Core.ViewModels;
@@ -17,7 +17,7 @@ using System.Globalization;
 namespace BdoComboSetup.Services;
 
 /// <summary>
-/// Creates the logger, the localizer, the settings, the icon catalog, the layouts and the view models.
+/// Creates the logger, the localizer, the settings, the asset pack, the layouts and the view models.
 /// In demo mode (--demo) nothing of the player is read or written: the settings, the characters and the saved combos go to
 /// a temporary folder, which also holds a synthetic game data folder (accounts, characters, layouts); the display is
 /// synthetic, the quick keys are the defaults, and the applier writes nothing.
@@ -27,7 +27,7 @@ public sealed class AppServices : IDisposable
     /// <summary>Temporary folder of the demo mode. It is recreated on every demo start.</summary>
     private const string DemoFolderName = "BdoComboSetup-demo";
 
-    /// <summary>The skill class table in the asset bundle (written by <c>mise run build-assets</c>).</summary>
+    /// <summary>The skill class table entry of the asset pack (written by <c>mise run build-assets</c>, packed by <c>mise run pack-assets</c>).</summary>
     private const string SkillClassesResource = "skill_classes.json";
 
     private AppServices(
@@ -40,7 +40,8 @@ public sealed class AppServices : IDisposable
         SettingsViewModel settingsView,
         ICombosCatalog combos,
         IAssetProvider assets,
-        CultureInfo culture)
+        CultureInfo culture,
+        AssetPackLoadResult assetPackLoad)
     {
         Logger = logger;
         Localizer = localizer;
@@ -52,6 +53,7 @@ public sealed class AppServices : IDisposable
         Combos = combos;
         Assets = assets;
         Culture = culture;
+        AssetPackLoad = assetPackLoad;
     }
 
     public AppLogger Logger { get; }
@@ -69,14 +71,17 @@ public sealed class AppServices : IDisposable
     /// <summary>The "Settings" page: account, data folder and language.</summary>
     public SettingsViewModel SettingsView { get; }
 
-    /// <summary>Classes and guides read from the embedded asset bundle.</summary>
+    /// <summary>Classes and guides read from the asset pack.</summary>
     public ICombosCatalog Combos { get; }
 
-    /// <summary>Skill and class icons: embedded bundle, then the file catalogs.</summary>
+    /// <summary>Skill and class icons read from the asset pack.</summary>
     public IAssetProvider Assets { get; }
 
     /// <summary>The culture of the running language (the language setting, or the Windows language).</summary>
     public CultureInfo Culture { get; }
+
+    /// <summary>How assets.bdoa was opened. A non-null ErrorCode means the app shows the error page instead of the modules.</summary>
+    public AssetPackLoadResult AssetPackLoad { get; }
 
     public static AppServices Create(StartupOptions startup)
     {
@@ -98,8 +103,10 @@ public sealed class AppServices : IDisposable
         var culture = new CultureInfo(language);
         var localizer = new ResourceLocalizer(logger);
 
-        var embedded = new AssemblyEmbeddedResources(typeof(AppServices).Assembly);
-        var skillClasses = LoadSkillClasses(embedded, logger);
+        // Every icon and JSON document comes from the complete pack next to the exe (assets.bdoa). There is no fallback.
+        var assetPackLoad = AssetPackLoader.LoadFile(AssetPackLoader.DefaultPath, logger);
+        var packResources = new AssetPackResources(assetPackLoad.Pack);
+        var skillClasses = LoadSkillClasses(packResources, logger);
         var demoRoot = Path.Combine(demoFolder, "BlackDesert");
         if (startup.DemoData)
         {
@@ -113,9 +120,8 @@ public sealed class AppServices : IDisposable
         }
 
         var display = startup.DemoData ? DemoGameLayouts.Display : GameOptionLoader.Load(GameOptionLoader.DefaultPath, logger);
-        var icons = IconCatalog.Load(settings.Settings.SkillIconRoot, settings.Settings.ClassHubRoot, logger);
-        var assets = new BundledAssetProvider(embedded, icons, logger);
-        var combos = JsonCombosCatalog.Load(embedded, assets, logger);
+        var assets = new BundledAssetProvider(packResources, logger);
+        var combos = JsonCombosCatalog.Load(packResources, assets, logger);
 
         // The data folder and the account are read live: a change in the settings applies to the Apply page at once.
         var locator = new GameDataLocator(() => settings.Settings.GameDataRoot, () => settings.Settings.GameAccount, logger);
@@ -197,21 +203,21 @@ public sealed class AppServices : IDisposable
 
         var settingsView = new SettingsViewModel(settings, locator, localizer, logger, language);
 
-        return new AppServices(logger, localizer, settings, startup, applyCombo, preview, settingsView, combos, assets, culture);
+        return new AppServices(logger, localizer, settings, startup, applyCombo, preview, settingsView, combos, assets, culture, assetPackLoad);
     }
 
     public void Dispose() => Logger.Dispose();
 
     /// <summary>
-    /// The skill class table of the bundle. A missing or broken table is logged and the classes are unknown until the bundle
+    /// The skill class table of the asset pack. A missing or broken table is logged and the classes are unknown until the pack
     /// is rebuilt; the rest of the app still works.
     /// </summary>
-    private static SkillClassTable LoadSkillClasses(IEmbeddedResources embedded, AppLogger logger)
+    private static SkillClassTable LoadSkillClasses(IEmbeddedResources packResources, AppLogger logger)
     {
-        using var stream = embedded.Open(SkillClassesResource);
+        using var stream = packResources.Open(SkillClassesResource);
         if (stream is null)
         {
-            logger.Warn("skill_classes.missing", "The asset bundle has no skill class table; run mise run build-assets");
+            logger.Warn("skill_classes.missing", "The asset pack has no skill class table; run mise run build-assets and mise run pack-assets");
             return SkillClassTable.Empty;
         }
 

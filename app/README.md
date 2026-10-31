@@ -18,8 +18,8 @@ is drawn: no bars, no panels, no labels beyond the key legend.
 - **Hidden slots** (toggle, off by default): panels the game hides (`IsShow=false`) are drawn dimmed with a dashed outline.
 - **Skills**: from the combo being edited on the Apply page (`ComboPreviewSlotSource`). Empty combo: every slot is empty.
 - **Quick keys**: the key bound by the character selected on the Apply page (`ShortcutKey QuickSlotN`), else the default.
-- **Icons**: `skills.json` / `classes.json` of the Scrappers export (`SkillIconRoot`), then the bdoclasshub folder
-  (`ClassHubRoot`), then a two-letter glyph. Icons are matched by skill number, never by file number.
+- **Icons**: read from `assets.bdoa` next to the exe (the asset pack, see `docs/asset-pack-format.md`). A missing icon
+  is drawn as a two-letter glyph. Icons are matched by skill number, never by file number.
 - **Demo** (`--demo`): synthetic layouts and display, the black background (no capture), no game file read or written.
 
 Core types: `IGameScreenSource` (`GameScreenSource` with `IGameWindowLocator` and `IGameFrameCapture`; the app implements
@@ -31,23 +31,25 @@ with fakes.
 Core types, in `BdoComboSetup.Core`:
 
 - `ICombosCatalog`: `IReadOnlyList<ClassInfo> Classes` (classType order, only classes with a guide) and
-  `Task<ComboGuide?> LoadGuideAsync(int classType, string specId)`. `JsonCombosCatalog` implements it over the embedded
-  bundle, caches each guide, and logs (never throws) on a missing or invalid file.
+  `Task<ComboGuide?> LoadGuideAsync(int classType, string specId)`. `JsonCombosCatalog` implements it over the asset pack, caches each guide, and logs (never throws) on a missing or invalid file.
 - `ClassInfo(ClassType, Slug, Name, Specs)`, `SpecInfo(Id, DisplayName, GuideKey)`. Names are `BilingualText(En, Es)`;
   `Name.For(culture)` picks Spanish for `es` cultures and falls back to English.
 - `ComboGuide(Title, Description, Source, Chains, Notes, Addons)`; `ComboChain(Section, Title, Notes, Steps)`;
   `ComboStep(Keys, Skills, Extra, Note)`; `ComboNote(Section, Text, Skills)`; `ComboAddon(Section, Skill, Description, Effects)`.
 - `ComboSkill(SkillNo, Name, DescriptionEs, OpenIcon)`: `OpenIcon` is a `Func<Stream?>` for the icon (caller disposes).
 - `IAssetProvider`: `Stream? OpenSkillIcon(int skillNo, string? className)` and `Stream? OpenClassIcon(int classType)`.
-  `BundledAssetProvider` answers from the embedded bundle, then from `IconCatalog` (Scrappers, bdoclasshub), then null.
+  `BundledAssetProvider` answers from the asset pack (`AssetPackResources` over `IAssetPack`), then null.
   Null means: draw the glyph.
-- `IEmbeddedResources` / `AssemblyEmbeddedResources`: the bundle names are in `BundleResourceNames`.
+- `IEmbeddedResources`: the entry names are in `BundleResourceNames`. `AssetPackResources` gives it the pack's entries.
+- `AssetPack` / `AssetPackAssembler` / `AssetPackLoader`: read `assets.bdoa`, join the parts, open the file next to the exe.
 
-`AppServices` builds `Combos` and `Assets`. The Apply and Preview pages still use `MockComboDataSource` (characters and
-the 20 cooldown slots) and the `IconCatalog` path contract; they do not read `Combos` or `Assets` yet.
+`AppServices` builds `Combos` and `Assets` from the pack and keeps `AssetPackLoad` (the error page is shown when it
+failed). The Apply page reads the characters of the active account (`CharacterRoster`), and the Preview page reads the live
+capture and the quick keys of the active account.
 
 Tests: `mise run test-real-data` is a Python test of the importer on the real data; the C# tests use synthetic bundle
-fixtures (`Fixtures\bundle\`, embedded in the test assembly).
+fixtures (`Fixtures\bundle\`, embedded in the test assembly) and the synthetic asset pack fixtures
+(`Fixtures\assetpack\`, written by `tests/assetpack_support.py`).
 
 ## Settings
 
@@ -59,7 +61,7 @@ The **Settings** page (footer of the navigation) changes `%LOCALAPPDATA%\BdoComb
 - **Language** (`Language`): `es` or `en-US`. The app restarts to apply it (the button starts a new copy of the app).
 - **Reminder before writing** (`SkipWriteHint`): "Don't show again" turns the reminder off; the toggle turns it on again.
 
-Other keys: `SkillIconRoot`, `ClassHubRoot`, `CooldownRows`/`CooldownColumns` (2 x 10), `SelectedLayout`, `BackupsRoot`,
+Other keys: `CooldownRows`/`CooldownColumns` (2 x 10), `SelectedLayout`, `BackupsRoot`,
 `SkillsJsonPath`. The Preview page reads its layouts and quick keys of the active account at startup, so a change of
 account or folder shows there after a restart.
 
@@ -71,8 +73,9 @@ Sidecar files (`gamevariable-*.xml`) and stale folders are ignored. Only the nam
 
 - **Name**: the name you set, then the in-game label (`CharacterMemo` in `gameVariable_lobby.xml`), then `<Class> N`.
 - **Class**: the class you set, then a vote over the skill numbers of the cooldown bar, the cooldown memos and the quick bar,
-  against `Assets\generated\skill_classes.json`, then unknown (a neutral icon). The table holds only skill groups with at most
-  nine classes; `mise run build-assets` builds it from `D:\extracted_bdo\class_skills.json`.
+  against `skill_classes.json` inside the asset pack (`assets.bdoa`), then unknown (a neutral icon). The table holds only
+  skill groups with at most nine classes; `mise run build-assets` builds it from `D:\extracted_bdo\class_skills.json` and
+  `mise run pack-assets` packs it.
 - **Pencil**: sets the name and the class once, and they are remembered per account in
   `%LOCALAPPDATA%\BdoComboSetup\characters.json`. An empty name and "Class decided by the game files" hand the choice back.
 

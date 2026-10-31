@@ -5,8 +5,13 @@ python = "3.12"
 PYTHONPATH = "{{config_root}}/src"
 PYTHONUTF8 = "1"
 
+[tasks.install]
+description = "Install the pinned Python dependencies (cryptography, brotli) from requirements.txt"
+run = "python -m pip install --quiet -r requirements.txt"
+
 [tasks.test]
 description = "Run unit tests (synthetic fixtures only, no real game data)"
+depends = ["install"]
 run = "python -m unittest discover -s tests -v"
 
 [tasks.check]
@@ -25,9 +30,22 @@ description = "Read the saved class pages and the client export into data/combos
 run = "python -m bdo_combo.guides import"
 
 [tasks.build-assets]
-description = "Build the app's asset bundle (only the icons and JSON the guides reference) into app/src/BdoComboSetup/Assets/generated"
-depends = ["import-guides"]
-run = "python -m bdo_combo.guides bundle"
+description = "Build the JSON staging bundle (data/asset-staging), then the asset parts in app/assets/parts (tracked in git)"
+depends = ["import-guides", "install"]
+run = [
+  "python -m bdo_combo.guides bundle",
+  "python -m bdo_combo.assetpack pack",
+]
+
+[tasks.pack-assets]
+description = "Write the asset parts app/assets/parts/assets.partNN.bdoa from the client export and data/asset-staging (run build-assets first)"
+depends = ["install"]
+run = "python -m bdo_combo.assetpack pack"
+
+[tasks.verify-assets]
+description = "Check the committed asset parts: one set, every part present, every entry authenticated and hashed"
+depends = ["install"]
+run = "python -m bdo_combo.assetpack verify-parts app/assets/parts"
 
 [tasks.test-real-data]
 description = "Check the importer on the real saved pages and client export (reads game data; writes nothing)"

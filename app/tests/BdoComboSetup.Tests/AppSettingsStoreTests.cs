@@ -15,7 +15,7 @@ public sealed class AppSettingsStoreTests : IDisposable
     {
         var store = new AppSettingsStore(SettingsPath, _log.Logger);
 
-        Assert.Equal(AppSettings.DefaultSkillIconRoot, store.Settings.SkillIconRoot);
+        Assert.Equal(AppSettings.DefaultGameDataRoot, store.Settings.GameDataRoot);
         Assert.Null(store.Settings.GameAccount);
         Assert.Null(store.Settings.Language);
         Assert.Null(store.Settings.SelectedLayout);

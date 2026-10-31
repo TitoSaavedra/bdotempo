@@ -340,11 +340,16 @@ class GuidesCliTests(SyntheticTreeTestCase):
             "--report", str(self.report),
             "--kinds-report", str(kinds_report),
         ])
+        skill_table = self.tmp / "class_skills.json"
+        skill_table.write_text(
+            '{"groups": [{"key": "g", "classes": [1], "ranks": [{"skillNo": 5}]}]}', encoding="utf-8"
+        )
         code_bundle, _ = self.run_cli([
             "bundle",
             "--combos-dir", str(self.combos),
             "--client-dir", str(self.client.root),
             "--out-dir", str(generated),
+            "--skill-table", str(skill_table),
         ])
 
         self.assertEqual(0, code_import)
@@ -352,6 +357,7 @@ class GuidesCliTests(SyntheticTreeTestCase):
         self.assertIn("classes 3, specs 6, guides 4", printed)
         self.assertIn("manual pool skills 0", printed)
         self.assertTrue((generated / "catalog.json").is_file())
+        self.assertTrue((generated / "skill_classes.json").is_file())
         self.assertTrue(kinds_report.is_file())
 
     def test_missing_classhub_is_an_error_exit_not_a_traceback(self):

@@ -414,4 +414,16 @@
   <data name="Settings.ShowWriteHintToggle.OnContent" xml:space="preserve"><value>Shown before each write</value></data>
   <data name="Settings.ShowWriteHintToggle.OffContent" xml:space="preserve"><value>Hidden</value></data>
   <data name="Settings.AccountItem" xml:space="preserve"><value>Account {0}</value></data>
+  <data name="AssetPack.Error.Title" xml:space="preserve">
+    <value>Asset pack not available</value>
+  </data>
+  <data name="AssetPack.Error.Missing" xml:space="preserve">
+    <value>The file assets.bdoa is missing from the folder next to the program. Install the app again, or run the installer again. Icons and combos cannot be shown until it is there.</value>
+  </data>
+  <data name="AssetPack.Error.Invalid" xml:space="preserve">
+    <value>The file assets.bdoa next to the program is damaged or does not match this version of the app. Install the app again to restore it.</value>
+  </data>
+  <data name="AssetPack.Error.Detail" xml:space="preserve">
+    <value>Error code: {0}. File: {1}</value>
+  </data>
 </root>

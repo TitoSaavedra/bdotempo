@@ -33,6 +33,7 @@
        Copied next to the test assembly and read from disk. -->
   <ItemGroup>
     <None Include="Fixtures\parity\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Fixtures\assetpack\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
