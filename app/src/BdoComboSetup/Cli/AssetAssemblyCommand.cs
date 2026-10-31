@@ -5,10 +5,10 @@ using BdoComboSetup.Core.Logging;
 namespace BdoComboSetup.Cli;
 
 /// <summary>
-/// The headless command <c>BdoComboSetup.exe --assemble-assets &lt;partsDir&gt; &lt;outFile&gt;</c>. The installer runs it after
+/// The headless command <c>BDOTempo.exe --assemble-assets &lt;partsDir&gt; &lt;outFile&gt;</c>. The installer runs it after
 /// copying the parts; the portable build can run it too. It opens no window and touches no WinRT API.
 /// The exit code is the contract (see <see cref="ExitCodes"/>). Stdout gets one JSON line on success, stderr one on failure;
-/// the structured log of the run is in %LOCALAPPDATA%\BdoComboSetup\logs.
+/// the structured log of the run is in %LOCALAPPDATA%\BDOTempo\logs.
 /// </summary>
 public static class AssetAssemblyCommand
 {
@@ -37,7 +37,7 @@ public static class AssetAssemblyCommand
             {
                 ["status"] = "error",
                 ["code"] = "usage",
-                ["usage"] = $"BdoComboSetup.exe {Switch} <partsDir> <outFile>",
+                ["usage"] = $"BDOTempo.exe {Switch} <partsDir> <outFile>",
             });
             return ExitCodes.Usage;
         }

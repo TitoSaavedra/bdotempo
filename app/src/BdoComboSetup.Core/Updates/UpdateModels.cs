@@ -4,7 +4,7 @@ namespace BdoComboSetup.Core.Updates;
 public static class UpdateRepository
 {
     public const string Owner = "TitoSaavedra";
-    public const string Name = "bdo-combo-setup";
+    public const string Name = "bdotempo";
 
     /// <summary>The "latest release" endpoint. It never returns drafts or pre-releases.</summary>
     public static Uri LatestReleaseApi { get; } = new($"https://api.github.com/repos/{Owner}/{Name}/releases/latest");
@@ -12,8 +12,8 @@ public static class UpdateRepository
     /// <summary>The public release page of the repository (the portable build opens a release from here).</summary>
     public static Uri ReleasesPage { get; } = new($"https://github.com/{Owner}/{Name}/releases");
 
-    /// <summary>The installer asset: <c>BdoComboSetup-Setup-&lt;version&gt;.exe</c>.</summary>
-    public const string InstallerPrefix = "BdoComboSetup-Setup-";
+    /// <summary>The installer asset: <c>BDOTempo-Setup-&lt;version&gt;.exe</c>.</summary>
+    public const string InstallerPrefix = "BDOTempo-Setup-";
 
     public const string InstallerSuffix = ".exe";
 

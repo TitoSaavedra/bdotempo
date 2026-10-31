@@ -1,4 +1,4 @@
-# BDO Combo Setup (app)
+# BDOTempo (app)
 
 WinUI 3 app (Windows App SDK, .NET 10). Tasks: `mise run build`, `mise run test`, `mise run publish`, `mise run screenshots`.
 
@@ -94,7 +94,7 @@ fixtures (`Fixtures\bundle\`, embedded in the test assembly) and the synthetic a
 
 ## Settings
 
-The **Settings** page (footer of the navigation) changes `%LOCALAPPDATA%\BdoComboSetup\settings.json`, created on the first change:
+The **Settings** page (footer of the navigation) changes `%LOCALAPPDATA%\BDOTempo\settings.json`, created on the first change:
 
 - **Account** (`GameAccount`): the numeric folders under `UserCache` that have an `11` folder. `-1` and non-numeric folders
   are ignored. The chosen account is remembered; with only one account it is used without asking.
@@ -118,7 +118,7 @@ Sidecar files (`gamevariable-*.xml`) and stale folders are ignored. Only the nam
   skill groups with at most nine classes; `mise run build-assets` builds it from `D:\extracted_bdo\class_skills.json` and
   `mise run pack-assets` packs it.
 - **Pencil**: sets the name and the class once, and they are remembered per account in
-  `%LOCALAPPDATA%\BdoComboSetup\characters.json`. An empty name and "Class decided by the game files" hand the choice back.
+  `%LOCALAPPDATA%\BDOTempo\characters.json`. An empty name and "Class decided by the game files" hand the choice back.
 
 The class grid is never filtered by the account. Game files are only read; a file that the game is writing is retried
 up to three times.
@@ -140,4 +140,4 @@ Options given on the command line are not saved.
 
 ## Logs
 
-JSON lines in `%LOCALAPPDATA%\BdoComboSetup\logs` with W3C trace ids.
+JSON lines in `%LOCALAPPDATA%\BDOTempo\logs` with W3C trace ids.

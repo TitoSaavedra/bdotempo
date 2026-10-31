@@ -42,8 +42,8 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
 
-    <data name="AppTitle" xml:space="preserve"><value>BDO Combo Setup</value></data>
-  <data name="AppTitleBar.Title" xml:space="preserve"><value>BDO Combo Setup</value></data>
+    <data name="AppTitle" xml:space="preserve"><value>BDOTempo</value></data>
+  <data name="AppTitleBar.Title" xml:space="preserve"><value>BDOTempo</value></data>
   <data name="NavApplyItem.Content" xml:space="preserve"><value>Apply combo</value></data>
   <data name="NavPreviewItem.Content" xml:space="preserve"><value>Preview</value></data>
   <data name="Apply.Title.Text" xml:space="preserve">

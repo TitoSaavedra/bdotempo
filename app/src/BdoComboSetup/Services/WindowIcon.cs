@@ -8,7 +8,7 @@ namespace BdoComboSetup.Services;
 
 /// <summary>
 /// Window and title bar icon. The icon files are embedded in the exe (EmbeddedResource in the csproj), and copied to
-/// %LOCALAPPDATA%\BdoComboSetup\icon at run time, because AppWindow.SetIcon takes the path of an .ico file.
+/// %LOCALAPPDATA%\BDOTempo\icon at run time, because AppWindow.SetIcon takes the path of an .ico file.
 /// The copy is rewritten only when its bytes differ. The icon is cosmetic: a failure is logged and the window still opens.
 /// </summary>
 internal static class WindowIcon
@@ -29,7 +29,7 @@ internal static class WindowIcon
         {
             var folder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "BdoComboSetup",
+                "BDOTempo",
                 "icon");
             Directory.CreateDirectory(folder);
 

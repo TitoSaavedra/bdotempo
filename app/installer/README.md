@@ -4,8 +4,8 @@ The release artifacts are built into `dist/` at the repository root (git-ignored
 
 | File | What it is |
 |------|------------|
-| `BdoComboSetup-Setup-<version>.exe` | Installer (Inno Setup 6): the app, the 17 asset parts, a Start Menu shortcut and an uninstaller. |
-| `BdoComboSetup-Portable-<version>.zip` | Portable: the app, `assets.bdoa` already assembled and `portable.flag`. No installer. |
+| `BDOTempo-Setup-<version>.exe` | Installer (Inno Setup 6): the app, the 17 asset parts, a Start Menu shortcut and an uninstaller. |
+| `BDOTempo-Portable-<version>.zip` | Portable: the app, `assets.bdoa` already assembled and `portable.flag`. No installer. |
 | `SHA256SUMS.txt` | `sha256sum` format, for the artifacts of this version. The in-app updater verifies the installer with it. |
 
 The version is the single source of truth: `<Version>` in `app/Directory.Build.props` (SemVer 2.0). It is shown in
@@ -46,11 +46,11 @@ runtime is bundled in the app folder (`WindowsAppSDKSelfContained=true`), so it 
 
 ## What the installer does
 
-1. Copies the app to `{autopf}\BDO Combo Setup` (per user by default; an administrator can choose the whole PC).
+1. Copies the app to `{autopf}\BDOTempo` (per user by default; an administrator can choose the whole PC).
 2. Copies `assets\parts\assets.part*.bdoa` into `{app}\assets\parts`.
-3. Runs `BdoComboSetup.exe --assemble-assets "{app}\assets\parts" "{app}\assets.bdoa"` and then deletes the parts folder.
+3. Runs `BDOTempo.exe --assemble-assets "{app}\assets\parts" "{app}\assets.bdoa"` and then deletes the parts folder.
    If the command fails, the installer ends with exit code 1, shows the error (interactive run) and keeps the parts.
-4. The uninstaller removes `assets.bdoa` and the `assets` folder. The logs in `%LOCALAPPDATA%\BdoComboSetup\logs` stay.
+4. The uninstaller removes `assets.bdoa` and the `assets` folder. The logs in `%LOCALAPPDATA%\BDOTempo\logs` stay.
 
 An update over an installed copy closes the running app (`CloseApplications`). The installer `AppId` is fixed; do not
 change it.
@@ -58,7 +58,7 @@ change it.
 Silent install and uninstall (used by the updater and for tests):
 
 ```
-BdoComboSetup-Setup-<version>.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /DIR="<folder>" /LOG="<log file>"
+BDOTempo-Setup-<version>.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /DIR="<folder>" /LOG="<log file>"
 "<folder>\unins000.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG="<log file>"
 ```
 

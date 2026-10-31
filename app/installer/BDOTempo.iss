@@ -1,4 +1,4 @@
-; BDO Combo Setup - installer (Inno Setup 6).
+; BDOTempo - installer (Inno Setup 6).
 ; Built by app/scripts/package.ps1 (mise run package-installer). The defines below are passed on the ISCC command line.
 ; Framework-dependent app: the .NET 10 Desktop Runtime (x64) must be on the PC; the check is in InitializeSetup.
 ; The installer embeds the app (publish output) and the 17 asset parts; the post-install step assembles assets.bdoa
@@ -19,19 +19,21 @@
 
 [Setup]
 ; Fixed for the life of the product: an update is recognised by this id. Do not change it.
-AppId={{70241272-4719-4171-AA9F-40E16C3C4F01}
-AppName=BDO Combo Setup
+AppId={{4B848DC4-80D6-4C79-8365-A79F29EF2A21}
+AppName=BDOTempo
 AppVersion={#AppVersion}
-AppVerName=BDO Combo Setup {#AppVersion}
+AppVerName=BDOTempo {#AppVersion}
 AppPublisher=TitoSaavedra
-AppPublisherURL=https://github.com/TitoSaavedra/bdo-combo-setup
-AppSupportURL=https://github.com/TitoSaavedra/bdo-combo-setup/issues
-AppUpdatesURL=https://github.com/TitoSaavedra/bdo-combo-setup/releases
-DefaultDirName={autopf}\BDO Combo Setup
-DefaultGroupName=BDO Combo Setup
+AppPublisherURL=https://github.com/TitoSaavedra/bdotempo
+AppSupportURL=https://github.com/TitoSaavedra/bdotempo/issues
+AppUpdatesURL=https://github.com/TitoSaavedra/bdotempo/releases
+DefaultDirName={autopf}\BDOTempo
+DefaultGroupName=BDOTempo
 DisableProgramGroupPage=yes
 OutputDir={#OutputDir}
-OutputBaseFilename=BdoComboSetup-Setup-{#AppVersion}
+OutputBaseFilename=BDOTempo-Setup-{#AppVersion}
+; The setup wizard and the Apps list use the app icon (the same .ico the exe embeds).
+SetupIconFile=..\assets\icon\app-icon.ico
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -42,11 +44,11 @@ MinVersion=10.0.17763
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 UsePreviousPrivileges=yes
-UninstallDisplayName=BDO Combo Setup
-UninstallDisplayIcon={app}\BdoComboSetup.exe
+UninstallDisplayName=BDOTempo
+UninstallDisplayIcon={app}\BDOTempo.exe
 ; An update over a running copy closes it first (the updater also exits the app before starting this installer).
 CloseApplications=yes
-CloseApplicationsFilter=BdoComboSetup.exe
+CloseApplicationsFilter=BDOTempo.exe
 RestartApplications=yes
 ShowLanguageDialog=auto
 LanguageDetectionMethod=uilanguage
@@ -62,8 +64,8 @@ en.DotNetInstallFailed=The runtime was not installed. The download page will ope
 es.DotNetInstallFailed=No se instaló el runtime. Se abrirá la página de descarga.
 en.AssetsFailed=The game data (assets.bdoa) could not be assembled (exit code %1). The app will show an error page until the installation is repeated. The parts are kept in %2.
 es.AssetsFailed=No se pudo montar el archivo de datos (assets.bdoa) (código de salida %1). La aplicación mostrará una página de error hasta repetir la instalación. Las partes se conservan en %2.
-en.LaunchApp=Launch BDO Combo Setup
-es.LaunchApp=Abrir BDO Combo Setup
+en.LaunchApp=Launch BDOTempo
+es.LaunchApp=Abrir BDOTempo
 
 [Files]
 ; The framework-dependent app (exe, its DLLs and the Windows App SDK runtime files).
@@ -72,12 +74,12 @@ Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 Source: "{#PartsDir}\assets.part*.bdoa"; DestDir: "{app}\assets\parts"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\BDO Combo Setup"; Filename: "{app}\BdoComboSetup.exe"; WorkingDir: "{app}"
-Name: "{group}\{cm:UninstallProgram,BDO Combo Setup}"; Filename: "{uninstallexe}"
+Name: "{group}\BDOTempo"; Filename: "{app}\BDOTempo.exe"; WorkingDir: "{app}"
+Name: "{group}\{cm:UninstallProgram,BDOTempo}"; Filename: "{uninstallexe}"
 
 [Run]
 ; Interactive installs offer to start the app on the last page. A silent install (the updater) does not start it.
-Filename: "{app}\BdoComboSetup.exe"; Description: "{cm:LaunchApp}"; WorkingDir: "{app}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\BDOTempo.exe"; Description: "{cm:LaunchApp}"; WorkingDir: "{app}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\assets"
@@ -167,7 +169,7 @@ begin
     Exit;
 
   AppDir := ExpandConstant('{app}');
-  Exe := AppDir + '\BdoComboSetup.exe';
+  Exe := AppDir + '\BDOTempo.exe';
   PartsDir := AppDir + '\assets\parts';
   AssetsFile := AppDir + '\assets.bdoa';
 

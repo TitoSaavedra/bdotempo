@@ -21,7 +21,7 @@ public sealed class UpdatePackageDownloader(IUpdateHttpClient http, AppLogger lo
 
     /// <summary>The temporary folder of the updater: %TEMP%\BdoComboSetup\updates.</summary>
     public static string DefaultWorkDirectory =>
-        Path.Combine(Path.GetTempPath(), "BdoComboSetup", "updates");
+        Path.Combine(Path.GetTempPath(), "BDOTempo", "updates");
 
     /// <summary>Downloads and verifies the installer. <paramref name="progress"/> reports a fraction from 0 to 1 when the size is known.</summary>
     public async Task<UpdatePackage> DownloadAsync(ReleaseInfo release, IProgress<double>? progress, CancellationToken cancellationToken)

@@ -126,7 +126,7 @@ public sealed class DemoReleaseFeed(SemanticVersion runningVersion, bool newerAv
         var release = new ReleaseInfo(
             TagName: "v" + version,
             Version: version,
-            Title: "BDO Combo Setup " + version,
+            Title: "BDOTempo " + version,
             Notes: "Demo release notes.\n\n- Updates: check, banner and one-click install.\n- Portable build: opens the release page.",
             PageUrl: UpdateRepository.ReleasesPage,
             PublishedAt: DateTimeOffset.UnixEpoch,

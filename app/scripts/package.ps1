@@ -1,6 +1,6 @@
 # Builds the release artifacts into <repo>\dist (git-ignored):
-#   BdoComboSetup-Setup-<version>.exe      installer (Inno Setup 6): app + the 17 asset parts; assembles assets.bdoa on install
-#   BdoComboSetup-Portable-<version>.zip   portable: app + assets.bdoa (assembled here) + portable.flag, no installer
+#   BDOTempo-Setup-<version>.exe      installer (Inno Setup 6): app + the 17 asset parts; assembles assets.bdoa on install
+#   BDOTempo-Portable-<version>.zip   portable: app + assets.bdoa (assembled here) + portable.flag, no installer
 #   SHA256SUMS.txt                         sha256sum format, for the artifacts of this version (the updater verifies the installer)
 # The version is the single source of truth: <Version> in app/Directory.Build.props.
 # Run through mise: `mise run package`, `mise run package-installer`, `mise run package-portable` (app/mise.toml).
@@ -20,7 +20,7 @@ $work = Join-Path $dist 'work'
 $publish = Join-Path $work 'publish'
 $partsDir = Join-Path $appRoot 'assets\parts'
 $project = Join-Path $appRoot 'src\BdoComboSetup\BdoComboSetup.csproj'
-$issScript = Join-Path $appRoot 'installer\BdoComboSetup.iss'
+$issScript = Join-Path $appRoot 'installer\BDOTempo.iss'
 
 $props = Get-Content -Raw -LiteralPath (Join-Path $appRoot 'Directory.Build.props')
 $match = [regex]::Match($props, '<Version>\s*([^<\s]+)\s*</Version>')
@@ -32,8 +32,8 @@ if ($version -notmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z.-]
     throw "The version '$version' is not SemVer 2.0 (app/Directory.Build.props)."
 }
 
-$installerName = "BdoComboSetup-Setup-$version.exe"
-$portableName = "BdoComboSetup-Portable-$version.zip"
+$installerName = "BDOTempo-Setup-$version.exe"
+$portableName = "BDOTempo-Portable-$version.zip"
 $partFiles = @(Get-ChildItem -LiteralPath $partsDir -Filter 'assets.part*.bdoa' -File -ErrorAction SilentlyContinue)
 if ($partFiles.Count -eq 0) {
     throw "No asset parts in $partsDir. Check out app/assets/parts (they are committed)."
@@ -48,8 +48,8 @@ function Invoke-Publish {
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet publish failed with exit code $LASTEXITCODE."
     }
-    if (-not (Test-Path -LiteralPath (Join-Path $publish 'BdoComboSetup.exe'))) {
-        throw "The publish output has no BdoComboSetup.exe."
+    if (-not (Test-Path -LiteralPath (Join-Path $publish 'BDOTempo.exe'))) {
+        throw "The publish output has no BDOTempo.exe."
     }
     if (Test-Path -LiteralPath (Join-Path $publish 'assets.bdoa')) {
         throw 'The publish output must not contain assets.bdoa: it is assembled by the packaging or the installer.'
@@ -59,14 +59,14 @@ function Invoke-Publish {
 # The app's own assembler (the same code the installer runs). Its exit code is the contract (app/docs/asset-pack-format.md).
 function Invoke-Assemble([string]$outFile) {
     $arguments = '--assemble-assets "' + $partsDir + '" "' + $outFile + '"'
-    $process = Start-Process -FilePath (Join-Path $publish 'BdoComboSetup.exe') -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
+    $process = Start-Process -FilePath (Join-Path $publish 'BDOTempo.exe') -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
     if ($process.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $outFile)) {
         throw "assets.bdoa could not be assembled (exit code $($process.ExitCode))."
     }
 }
 
 function New-Portable {
-    $stage = Join-Path $work "portable\BdoComboSetup-Portable-$version"
+    $stage = Join-Path $work "portable\BDOTempo-Portable-$version"
     if (Test-Path -LiteralPath $stage) {
         Remove-Item -LiteralPath $stage -Recurse -Force
     }

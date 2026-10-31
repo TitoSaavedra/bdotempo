@@ -64,7 +64,7 @@ public static class ReleaseParser
     }
 
     /// <summary>
-    /// The installer of this release: <c>BdoComboSetup-Setup-&lt;version&gt;.exe</c> with the release's own version. Null when the
+    /// The installer of this release: <c>BDOTempo-Setup-&lt;version&gt;.exe</c> with the release's own version. Null when the
     /// release has none (the check then reports the asset as missing).
     /// </summary>
     public static ReleaseAsset? FindInstaller(ReleaseInfo release)

@@ -9,7 +9,7 @@ namespace BdoComboSetup.Core.Characters;
 public sealed record CharacterOverride(string? Name, int? ClassType);
 
 /// <summary>
-/// The user's own names and classes for the characters, per account, in %LOCALAPPDATA%\BdoComboSetup\characters.json.
+/// The user's own names and classes for the characters, per account, in %LOCALAPPDATA%\BDOTempo\characters.json.
 /// Only this file is written by the app for characters; the game files are never touched. Every change is saved at once
 /// (temporary file, then move). A file that cannot be read is moved aside and the store starts empty.
 /// </summary>
@@ -40,7 +40,7 @@ public sealed class CharacterOverrideStore
     }
 
     public static string DefaultPath =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BdoComboSetup", "characters.json");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BDOTempo", "characters.json");
 
     /// <summary>The override of a character, or null when the user set nothing for it.</summary>
     public CharacterOverride? Get(string account, string pcid)

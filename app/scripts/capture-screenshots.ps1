@@ -1,4 +1,4 @@
-# Launches the published BdoComboSetup.exe once per screenshot (synthetic data, --demo) and saves ONLY the app window to docs\screenshots.
+# Launches the published BDOTempo.exe once per screenshot (synthetic data, --demo) and saves ONLY the app window to docs\screenshots.
 # The folder is git-ignored (game art): the images are generated locally and never committed.
 # The window is rendered by the app itself (PrintWindow with PW_RENDERFULLCONTENT), so other windows that cover it
 # never appear in the image. The frame is cropped to the visible bounds reported by DWM (no invisible shadow border).
@@ -16,7 +16,7 @@ Add-Type -AssemblyName System.Drawing
 
 $appRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 if (-not $ExePath) {
-    $ExePath = Join-Path $appRoot 'src\BdoComboSetup\bin\x64\Release\net10.0-windows10.0.26100.0\win-x64\publish\BdoComboSetup.exe'
+    $ExePath = Join-Path $appRoot 'src\BdoComboSetup\bin\x64\Release\net10.0-windows10.0.26100.0\win-x64\publish\BDOTempo.exe'
 }
 if (-not $OutDir) {
     $OutDir = Join-Path $appRoot 'docs\screenshots'

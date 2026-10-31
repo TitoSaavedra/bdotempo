@@ -14,14 +14,14 @@ public enum LogLevel
 }
 
 /// <summary>
-/// Structured JSON-lines logger written to %LOCALAPPDATA%\BdoComboSetup\logs.
+/// Structured JSON-lines logger written to %LOCALAPPDATA%\BDOTempo\logs.
 /// Every line carries a W3C trace-id and span-id. They come from the current
 /// <see cref="Activity"/> when there is one, otherwise from the session span.
 /// Operation spans reuse the session trace-id, so one run shares one trace.
 /// </summary>
 public sealed class AppLogger : IDisposable
 {
-    public const string SourceName = "BdoComboSetup";
+    public const string SourceName = "BDOTempo";
 
     private static readonly ActivitySource Source = new(SourceName, "0.1.0");
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -56,9 +56,9 @@ public sealed class AppLogger : IDisposable
             ?? throw new InvalidOperationException("Activity listener is not active; cannot create the log session span.");
     }
 
-    /// <summary>The default log directory: %LOCALAPPDATA%\BdoComboSetup\logs.</summary>
+    /// <summary>The default log directory: %LOCALAPPDATA%\BDOTempo\logs.</summary>
     public static string DefaultLogDirectory =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BdoComboSetup", "logs");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BDOTempo", "logs");
 
     public static AppLogger CreateDefault(string sessionName) => new(DefaultLogDirectory, sessionName);
 

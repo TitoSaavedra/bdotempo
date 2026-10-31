@@ -7,7 +7,7 @@ using BdoComboSetup.Core.Logging;
 namespace BdoComboSetup.Core.Combo;
 
 /// <summary>
-/// Stores profiles as JSON in one folder (%LOCALAPPDATA%\BdoComboSetup\profiles by default), named
+/// Stores profiles as JSON in one folder (%LOCALAPPDATA%\BDOTempo\profiles by default), named
 /// "classType.specId.json". Saves go through a temporary file, so a crash never leaves a half-written file.
 /// A file that cannot be read is logged and treated as "no profile"; the base guide is then shown.
 /// </summary>
@@ -24,7 +24,7 @@ public sealed class ComboProfileStore(string directory, AppLogger logger) : ICom
     private readonly AppLogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     public static string DefaultDirectory =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BdoComboSetup", "profiles");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BDOTempo", "profiles");
 
     /// <summary>The file of one class and spec. The spec id must be a plain lowercase name, because it becomes part of a file name.</summary>
     public string PathFor(int classType, string specId)

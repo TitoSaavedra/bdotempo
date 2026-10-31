@@ -6,7 +6,9 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <RootNamespace>BdoComboSetup</RootNamespace>
-    <AssemblyName>BdoComboSetup</AssemblyName>
+    <AssemblyName>BDOTempo</AssemblyName>
+    <Product>BDOTempo</Product>
+    <Title>BDOTempo</Title>
     <!-- Version: app/Directory.Build.props (single source of truth). -->
 
     <Nullable>enable</Nullable>
@@ -57,7 +59,7 @@
   </ItemGroup>
 
   <!-- The window icon (AppWindow.SetIcon and the title bar) is embedded: the single-file exe has no loose files next to it.
-       WindowIcon.cs writes these copies to %LOCALAPPDATA%\BdoComboSetup\icon at run time, because SetIcon takes a path. -->
+       WindowIcon.cs writes these copies to %LOCALAPPDATA%\BDOTempo\icon at run time, because SetIcon takes a path. -->
   <ItemGroup>
     <EmbeddedResource Include="..\..\assets\icon\app-icon.ico" LogicalName="BdoComboSetup.app-icon.ico" />
     <EmbeddedResource Include="..\..\assets\icon\app-icon-256.png" LogicalName="BdoComboSetup.app-icon-256.png" />

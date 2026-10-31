@@ -35,11 +35,11 @@ description = "Publish the framework-dependent win-x64 app (Release): needs the 
 run = "dotnet publish src/BdoComboSetup/BdoComboSetup.csproj -c Release -r win-x64 -p:Platform=x64"
 
 [tasks.package-installer]
-description = "Build dist/BdoComboSetup-Setup-<version>.exe (Inno Setup 6 installer with the app and the asset parts) and dist/SHA256SUMS.txt. Needs Inno Setup 6 (see installer/README.md)"
+description = "Build dist/BDOTempo-Setup-<version>.exe (Inno Setup 6 installer with the app and the asset parts) and dist/SHA256SUMS.txt. Needs Inno Setup 6 (see installer/README.md)"
 run = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1 -Target installer"
 
 [tasks.package-portable]
-description = "Build dist/BdoComboSetup-Portable-<version>.zip (app + assets.bdoa + portable.flag, no installer) and dist/SHA256SUMS.txt"
+description = "Build dist/BDOTempo-Portable-<version>.zip (app + assets.bdoa + portable.flag, no installer) and dist/SHA256SUMS.txt"
 run = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1 -Target portable"
 
 [tasks.package]

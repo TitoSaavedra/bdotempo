@@ -5,7 +5,7 @@ using BdoComboSetup.Core.Logging;
 namespace BdoComboSetup.Core.Settings;
 
 /// <summary>
-/// Local settings of this PC, stored as JSON in %LOCALAPPDATA%\BdoComboSetup\settings.json.
+/// Local settings of this PC, stored as JSON in %LOCALAPPDATA%\BDOTempo\settings.json.
 /// Nothing here is game data; the game files are only read.
 /// </summary>
 public sealed record AppSettings
@@ -106,7 +106,7 @@ public sealed class AppSettingsStore
     }
 
     public static string DefaultPath =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BdoComboSetup", "settings.json");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BDOTempo", "settings.json");
 
     public AppSettings Settings { get; private set; }
 

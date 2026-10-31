@@ -26,7 +26,7 @@ namespace BdoComboSetup.Services;
 public sealed class AppServices : IDisposable
 {
     /// <summary>Temporary folder of the demo mode. It is recreated on every demo start.</summary>
-    private const string DemoFolderName = "BdoComboSetup-demo";
+    private const string DemoFolderName = "BDOTempo-demo";
 
     /// <summary>The skill class table entry of the asset pack (written by <c>mise run build-assets</c>, packed by <c>mise run pack-assets</c>).</summary>
     private const string SkillClassesResource = "skill_classes.json";
@@ -224,7 +224,7 @@ public sealed class AppServices : IDisposable
         var transport = new HttpClientUpdateTransport(httpClient);
         IReleaseFeed releases = startup.DemoData
             ? new DemoReleaseFeed(AppVersion.Current, startup.DemoUpdate)
-            : new GitHubReleaseFeed(transport, logger, $"BdoComboSetup/{AppVersion.Current}");
+            : new GitHubReleaseFeed(transport, logger, $"BDOTempo/{AppVersion.Current}");
         var installerLogPath = Path.Combine(AppLogger.DefaultLogDirectory, $"update-setup-{DateTime.UtcNow:yyyyMMddTHHmmss}.log");
         var updateState = new AppSettingsUpdateStateStore(settings);
         var updateService = new UpdateService(

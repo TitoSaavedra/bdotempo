@@ -124,7 +124,7 @@ Parts in the repository: `app/assets/parts/`. The complete `assets.bdoa` is a bu
 
 ## The assembler
 
-`BdoComboSetup.exe --assemble-assets <partsDir> <outFile>` (headless: no window, no WinRT). It is the same code the
+`BDOTempo.exe --assemble-assets <partsDir> <outFile>` (headless: no window, no WinRT). It is the same code the
 Python tool uses to check, implemented in `AssetPackAssembler`.
 
 Checks, in this order (the first failure stops the run and nothing is written):
@@ -155,13 +155,13 @@ entries.
 |    6 | write failed    | The output could not be written, or the written file failed its own verification.                 |
 
 On failure one JSON line goes to stderr: `status = "error"`, `code` (the error code, for example `part_missing`) and
-`message`. The structured log of the run (with `trace_id` and `span_id`) is in `%LOCALAPPDATA%\BdoComboSetup\logs`.
+`message`. The structured log of the run (with `trace_id` and `span_id`) is in `%LOCALAPPDATA%\BDOTempo\logs`.
 When the command is started from a console window the JSON is shown there; from an installer, the exit code is the
 contract.
 
 ## Runtime (the app)
 
-- The app opens **only** `assets.bdoa` from the folder that contains `BdoComboSetup.exe`
+- The app opens **only** `assets.bdoa` from the folder that contains `BDOTempo.exe`
   (`AppContext.BaseDirectory`). It does not embed the pack and does not read loose images or JSON.
 - It refuses a part (`is_part`). It does not assemble anything at run time.
 - If the file is missing (`missing`) or invalid (`bad_magic`, `index_authentication`, ...), the app logs an error and
@@ -172,11 +172,11 @@ contract.
 
 ## Installer and portable contract (for the packaging step)
 
-- **Installer (Inno Setup)**: installs `BdoComboSetup.exe` and the parts into `{app}\assets\parts\`. The post-install
-  step runs `"{app}\BdoComboSetup.exe" --assemble-assets "{app}\assets\parts" "{app}\assets.bdoa"`, aborts the install
-  when the exit code is not 0, and then deletes `{app}\assets\parts\`. The result is `{app}\BdoComboSetup.exe` and
+- **Installer (Inno Setup)**: installs `BDOTempo.exe` and the parts into `{app}\assets\parts\`. The post-install
+  step runs `"{app}\BDOTempo.exe" --assemble-assets "{app}\assets\parts" "{app}\assets.bdoa"`, aborts the install
+  when the exit code is not 0, and then deletes `{app}\assets\parts\`. The result is `{app}\BDOTempo.exe` and
   `{app}\assets.bdoa`.
-- **Portable zip**: contains `BdoComboSetup.exe` and `assets.bdoa` (assembled at packaging time with the same command).
+- **Portable zip**: contains `BDOTempo.exe` and `assets.bdoa` (assembled at packaging time with the same command).
 - **Icon (Inno Setup)**: the installer uses `app\assets\icon\app-icon.ico` as `SetupIconFile` and as the uninstall icon
   (`UninstallDisplayIcon`). The file is original art, committed in the repo. The exe already embeds it (`ApplicationIcon`
   and an embedded copy for the window), so the installer does not need to copy any icon file next to the exe.
