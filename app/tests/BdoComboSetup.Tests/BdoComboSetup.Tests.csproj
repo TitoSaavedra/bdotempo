@@ -29,4 +29,10 @@
     <EmbeddedResource Include="Fixtures\bundle\*.json" LogicalName="%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <!-- Synthetic parity fixtures: inputs, combo files, the skill table and the expected output of the Python tool.
+       Copied next to the test assembly and read from disk. -->
+  <ItemGroup>
+    <None Include="Fixtures\parity\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

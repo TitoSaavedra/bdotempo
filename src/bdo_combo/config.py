@@ -17,7 +17,7 @@ from . import log
 DEFAULT_DATA_DIR = Path(r"C:\Users\TitoS\OneDrive\Documentos\Black Desert")
 DEFAULT_SKILLS_JSON = Path(r"D:\extracted_bdo\class_skills.json")
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_BACKUPS_DIR = REPO_ROOT / "backups"
+BACKUPS_FOLDER_NAME = "_backups"
 
 GAME_PROCESS_NAME = "BlackDesert64.exe"
 RECENT_WRITE_WINDOW_SECONDS = 10
@@ -30,6 +30,11 @@ class ToolError(Exception):
     """An expected, user-facing failure (bad input, refused operation, ...)."""
 
     exit_code: int = 1
+
+
+def default_backups_dir(data_dir: Path) -> Path:
+    """Backups go to ``_backups`` inside the Black Desert data folder."""
+    return data_dir / BACKUPS_FOLDER_NAME
 
 
 @dataclass(frozen=True)
@@ -49,14 +54,14 @@ class Settings:
                 value = os.environ.get(env) or default
             return value
 
-        data_dir = pick("data_dir", "BDO_DATA_DIR", str(DEFAULT_DATA_DIR))
+        data_dir = Path(pick("data_dir", "BDO_DATA_DIR", str(DEFAULT_DATA_DIR)))
         skills_json = pick("skills_json", "BDO_SKILLS_JSON", str(DEFAULT_SKILLS_JSON))
-        backups_dir = pick("backups_dir", "BDO_BACKUPS_DIR", str(DEFAULT_BACKUPS_DIR))
+        backups_dir = pick("backups_dir", "BDO_BACKUPS_DIR", None)
         return cls(
-            data_dir=Path(data_dir),
+            data_dir=data_dir,
             account=pick("account", "BDO_ACCOUNT", None),
             skills_json=Path(skills_json),
-            backups_dir=Path(backups_dir),
+            backups_dir=Path(backups_dir) if backups_dir else default_backups_dir(data_dir),
             log_file=pick("log_file", "BDO_LOG_FILE", None),
             verbose=bool(getattr(args, "verbose", False)),
         )

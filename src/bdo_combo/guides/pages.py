@@ -26,6 +26,9 @@ _STEP_ANNOTATION_CLASSES = frozenset(
 _STEP_PART_CLASSES = frozenset({"combo-skill", "combo-keys", "combo-step-extra"})
 # Prose paragraphs of a chain, kept in the chain's notes in document order.
 _CHAIN_NOTE_CLASSES = frozenset({"combo-intro", "combo-repeat", "combo-loop-cue", "combo-chain-note"})
+# Sections written as lists of notes rather than combo chains. Each list item becomes a step of one chain,
+# so the skills it names keep their numbers (cancels, and the spiritforging mechanic of Maegu).
+_NOTE_CHAIN_SECTIONS = frozenset({"class-cancels", "spiritforging"})
 
 
 @dataclass
@@ -65,8 +68,11 @@ def parse_guide(root: Element) -> ParsedGuide:
         section_id = section.attrs.get("id", "")
         for chain in section.select(cls="combo-chain"):
             guide.chains.append(_parse_chain(chain, section_id, guide.problems))
-        for aside in section.select(tag="aside", cls="combo-notes"):
-            guide.notes.extend(_parse_notes(aside, section_id, guide.problems))
+        if section_id in _NOTE_CHAIN_SECTIONS:
+            guide.chains.append(_parse_note_chain(section, section_id, guide.problems))
+        else:
+            for aside in section.select(tag="aside", cls="combo-notes"):
+                guide.notes.extend(_parse_notes(aside, section_id, guide.problems))
         for card in section.select(cls="addon-card"):
             addon = _parse_addon(card, section_id, guide.problems)
             if addon is not None:
@@ -102,6 +108,51 @@ def _parse_chain(chain: Element, section_id: str, problems: list[str]) -> dict[s
         "notes": notes,
         "steps": steps,
     }
+
+
+def _parse_note_chain(section: Element, section_id: str, problems: list[str]) -> dict[str, Any]:
+    """A section of note lists as one chain: its paragraphs are the chain notes, and each top-level list item
+    is a step. The heading above a list becomes the step's extra, and the item's text its note."""
+    title_el = section.first(tag="h2", cls="combo-guide-title")
+    notes = [
+        text
+        for paragraph in section.select(tag="p")
+        if paragraph.classes & _CHAIN_NOTE_CLASSES and (text := paragraph.text())
+    ]
+    steps: list[dict[str, Any]] = []
+    for aside in section.select(tag="aside", cls="combo-notes"):
+        heading = ""
+        for child in aside.elements():
+            if child.tag == "h3":
+                heading = child.text()
+            elif child.tag == "ul":
+                for item in child.elements():
+                    if item.tag != "li":
+                        continue
+                    steps.append({
+                        "keys": None,
+                        "skills": _inline_skill_refs(item, problems),
+                        "extra": heading or None,
+                        "note": item.text() or None,
+                    })
+    return {
+        "section": section_id,
+        "title": title_el.text() if title_el else "",
+        "notes": notes,
+        "steps": steps,
+    }
+
+
+def _inline_skill_refs(container: Element, problems: list[str]) -> list[dict[str, Any]]:
+    refs: list[dict[str, Any]] = []
+    for span in container.select(tag="span", cls="skill-inline"):
+        icon = span.first(tag="img", cls="skill-inline-icon")
+        number = skill_number_from_icon(icon.attrs.get("src", "")) if icon else None
+        if number is None:
+            problems.append("inline skill without a numbered icon was skipped")
+            continue
+        refs.append({"skillNo": number, "nameEn": span.text()})
+    return refs
 
 
 def _parse_step(li: Element, problems: list[str]) -> dict[str, Any]:

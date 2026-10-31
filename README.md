@@ -36,7 +36,7 @@ Common options (CLI flag, or the environment variable in brackets):
 | `--data-dir` [`BDO_DATA_DIR`] | `C:\Users\TitoS\OneDrive\Documentos\Black Desert` |
 | `--account` [`BDO_ACCOUNT`] | auto-detected (see below) |
 | `--skills-json` [`BDO_SKILLS_JSON`] | `D:\extracted_bdo\class_skills.json` |
-| `--backups-dir` [`BDO_BACKUPS_DIR`] | `backups/` in this repo |
+| `--backups-dir` [`BDO_BACKUPS_DIR`] | `_backups` inside the data folder (`<data-dir>\_backups`) |
 | `--log-file` [`BDO_LOG_FILE`] | none (logs always go to stderr) |
 | `--verbose` | off (adds debug logs and unchanged entries to the diff) |
 
@@ -96,20 +96,30 @@ It exits non-zero on any mismatch.
 - `apply` is a dry run unless `--write` is given. `--dry-run` is accepted and
   is the default. Applying to every character is not allowed: `--pcid` is
   required.
-- With `--write`, a backup of the targeted files is taken first, into
-  `backups/<UTC timestamp>/` with a `manifest.json` (tool version, account,
+- Backups go to `_backups` inside the Black Desert data folder, as
+  `_backups\<UTC timestamp>\` with a `manifest.json` (tool version, account,
   reason, SHA-256 of each original). Backup folders are never overwritten.
+- No game file is written without a verified backup. With `--write`, each
+  backup copy is read back and its SHA-256 compared with the original, then
+  the manifest is re-checked. If anything fails, the partial backup folder is
+  removed, the command exits with code 1 and nothing is written.
+- A game file is replaced only if its backup copy is intact and matches the
+  file's current bytes. A file the game changed after the backup is refused.
 - Writes are refused while `BlackDesert64.exe` is running and the file was
   modified in the last 10 seconds (the game rewrites it). `--force` overrides
   this.
 - After writing, the file is read back and validated (only the two sections
-  changed, 20 slots, no duplicate memos, CRLF kept). On failure the original
-  is restored from the backup and the command exits with code 3.
+  changed, 20 slots, no duplicate memos, CRLF kept). On failure the bad
+  content is backed up (`pre-rollback`), the original is restored from the
+  backup and the command exits with code 3.
 - `restore` is a dry run unless `--write`. Before restoring, it takes a
   `pre-restore` backup of the current files, and it applies the same game
   guard.
-- Exit codes: 0 success, 1 error or refusal (including a validation mismatch),
-  3 post-write validation failed and the original was restored.
+- Backups kept in the old `backups/` folder of this repo are not used any
+  more. To restore one, copy its folder into `_backups` first.
+- Exit codes: 0 success, 1 error or refusal (including a validation mismatch
+  and a backup that could not be made or verified), 3 post-write validation
+  failed and the original was restored.
 
 ## Logs
 
@@ -196,13 +206,36 @@ mise run build-assets    # runs import-guides, then copies what the guides refer
 - `data/combos/catalog.json`: the 32 classes with their names (English, Spanish) and the specs that have a guide.
   Shai's three experts (Azminek, Talent, Wootaru) share the Talent guide.
 - `data/combos/guides/<class>.<spec>.json`: one guide per key, with chains (title, steps with keys, skills, extra
-  and note), tips, and add-ons. Each skill is `{skillNo, nameEn, nameEs}`. The skill number is the numeric prefix
-  of the icon file name on the site.
-- `reports/unresolved_skills.txt`: skills the guides name but `skills_es.json` does not have (their `nameEs` stays
-  null), skills with no icon in the export, and the specs that have no saved guide.
-- The bundle holds only what the guides reference: `catalog.json`, `skills.json` (names and Spanish descriptions,
-  game markup removed), `guide-<class>.<spec>.json`, `skill-<skillNo>.png` and the 32 `class-<classType>.png`.
-  Icons above 64 px are refused.
+  and note), tips, add-ons and `manualPool`. Each skill is `{skillNo, nameEn, nameEs}`. The skill number is the
+  numeric prefix of the icon file name on the site.
+- Every chain has a `kind`, decided by `src/bdo_combo/guides/kinds.py` (first matching rule wins):
+  - `buff`: a buff or stance activation (`Self Buff`, `Prebuff / Debuff`...), or steps that all carry buff markers.
+    Applied automatically.
+  - `combo`: a rotation or filler of a combo section (`skill-rotation`, `dps-priority`...). Applied automatically.
+  - `mobility`: the `class-mobility` section, or a movement title in a combo section. Manual only.
+  - `cancels`: the `class-cancels` section (Wizard only). Manual only.
+  - `other`: reference sections (`class-specifics`, `spiritforging`, videos, further reading), and a buff list with
+    no key presses in a reference section. Shown collapsed, never applied.
+- `manualPool` (guide level): the skills of the mobility and cancels chains, each once, in guide order. These are
+  the skills the user places on the cooldown bar by hand; they are never part of the automatic combo.
+- `reports/chain_kinds.txt`: every chain with its kind, the rule that gave it and its confidence. The low
+  confidence chains come first: those rest on the section alone, or on a title with no keyword.
+- `reports/unresolved_skills.txt`: skills the guides name but `skills_es.json` does not have (their `nameEn` stays
+  null), skills with no icon in the export, skills without tooltip data, tooltip names that differ from the guide,
+  and the specs that have no saved guide.
+- `data/combos/tooltips.json` (from `data/classhub/data/skills`): the tooltip of every skill the guides reference,
+  keyed by skillNo. Language order: Mexican Spanish, Spanish, then English, one entry at a time. A tooltip is
+  `{name, lang, keys, level, cost, cooldownSec, damage, pvpPercent, protection, extras, features}`; text is plain,
+  numbers are numbers. The skill's map entry depends on the page kind (`awakening` or `succession`), so the same
+  skill number can have another tooltip on another page; the first guide in key order decides and the rest are
+  reported as conflicts.
+- The bundle holds only what the guides reference: `catalog.json`, `skills.json` (names, Spanish descriptions,
+  game markup removed, and the `tooltip` of each skill), `guide-<class>.<spec>.json`, `skill-<skillNo>.png` and the
+  32 `class-<classType>.png`. Icons above 64 px are refused.
+
+Schema: `catalog.json` and the guide files are schema 1. The kinds, the manual pool and the tooltips were added to
+schema 1 as optional fields: a reader must treat a missing `kind` as `other`, a missing `manualPool` as empty and a
+missing `tooltip` as none. The C# reader (`app/src/BdoComboSetup.Core/Combo/Catalog`) does exactly that.
 
 The app embeds the bundle (`EmbeddedResource`, one file name per resource), so the single-file exe needs no loose
 files. Without a bundle the app still builds and runs, with glyphs for the icons.

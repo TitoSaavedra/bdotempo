@@ -4,8 +4,9 @@ Output folder (flat, so each file is an EmbeddedResource with the same name):
 
 * ``catalog.json``: the combo catalog (copy of ``<combos>/catalog.json``).
 * ``guide-<class>.<spec>.json``: one per guide, copied from ``<combos>/guides``.
-* ``skills.json``: ``{"<skillNo>": {"nameEn", "nameEs", "descriptionEs"}}`` for the referenced skills.
-  Descriptions are plain text with line breaks (game markup removed).
+* ``skills.json``: ``{"<skillNo>": {"nameEn", "nameEs", "descriptionEs", "tooltip"?}}`` for the referenced skills.
+  Descriptions are plain text with line breaks (game markup removed). ``tooltip`` is optional: it is written
+  for every skill that ``<combos>/tooltips.json`` has (cooldown, cost, damage, PvP and features).
 * ``skill-<skillNo>.png``: the skill icons, copied as they are (the client icons are 40 to 50 px).
 * ``class-<classType>.png``: the 32 class icons.
 
@@ -24,7 +25,7 @@ from typing import Any
 
 from .. import log
 from .client import ClientExport, clean_description, clean_name
-from .importer import iter_skill_refs
+from .importer import TOOLTIPS_FILE, iter_skill_refs
 
 CATALOG_RESOURCE = "catalog.json"
 SKILLS_RESOURCE = "skills.json"
@@ -44,6 +45,7 @@ class BundleStats:
     class_icons: int = 0
     guides: int = 0
     skills_described: int = 0
+    skills_with_tooltip: int = 0
     missing_skill_icons: list[int] = field(default_factory=list)
 
 
@@ -78,7 +80,8 @@ def build_bundle(combos_dir: Path, client: ClientExport, out_dir: Path) -> Bundl
             stats.guides += 1
 
         skill_refs = _collect_skill_refs(guides)
-        _write_skills_lookup(out_dir, skill_refs, client, stats)
+        tooltips = _read_optional_tooltips(combos_dir)
+        _write_skills_lookup(out_dir, skill_refs, client, stats, tooltips)
         _copy_skill_icons(out_dir, sorted(skill_refs), client, stats)
         _copy_class_icons(out_dir, client, stats)
 
@@ -110,24 +113,42 @@ def _collect_skill_refs(guides: dict[str, dict[str, Any]]) -> dict[int, dict[str
     return refs
 
 
+def _read_optional_tooltips(combos_dir: Path) -> dict[str, Any]:
+    """The tooltips the import wrote, or nothing: the bundle is still valid without them (no tooltip shown)."""
+    path = combos_dir / TOOLTIPS_FILE
+    if not path.is_file():
+        log.warn("no tooltips file; skills get no tooltip", path=str(path))
+        return {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise BundleError(f"{path} must hold a JSON object")
+    return data
+
+
 def _write_skills_lookup(
     out_dir: Path,
     skill_refs: dict[int, dict[str, Any]],
     client: ClientExport,
     stats: BundleStats,
+    tooltips: dict[str, Any] | None = None,
 ) -> None:
     client_skills = client.skill_names()
+    tooltips = tooltips or {}
     lookup: dict[str, dict[str, Any]] = {}
     for skill_no in sorted(skill_refs):
         skill = client_skills.get(skill_no)
         description = clean_description(skill.description) if skill is not None else ""
         if description:
             stats.skills_described += 1
-        lookup[str(skill_no)] = {
+        entry: dict[str, Any] = {
             "nameEn": skill_refs[skill_no]["nameEn"],
             "nameEs": clean_name(skill.name) if skill is not None else None,
             "descriptionEs": description or None,
         }
+        if str(skill_no) in tooltips:
+            entry["tooltip"] = tooltips[str(skill_no)]
+            stats.skills_with_tooltip += 1
+        lookup[str(skill_no)] = entry
     _write_json(out_dir / SKILLS_RESOURCE, lookup, stats)
 
 

@@ -3,9 +3,13 @@
 Outputs (JSON, UTF-8, LF):
 
 * ``<out>/catalog.json``: classes (classType, slug, names) and their specs (id, display names, guide key).
-* ``<out>/guides/<class>.<spec>.json``: one guide per key, with chains, notes and add-ons.
-* ``<report>``: skills that the guides reference but the client export does not name, and skills
-  whose icon is missing.
+* ``<out>/guides/<class>.<spec>.json``: one guide per key, with chains (each with a ``kind``), notes, add-ons
+  and ``manualPool`` (the skills of the mobility and cancels chains, placed by hand, never applied automatically).
+* ``<out>/tooltips.json``: the skill tooltips of every skill the guides reference (chains, notes and add-ons),
+  keyed by skillNo. Read by the bundle.
+* ``<report>``: skills that the guides reference but the client export does not name, skills
+  whose icon is missing, and skills without tooltip data.
+* ``<kinds report>`` (optional): every chain with its kind, the rule that gave it and its confidence.
 
 Every skill reference is ``{"skillNo", "nameEn", "nameEs"}``. ``nameEs`` is null when the client export
 has no entry for the skill; the report lists those skills.
@@ -31,16 +35,30 @@ from .catalog import (
     spanish_class_name,
 )
 from .client import ClientExport, clean_name
+from .kinds import KINDS, LOW, MANUAL_ONLY_KINDS, Verdict, classify_chain
 from .pages import ParsedGuide
+from .tooltips import GuideSource, TooltipBuild, build_tooltips
 
 SITE_URL = "https://bdoclasshub.com/"
 GUIDE_SCHEMA = 1
+TOOLTIPS_FILE = "tooltips.json"
 
 
 @dataclass
 class UnresolvedSkill:
     name_en: str
     guides: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ChainRow:
+    """One chain of one guide with the kind the rules gave it, for the kinds report."""
+
+    guide_key: str
+    section: str
+    title: str
+    steps: int
+    verdict: Verdict
 
 
 @dataclass
@@ -50,6 +68,8 @@ class ImportResult:
     unresolved: dict[int, UnresolvedSkill]
     icon_missing: dict[int, list[str]]
     problems: list[str]
+    chain_rows: list[ChainRow] = field(default_factory=list)
+    tooltips: TooltipBuild = field(default_factory=TooltipBuild)
 
     def skill_refs(self) -> Iterator[dict[str, Any]]:
         for key in sorted(self.guides):
@@ -58,6 +78,9 @@ class ImportResult:
     def stats(self) -> dict[str, int]:
         chains = sum(len(guide["chains"]) for guide in self.guides.values())
         steps = sum(len(chain["steps"]) for guide in self.guides.values() for chain in guide["chains"])
+        counts = {f"chains_{kind}": 0 for kind in KINDS}
+        for row in self.chain_rows:
+            counts[f"chains_{row.verdict.kind}"] += 1
         return {
             "classes": len(self.catalog["classes"]),
             "specs": sum(len(entry["specs"]) for entry in self.catalog["classes"]),
@@ -68,6 +91,12 @@ class ImportResult:
             "unresolved_skills": len(self.unresolved),
             "icons_missing": len(self.icon_missing),
             "problems": len(self.problems),
+            **counts,
+            "chains_low_confidence": sum(1 for row in self.chain_rows if row.verdict.confidence == LOW),
+            "manual_pool_skills": sum(len(guide["manualPool"]) for guide in self.guides.values()),
+            "tooltips": len(self.tooltips.tooltips),
+            "tooltips_no_data": len(self.tooltips.no_data),
+            "tooltip_name_mismatches": len(self.tooltips.name_mismatches),
         }
 
 
@@ -96,6 +125,8 @@ def import_guides(classhub_dir: Path, client: ClientExport) -> ImportResult:
 
         class_type_by_slug = {class_slug(cls.name): class_type for class_type, cls in client_classes.items()}
         guides: dict[str, dict[str, Any]] = {}
+        chain_rows: list[ChainRow] = []
+        sources: list[GuideSource] = []
         for plan in plans:
             if plan.guide.key in guides:
                 continue
@@ -106,8 +137,10 @@ def import_guides(classhub_dir: Path, client: ClientExport) -> ImportResult:
                 continue
             parsed = pages.guide(plan.guide.page)
             guide = _guide_json(plan, class_type, parsed)
+            chain_rows.extend(_classify_guide(plan.guide.key, guide))
             _record_problems(plan, parsed, problems)
             guides[plan.guide.key] = guide
+            sources.append(GuideSource(plan.guide.key, plan.class_slug, plan.guide.page, guide))
             log.info(
                 "guide read",
                 key=plan.guide.key,
@@ -118,7 +151,10 @@ def import_guides(classhub_dir: Path, client: ClientExport) -> ImportResult:
             )
 
         unresolved = _resolve_skill_names(guides, client_skills, problems)
+        for guide in guides.values():
+            guide["manualPool"] = manual_pool(guide)
         icon_missing = _check_icons(guides, client)
+        tooltips = build_tooltips(classhub_dir, sources)
 
         classes = [
             (class_type, class_display_name(cls.name), spanish_class_name(classhub_dir, class_display_name(cls.name)))
@@ -136,10 +172,17 @@ def import_guides(classhub_dir: Path, client: ClientExport) -> ImportResult:
             unresolved=unresolved,
             icon_missing=icon_missing,
             problems=problems,
+            chain_rows=chain_rows,
+            tooltips=tooltips,
         )
 
 
-def write_outputs(result: ImportResult, out_dir: Path, report_path: Path) -> None:
+def write_outputs(
+    result: ImportResult,
+    out_dir: Path,
+    report_path: Path,
+    kinds_report_path: Path | None = None,
+) -> None:
     with log.span("guides.import.write", out_dir=str(out_dir), report=str(report_path)):
         guides_dir = out_dir / "guides"
         guides_dir.mkdir(parents=True, exist_ok=True)
@@ -148,10 +191,49 @@ def write_outputs(result: ImportResult, out_dir: Path, report_path: Path) -> Non
         for key, guide in result.guides.items():
             _write_json(guides_dir / f"{key}.json", guide)
         _write_json(out_dir / "catalog.json", result.catalog)
+        tooltips = {str(skill_no): tooltip for skill_no, tooltip in sorted(result.tooltips.tooltips.items())}
+        _write_json(out_dir / TOOLTIPS_FILE, tooltips)
 
         report_path.parent.mkdir(parents=True, exist_ok=True)
         report_path.write_text(render_report(result), encoding="utf-8", newline="\n")
         log.info("unresolved skills report written", unresolved=len(result.unresolved))
+
+        if kinds_report_path is not None:
+            kinds_report_path.parent.mkdir(parents=True, exist_ok=True)
+            kinds_report_path.write_text(render_kinds_report(result), encoding="utf-8", newline="\n")
+            log.info("chain kinds report written", chains=len(result.chain_rows))
+
+
+def render_kinds_report(result: ImportResult) -> str:
+    """Every chain with its kind, grouped so the low-confidence ones are read first."""
+    rows = result.chain_rows
+    counts = {kind: sum(1 for row in rows if row.verdict.kind == kind) for kind in KINDS}
+    low = [row for row in rows if row.verdict.confidence == LOW]
+    lines = [
+        "Combo chains by kind",
+        "Generated by `python -m bdo_combo.guides import`. Do not edit by hand.",
+        "",
+        f"Chains: {len(rows)}",
+        "Kinds: " + ", ".join(f"{kind} {counts[kind]}" for kind in KINDS),
+        "buff and combo are applied automatically to the cooldown bar; mobility and cancels are manual-only;",
+        "other is shown collapsed. Rules: src/bdo_combo/guides/kinds.py (classify_chain).",
+        "",
+        f"LOW CONFIDENCE ({len(low)}): review these first",
+        "guide | section | kind | reason | steps | title",
+    ]
+    lines += [_kind_line(row) for row in low]
+    lines += ["", "ALL CHAINS", "guide | section | kind | confidence | reason | steps | title"]
+    lines += [_kind_line(row, with_confidence=True) for row in rows]
+    return "\n".join(lines) + "\n"
+
+
+def _kind_line(row: ChainRow, with_confidence: bool = False) -> str:
+    title = row.title or "(no title)"
+    head = [row.guide_key, row.section, row.verdict.kind]
+    if with_confidence:
+        head.append(row.verdict.confidence)
+    head += [row.verdict.reason, str(row.steps), title]
+    return " | ".join(head)
 
 
 def render_report(result: ImportResult) -> str:
@@ -175,6 +257,23 @@ def render_report(result: ImportResult) -> str:
     for skill_no in sorted(result.icon_missing):
         lines.append(f"{skill_no} | {', '.join(sorted(set(result.icon_missing[skill_no])))}")
 
+    tooltips = result.tooltips
+    lines += [
+        "",
+        f"Skills without tooltip data: {len(tooltips.no_data)}",
+        "Skills in buff, combo, mobility or cancels chains (and add-ons) that the saved skill files do not have.",
+        "skillNo | guides",
+    ]
+    for skill_no in sorted(tooltips.no_data):
+        lines.append(f"{skill_no} | {', '.join(tooltips.no_data[skill_no])}")
+
+    lines += ["", f"Tooltip names that differ from the guide: {len(tooltips.name_mismatches)}"]
+    lines += [f"- {mismatch}" for mismatch in tooltips.name_mismatches]
+    lines += ["", f"Tooltip conflicts between guides: {len(tooltips.conflicts)}"]
+    lines += [f"- {conflict}" for conflict in tooltips.conflicts]
+    lines += ["", f"Class skill files missing: {len(tooltips.missing_class_files)}"]
+    lines += [f"- {slug}" for slug in tooltips.missing_class_files]
+
     lines += ["", f"Other problems: {len(result.problems)}"]
     lines += [f"- {problem}" for problem in result.problems]
     return "\n".join(lines) + "\n"
@@ -193,6 +292,38 @@ def _guide_json(plan: SpecPlan, class_type: int, parsed: ParsedGuide) -> dict[st
         "notes": parsed.notes,
         "addons": parsed.addons,
     }
+
+
+def _classify_guide(key: str, guide: dict[str, Any]) -> list[ChainRow]:
+    """Gives every chain its kind (written into the chain) and returns the rows for the kinds report."""
+    rows: list[ChainRow] = []
+    for chain in guide["chains"]:
+        steps = chain["steps"]
+        verdict = classify_chain(
+            chain["section"],
+            chain["title"],
+            [step["extra"] for step in steps],
+            [step["keys"] for step in steps],
+        )
+        chain["kind"] = verdict.kind
+        rows.append(ChainRow(key, chain["section"], chain["title"], len(steps), verdict))
+    return rows
+
+
+def manual_pool(guide: dict[str, Any]) -> list[dict[str, Any]]:
+    """The skills of the mobility and cancels chains, each once, in document order.
+
+    This is the pool the user places on the cooldown bar by hand. Its skills are never part of the automatic
+    combo, even when the same skill also appears in a buff or combo chain.
+    """
+    pool: dict[int, dict[str, Any]] = {}
+    for chain in guide["chains"]:
+        if chain["kind"] not in MANUAL_ONLY_KINDS:
+            continue
+        for step in chain["steps"]:
+            for ref in step["skills"]:
+                pool.setdefault(ref["skillNo"], {"skillNo": ref["skillNo"], "nameEn": ref["nameEn"], "nameEs": ref["nameEs"]})
+    return list(pool.values())
 
 
 def _record_problems(plan: SpecPlan, parsed: ParsedGuide, problems: list[str]) -> None:

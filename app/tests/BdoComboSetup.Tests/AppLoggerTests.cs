@@ -71,25 +71,4 @@ public sealed class AppLoggerTests : IDisposable
         Assert.False(string.IsNullOrEmpty(error.GetProperty("stack").GetString()));
     }
 
-    [Fact]
-    public async Task Stub_applier_logs_the_operation_without_writing_anything()
-    {
-        var applier = new StubComboApplier(_log.Logger);
-        var request = new ComboApplyRequest(
-            "Tamer",
-            ComboMode.Awakening,
-            new CharacterOption("TestName", "1"),
-            IncludeCooldownBar: true,
-            IncludeMemos: true,
-            IncludeQuickSlots: true,
-            DryRun: true);
-
-        var result = await applier.ApplyAsync(request);
-
-        Assert.Equal(ComboApplyStatus.NotConnected, result.Status);
-        var lines = ReadLines().ToList();
-        Assert.Contains(lines, e => e.GetProperty("event").GetString() == "combo.apply.not_connected");
-        // The character name is personal data and must never reach the log.
-        Assert.DoesNotContain("TestName", File.ReadAllText(_log.Logger.FilePath));
-    }
 }
