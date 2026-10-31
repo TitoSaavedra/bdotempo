@@ -71,7 +71,7 @@ public sealed partial class ComboStepViewModel : ObservableObject
     /// <summary>The second skill of a step with several skills, shown next to the first one.</summary>
     public ComboSkill? SecondarySkill => Skills.Count > 1 ? Skills[1] : null;
 
-    public string SkillName => PrimarySkill is { } skill ? skill.Name.For(_culture) : _localizer.Get("Apply_NoSkill");
+    public string SkillName => PrimarySkill is { } skill ? skill.Name.For(_culture) : _localizer.Get("Apply.NoSkill");
 
     /// <summary>The Spanish game text of the primary skill, or null when the guide has none.</summary>
     public string? SkillDescription => PrimarySkill?.DescriptionEs;
@@ -122,7 +122,7 @@ public sealed partial class ComboStepViewModel : ObservableObject
     /// or a hint when there is no memo yet.
     /// </summary>
     public string KeyLegend => IsHotkey
-        ? (HasMemo ? Memo!.Trim() : _localizer.Get("Apply_YourKey"))
+        ? (HasMemo ? Memo!.Trim() : _localizer.Get("Apply.YourKey"))
         : (Keys ?? string.Empty);
 
     public bool HasCooldown => CooldownSlot is not null;
@@ -132,8 +132,8 @@ public sealed partial class ComboStepViewModel : ObservableObject
 
     /// <summary>Name and key for screen readers.</summary>
     public string AutomationName => string.IsNullOrEmpty(KeyLegend)
-        ? _localizer.Format("Apply_StepAutomationName", Position, DisplayName)
-        : _localizer.Format("Apply_StepAutomationNameWithKey", Position, DisplayName, KeyLegend);
+        ? _localizer.Format("Apply.StepAutomationName", Position, DisplayName)
+        : _localizer.Format("Apply.StepAutomationNameWithKey", Position, DisplayName, KeyLegend);
 
     internal void RaiseEdited() => Edited?.Invoke(this, EventArgs.Empty);
 

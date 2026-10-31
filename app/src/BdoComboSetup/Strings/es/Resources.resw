@@ -48,18 +48,6 @@
   <data name="NavApplyItem.Content" xml:space="preserve"><value>Aplicar combo</value></data>
   <data name="NavPreviewItem.Content" xml:space="preserve"><value>Vista previa</value></data>
 
-  <data name="ApplyTitle.Text" xml:space="preserve"><value>Aplicar combo</value></data>
-  <data name="CharacterComboBox.Header" xml:space="preserve"><value>Personaje</value></data>
-  <data name="ClassComboBox.Header" xml:space="preserve"><value>Clase</value></data>
-  <data name="ModeHeader.Text" xml:space="preserve"><value>Modo</value></data>
-  <data name="ModeSuccessionRadio.Content" xml:space="preserve"><value>Sucesión</value></data>
-  <data name="ModeAwakeningRadio.Content" xml:space="preserve"><value>Despertar</value></data>
-  <data name="CooldownBarCheckBox.Content" xml:space="preserve"><value>Barra de enfriamiento</value></data>
-  <data name="MemosCheckBox.Content" xml:space="preserve"><value>Notas</value></data>
-  <data name="QuickSlotsCheckBox.Content" xml:space="preserve"><value>Ranuras rápidas</value></data>
-  <data name="BackupInfoBar.Message" xml:space="preserve"><value>Se hace una copia de seguridad antes de escribir. Después de aplicar, sal del personaje (sin cerrar el cliente) y vuelve a entrar.</value></data>
-  <data name="ApplyButton.Content" xml:space="preserve"><value>Aplicar combo</value></data>
-  <data name="DryRunButton.Content" xml:space="preserve"><value>Simulación</value></data>
 
   <data name="PreviewTitle.Text" xml:space="preserve"><value>Vista previa</value></data>
   <data name="CooldownBarCaption.Text" xml:space="preserve"><value>Barra de enfriamiento</value></data>
@@ -70,15 +58,6 @@
   <data name="SaveButton.Content" xml:space="preserve"><value>Guardar cambios</value></data>
   <data name="ResetButton.Content" xml:space="preserve"><value>Restablecer</value></data>
 
-  <data name="Apply_SummaryTitle" xml:space="preserve"><value>{0} · {1}</value><comment>{0} class name, {1} mode label</comment></data>
-  <data name="Apply_SourceFormat" xml:space="preserve"><value>Fuente: {0}</value><comment>{0} host name</comment></data>
-  <data name="Apply_ComboSkillsCount" xml:space="preserve"><value>{0} habilidades de combo</value></data>
-  <data name="Apply_PriorityBuffsCount" xml:space="preserve"><value>{0} buffs prioritarios</value></data>
-  <data name="Apply_QuickSlotsCount" xml:space="preserve"><value>{0} ranuras rápidas</value></data>
-  <data name="Mode_Succession" xml:space="preserve"><value>Sucesión</value></data>
-  <data name="Mode_Awakening" xml:space="preserve"><value>Despertar</value></data>
-  <data name="Apply_Status_NotConnected" xml:space="preserve"><value>Aún no está conectado: el aplicador de combos no está disponible en esta versión. No se escribió nada.</value></data>
-  <data name="Apply_Status_Failed" xml:space="preserve"><value>La operación falló. Revisa el log para ver los detalles.</value></data>
 
   <data name="Preview_EmptySlot" xml:space="preserve"><value>Ranura vacía</value></data>
   <data name="Preview_PlaceholderSkill" xml:space="preserve"><value>Habilidad {0}</value></data>
@@ -120,4 +99,60 @@
   <data name="Preview_GameWindow_NotConnected" xml:space="preserve"><value>La vista en vivo del juego aún no está conectada.</value></data>
   <data name="Preview_GameWindow_NotRunning" xml:space="preserve"><value>El juego no está abierto.</value></data>
   <data name="Preview_GameWindow_Running" xml:space="preserve"><value>Ventana del juego encontrada.</value></data>
+
+
+  <!-- Apply page (Apply.* keys). Keys with dots are hierarchical in the PRI: Apply.X.Y -> Apply/X/Y. -->
+  <data name="Apply.Title.Text" xml:space="preserve"><value>Aplicar combo</value></data>
+  <data name="Apply.ClassHeader.Text" xml:space="preserve"><value>Clase</value></data>
+  <data name="Apply.GuideHeader.Text" xml:space="preserve"><value>Guía</value></data>
+  <data name="Apply.ChangeCharacterButton.AutomationProperties.Name" xml:space="preserve"><value>Cambiar personaje</value></data>
+  <data name="Apply.RestoreButton.Content" xml:space="preserve"><value>Restaurar combo de bdoclasshub</value></data>
+  <data name="Apply.AddSkillButton.Content" xml:space="preserve"><value>Añadir habilidad</value></data>
+  <data name="Apply.AddSkillSearch.PlaceholderText" xml:space="preserve"><value>Busca por nombre o número</value></data>
+  <data name="Apply.EmptyTitle.Text" xml:space="preserve"><value>Aún no hay combo para esta guía</value></data>
+  <data name="Apply.EmptyBody.Text" xml:space="preserve"><value>La guía no está en el paquete de la app. Elige otra especialidad o clase.</value></data>
+  <data name="Apply.NoStepsTitle.Text" xml:space="preserve"><value>Esta guía no tiene pasos</value></data>
+  <data name="Apply.EmptyChain.Text" xml:space="preserve"><value>Esta cadena no tiene pasos. Añade una habilidad abajo.</value></data>
+  <data name="Apply.DetailEmpty.Text" xml:space="preserve"><value>Selecciona un paso para ver sus detalles.</value></data>
+  <data name="Apply.DescriptionHeader.Text" xml:space="preserve"><value>Descripción</value></data>
+  <data name="Apply.CustomizationHeader.Text" xml:space="preserve"><value>Personalización</value></data>
+  <data name="Apply.CustomNameBox.Header" xml:space="preserve"><value>Nombre propio</value></data>
+  <data name="Apply.CustomNameBox.PlaceholderText" xml:space="preserve"><value>Sin nombre propio</value></data>
+  <data name="Apply.MemoBox.Header" xml:space="preserve"><value>Memo</value></data>
+  <data name="Apply.MemoBox.PlaceholderText" xml:space="preserve"><value>Tu tecla o una nota</value></data>
+  <data name="Apply.CooldownBox.Header" xml:space="preserve"><value>Slot de cooldown</value></data>
+  <data name="Apply.QuickBox.Header" xml:space="preserve"><value>Quickslot</value></data>
+  <data name="Apply.ResetStepButton.Content" xml:space="preserve"><value>Restablecer paso</value></data>
+  <data name="Apply.RemoveButton.Content" xml:space="preserve"><value>Quitar</value></data>
+  <data name="Apply.MoveEarlierButton.Content" xml:space="preserve"><value>Mover a la izquierda</value></data>
+  <data name="Apply.MoveEarlierButton.AutomationProperties.Name" xml:space="preserve"><value>Mover paso antes</value></data>
+  <data name="Apply.MoveLaterButton.Content" xml:space="preserve"><value>Mover a la derecha</value></data>
+  <data name="Apply.MoveLaterButton.AutomationProperties.Name" xml:space="preserve"><value>Mover paso después</value></data>
+  <data name="Apply.SaveButton.Content" xml:space="preserve"><value>Guardar como mi combo</value></data>
+  <data name="Apply.DryRunButton.Content" xml:space="preserve"><value>Simulación</value></data>
+  <data name="Apply.ApplyButton.Content" xml:space="preserve"><value>Aplicar combo</value></data>
+  <data name="Apply.SectionBuffs.Text" xml:space="preserve"><value>Buffs</value></data>
+  <data name="Apply.SectionCombos.Text" xml:space="preserve"><value>Combos</value></data>
+  <data name="Apply.SectionMobility.Header" xml:space="preserve"><value>Movilidad (manual)</value></data>
+  <data name="Apply.MobilityHint.Text" xml:space="preserve"><value>No se añade al combo por sí sola. Asigna un slot de cooldown a mano.</value></data>
+  <data name="Apply.AddToSlotButton.Content" xml:space="preserve"><value>Añadir a un slot</value></data>
+  <data name="Apply.BackupInfo.Text" xml:space="preserve"><value>Se crea un backup antes de escribir. Después de aplicar, sal del personaje (sin cerrar el cliente) y vuelve a entrar.</value></data>
+  <data name="Apply.NoSkill" xml:space="preserve"><value>Sin habilidad</value></data>
+  <data name="Apply.YourKey" xml:space="preserve"><value>Tu tecla</value></data>
+  <data name="Apply.StepAutomationName" xml:space="preserve"><value>Paso {0}: {1}</value></data>
+  <data name="Apply.StepAutomationNameWithKey" xml:space="preserve"><value>Paso {0}: {1}, tecla {2}</value></data>
+  <data name="Apply.StepCountOne" xml:space="preserve"><value>1 paso</value></data>
+  <data name="Apply.StepCountMany" xml:space="preserve"><value>{0} pasos</value></data>
+  <data name="Apply.ChainFallbackTitle" xml:space="preserve"><value>Cadena {0}</value></data>
+  <data name="Apply.OptionNone" xml:space="preserve"><value>Ninguna</value></data>
+  <data name="Apply.QuickPositionOption" xml:space="preserve"><value>Posición {0} ({1})</value></data>
+  <data name="Apply.PcidFormat" xml:space="preserve"><value>PCID {0}</value></data>
+  <data name="Apply.StateUnsaved" xml:space="preserve"><value>Cambios sin guardar</value></data>
+  <data name="Apply.StateSaved" xml:space="preserve"><value>Mi combo</value></data>
+  <data name="Apply.StateBase" xml:space="preserve"><value>Guía de bdoclasshub</value></data>
+  <data name="Apply.StatusSaved" xml:space="preserve"><value>Tu combo está guardado.</value></data>
+  <data name="Apply.StatusSaveFailed" xml:space="preserve"><value>No se pudo guardar el combo. Revisa el log para ver los detalles.</value></data>
+  <data name="Apply.StatusRestored" xml:space="preserve"><value>Volvió el combo de bdoclasshub.</value></data>
+  <data name="Apply.StatusFailed" xml:space="preserve"><value>La operación falló. Revisa el log para ver los detalles.</value></data>
+  <data name="Apply.StatusNotConnected" xml:space="preserve"><value>Aún no está conectado: el aplicador de combos no está disponible en esta versión. No se escribió nada.</value></data>
 </root>

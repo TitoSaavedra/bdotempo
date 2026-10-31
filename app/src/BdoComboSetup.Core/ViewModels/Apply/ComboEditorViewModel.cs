@@ -19,10 +19,18 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     private readonly ILocalizer _localizer;
     private readonly CultureInfo _culture;
     private readonly AppLogger _logger;
+    private readonly IChainKindResolver _kinds;
     private readonly Dictionary<int, ComboSkill> _skillsByNo;
     private bool _tracking;
 
-    private ComboEditorViewModel(int classType, string specId, ComboGuide guide, ILocalizer localizer, CultureInfo culture, AppLogger logger)
+    private ComboEditorViewModel(
+        int classType,
+        string specId,
+        ComboGuide guide,
+        ILocalizer localizer,
+        CultureInfo culture,
+        AppLogger logger,
+        IChainKindResolver kinds)
     {
         ClassType = classType;
         SpecId = specId;
@@ -30,12 +38,14 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         _localizer = localizer;
         _culture = culture;
         _logger = logger;
+        _kinds = kinds;
 
         AvailableSkills = BuildAvailableSkills(guide, culture);
         _skillsByNo = AvailableSkills.ToDictionary(option => option.SkillNo, option => option.Skill);
         CooldownOptions = BuildCooldownOptions(localizer);
         QuickOptions = BuildQuickOptions(localizer);
         Chains = new ObservableCollection<ComboChainViewModel>();
+        ManualChains = new ObservableCollection<ComboChainViewModel>();
     }
 
     public int ClassType { get; }
@@ -49,7 +59,17 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     /// <summary>The host of the guide page on bdoclasshub.com, shown as the source. Empty when the guide has none.</summary>
     public string SourceHost => Uri.TryCreate(_guide.Source, UriKind.Absolute, out var uri) ? uri.Host : string.Empty;
 
+    /// <summary>The buff and combo chains, buffs first. These are the steps of the combo.</summary>
     public ObservableCollection<ComboChainViewModel> Chains { get; }
+
+    /// <summary>
+    /// The mobility chains: a manual pool. Their skills go to a cooldown slot only by hand (see <see cref="AddToFreeSlot"/>),
+    /// never with the combo.
+    /// </summary>
+    public ObservableCollection<ComboChainViewModel> ManualChains { get; }
+
+    /// <summary>True when the guide has mobility skills for the manual pool.</summary>
+    public bool HasManualSteps => ManualChains.Any(chain => chain.HasSteps);
 
     /// <summary>Every skill of the guide, for "Add skill".</summary>
     public IReadOnlyList<SkillOption> AvailableSkills { get; }
@@ -114,14 +134,15 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         ComboProfile? profile,
         ILocalizer localizer,
         CultureInfo culture,
-        AppLogger logger)
+        AppLogger logger,
+        IChainKindResolver? kinds = null)
     {
         ArgumentNullException.ThrowIfNull(guide);
         ArgumentNullException.ThrowIfNull(localizer);
         ArgumentNullException.ThrowIfNull(culture);
         ArgumentNullException.ThrowIfNull(logger);
 
-        var editor = new ComboEditorViewModel(classType, specId, guide, localizer, culture, logger);
+        var editor = new ComboEditorViewModel(classType, specId, guide, localizer, culture, logger, kinds ?? TitleChainKindResolver.Instance);
         editor.LoadChains(profile);
         return editor;
     }
@@ -131,7 +152,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         new(
             ClassType,
             SpecId,
-            Chains.Select(chain => new ComboProfileChain(
+            AllChains().OrderBy(chain => chain.Index).Select(chain => new ComboProfileChain(
                 chain.Index,
                 chain.Steps.Select(step => new ComboProfileStep(
                     step.BaseStep,
@@ -160,12 +181,15 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         });
     }
 
-    public IEnumerable<ComboStepViewModel> AllSteps() => Chains.SelectMany(chain => chain.Steps);
+    public IEnumerable<ComboStepViewModel> AllSteps() => AllChains().SelectMany(chain => chain.Steps);
+
+    /// <summary>Every chain the editor holds: the combo chains, then the manual pool.</summary>
+    private IEnumerable<ComboChainViewModel> AllChains() => Chains.Concat(ManualChains);
 
     [RelayCommand]
     public void SelectStep(ComboStepViewModel? step)
     {
-        if (step is not null && Chains.Any(chain => chain.Steps.Contains(step)))
+        if (step is not null && AllChains().Any(chain => chain.Steps.Contains(step)))
         {
             SelectedStep = step;
         }
@@ -311,6 +335,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     internal void NotifyStepsChanged()
     {
         OnPropertyChanged(nameof(TotalSteps));
+        OnPropertyChanged(nameof(HasManualSteps));
         MarkChanged();
     }
 
@@ -333,33 +358,85 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     private void Attach(ComboStepViewModel step) => step.Edited += (_, _) => MarkChanged();
 
     private ComboChainViewModel? FindChain(ComboStepViewModel step) =>
-        Chains.FirstOrDefault(chain => chain.Steps.Contains(step));
+        AllChains().FirstOrDefault(chain => chain.Steps.Contains(step));
 
-    /// <summary>Fills <see cref="Chains"/> from the guide and the profile, then selects the first step.</summary>
+    /// <summary>
+    /// Gives a mobility skill the lowest cooldown slot that no step holds. It does nothing when the step already has a slot
+    /// or when all 20 slots are used. The skill is never added to the combo by this.
+    /// </summary>
+    [RelayCommand]
+    public void AddToFreeSlot(ComboStepViewModel? step)
+    {
+        if (step is null || step.CooldownSlot is not null)
+        {
+            return;
+        }
+
+        var used = AllSteps().Where(item => item.CooldownSlot is not null).Select(item => item.CooldownSlot!.Value).ToHashSet();
+        for (var slot = 1; slot <= SlotAssignment.CooldownSlotCount; slot++)
+        {
+            if (used.Contains(slot))
+            {
+                continue;
+            }
+
+            AssignCooldown(step, slot);
+            _logger.Info("apply.slot.added_by_hand", "Manual skill given a free cooldown slot", new Dictionary<string, object?>
+            {
+                ["slot"] = slot,
+                ["base_step"] = step.BaseStep,
+            });
+            return;
+        }
+
+        _logger.Info("apply.slot.none_free", "Every cooldown slot is in use; the skill was not added");
+    }
+
+    /// <summary>
+    /// Fills the chains from the guide and the profile, then selects the first step. Buff chains come first, then combo
+    /// chains, each in guide order. Mobility chains go to <see cref="ManualChains"/>. Cancels and other chains are not shown.
+    /// </summary>
     private void LoadChains(ComboProfile? profile)
     {
         _tracking = false;
 
         SelectedStep = null;
         Chains.Clear();
+        ManualChains.Clear();
         var profileChains = IndexProfileChains(profile);
-        var chains = new List<ComboChainViewModel>();
+        var built = new List<(ComboChainKind Kind, ComboChainViewModel Chain)>();
         for (var index = 0; index < _guide.Chains.Count; index++)
         {
             var chain = _guide.Chains[index];
+            var kind = _kinds.Resolve(chain);
+            if (kind is ComboChainKind.Cancels or ComboChainKind.Other)
+            {
+                _logger.Debug("apply.chain.hidden", "Chain kind is not shown yet", new Dictionary<string, object?>
+                {
+                    ["chain"] = index,
+                    ["kind"] = kind.ToString(),
+                });
+                continue;
+            }
+
             var steps = profileChains.TryGetValue(index, out var saved)
                 ? StepsFromProfile(index, chain, saved)
                 : BaseSteps(chain);
             var title = string.IsNullOrWhiteSpace(chain.Title)
-                ? _localizer.Format("Apply_ChainFallbackTitle", (index + 1).ToString(CultureInfo.InvariantCulture))
+                ? _localizer.Format("Apply.ChainFallbackTitle", (index + 1).ToString(CultureInfo.InvariantCulture))
                 : chain.Title;
-            chains.Add(new ComboChainViewModel(this, index, title, string.Join(" · ", chain.Notes), steps, AvailableSkills, _localizer));
+            built.Add((kind, new ComboChainViewModel(this, index, title, string.Join(" · ", chain.Notes), steps, AvailableSkills, _localizer)));
         }
 
-        ClearInvalidSlots(chains.SelectMany(chain => chain.Steps).ToList());
-        foreach (var chain in chains)
+        ClearInvalidSlots(built.SelectMany(item => item.Chain.Steps).ToList());
+        foreach (var item in built.Where(item => item.Kind == ComboChainKind.Buff).Concat(built.Where(item => item.Kind == ComboChainKind.Combo)))
         {
-            Chains.Add(chain);
+            Chains.Add(item.Chain);
+        }
+
+        foreach (var item in built.Where(item => item.Kind == ComboChainKind.Mobility))
+        {
+            ManualChains.Add(item.Chain);
         }
 
         foreach (var step in AllSteps())
@@ -371,6 +448,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         HasUnsavedChanges = false;
         SelectedStep = AllSteps().FirstOrDefault();
         OnPropertyChanged(nameof(TotalSteps));
+        OnPropertyChanged(nameof(HasManualSteps));
         _tracking = true;
 
         _logger.Info("apply.guide.loaded", "Working copy built", new Dictionary<string, object?>
@@ -378,6 +456,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
             ["class_type"] = ClassType,
             ["spec"] = SpecId,
             ["chains"] = Chains.Count,
+            ["manual_chains"] = ManualChains.Count,
             ["steps"] = TotalSteps,
             ["from_profile"] = profile is not null,
         });
@@ -529,7 +608,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
 
     private static IReadOnlyList<SlotOption> BuildCooldownOptions(ILocalizer localizer)
     {
-        var options = new List<SlotOption> { new(null, localizer.Get("Apply_OptionNone")) };
+        var options = new List<SlotOption> { new(null, localizer.Get("Apply.OptionNone")) };
         for (var slot = 1; slot <= SlotAssignment.CooldownSlotCount; slot++)
         {
             options.Add(new SlotOption(slot, slot.ToString(CultureInfo.InvariantCulture)));
@@ -540,11 +619,11 @@ public sealed partial class ComboEditorViewModel : ObservableObject
 
     private static IReadOnlyList<SlotOption> BuildQuickOptions(ILocalizer localizer)
     {
-        var options = new List<SlotOption> { new(null, localizer.Get("Apply_OptionNone")) };
+        var options = new List<SlotOption> { new(null, localizer.Get("Apply.OptionNone")) };
         foreach (var input in QuickSlotMap.Inputs)
         {
             var label = input.MouseButton ?? input.Position.ToString(CultureInfo.InvariantCulture);
-            options.Add(new SlotOption(input.Position, localizer.Format("Preview_QuickPositionOption", input.Position, label)));
+            options.Add(new SlotOption(input.Position, localizer.Format("Apply.QuickPositionOption", input.Position, label)));
         }
 
         return options;

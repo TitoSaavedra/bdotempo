@@ -32,6 +32,31 @@ internal static class ComboTestData
         [],
         [new ComboAddon("class-addons", Skill(500, "Skybound Stab", "Estocada celestial"), "Thrust.", [])]);
 
+    /// <summary>
+    /// The tamer guide plus a mobility chain (manual pool, skills 600 and 601) and a cancels chain (hidden, skill 700).
+    /// Chain indices: 0 Damage Combo, 1 Auto buffs, 2 Movement Between Packs, 3 Tiger Blade Cancel.
+    /// </summary>
+    public static ComboGuide GuideWithMobility()
+    {
+        var basic = TamerGuide();
+        return basic with
+        {
+            Chains =
+            [
+                .. basic.Chains,
+                new ComboChain("class-mobility", "Movement Between Packs", [],
+                [
+                    new ComboStep("Shift+Space", [Skill(600, "Butterfly Step", "Paso mariposa")], null, null),
+                    new ComboStep("Shift+Q", [Skill(601, "Breeze Into Stride", "Brisa")], null, null),
+                ]),
+                new ComboChain("class-cancels", "Tiger Blade Cancel", [],
+                [
+                    new ComboStep("RMB", [Skill(700, "Tiger Blade", "Hoja tigre")], null, null),
+                ]),
+            ],
+        };
+    }
+
     public static ComboGuide ShaiGuide() => new(
         "Shai Talent",
         null,

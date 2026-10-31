@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using BdoComboSetup.Core.Assets;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Localization;
 using BdoComboSetup.Core.Logging;
@@ -25,6 +26,7 @@ public enum StatusSeverity
 public sealed partial class ApplyComboViewModel : ObservableObject
 {
     private readonly ICombosCatalog _catalog;
+    private readonly IAssetProvider _assets;
     private readonly IComboProfileStore _profiles;
     private readonly IComboApplier _applier;
     private readonly ILocalizer _localizer;
@@ -37,6 +39,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 
     public ApplyComboViewModel(
         ICombosCatalog catalog,
+        IAssetProvider assets,
         IComboDataSource data,
         IComboProfileStore profiles,
         IComboApplier applier,
@@ -45,6 +48,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         AppLogger logger)
     {
         ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(assets);
         ArgumentNullException.ThrowIfNull(data);
         ArgumentNullException.ThrowIfNull(profiles);
         ArgumentNullException.ThrowIfNull(applier);
@@ -53,6 +57,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(logger);
 
         _catalog = catalog;
+        _assets = assets;
         _profiles = profiles;
         _applier = applier;
         _localizer = localizer;
@@ -61,7 +66,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 
         Characters = new ObservableCollection<CharacterOption>(data.GetCharacters());
         Classes = new ObservableCollection<ClassOptionViewModel>(
-            catalog.Classes.Select(info => new ClassOptionViewModel(info, culture, option => SelectClassAsync(option))));
+            catalog.Classes.Select(info => new ClassOptionViewModel(info, culture, assets, option => SelectClassAsync(option))));
         Specs = new ObservableCollection<SpecOptionViewModel>();
         _selectedCharacter = Characters.FirstOrDefault();
     }
@@ -121,7 +126,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 
     public string CharacterPcidText => SelectedCharacter is null
         ? string.Empty
-        : _localizer.Format("Apply_PcidFormat", SelectedCharacter.Pcid);
+        : _localizer.Format("Apply.PcidFormat", SelectedCharacter.Pcid);
 
     /// <summary>Which copy is on screen: unsaved changes, the user's saved combo, or the bdoclasshub guide. Empty without a guide.</summary>
     public string ProfileStateText
@@ -134,8 +139,8 @@ public sealed partial class ApplyComboViewModel : ObservableObject
             }
 
             return _localizer.Get(Editor.HasUnsavedChanges
-                ? "Apply_State_Unsaved"
-                : Editor.HasSavedProfile ? "Apply_State_Saved" : "Apply_State_Base");
+                ? "Apply.StateUnsaved"
+                : Editor.HasSavedProfile ? "Apply.StateSaved" : "Apply.StateBase");
         }
     }
 
@@ -167,6 +172,12 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         {
             _logger.Warn("apply.catalog.empty", "The combo catalog has no classes with a guide");
             return;
+        }
+
+        var character = Characters.FirstOrDefault(item => item.ClassType == option.ClassType);
+        if (character is not null)
+        {
+            SelectedCharacter = character;
         }
 
         await SelectClassAsync(option, specId);
@@ -206,7 +217,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         {
             await _profiles.SaveAsync(profile);
             editor.MarkSaved();
-            ShowStatus(StatusSeverity.Success, "Apply_Status_Saved");
+            ShowStatus(StatusSeverity.Success, "Apply.StatusSaved");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -215,7 +226,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
                 ["class_type"] = editor.ClassType,
                 ["spec"] = editor.SpecId,
             });
-            ShowStatus(StatusSeverity.Error, "Apply_Status_SaveFailed");
+            ShowStatus(StatusSeverity.Error, "Apply.StatusSaveFailed");
         }
     }
 
@@ -233,7 +244,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         {
             _profiles.Delete(editor.ClassType, editor.SpecId);
             editor.ResetToBase();
-            ShowStatus(StatusSeverity.Success, "Apply_Status_Restored");
+            ShowStatus(StatusSeverity.Success, "Apply.StatusRestored");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -242,7 +253,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
                 ["class_type"] = editor.ClassType,
                 ["spec"] = editor.SpecId,
             });
-            ShowStatus(StatusSeverity.Error, "Apply_Status_Failed");
+            ShowStatus(StatusSeverity.Error, "Apply.StatusFailed");
         }
     }
 
@@ -358,7 +369,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
                 ["spec"] = spec.Id,
             });
             Editor = null;
-            ShowStatus(StatusSeverity.Error, "Apply_Status_Failed");
+            ShowStatus(StatusSeverity.Error, "Apply.StatusFailed");
         }
         finally
         {
@@ -412,7 +423,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
             switch (result.Status)
             {
                 case ComboApplyStatus.NotConnected:
-                    ShowStatus(StatusSeverity.Warning, "Apply_Status_NotConnected");
+                    ShowStatus(StatusSeverity.Warning, "Apply.StatusNotConnected");
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(result), result.Status, "Unhandled apply status.");
@@ -424,7 +435,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
             {
                 ["dry_run"] = dryRun,
             });
-            ShowStatus(StatusSeverity.Error, "Apply_Status_Failed");
+            ShowStatus(StatusSeverity.Error, "Apply.StatusFailed");
         }
     }
 

@@ -57,8 +57,8 @@ public sealed partial class ComboChainViewModel : ObservableObject
     public bool HasSteps => Steps.Count > 0;
 
     public string StepCountText => Steps.Count == 1
-        ? _localizer.Get("Apply_StepCount_One")
-        : _localizer.Format("Apply_StepCount_Many", Steps.Count.ToString(CultureInfo.InvariantCulture));
+        ? _localizer.Get("Apply.StepCountOne")
+        : _localizer.Format("Apply.StepCountMany", Steps.Count.ToString(CultureInfo.InvariantCulture));
 
     /// <summary>Every skill of the guide, for the "Add skill" list.</summary>
     public IReadOnlyList<SkillOption> AvailableSkills => _availableSkills;

@@ -5,6 +5,7 @@ using BdoComboSetup.Core.Icons;
 using BdoComboSetup.Core.Logging;
 using BdoComboSetup.Core.Settings;
 using BdoComboSetup.Core.ViewModels;
+using System.Globalization;
 
 namespace BdoComboSetup.Services;
 
@@ -69,11 +70,15 @@ public sealed class AppServices : IDisposable
         var assets = new BundledAssetProvider(embedded, icons, logger);
         var combos = JsonCombosCatalog.Load(embedded, assets, logger);
 
+        var profiles = new ComboProfileStore(ComboProfileStore.DefaultDirectory, logger);
         var applyCombo = new ApplyComboViewModel(
+            combos,
+            assets,
             dataSource,
-            combo,
+            profiles,
             new StubComboApplier(logger),
             localizer,
+            CultureInfo.CurrentUICulture,
             logger);
 
         var preview = new PreviewViewModel(

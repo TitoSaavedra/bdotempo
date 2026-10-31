@@ -1,4 +1,5 @@
 using System.Globalization;
+using BdoComboSetup.Core.Assets;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -18,18 +19,23 @@ public sealed record SkillOption(ComboSkill Skill, string Name)
 /// <summary>A class of the catalog, shown as a button in the class grid.</summary>
 public sealed partial class ClassOptionViewModel : ObservableObject
 {
-    public ClassOptionViewModel(ClassInfo info, CultureInfo culture, Func<ClassOptionViewModel, Task> select)
+    public ClassOptionViewModel(ClassInfo info, CultureInfo culture, IAssetProvider assets, Func<ClassOptionViewModel, Task> select)
     {
         ArgumentNullException.ThrowIfNull(info);
         ArgumentNullException.ThrowIfNull(culture);
+        ArgumentNullException.ThrowIfNull(assets);
         ArgumentNullException.ThrowIfNull(select);
 
         Info = info;
         Name = info.Name.For(culture);
+        OpenIcon = () => assets.OpenClassIcon(info.ClassType);
         SelectCommand = new AsyncRelayCommand(() => select(this));
     }
 
     public ClassInfo Info { get; }
+
+    /// <summary>Opens the class icon (white on transparent). Null from the function means the icon is missing.</summary>
+    public Func<Stream?> OpenIcon { get; }
 
     public int ClassType => Info.ClassType;
 

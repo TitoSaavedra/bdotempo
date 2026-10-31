@@ -17,7 +17,13 @@ public sealed class ResourceLocalizer(AppLogger logger) : ILocalizer
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
+        // The PRI stores a resw name such as "Apply.NoSkill" as the hierarchy "Apply/NoSkill". Try the name as written first.
         var value = _loader.GetString(key);
+        if (string.IsNullOrEmpty(value) && key.Contains('.', StringComparison.Ordinal))
+        {
+            value = _loader.GetString(key.Replace('.', '/'));
+        }
+
         if (string.IsNullOrEmpty(value))
         {
             logger.Warn("localization.missing_key", "Resource key not found", new Dictionary<string, object?>

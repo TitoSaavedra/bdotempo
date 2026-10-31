@@ -9,11 +9,17 @@ public sealed class MockComboDataSource : IComboDataSource
     private const string MockDescription = "LBD Dragon damage combo";
     private const string MockSourceUrl = "https://bdoclasshub.com/classes/tamer/awakening/index.html";
 
-    /// <summary>Tamer's classType in the game data.</summary>
+    /// <summary>Classes of the mock characters, in the game data (Tamer 16, Warrior 0, Shai 17).</summary>
     private const int TamerClassType = 16;
+    private const int WarriorClassType = 0;
+    private const int ShaiClassType = 17;
 
     public IReadOnlyList<CharacterOption> GetCharacters() =>
-        [new CharacterOption("AhrinSong", "10000000006346933", TamerClassType)];
+    [
+        new CharacterOption("AhrinSong", "10000000006346933", TamerClassType),
+        new CharacterOption("Sample Warrior", "10000000000000001", WarriorClassType),
+        new CharacterOption("Sample Shai", "10000000000000002", ShaiClassType),
+    ];
 
     public ComboDefinition GetCombo(string className, ComboMode mode) =>
         new(className, mode, MockDescription, MockSourceUrl, BuildSlots());

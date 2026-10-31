@@ -3,10 +3,11 @@ using BdoComboSetup.Core.Game;
 namespace BdoComboSetup.Services;
 
 /// <summary>
-/// Command-line options: "--page apply|preview", "--layout general|preset1|preset2|preset3" and "--panels" (show the UI panel overlay).
+/// Command-line options: "--page apply|preview", "--layout general|preset1|preset2|preset3", "--panels" (show the UI panel
+/// overlay), and for the Apply page "--class &lt;slug&gt;" and "--spec &lt;id&gt;" (for example --class tamer --spec awakening).
 /// Options given on the command line apply to this run only; they are not saved in the settings.
 /// </summary>
-public sealed record StartupOptions(string Page, GameUiLayoutId? Layout, bool ShowPanels)
+public sealed record StartupOptions(string Page, GameUiLayoutId? Layout, bool ShowPanels, string? ApplyClass = null, string? ApplySpec = null)
 {
     public const string ApplyPage = "apply";
     public const string PreviewPage = "preview";
@@ -18,6 +19,8 @@ public sealed record StartupOptions(string Page, GameUiLayoutId? Layout, bool Sh
         var page = ApplyPage;
         GameUiLayoutId? layout = null;
         var showPanels = false;
+        string? applyClass = null;
+        string? applySpec = null;
         for (var i = 1; i < args.Count; i++)
         {
             switch (args[i])
@@ -33,10 +36,18 @@ public sealed record StartupOptions(string Page, GameUiLayoutId? Layout, bool Sh
                 case "--panels":
                     showPanels = true;
                     break;
+                case "--class" when i + 1 < args.Count:
+                    applyClass = args[i + 1];
+                    i++;
+                    break;
+                case "--spec" when i + 1 < args.Count:
+                    applySpec = args[i + 1];
+                    i++;
+                    break;
             }
         }
 
-        return new StartupOptions(page, layout, showPanels);
+        return new StartupOptions(page, layout, showPanels, applyClass, applySpec);
     }
 
     private static GameUiLayoutId? ParseLayout(string text) => text.ToLowerInvariant() switch
