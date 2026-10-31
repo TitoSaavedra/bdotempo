@@ -177,6 +177,9 @@ contract.
   when the exit code is not 0, and then deletes `{app}\assets\parts\`. The result is `{app}\BdoComboSetup.exe` and
   `{app}\assets.bdoa`.
 - **Portable zip**: contains `BdoComboSetup.exe` and `assets.bdoa` (assembled at packaging time with the same command).
+- **Icon (Inno Setup)**: the installer uses `app\assets\icon\app-icon.ico` as `SetupIconFile` and as the uninstall icon
+  (`UninstallDisplayIcon`). The file is original art, committed in the repo. The exe already embeds it (`ApplicationIcon`
+  and an embedded copy for the window), so the installer does not need to copy any icon file next to the exe.
 
 ## Obfuscation, not DRM
 

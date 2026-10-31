@@ -1,0 +1,2 @@
+# Python dependency of the icon script (app/scripts/build_icon.py). Pinned: a new version can change the rendered bytes.
+resvg-py==0.5.0

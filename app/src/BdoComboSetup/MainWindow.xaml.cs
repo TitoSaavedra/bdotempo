@@ -20,6 +20,7 @@ public sealed partial class MainWindow : Window
         AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
         AppWindow.Resize(new SizeInt32(1440, 900));
+        WindowIcon.Apply(AppWindow, AppTitleBar, services.Logger);
 
         // Without a readable assets.bdoa the modules cannot show icons or combos: the window shows the explanation only.
         if (services.AssetPackLoad.ErrorCode is not null)
