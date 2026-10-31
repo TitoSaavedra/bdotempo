@@ -7,6 +7,7 @@ namespace BdoComboSetup.Core.Combo;
 public sealed class MockComboDataSource : IComboDataSource
 {
     private const string TamerClass = "Tamer";
+    private const int TamerClassId = 16;
     private const string MockDescription = "LBD Dragon damage combo";
     private const string MockSourceUrl = "https://bdoclasshub.com/classes/tamer/awakening/index.html";
 
@@ -16,7 +17,7 @@ public sealed class MockComboDataSource : IComboDataSource
     public IReadOnlyList<string> GetClassNames() => [TamerClass];
 
     public ComboDefinition GetCombo(string className, ComboMode mode) =>
-        new(className, mode, MockDescription, MockSourceUrl, BuildSlots());
+        new(className, TamerClassId, mode, MockDescription, MockSourceUrl, BuildSlots());
 
     private static IReadOnlyList<SlotData> BuildSlots() =>
     [

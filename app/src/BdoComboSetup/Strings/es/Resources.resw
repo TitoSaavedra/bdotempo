@@ -77,7 +77,31 @@
   <data name="Apply_QuickSlotsCount" xml:space="preserve"><value>{0} ranuras rápidas</value></data>
   <data name="Mode_Succession" xml:space="preserve"><value>Sucesión</value></data>
   <data name="Mode_Awakening" xml:space="preserve"><value>Despertar</value></data>
-  <data name="Apply_Status_NotConnected" xml:space="preserve"><value>Aún no está conectado: el aplicador de combos no está disponible en esta versión. No se escribió nada.</value></data>
+  <data name="Apply_Problem_None" xml:space="preserve"><value>Sin detalles</value></data>
+  <data name="Apply_Problem_InvalidRequest" xml:space="preserve"><value>La solicitud no es válida</value></data>
+  <data name="Apply_Problem_AccountNotFound" xml:space="preserve"><value>No se encontró la cuenta del juego</value></data>
+  <data name="Apply_Problem_CharacterNotFound" xml:space="preserve"><value>No se encontró el personaje</value></data>
+  <data name="Apply_Problem_SkillTableMissing" xml:space="preserve"><value>Falta la tabla de habilidades (class_skills.json)</value></data>
+  <data name="Apply_Problem_SkillMismatch" xml:space="preserve"><value>Las habilidades no coinciden con la tabla de habilidades</value></data>
+  <data name="Apply_Problem_UnsupportedLayout" xml:space="preserve"><value>El archivo del personaje tiene un formato que no se reconoce</value></data>
+  <data name="Apply_Problem_QuickSlotRefused" xml:space="preserve"><value>Los accesos rápidos no se pueden escribir en su estado actual</value></data>
+  <data name="Apply_Problem_ValidationFailed" xml:space="preserve"><value>La comprobación del resultado falló</value></data>
+  <data name="Apply_Problem_GameRunning" xml:space="preserve"><value>El juego está abierto y el archivo cambió hace poco. Ciérralo o fuerza la escritura</value></data>
+  <data name="Apply_Problem_BackupFailed" xml:space="preserve"><value>No se pudo crear la copia de seguridad</value></data>
+  <data name="Apply_Problem_WriteFailed" xml:space="preserve"><value>No se pudo escribir el archivo</value></data>
+  <data name="Apply_Problem_RollbackFailed" xml:space="preserve"><value>No se pudo restaurar la copia de seguridad</value></data>
+  <data name="Apply_Problem_UnexpectedError" xml:space="preserve"><value>Error inesperado</value></data>
+  <data name="Apply_ProblemDetail" xml:space="preserve"><value>{0} ({1})</value><comment>{0} problem title, {1} technical detail</comment></data>
+  <data name="Apply_Result_Summary" xml:space="preserve"><value>{0} casillas, {1} memos nuevos, {2} memos cambiados, {3} accesos rápidos</value><comment>{0} slots, {1} added memos, {2} changed memos, {3} quick slots</comment></data>
+  <data name="Apply_Result_DryRun" xml:space="preserve"><value>Simulación: {0}. No se escribió nada.</value><comment>{0} summary</comment></data>
+  <data name="Apply_Result_DryRunUnchanged" xml:space="preserve"><value>Simulación: el personaje ya tiene este combo. No se escribió nada.</value></data>
+  <data name="Apply_Result_Written" xml:space="preserve"><value>Escrito y validado: {0}.</value><comment>{0} summary</comment></data>
+  <data name="Apply_Result_Unchanged" xml:space="preserve"><value>El personaje ya tiene este combo; no se escribió nada.</value></data>
+  <data name="Apply_Result_Refused" xml:space="preserve"><value>No se escribió nada. {0}</value><comment>{0} problem</comment></data>
+  <data name="Apply_Result_RolledBack" xml:space="preserve"><value>La comprobación posterior a la escritura falló y se restauró la copia de seguridad. {0}</value><comment>{0} problem</comment></data>
+  <data name="Apply_Result_Failed" xml:space="preserve"><value>La operación falló. {0}</value><comment>{0} problem</comment></data>
+  <data name="Apply_Result_Backup" xml:space="preserve"><value>Copia de seguridad: {0}</value><comment>{0} backup folder</comment></data>
+  <data name="Apply_Result_Warnings" xml:space="preserve"><value>Avisos: {0}</value><comment>{0} warning count</comment></data>
   <data name="Apply_Status_Failed" xml:space="preserve"><value>La operación falló. Revisa el log para ver los detalles.</value></data>
 
   <data name="Preview_EmptySlot" xml:space="preserve"><value>Ranura vacía</value></data>

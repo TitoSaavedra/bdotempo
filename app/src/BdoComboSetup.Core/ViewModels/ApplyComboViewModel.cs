@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using BdoComboSetup.Core.Combo;
+using BdoComboSetup.Core.GameData;
 using BdoComboSetup.Core.Localization;
 using BdoComboSetup.Core.Logging;
+using BdoComboSetup.Core.Operations;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -146,32 +148,21 @@ public sealed partial class ApplyComboViewModel : ObservableObject
             return;
         }
 
-        var request = new ComboApplyRequest(
-            SelectedClassName,
-            Mode,
-            SelectedCharacter,
-            IncludeCooldownBar,
-            IncludeMemos,
-            IncludeQuickSlots,
-            dryRun);
-
+        var request = BuildRequest(SelectedCharacter.Pcid);
         _logger.Info("apply.requested", "User requested a combo apply", new Dictionary<string, object?>
         {
             ["dry_run"] = dryRun,
             ["mode"] = Mode.ToString(),
+            ["cooldown_slots"] = request.CooldownSlots.Count,
+            ["quick_slots"] = request.QuickSlots.Count,
         });
 
         try
         {
-            var result = await _applier.ApplyAsync(request);
-            switch (result.Status)
-            {
-                case ComboApplyStatus.NotConnected:
-                    ShowStatus(StatusSeverity.Warning, "Apply_Status_NotConnected");
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(result), result.Status, "Unhandled apply status.");
-            }
+            var result = dryRun
+                ? await _applier.DryRunAsync(request)
+                : await _applier.ApplyAsync(request);
+            ShowResult(result);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -181,6 +172,99 @@ public sealed partial class ApplyComboViewModel : ObservableObject
             });
             ShowStatus(StatusSeverity.Error, "Apply_Status_Failed");
         }
+    }
+
+    /// <summary>
+    /// Cooldown slots are the combo's slots that have a skill (the UI numbers them 1..20, the file 0..19; empty slots
+    /// are written as 0). Quick slots are the quick bar positions with a skill. A position without a skill is left as it is.
+    /// </summary>
+    private ComboApplyRequest BuildRequest(string pcid)
+    {
+        var cooldown = _combo.Slots
+            .Where(slot => slot.SkillNo is > 0)
+            .Select(slot => new CooldownSlot(slot.Index - 1, slot.SkillNo!.Value, slot.SkillName, slot.Memo))
+            .ToList();
+
+        var quick = IncludeQuickSlots
+            ? _combo.Slots
+                .Where(slot => slot.QuickPosition > 0 && slot.SkillNo is > 0)
+                .Select(slot => new QuickSlotAssignment(slot.QuickPosition, slot.SkillNo))
+                .ToList()
+            : new List<QuickSlotAssignment>();
+
+        return new ComboApplyRequest(
+            pcid,
+            _combo.ClassId,
+            cooldown,
+            quick,
+            IncludeCooldownBar,
+            IncludeMemos,
+            IncludeQuickSlots);
+    }
+
+    /// <summary>Shows the outcome, the diff counts and the backup path in the status bar.</summary>
+    private void ShowResult(ComboApplyResult result)
+    {
+        var diff = result.Diff;
+        var summary = diff is null
+            ? string.Empty
+            : _localizer.Format(
+                "Apply_Result_Summary",
+                diff.Slots.Count,
+                diff.Memos.Count(m => m.Status == MemoStatus.Added),
+                diff.Memos.Count(m => m.Status == MemoStatus.Changed),
+                diff.QuickSlots.Count);
+
+        var severity = StatusSeverity.Information;
+        var lines = new List<string>();
+        switch (result.Outcome)
+        {
+            case OperationOutcome.DryRun:
+                lines.Add(diff is { Changed: true }
+                    ? _localizer.Format("Apply_Result_DryRun", summary)
+                    : _localizer.Get("Apply_Result_DryRunUnchanged"));
+                break;
+            case OperationOutcome.Written:
+                lines.Add(_localizer.Format("Apply_Result_Written", summary));
+                break;
+            case OperationOutcome.Unchanged:
+                lines.Add(_localizer.Get("Apply_Result_Unchanged"));
+                break;
+            case OperationOutcome.Refused:
+                severity = StatusSeverity.Warning;
+                lines.Add(_localizer.Format("Apply_Result_Refused", ProblemText(result)));
+                break;
+            case OperationOutcome.RolledBack:
+                severity = StatusSeverity.Error;
+                lines.Add(_localizer.Format("Apply_Result_RolledBack", ProblemText(result)));
+                break;
+            default:
+                severity = StatusSeverity.Error;
+                lines.Add(_localizer.Format("Apply_Result_Failed", ProblemText(result)));
+                break;
+        }
+
+        if (result.BackupPath is not null)
+        {
+            lines.Add(_localizer.Format("Apply_Result_Backup", result.BackupPath));
+        }
+
+        if (result.Warnings.Count > 0)
+        {
+            lines.Add(_localizer.Format("Apply_Result_Warnings", result.Warnings.Count));
+        }
+
+        StatusMessage = string.Join(Environment.NewLine, lines);
+        StatusSeverity = severity;
+        IsStatusOpen = true;
+    }
+
+    private string ProblemText(ComboApplyResult result)
+    {
+        var title = _localizer.Get("Apply_Problem_" + result.Problem);
+        return string.IsNullOrEmpty(result.ProblemDetail)
+            ? title
+            : _localizer.Format("Apply_ProblemDetail", title, result.ProblemDetail);
     }
 
     private void ShowStatus(StatusSeverity severity, string messageKey)

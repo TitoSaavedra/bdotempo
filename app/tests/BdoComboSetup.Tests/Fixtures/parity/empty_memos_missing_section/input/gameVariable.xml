@@ -1,0 +1,38 @@
+<CheckQuestList Version="1">
+	<Quest Id="1" State="2"/>
+</CheckQuestList>
+<QuestSortType Version="1">
+</QuestSortType>
+<ShortcutKey Version="15">
+	<Key Index="0" Code="81" Note="Q &amp; W"/>
+</ShortcutKey>
+<ChattingMacro Version="2"/>
+<SkillCoolTimeSlot Version="2">
+	<SkillCoolTimeSlot SlotNo="0" SkillNo="6457"/>
+	<SkillCoolTimeSlot SlotNo="1" SkillNo="5157"/>
+	<SkillCoolTimeSlot SlotNo="2" SkillNo="5167"/>
+	<SkillCoolTimeSlot SlotNo="3" SkillNo="5179"/>
+	<SkillCoolTimeSlot SlotNo="4" SkillNo="5161"/>
+	<SkillCoolTimeSlot SlotNo="5" SkillNo="0"/>
+	<SkillCoolTimeSlot SlotNo="6" SkillNo="5172"/>
+	<SkillCoolTimeSlot SlotNo="7" SkillNo="5177"/>
+	<SkillCoolTimeSlot SlotNo="8" SkillNo="5164"/>
+	<SkillCoolTimeSlot SlotNo="9" SkillNo="5014"/>
+	<SkillCoolTimeSlot SlotNo="10" SkillNo="5124"/>
+	<SkillCoolTimeSlot SlotNo="11" SkillNo="0"/>
+	<SkillCoolTimeSlot SlotNo="12" SkillNo="5153"/>
+	<SkillCoolTimeSlot SlotNo="13" SkillNo="5181"/>
+	<SkillCoolTimeSlot SlotNo="14" SkillNo="0"/>
+	<SkillCoolTimeSlot SlotNo="15" SkillNo="5152"/>
+	<SkillCoolTimeSlot SlotNo="16" SkillNo="5180"/>
+	<SkillCoolTimeSlot SlotNo="17" SkillNo="0"/>
+	<SkillCoolTimeSlot SlotNo="18" SkillNo="0"/>
+	<SkillCoolTimeSlot SlotNo="19" SkillNo="0"/>
+</SkillCoolTimeSlot>
+<ItemLockedInInventory Version="3"/>
+<QuestOption Version="2">
+	<Option Name="x &amp; y"/>
+</QuestOption>
+<UISettingPreset Version="1"/>
+<PetOrderList Version="3"/>
+

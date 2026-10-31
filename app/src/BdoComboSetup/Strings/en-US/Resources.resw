@@ -77,7 +77,31 @@
   <data name="Apply_QuickSlotsCount" xml:space="preserve"><value>{0} quick slots</value></data>
   <data name="Mode_Succession" xml:space="preserve"><value>Succession</value></data>
   <data name="Mode_Awakening" xml:space="preserve"><value>Awakening</value></data>
-  <data name="Apply_Status_NotConnected" xml:space="preserve"><value>Not connected yet: the combo applier is not available in this build. Nothing was written.</value></data>
+  <data name="Apply_Problem_None" xml:space="preserve"><value>No details</value></data>
+  <data name="Apply_Problem_InvalidRequest" xml:space="preserve"><value>The request is not valid</value></data>
+  <data name="Apply_Problem_AccountNotFound" xml:space="preserve"><value>The game account was not found</value></data>
+  <data name="Apply_Problem_CharacterNotFound" xml:space="preserve"><value>The character was not found</value></data>
+  <data name="Apply_Problem_SkillTableMissing" xml:space="preserve"><value>The skill table (class_skills.json) is missing</value></data>
+  <data name="Apply_Problem_SkillMismatch" xml:space="preserve"><value>The skills do not match the skill table</value></data>
+  <data name="Apply_Problem_UnsupportedLayout" xml:space="preserve"><value>The character file has a layout that is not recognized</value></data>
+  <data name="Apply_Problem_QuickSlotRefused" xml:space="preserve"><value>The quick slots cannot be written in their current state</value></data>
+  <data name="Apply_Problem_ValidationFailed" xml:space="preserve"><value>The result check failed</value></data>
+  <data name="Apply_Problem_GameRunning" xml:space="preserve"><value>The game is running and the file changed recently. Close the game or force the write</value></data>
+  <data name="Apply_Problem_BackupFailed" xml:space="preserve"><value>The backup could not be created</value></data>
+  <data name="Apply_Problem_WriteFailed" xml:space="preserve"><value>The file could not be written</value></data>
+  <data name="Apply_Problem_RollbackFailed" xml:space="preserve"><value>The backup could not be restored</value></data>
+  <data name="Apply_Problem_UnexpectedError" xml:space="preserve"><value>Unexpected error</value></data>
+  <data name="Apply_ProblemDetail" xml:space="preserve"><value>{0} ({1})</value><comment>{0} problem title, {1} technical detail</comment></data>
+  <data name="Apply_Result_Summary" xml:space="preserve"><value>{0} slots, {1} new memos, {2} changed memos, {3} quick slots</value><comment>{0} slots, {1} added memos, {2} changed memos, {3} quick slots</comment></data>
+  <data name="Apply_Result_DryRun" xml:space="preserve"><value>Dry run: {0}. Nothing was written.</value><comment>{0} summary</comment></data>
+  <data name="Apply_Result_DryRunUnchanged" xml:space="preserve"><value>Dry run: the character already has this combo. Nothing was written.</value></data>
+  <data name="Apply_Result_Written" xml:space="preserve"><value>Written and validated: {0}.</value><comment>{0} summary</comment></data>
+  <data name="Apply_Result_Unchanged" xml:space="preserve"><value>The character already has this combo; nothing was written.</value></data>
+  <data name="Apply_Result_Refused" xml:space="preserve"><value>Nothing was written. {0}</value><comment>{0} problem</comment></data>
+  <data name="Apply_Result_RolledBack" xml:space="preserve"><value>The check after writing failed and the backup was restored. {0}</value><comment>{0} problem</comment></data>
+  <data name="Apply_Result_Failed" xml:space="preserve"><value>The operation failed. {0}</value><comment>{0} problem</comment></data>
+  <data name="Apply_Result_Backup" xml:space="preserve"><value>Backup: {0}</value><comment>{0} backup folder</comment></data>
+  <data name="Apply_Result_Warnings" xml:space="preserve"><value>Warnings: {0}</value><comment>{0} warning count</comment></data>
   <data name="Apply_Status_Failed" xml:space="preserve"><value>The request failed. Check the log for details.</value></data>
 
   <data name="Preview_EmptySlot" xml:space="preserve"><value>Empty slot</value></data>

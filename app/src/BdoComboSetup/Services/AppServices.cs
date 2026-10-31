@@ -1,6 +1,9 @@
 using BdoComboSetup.Core.Assets;
+using BdoComboSetup.Core.Backup;
 using BdoComboSetup.Core.Combo;
+using BdoComboSetup.Core.Files;
 using BdoComboSetup.Core.Game;
+using BdoComboSetup.Core.GameData;
 using BdoComboSetup.Core.Icons;
 using BdoComboSetup.Core.Logging;
 using BdoComboSetup.Core.Settings;
@@ -60,8 +63,8 @@ public sealed class AppServices : IDisposable
         var localizer = new ResourceLocalizer(logger);
         var settings = new AppSettingsStore(AppSettingsStore.DefaultPath, logger);
 
-        var dataSource = new MockComboDataSource();
-        var combo = dataSource.GetCombo("Tamer", ComboMode.Awakening);
+        var mockData = new MockComboDataSource();
+        var combo = mockData.GetCombo("Tamer", ComboMode.Awakening);
         var display = GameOptionLoader.Load(GameOptionLoader.DefaultPath, logger);
         var layouts = GameUiLayoutReader.Load(GameUiLayoutReader.DefaultPath(settings.Settings.GameAccountFolder), logger);
         var icons = IconCatalog.Load(settings.Settings.SkillIconRoot, settings.Settings.ClassHubRoot, logger);
@@ -69,10 +72,24 @@ public sealed class AppServices : IDisposable
         var assets = new BundledAssetProvider(embedded, icons, logger);
         var combos = JsonCombosCatalog.Load(embedded, assets, logger);
 
+        var files = new LocalFileStore(logger);
+        var guard = new GameProcessGuard(logger);
+        var locator = new GameDataLocator(settings.Settings.GameDataRoot, settings.Settings.GameAccount, logger);
+        var backupsRoot = settings.Settings.BackupsRoot ?? Path.Combine(settings.Settings.GameDataRoot, "_backups");
+        var backups = new BackupService(backupsRoot, locator, files, guard, logger);
+        var applier = new ComboApplier(
+            locator,
+            backups,
+            guard,
+            files,
+            () => SkillTable.Load(settings.Settings.SkillsJsonPath, logger),
+            logger);
+        var dataSource = new GameDataComboSource(locator, mockData, logger);
+
         var applyCombo = new ApplyComboViewModel(
             dataSource,
             combo,
-            new StubComboApplier(logger),
+            applier,
             localizer,
             logger);
 
