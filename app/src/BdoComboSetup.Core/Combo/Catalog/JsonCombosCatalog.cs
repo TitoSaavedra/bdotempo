@@ -146,7 +146,8 @@ public sealed class JsonCombosCatalog : ICombosCatalog
                     ToSkill(addon.Skill!, classSlug),
                     addon.Description,
                     OrEmpty(addon.Effects).Select(effect => new ComboAddonEffect(effect.Label ?? string.Empty, effect.Value ?? string.Empty)).ToList()))
-                .ToList());
+                .ToList(),
+            ManualPool: ToSkills(json.ManualPool, classSlug));
 
     private ComboChain ToChain(ChainJson chain, string classSlug) =>
         new(
@@ -155,7 +156,33 @@ public sealed class JsonCombosCatalog : ICombosCatalog
             Notes: OrEmpty(chain.Notes),
             Steps: OrEmpty(chain.Steps)
                 .Select(step => new ComboStep(step.Keys, ToSkills(step.Skills, classSlug), step.Extra, step.Note))
-                .ToList());
+                .ToList(),
+            Kind: ParseKind(chain.Kind, chain.Section));
+
+    /// <summary>The kind of a chain. An unknown or missing kind is other, which the app never applies automatically.</summary>
+    private ChainKind ParseKind(string? kind, string? section)
+    {
+        switch (kind)
+        {
+            case "buff":
+                return ChainKind.Buff;
+            case "combo":
+                return ChainKind.Combo;
+            case "mobility":
+                return ChainKind.Mobility;
+            case "cancels":
+                return ChainKind.Cancels;
+            case "other":
+                return ChainKind.Other;
+            default:
+                _logger.Warn("combo.chain.unknown_kind", "A chain has no known kind; it is shown as other and never applied automatically", new Dictionary<string, object?>
+                {
+                    ["kind"] = kind,
+                    ["section"] = section,
+                });
+                return ChainKind.Other;
+        }
+    }
 
     private IReadOnlyList<ComboSkill> ToSkills(List<SkillRefJson>? refs, string classSlug) =>
         OrEmpty(refs).Select(reference => ToSkill(reference, classSlug)).ToList();
@@ -170,7 +197,33 @@ public sealed class JsonCombosCatalog : ICombosCatalog
             SkillNo: skillNo,
             Name: new BilingualText(english, spanish),
             DescriptionEs: entry?.DescriptionEs,
-            OpenIcon: () => _assets.OpenSkillIcon(skillNo, classSlug));
+            OpenIcon: () => _assets.OpenSkillIcon(skillNo, classSlug),
+            Tooltip: ToTooltip(entry?.Tooltip));
+    }
+
+    private static SkillTooltip? ToTooltip(TooltipJson? json)
+    {
+        if (json is null)
+        {
+            return null;
+        }
+
+        return new SkillTooltip(
+            Name: json.Name ?? string.Empty,
+            Language: json.Lang ?? string.Empty,
+            Keys: OrEmpty(json.Keys),
+            RequiredLevel: json.Level,
+            Costs: OrEmpty(json.Cost)
+                .Select(cost => new SkillCost(cost.Type ?? string.Empty, cost.Label ?? string.Empty, cost.Value ?? string.Empty))
+                .ToList(),
+            CooldownSeconds: json.CooldownSec,
+            Damage: OrEmpty(json.Damage)
+                .Select(row => new SkillDamage(row.Label ?? string.Empty, row.Percent, row.Hits, row.MaxHits))
+                .ToList(),
+            PvpPercent: json.PvpPercent,
+            Protection: OrEmpty(json.Protection),
+            Extras: OrEmpty(json.Extras),
+            Features: OrEmpty(json.Features));
     }
 
     private static IReadOnlyList<ClassInfo> ReadClasses(IEmbeddedResources resources, AppLogger logger, OperationScope scope)

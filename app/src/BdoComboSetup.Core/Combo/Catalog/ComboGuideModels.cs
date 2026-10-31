@@ -32,20 +32,46 @@ public sealed record ClassInfo(int ClassType, string Slug, BilingualText Name, I
 /// </summary>
 public sealed record SpecInfo(string Id, BilingualText DisplayName, string GuideKey);
 
-/// <summary>A combo guide as the site shows it: chains of steps, tips and class add-ons.</summary>
+/// <summary>
+/// What a chain is for. <see cref="ChainKind.Buff"/> and <see cref="ChainKind.Combo"/> chains are applied automatically
+/// to the cooldown bar. <see cref="ChainKind.Mobility"/> and <see cref="ChainKind.Cancels"/> skills are placed by hand
+/// from <see cref="ComboGuide.ManualPool"/>, never applied automatically. <see cref="ChainKind.Other"/> chains are
+/// reference text.
+/// </summary>
+public enum ChainKind
+{
+    Other,
+    Buff,
+    Combo,
+    Mobility,
+    Cancels,
+}
+
+/// <summary>
+/// A combo guide as the site shows it: chains of steps, tips and class add-ons.
+/// <see cref="ManualPool"/> lists the skills of the mobility and cancels chains, once each, in guide order.
+/// </summary>
 /// <param name="Title">The site's title for the guide, usually the class and spec.</param>
 /// <param name="Description">The short kicker, for example "PvE Combo Guide". Null when the site has none.</param>
 /// <param name="Source">The guide page on bdoclasshub.com.</param>
+/// <param name="ManualPool">The skills the user places by hand. Empty when the guide has no mobility or cancels chain.</param>
 public sealed record ComboGuide(
     string Title,
     string? Description,
     string Source,
     IReadOnlyList<ComboChain> Chains,
     IReadOnlyList<ComboNote> Notes,
-    IReadOnlyList<ComboAddon> Addons);
+    IReadOnlyList<ComboAddon> Addons,
+    IReadOnlyList<ComboSkill> ManualPool);
 
 /// <summary>A titled sequence of steps, such as "Damage Combo". <see cref="Notes"/> are the prose lines of the chain.</summary>
-public sealed record ComboChain(string Section, string Title, IReadOnlyList<string> Notes, IReadOnlyList<ComboStep> Steps);
+/// <param name="Kind">What the chain is for. Defaults to <see cref="ChainKind.Other"/>, which is never applied automatically.</param>
+public sealed record ComboChain(
+    string Section,
+    string Title,
+    IReadOnlyList<string> Notes,
+    IReadOnlyList<ComboStep> Steps,
+    ChainKind Kind = ChainKind.Other);
 
 /// <summary>One step: the keys to press, the skills it uses, an extra line (such as "opener") and an annotation.</summary>
 public sealed record ComboStep(string? Keys, IReadOnlyList<ComboSkill> Skills, string? Extra, string? Note);
@@ -61,5 +87,47 @@ public sealed record ComboAddonEffect(string Label, string Value);
 /// <summary>
 /// A skill in a guide. <see cref="DescriptionEs"/> is the Spanish game text, plain, with line breaks.
 /// <see cref="OpenIcon"/> returns a new stream of the icon, or null when there is none; the caller disposes it.
+/// <see cref="Tooltip"/> is the game's skill tooltip, or null when the bundle has none for the skill.
 /// </summary>
-public sealed record ComboSkill(int SkillNo, BilingualText Name, string? DescriptionEs, Func<Stream?> OpenIcon);
+public sealed record ComboSkill(
+    int SkillNo,
+    BilingualText Name,
+    string? DescriptionEs,
+    Func<Stream?> OpenIcon,
+    SkillTooltip? Tooltip = null);
+
+/// <summary>
+/// The game's tooltip for a skill (bdoclasshub skill data), as plain text and numbers. The app formats the numbers.
+/// </summary>
+/// <param name="Name">The skill name, in <see cref="Language"/>.</param>
+/// <param name="Language">The language of the text: "es-mx", "es" or "en", whichever the skill first has.</param>
+/// <param name="Keys">Key hints the site lists for the skill.</param>
+/// <param name="RequiredLevel">The level that unlocks the skill, or null.</param>
+/// <param name="Costs">Costs such as MP. Empty when the skill has none.</param>
+/// <param name="CooldownSeconds">The cooldown in seconds, or null when the skill has none listed.</param>
+/// <param name="Damage">One row per damage line (an attack and its hits, or a total).</param>
+/// <param name="PvpPercent">PvP damage as a percent of the PvE damage, or null.</param>
+/// <param name="Protection">Protection lines such as super armor.</param>
+/// <param name="Extras">Extra lines of the skill.</param>
+/// <param name="Features">Feature lines such as targets or effects.</param>
+public sealed record SkillTooltip(
+    string Name,
+    string Language,
+    IReadOnlyList<string> Keys,
+    int? RequiredLevel,
+    IReadOnlyList<SkillCost> Costs,
+    double? CooldownSeconds,
+    IReadOnlyList<SkillDamage> Damage,
+    double? PvpPercent,
+    IReadOnlyList<string> Protection,
+    IReadOnlyList<string> Extras,
+    IReadOnlyList<string> Features);
+
+/// <summary>A cost of a skill, for example type "MP", label "Cost", value "30".</summary>
+public sealed record SkillCost(string Type, string Label, string Value);
+
+/// <summary>
+/// One damage line of a skill. <see cref="Percent"/> is the damage in percent of the attack, <see cref="Hits"/> the number of
+/// hits and <see cref="MaxHits"/> the hit cap when the game gives one.
+/// </summary>
+public sealed record SkillDamage(string Label, double Percent, int Hits, int? MaxHits);
