@@ -10,19 +10,20 @@ public sealed class MockComboDataSource : IComboDataSource
     private const string MockSourceUrl = "https://bdoclasshub.com/classes/tamer/awakening/index.html";
 
     /// <summary>Classes of the mock characters, in the game data (Tamer 16, Warrior 0, Shai 17).</summary>
-    private const int TamerClassType = 16;
+    private const int TamerClassId = 16;
+    private const int TamerClassType = TamerClassId;
     private const int WarriorClassType = 0;
     private const int ShaiClassType = 17;
 
     public IReadOnlyList<CharacterOption> GetCharacters() =>
     [
-        new CharacterOption("AhrinSong", "10000000006346933", TamerClassType),
-        new CharacterOption("Sample Warrior", "10000000000000001", WarriorClassType),
-        new CharacterOption("Sample Shai", "10000000000000002", ShaiClassType),
+        new CharacterOption("Demo Tamer", "10000000000000011", TamerClassType),
+        new CharacterOption("Demo Warrior", "10000000000000001", WarriorClassType),
+        new CharacterOption("Demo Shai", "10000000000000002", ShaiClassType),
     ];
 
     public ComboDefinition GetCombo(string className, ComboMode mode) =>
-        new(className, mode, MockDescription, MockSourceUrl, BuildSlots());
+        new(className, TamerClassId, mode, MockDescription, MockSourceUrl, BuildSlots());
 
     private static IReadOnlyList<SlotData> BuildSlots() =>
     [

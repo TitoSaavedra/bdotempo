@@ -4,10 +4,19 @@ namespace BdoComboSetup.Services;
 
 /// <summary>
 /// Command-line options: "--page apply|preview", "--layout general|preset1|preset2|preset3", "--panels" (show the UI panel
-/// overlay), and for the Apply page "--class &lt;slug&gt;" and "--spec &lt;id&gt;" (for example --class tamer --spec awakening).
+/// overlay), for the Apply page "--class &lt;slug&gt;" and "--spec &lt;id&gt;" (for example --class tamer --spec awakening), and
+/// "--demo" (synthetic characters and a demo applier instead of the game account; used for screenshots, never writes), and
+/// "--demo-review" (the same, and opens the review of the combo at startup).
 /// Options given on the command line apply to this run only; they are not saved in the settings.
 /// </summary>
-public sealed record StartupOptions(string Page, GameUiLayoutId? Layout, bool ShowPanels, string? ApplyClass = null, string? ApplySpec = null)
+public sealed record StartupOptions(
+    string Page,
+    GameUiLayoutId? Layout,
+    bool ShowPanels,
+    string? ApplyClass = null,
+    string? ApplySpec = null,
+    bool DemoData = false,
+    bool DemoReview = false)
 {
     public const string ApplyPage = "apply";
     public const string PreviewPage = "preview";
@@ -21,6 +30,8 @@ public sealed record StartupOptions(string Page, GameUiLayoutId? Layout, bool Sh
         var showPanels = false;
         string? applyClass = null;
         string? applySpec = null;
+        var demoData = false;
+        var demoReview = false;
         for (var i = 1; i < args.Count; i++)
         {
             switch (args[i])
@@ -44,10 +55,17 @@ public sealed record StartupOptions(string Page, GameUiLayoutId? Layout, bool Sh
                     applySpec = args[i + 1];
                     i++;
                     break;
+                case "--demo":
+                    demoData = true;
+                    break;
+                case "--demo-review":
+                    demoData = true;
+                    demoReview = true;
+                    break;
             }
         }
 
-        return new StartupOptions(page, layout, showPanels, applyClass, applySpec);
+        return new StartupOptions(page, layout, showPanels, applyClass, applySpec, demoData, demoReview);
     }
 
     private static GameUiLayoutId? ParseLayout(string text) => text.ToLowerInvariant() switch

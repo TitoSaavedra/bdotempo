@@ -15,6 +15,15 @@ namespace BdoComboSetup.Core.ViewModels;
 /// </summary>
 public sealed partial class ComboEditorViewModel : ObservableObject
 {
+    /// <summary>The first cooldown slot of the default layout's combo steps.</summary>
+    private const int FirstComboSlot = 1;
+
+    /// <summary>The last cooldown slot that the default layout gives to combo steps; buffs use the slots after it.</summary>
+    private const int LastComboSlot = 12;
+
+    /// <summary>The first cooldown slot of the default layout's buff steps.</summary>
+    private const int FirstBuffSlot = 13;
+
     private readonly ComboGuide _guide;
     private readonly ILocalizer _localizer;
     private readonly CultureInfo _culture;
@@ -404,6 +413,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         Chains.Clear();
         ManualChains.Clear();
         var profileChains = IndexProfileChains(profile);
+        var defaults = profile is null ? DefaultSlots() : new Dictionary<(int Chain, int Step), DefaultSlot>();
         var built = new List<(ComboChainKind Kind, ComboChainViewModel Chain)>();
         for (var index = 0; index < _guide.Chains.Count; index++)
         {
@@ -421,7 +431,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
 
             var steps = profileChains.TryGetValue(index, out var saved)
                 ? StepsFromProfile(index, chain, saved)
-                : BaseSteps(chain);
+                : BaseSteps(index, chain, defaults);
             var title = string.IsNullOrWhiteSpace(chain.Title)
                 ? _localizer.Format("Apply.ChainFallbackTitle", (index + 1).ToString(CultureInfo.InvariantCulture))
                 : chain.Title;
@@ -484,10 +494,97 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         return result;
     }
 
-    private List<ComboStepViewModel> BaseSteps(ComboChain chain) =>
+    private List<ComboStepViewModel> BaseSteps(int chainIndex, ComboChain chain, IReadOnlyDictionary<(int Chain, int Step), DefaultSlot> defaults) =>
         chain.Steps
-            .Select((step, index) => new ComboStepViewModel(index, step.Skills, step.Keys, step.Extra, step.Note, _localizer, _culture))
+            .Select((step, index) =>
+            {
+                if (defaults.TryGetValue((chainIndex, index), out var assigned))
+                {
+                    return new ComboStepViewModel(
+                        index,
+                        step.Skills,
+                        step.Keys,
+                        step.Extra,
+                        step.Note,
+                        _localizer,
+                        _culture,
+                        cooldownSlot: assigned.Slot,
+                        memo: assigned.Memo);
+                }
+
+                return new ComboStepViewModel(index, step.Skills, step.Keys, step.Extra, step.Note, _localizer, _culture);
+            })
             .ToList();
+
+    /// <summary>A default cooldown slot of a guide step, with the key legend of the step as its memo (null when none).</summary>
+    private sealed record DefaultSlot(int Slot, string? Memo);
+
+    /// <summary>
+    /// The default layout of a guide with no saved profile. Only buff and combo chains take part (mobility is a manual
+    /// pool): combo steps fill cooldown slots 1..12 in guide order, then buff steps fill 13..20. A skill takes one slot,
+    /// at its first step. The key legend of the step becomes the memo, except the player's own key ("Hotkey" or "Hotbar").
+    /// </summary>
+    private Dictionary<(int Chain, int Step), DefaultSlot> DefaultSlots()
+    {
+        var placements = new List<(int Chain, int Step, ComboChainKind Kind, ComboSkill Skill, string? Keys)>();
+        for (var chainIndex = 0; chainIndex < _guide.Chains.Count; chainIndex++)
+        {
+            var chain = _guide.Chains[chainIndex];
+            var kind = _kinds.Resolve(chain);
+            if (kind is not (ComboChainKind.Combo or ComboChainKind.Buff))
+            {
+                continue;
+            }
+
+            for (var stepIndex = 0; stepIndex < chain.Steps.Count; stepIndex++)
+            {
+                if (chain.Steps[stepIndex].Skills.Count > 0)
+                {
+                    placements.Add((chainIndex, stepIndex, kind, chain.Steps[stepIndex].Skills[0], chain.Steps[stepIndex].Keys));
+                }
+            }
+        }
+
+        var result = new Dictionary<(int Chain, int Step), DefaultSlot>();
+        var placedSkills = new HashSet<int>();
+        var nextComboSlot = FirstComboSlot;
+        var nextBuffSlot = FirstBuffSlot;
+        foreach (var placement in placements.OrderBy(item => item.Kind == ComboChainKind.Combo ? 0 : 1))
+        {
+            if (!placedSkills.Add(placement.Skill.SkillNo))
+            {
+                continue;
+            }
+
+            int slot;
+            if (placement.Kind == ComboChainKind.Combo)
+            {
+                if (nextComboSlot > LastComboSlot)
+                {
+                    continue;
+                }
+
+                slot = nextComboSlot++;
+            }
+            else
+            {
+                if (nextBuffSlot > SlotAssignment.CooldownSlotCount)
+                {
+                    continue;
+                }
+
+                slot = nextBuffSlot++;
+            }
+
+            var keys = placement.Keys?.Trim();
+            var memo = string.IsNullOrEmpty(keys) || ComboStepViewModel.IsPlayerKeyLegend(keys)
+                ? null
+                : keys;
+            result[(placement.Chain, placement.Step)] = new DefaultSlot(slot, memo);
+        }
+
+        return result;
+    }
 
     private List<ComboStepViewModel> StepsFromProfile(int chainIndex, ComboChain chain, ComboProfileChain saved)
     {

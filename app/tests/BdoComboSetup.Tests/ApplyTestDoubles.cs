@@ -2,6 +2,7 @@ using System.Globalization;
 using BdoComboSetup.Core.Assets;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Logging;
+using BdoComboSetup.Core.Operations;
 
 namespace BdoComboSetup.Tests;
 
@@ -84,5 +85,27 @@ internal static class ApplyTestHelpers
                 System.IO.Directory.Delete(Directory, recursive: true);
             }
         }
+    }
+}
+
+/// <summary>An applier that records every request. The dry run and the write answer with the given results.</summary>
+internal sealed class RecordingApplier(ComboApplyResult? dryRunResult = null, ComboApplyResult? writeResult = null) : IComboApplier
+{
+    private static readonly ComboApplyResult Unchanged = new(OperationOutcome.Unchanged, OperationProblem.None, null, null, null, null, []);
+
+    public List<ComboApplyRequest> DryRuns { get; } = [];
+
+    public List<ComboApplyRequest> Writes { get; } = [];
+
+    public Task<ComboApplyResult> DryRunAsync(ComboApplyRequest request, CancellationToken cancellationToken = default)
+    {
+        DryRuns.Add(request);
+        return Task.FromResult(dryRunResult ?? Unchanged);
+    }
+
+    public Task<ComboApplyResult> ApplyAsync(ComboApplyRequest request, CancellationToken cancellationToken = default)
+    {
+        Writes.Add(request);
+        return Task.FromResult(writeResult ?? Unchanged);
     }
 }

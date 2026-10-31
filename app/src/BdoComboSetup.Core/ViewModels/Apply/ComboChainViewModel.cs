@@ -60,9 +60,6 @@ public sealed partial class ComboChainViewModel : ObservableObject
         ? _localizer.Get("Apply.StepCountOne")
         : _localizer.Format("Apply.StepCountMany", Steps.Count.ToString(CultureInfo.InvariantCulture));
 
-    /// <summary>Every skill of the guide, for the "Add skill" list.</summary>
-    public IReadOnlyList<SkillOption> AvailableSkills => _availableSkills;
-
     /// <summary>The "Add skill" list, filtered by <see cref="SkillSearch"/>.</summary>
     public ObservableCollection<SkillOption> FilteredSkills { get; }
 
@@ -89,7 +86,6 @@ public sealed partial class ComboChainViewModel : ObservableObject
         for (var i = 0; i < Steps.Count; i++)
         {
             Steps[i].Position = i + 1;
-            Steps[i].IsLast = i == Steps.Count - 1;
         }
 
         OnPropertyChanged(nameof(HasSteps));

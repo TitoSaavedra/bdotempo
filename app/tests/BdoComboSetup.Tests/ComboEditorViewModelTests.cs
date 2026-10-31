@@ -21,6 +21,12 @@ public sealed class ComboEditorViewModelTests : IDisposable
         _log.Logger,
         kinds);
 
+    /// <summary>
+    /// A working copy with no default cooldown slots. A profile with no chains makes every step a plain guide step; the
+    /// default layout only applies to a guide without a profile.
+    /// </summary>
+    private ComboEditorViewModel Blank() => Create(ProfileOf());
+
     private ComboEditorViewModel CreateWithMobility(ComboProfile? profile = null) => ComboEditorViewModel.Create(
         16,
         "awakening",
@@ -86,15 +92,12 @@ public sealed class ComboEditorViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Steps_are_numbered_from_one_and_the_last_step_has_no_arrow()
+    public void Steps_are_numbered_from_one_in_each_chain()
     {
         var editor = Create();
 
-        var damage = Damage(editor).Steps;
-        Assert.Equal([1, 2, 3], damage.Select(step => step.Position));
-        Assert.Equal([false, false, true], damage.Select(step => step.IsLast));
+        Assert.Equal([1, 2, 3], Damage(editor).Steps.Select(step => step.Position));
         Assert.Equal(1, Buffs(editor).Steps[0].Position);
-        Assert.True(Buffs(editor).Steps[0].IsLast);
     }
 
     [Fact]
@@ -348,7 +351,7 @@ public sealed class ComboEditorViewModelTests : IDisposable
     [Fact]
     public void Cooldown_slots_outside_1_to_20_and_quick_positions_outside_1_to_9_are_rejected()
     {
-        var editor = Create();
+        var editor = Blank();
         var step = Damage(editor).Steps[0];
 
         Assert.Throws<ArgumentOutOfRangeException>(() => editor.AssignCooldown(step, 0));
@@ -361,7 +364,7 @@ public sealed class ComboEditorViewModelTests : IDisposable
     [Fact]
     public void The_selected_slot_options_apply_the_swap_rule_to_the_selected_step()
     {
-        var editor = Create();
+        var editor = Blank();
         var first = Damage(editor).Steps[0];
         var second = Damage(editor).Steps[1];
         editor.AssignCooldown(first, 1);
@@ -462,7 +465,36 @@ public sealed class ComboEditorViewModelTests : IDisposable
         Assert.Equal(4, editor.TotalSteps);
         Assert.Equal("0,1,2", BasesOf(ChainOf(editor.ToProfile(), 0)));
         Assert.Null(Damage(editor).Steps[0].Memo);
-        Assert.Null(Damage(editor).Steps[0].CooldownSlot);
+
+        // Back to the guide means back to its default layout: the first combo step is slot 1 again.
+        Assert.Equal(1, Damage(editor).Steps[0].CooldownSlot);
+    }
+
+    [Fact]
+    public void A_guide_without_a_profile_gets_the_default_layout_combo_steps_first_then_buffs()
+    {
+        var editor = Create();
+
+        // Damage combo: Flow (hotkey, no memo) = 1, Moonlight (R 2) = 2, Heuklang = 3; Dragonblood is the second skill of a step.
+        // The buff chain's Heuklang is already placed, so it gets no second slot.
+        Assert.Equal(1, Damage(editor).Steps[0].CooldownSlot);
+        Assert.Null(Damage(editor).Steps[0].Memo);
+        Assert.Equal(2, Damage(editor).Steps[1].CooldownSlot);
+        Assert.Equal("R 2", Damage(editor).Steps[1].Memo);
+        Assert.Equal(3, Damage(editor).Steps[2].CooldownSlot);
+        Assert.Equal("E", Damage(editor).Steps[2].Memo);
+        Assert.Null(Buffs(editor).Steps[0].CooldownSlot);
+        Assert.False(editor.HasUnsavedChanges);
+    }
+
+    [Fact]
+    public void Mobility_steps_never_get_a_default_slot_and_only_the_combo_steps_do()
+    {
+        var editor = CreateWithMobility();
+
+        // Damage combo 100, 200 and 300 take slots 1 to 3. The buff's Heuklang (300) is already placed, the pool is manual.
+        Assert.Equal(3, editor.AllSteps().Count(step => step.CooldownSlot is not null));
+        Assert.All(editor.ManualChains.SelectMany(chain => chain.Steps), step => Assert.Null(step.CooldownSlot));
     }
 
     [Fact]
@@ -496,7 +528,7 @@ public sealed class ComboEditorViewModelTests : IDisposable
     [Fact]
     public void The_cooldown_label_is_the_slot_number_with_a_hash()
     {
-        var editor = Create();
+        var editor = Blank();
         var step = Damage(editor).Steps[0];
 
         Assert.Equal(string.Empty, step.CooldownLabel);
@@ -540,7 +572,7 @@ public sealed class ComboEditorViewModelTests : IDisposable
     [Fact]
     public void A_manual_skill_gets_the_lowest_free_cooldown_slot_by_hand()
     {
-        var editor = CreateWithMobility();
+        var editor = CreateWithMobility(ProfileOf());
         var pool = editor.ManualChains[0];
         editor.AssignCooldown(Damage(editor).Steps[0], 1);
 
@@ -578,7 +610,7 @@ public sealed class ComboEditorViewModelTests : IDisposable
     [Fact]
     public void The_profile_saves_the_manual_pool_chain_with_its_index_and_not_the_hidden_ones()
     {
-        var editor = CreateWithMobility();
+        var editor = CreateWithMobility(ProfileOf());
         editor.AddToFreeSlotCommand.Execute(editor.ManualChains[0].Steps[1]);
 
         var profile = editor.ToProfile();
@@ -636,5 +668,19 @@ public sealed class ComboEditorViewModelTests : IDisposable
     private sealed class HideEverythingResolver : IChainKindResolver
     {
         public ComboChainKind Resolve(ComboChain chain) => ComboChainKind.Other;
+    }
+
+    [Fact]
+    public void Player_key_legends_are_not_keys_so_they_never_become_a_memo()
+    {
+        Assert.True(ComboStepViewModel.IsPlayerKeyLegend("Hotkey"));
+        Assert.True(ComboStepViewModel.IsPlayerKeyLegend("hotbar"));
+        Assert.False(ComboStepViewModel.IsPlayerKeyLegend("R 2"));
+        Assert.False(ComboStepViewModel.IsPlayerKeyLegend(null));
+
+        var editor = Create();
+
+        Assert.Null(Damage(editor).Steps[0].Memo);
+        Assert.True(Damage(editor).Steps[0].IsHotkey);
     }
 }

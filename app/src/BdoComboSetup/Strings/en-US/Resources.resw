@@ -42,13 +42,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
 
-  <data name="AppTitle" xml:space="preserve"><value>BDO Combo Setup</value></data>
+    <data name="AppTitle" xml:space="preserve"><value>BDO Combo Setup</value></data>
   <data name="AppTitleBar.Title" xml:space="preserve"><value>BDO Combo Setup</value></data>
-
   <data name="NavApplyItem.Content" xml:space="preserve"><value>Apply combo</value></data>
   <data name="NavPreviewItem.Content" xml:space="preserve"><value>Preview</value></data>
-
-
   <data name="PreviewTitle.Text" xml:space="preserve"><value>Preview</value></data>
   <data name="CooldownBarCaption.Text" xml:space="preserve"><value>Cooldown bar</value></data>
   <data name="QuickBarCaption.Text" xml:space="preserve"><value>Quick slots</value></data>
@@ -57,8 +54,6 @@
   <data name="QuickPositionComboBox.Header" xml:space="preserve"><value>Quick slot position</value></data>
   <data name="SaveButton.Content" xml:space="preserve"><value>Save changes</value></data>
   <data name="ResetButton.Content" xml:space="preserve"><value>Reset</value></data>
-
-
   <data name="Preview_EmptySlot" xml:space="preserve"><value>Empty slot</value></data>
   <data name="Preview_PlaceholderSkill" xml:space="preserve"><value>Skill {0}</value></data>
   <data name="Preview_Group_Combo" xml:space="preserve"><value>Combo skill</value></data>
@@ -99,60 +94,256 @@
   <data name="Preview_GameWindow_NotConnected" xml:space="preserve"><value>Live view of the game is not connected yet.</value></data>
   <data name="Preview_GameWindow_NotRunning" xml:space="preserve"><value>The game is not running.</value></data>
   <data name="Preview_GameWindow_Running" xml:space="preserve"><value>Game window found.</value></data>
-
-
-  <!-- Apply page (Apply.* keys). Keys with dots are hierarchical in the PRI: Apply.X.Y -> Apply/X/Y. -->
-  <data name="Apply.Title.Text" xml:space="preserve"><value>Apply combo</value></data>
-  <data name="Apply.ClassHeader.Text" xml:space="preserve"><value>Class</value></data>
-  <data name="Apply.GuideHeader.Text" xml:space="preserve"><value>Guide</value></data>
-  <data name="Apply.ChangeCharacterButton.AutomationProperties.Name" xml:space="preserve"><value>Change character</value></data>
-  <data name="Apply.RestoreButton.Content" xml:space="preserve"><value>Restore bdoclasshub combo</value></data>
-  <data name="Apply.AddSkillButton.Content" xml:space="preserve"><value>Add skill</value></data>
-  <data name="Apply.AddSkillSearch.PlaceholderText" xml:space="preserve"><value>Search by name or number</value></data>
-  <data name="Apply.EmptyTitle.Text" xml:space="preserve"><value>No combo for this guide yet</value></data>
-  <data name="Apply.EmptyBody.Text" xml:space="preserve"><value>The guide is not in the app's bundle. Pick another spec or class.</value></data>
-  <data name="Apply.NoStepsTitle.Text" xml:space="preserve"><value>This guide has no steps</value></data>
-  <data name="Apply.EmptyChain.Text" xml:space="preserve"><value>No steps in this chain. Add a skill below.</value></data>
-  <data name="Apply.DetailEmpty.Text" xml:space="preserve"><value>Select a step to see its details.</value></data>
-  <data name="Apply.DescriptionHeader.Text" xml:space="preserve"><value>Description</value></data>
-  <data name="Apply.CustomizationHeader.Text" xml:space="preserve"><value>Customization</value></data>
-  <data name="Apply.CustomNameBox.Header" xml:space="preserve"><value>Custom name</value></data>
-  <data name="Apply.CustomNameBox.PlaceholderText" xml:space="preserve"><value>No custom name</value></data>
-  <data name="Apply.MemoBox.Header" xml:space="preserve"><value>Memo</value></data>
-  <data name="Apply.MemoBox.PlaceholderText" xml:space="preserve"><value>Your key or a note</value></data>
-  <data name="Apply.CooldownBox.Header" xml:space="preserve"><value>Cooldown slot</value></data>
-  <data name="Apply.QuickBox.Header" xml:space="preserve"><value>Quick slot</value></data>
-  <data name="Apply.ResetStepButton.Content" xml:space="preserve"><value>Reset step</value></data>
-  <data name="Apply.RemoveButton.Content" xml:space="preserve"><value>Remove</value></data>
-  <data name="Apply.MoveEarlierButton.Content" xml:space="preserve"><value>Move left</value></data>
-  <data name="Apply.MoveEarlierButton.AutomationProperties.Name" xml:space="preserve"><value>Move step earlier</value></data>
-  <data name="Apply.MoveLaterButton.Content" xml:space="preserve"><value>Move right</value></data>
-  <data name="Apply.MoveLaterButton.AutomationProperties.Name" xml:space="preserve"><value>Move step later</value></data>
-  <data name="Apply.SaveButton.Content" xml:space="preserve"><value>Save as my combo</value></data>
-  <data name="Apply.DryRunButton.Content" xml:space="preserve"><value>Dry run</value></data>
-  <data name="Apply.ApplyButton.Content" xml:space="preserve"><value>Apply combo</value></data>
-  <data name="Apply.SectionBuffs.Text" xml:space="preserve"><value>Buffs</value></data>
-  <data name="Apply.SectionCombos.Text" xml:space="preserve"><value>Combos</value></data>
-  <data name="Apply.SectionMobility.Header" xml:space="preserve"><value>Mobility (manual)</value></data>
-  <data name="Apply.MobilityHint.Text" xml:space="preserve"><value>Not added to the combo by itself. Give a skill a cooldown slot by hand.</value></data>
-  <data name="Apply.AddToSlotButton.Content" xml:space="preserve"><value>Add to slot</value></data>
-  <data name="Apply.BackupInfo.Text" xml:space="preserve"><value>A backup is taken before writing. After applying, leave the character (without closing the client) and enter again.</value></data>
-  <data name="Apply.NoSkill" xml:space="preserve"><value>No skill</value></data>
-  <data name="Apply.YourKey" xml:space="preserve"><value>Your key</value></data>
-  <data name="Apply.StepAutomationName" xml:space="preserve"><value>Step {0}: {1}</value></data>
-  <data name="Apply.StepAutomationNameWithKey" xml:space="preserve"><value>Step {0}: {1}, key {2}</value></data>
-  <data name="Apply.StepCountOne" xml:space="preserve"><value>1 step</value></data>
-  <data name="Apply.StepCountMany" xml:space="preserve"><value>{0} steps</value></data>
-  <data name="Apply.ChainFallbackTitle" xml:space="preserve"><value>Chain {0}</value></data>
-  <data name="Apply.OptionNone" xml:space="preserve"><value>None</value></data>
-  <data name="Apply.QuickPositionOption" xml:space="preserve"><value>Position {0} ({1})</value></data>
-  <data name="Apply.PcidFormat" xml:space="preserve"><value>PCID {0}</value></data>
-  <data name="Apply.StateUnsaved" xml:space="preserve"><value>Unsaved changes</value></data>
-  <data name="Apply.StateSaved" xml:space="preserve"><value>My combo</value></data>
-  <data name="Apply.StateBase" xml:space="preserve"><value>bdoclasshub guide</value></data>
-  <data name="Apply.StatusSaved" xml:space="preserve"><value>Your combo is saved.</value></data>
-  <data name="Apply.StatusSaveFailed" xml:space="preserve"><value>The combo could not be saved. Check the log for details.</value></data>
-  <data name="Apply.StatusRestored" xml:space="preserve"><value>The bdoclasshub combo is back.</value></data>
-  <data name="Apply.StatusFailed" xml:space="preserve"><value>The request failed. Check the log for details.</value></data>
-  <data name="Apply.StatusNotConnected" xml:space="preserve"><value>Not connected yet: the combo applier is not available in this build. Nothing was written.</value></data>
+  <data name="Apply.Title.Text" xml:space="preserve">
+    <value>Apply combo</value>
+  </data>
+  <data name="Apply.CharacterBox.Header" xml:space="preserve">
+    <value>Character to apply to</value>
+  </data>
+  <data name="Apply.IncludeCooldownBarCheck.Content" xml:space="preserve">
+    <value>Cooldown bar</value>
+  </data>
+  <data name="Apply.IncludeMemosCheck.Content" xml:space="preserve">
+    <value>Memos</value>
+  </data>
+  <data name="Apply.IncludeQuickSlotsCheck.Content" xml:space="preserve">
+    <value>Quick slots</value>
+  </data>
+  <data name="Apply.RestoreButton.Content" xml:space="preserve">
+    <value>Restore guide</value>
+  </data>
+  <data name="Apply.SaveButton.Content" xml:space="preserve">
+    <value>Save my combo</value>
+  </data>
+  <data name="Apply.DryRunButton.Content" xml:space="preserve">
+    <value>Preview changes</value>
+  </data>
+  <data name="Apply.ApplyButton.Content" xml:space="preserve">
+    <value>Apply to character</value>
+  </data>
+  <data name="Apply.ReviewTitle.Text" xml:space="preserve">
+    <value>Review the changes</value>
+  </data>
+  <data name="Apply.ReviewBackupNote.Text" xml:space="preserve">
+    <value>A verified backup of the character file is taken before anything is written. Close the game first: the write is refused while it runs.</value>
+  </data>
+  <data name="Apply.WriteButton.Content" xml:space="preserve">
+    <value>Write to character</value>
+  </data>
+  <data name="Apply.CancelReviewButton.Content" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Apply.EmptyTitle.Text" xml:space="preserve">
+    <value>Choose a class and a guide</value>
+  </data>
+  <data name="Apply.EmptyBody.Text" xml:space="preserve">
+    <value>The combo of the guide appears here: buffs and combos first. Mobility skills are a manual pool at the bottom.</value>
+  </data>
+  <data name="Apply.SectionMobility.Text" xml:space="preserve">
+    <value>Mobility (manual)</value>
+  </data>
+  <data name="Apply.MobilityHint.Text" xml:space="preserve">
+    <value>These skills are never added to the combo. Give one a cooldown slot by hand with its button.</value>
+  </data>
+  <data name="Apply.GuideMissing.Text" xml:space="preserve">
+    <value>This guide is not available yet.</value>
+  </data>
+  <data name="Apply.DetailEmpty.Text" xml:space="preserve">
+    <value>Select a step to see its details and change its name, memo or slots.</value>
+  </data>
+  <data name="Apply.DescriptionHeader.Text" xml:space="preserve">
+    <value>Game description</value>
+  </data>
+  <data name="Apply.GuideNotesHeader.Text" xml:space="preserve">
+    <value>Guide notes</value>
+  </data>
+  <data name="Apply.CustomizationHeader.Text" xml:space="preserve">
+    <value>Customize</value>
+  </data>
+  <data name="Apply.CustomNameBox.Header" xml:space="preserve">
+    <value>My name</value>
+  </data>
+  <data name="Apply.CustomNameBox.PlaceholderText" xml:space="preserve">
+    <value>Leave empty to use the skill name</value>
+  </data>
+  <data name="Apply.MemoBox.Header" xml:space="preserve">
+    <value>Memo (shown on the cooldown bar)</value>
+  </data>
+  <data name="Apply.MemoBox.PlaceholderText" xml:space="preserve">
+    <value>For example: SH + Q</value>
+  </data>
+  <data name="Apply.CooldownBox.Header" xml:space="preserve">
+    <value>Cooldown slot</value>
+  </data>
+  <data name="Apply.QuickBox.Header" xml:space="preserve">
+    <value>Quick slot</value>
+  </data>
+  <data name="Apply.MoveEarlierButton.Content" xml:space="preserve">
+    <value>Move up</value>
+  </data>
+  <data name="Apply.MoveLaterButton.Content" xml:space="preserve">
+    <value>Move down</value>
+  </data>
+  <data name="Apply.RemoveButton.Content" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Apply.ResetStepButton.Content" xml:space="preserve">
+    <value>Reset this step</value>
+  </data>
+  <data name="Apply.AddToSlotButton.Content" xml:space="preserve">
+    <value>Add to a slot</value>
+  </data>
+  <data name="Apply.AddSkillButton.Content" xml:space="preserve">
+    <value>Add skill</value>
+  </data>
+  <data name="Apply.AddSkillSearch.PlaceholderText" xml:space="preserve">
+    <value>Search by name or number</value>
+  </data>
+  <data name="Apply.PcidFormat" xml:space="preserve">
+    <value>Character ID {0}</value>
+  </data>
+  <data name="Apply.StateUnsaved" xml:space="preserve">
+    <value>Unsaved changes</value>
+  </data>
+  <data name="Apply.StateSaved" xml:space="preserve">
+    <value>My combo</value>
+  </data>
+  <data name="Apply.StateBase" xml:space="preserve">
+    <value>Guide (bdoclasshub)</value>
+  </data>
+  <data name="Apply.StatusSaved" xml:space="preserve">
+    <value>Your combo was saved.</value>
+  </data>
+  <data name="Apply.StatusSaveFailed" xml:space="preserve">
+    <value>The combo could not be saved. Check the folder permissions.</value>
+  </data>
+  <data name="Apply.StatusRestored" xml:space="preserve">
+    <value>The guide is back to the bdoclasshub version.</value>
+  </data>
+  <data name="Apply.StatusFailed" xml:space="preserve">
+    <value>The request failed. Check the log for details.</value>
+  </data>
+  <data name="Apply.StatusStale" xml:space="preserve">
+    <value>The combo changed after the review. Review it again before writing.</value>
+  </data>
+  <data name="Apply.NoSkill" xml:space="preserve">
+    <value>No skill</value>
+  </data>
+  <data name="Apply.YourKey" xml:space="preserve">
+    <value>Your key</value>
+  </data>
+  <data name="Apply.StepAutomationName" xml:space="preserve">
+    <value>Step {0}: {1}</value>
+  </data>
+  <data name="Apply.StepAutomationNameWithKey" xml:space="preserve">
+    <value>Step {0}: {1}, key {2}</value>
+  </data>
+  <data name="Apply.StepCountOne" xml:space="preserve">
+    <value>1 step</value>
+  </data>
+  <data name="Apply.StepCountMany" xml:space="preserve">
+    <value>{0} steps</value>
+  </data>
+  <data name="Apply.ChainFallbackTitle" xml:space="preserve">
+    <value>Chain {0}</value>
+  </data>
+  <data name="Apply.OptionNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="Apply.QuickPositionOption" xml:space="preserve">
+    <value>Position {0} ({1})</value>
+  </data>
+  <data name="Apply.Problem.None" xml:space="preserve">
+    <value>No details</value>
+  </data>
+  <data name="Apply.Problem.InvalidRequest" xml:space="preserve">
+    <value>The request is not valid</value>
+  </data>
+  <data name="Apply.Problem.AccountNotFound" xml:space="preserve">
+    <value>The game account was not found</value>
+  </data>
+  <data name="Apply.Problem.CharacterNotFound" xml:space="preserve">
+    <value>The character was not found</value>
+  </data>
+  <data name="Apply.Problem.SkillTableMissing" xml:space="preserve">
+    <value>The skill table (class_skills.json) is missing</value>
+  </data>
+  <data name="Apply.Problem.SkillMismatch" xml:space="preserve">
+    <value>The skills do not match the skill table</value>
+  </data>
+  <data name="Apply.Problem.UnsupportedLayout" xml:space="preserve">
+    <value>The character file has a layout that is not recognized</value>
+  </data>
+  <data name="Apply.Problem.QuickSlotRefused" xml:space="preserve">
+    <value>The quick slots cannot be written in their current state</value>
+  </data>
+  <data name="Apply.Problem.ValidationFailed" xml:space="preserve">
+    <value>The result check failed</value>
+  </data>
+  <data name="Apply.Problem.GameRunning" xml:space="preserve">
+    <value>The game is running and the file changed recently. Close the game or force the write</value>
+  </data>
+  <data name="Apply.Problem.BackupFailed" xml:space="preserve">
+    <value>The backup could not be created</value>
+  </data>
+  <data name="Apply.Problem.WriteFailed" xml:space="preserve">
+    <value>The file could not be written</value>
+  </data>
+  <data name="Apply.Problem.RollbackFailed" xml:space="preserve">
+    <value>The backup could not be restored</value>
+  </data>
+  <data name="Apply.Problem.UnexpectedError" xml:space="preserve">
+    <value>Unexpected error</value>
+  </data>
+  <data name="Apply.ProblemDetail" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="Apply.Result.DryRun" xml:space="preserve">
+    <value>Preview: {0} changes. Nothing was written.</value>
+  </data>
+  <data name="Apply.Result.DryRunUnchanged" xml:space="preserve">
+    <value>Preview: the character already has this combo. Nothing was written.</value>
+  </data>
+  <data name="Apply.Result.Written" xml:space="preserve">
+    <value>Written and validated: {0} changes.</value>
+  </data>
+  <data name="Apply.Result.Unchanged" xml:space="preserve">
+    <value>The character already has this combo; nothing was written.</value>
+  </data>
+  <data name="Apply.Result.Refused" xml:space="preserve">
+    <value>Nothing was written. {0}</value>
+  </data>
+  <data name="Apply.Result.RolledBack" xml:space="preserve">
+    <value>The check after writing failed and the backup was restored. {0}</value>
+  </data>
+  <data name="Apply.Result.Failed" xml:space="preserve">
+    <value>The operation failed. {0}</value>
+  </data>
+  <data name="Apply.Result.Backup" xml:space="preserve">
+    <value>Backup: {0}</value>
+  </data>
+  <data name="Apply.Result.Warnings" xml:space="preserve">
+    <value>Warnings: {0}</value>
+  </data>
+  <data name="Apply.Review.Slot" xml:space="preserve">
+    <value>Cooldown slot {0}: {1} → {2}</value>
+  </data>
+  <data name="Apply.Review.Memo" xml:space="preserve">
+    <value>Memo for {0}: {1}</value>
+  </data>
+  <data name="Apply.Review.Quick" xml:space="preserve">
+    <value>Quick slot {0}: {1} → {2}</value>
+  </data>
+  <data name="Apply.Review.Empty" xml:space="preserve">
+    <value>(empty)</value>
+  </data>
+  <data name="Apply.Review.UnknownSkill" xml:space="preserve">
+    <value>skill {0}</value>
+  </data>
+  <data name="Apply.Review.Summary" xml:space="preserve">
+    <value>{0} changes will be written.</value>
+  </data>
+  <data name="Apply.Review.NoChanges" xml:space="preserve">
+    <value>The character already has this combo. There is nothing to write.</value>
+  </data>
 </root>

@@ -189,6 +189,12 @@ class CharacterFixture:
         ]
 
 
+def corrupting_copy(dest: Path, data: bytes) -> None:
+    """Stands in for a backup copy that does not match the original (for failure tests)."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(data + b"X")
+
+
 @contextmanager
 def temp_root() -> Iterator[Path]:
     with tempfile.TemporaryDirectory() as tmp:

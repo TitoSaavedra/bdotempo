@@ -3,7 +3,7 @@ using BdoComboSetup.Core.ViewModels;
 
 namespace BdoComboSetup.Tests;
 
-/// <summary>The Apply page view model: startup selection, spec switching, profiles, and the (stubbed) applier.</summary>
+/// <summary>The Apply page view model: startup selection, spec switching, and profiles. The write flow is in ApplyComboWriteTests.</summary>
 public sealed class ApplyComboViewModelTests : IDisposable
 {
     private readonly TempLogger _log = new();
@@ -25,7 +25,7 @@ public sealed class ApplyComboViewModelTests : IDisposable
         new NoIconAssets(),
         new MockComboDataSource(),
         store ?? _profiles.Store,
-        applier ?? new StubComboApplier(_log.Logger),
+        applier ?? new RecordingApplier(),
         new KeyLocalizer(),
         ApplyTestHelpers.Culture,
         _log.Logger);
@@ -39,7 +39,7 @@ public sealed class ApplyComboViewModelTests : IDisposable
 
         await vm.InitializeAsync();
 
-        Assert.Equal("AhrinSong", vm.SelectedCharacter?.Name);
+        Assert.Equal("Demo Tamer", vm.SelectedCharacter?.Name);
         Assert.Equal("tamer", vm.SelectedClass?.Slug);
         Assert.Equal("awakening", vm.SelectedSpec?.Id);
         Assert.True(vm.HasEditor);
@@ -55,7 +55,7 @@ public sealed class ApplyComboViewModelTests : IDisposable
 
         Assert.Equal("shai", vm.SelectedClass?.Slug);
         Assert.Equal("talent", vm.SelectedSpec?.Id);
-        Assert.Equal("Sample Shai", vm.SelectedCharacter?.Name);
+        Assert.Equal("Demo Shai", vm.SelectedCharacter?.Name);
         Assert.Equal("Shai Talent", vm.Editor?.Title);
     }
 
@@ -76,10 +76,10 @@ public sealed class ApplyComboViewModelTests : IDisposable
         var vm = Create();
         await vm.InitializeAsync("warrior", "awakening");
 
-        await vm.SelectCharacterCommand.ExecuteAsync(vm.Characters.Single(item => item.Name == "AhrinSong"));
+        await vm.SelectCharacterCommand.ExecuteAsync(vm.Characters.Single(item => item.Name == "Demo Tamer"));
 
         Assert.Equal("tamer", vm.SelectedClass?.Slug);
-        Assert.Equal("AhrinSong", vm.SelectedCharacter?.Name);
+        Assert.Equal("Demo Tamer", vm.SelectedCharacter?.Name);
     }
 
     [Fact]
@@ -241,41 +241,17 @@ public sealed class ApplyComboViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task Apply_with_the_stub_reports_not_connected_as_a_warning()
-    {
-        var vm = Create();
-        await vm.InitializeAsync("tamer", "awakening");
-
-        await vm.ApplyCommand.ExecuteAsync(null);
-
-        Assert.True(vm.IsStatusOpen);
-        Assert.Equal("Apply.StatusNotConnected", vm.StatusMessage);
-        Assert.Equal(StatusSeverity.Warning, vm.StatusSeverity);
-    }
-
-    [Fact]
-    public async Task Dry_run_with_the_stub_reports_not_connected_as_a_warning()
-    {
-        var vm = Create();
-        await vm.InitializeAsync("tamer", "awakening");
-
-        await vm.DryRunCommand.ExecuteAsync(null);
-
-        Assert.True(vm.IsStatusOpen);
-        Assert.Equal("Apply.StatusNotConnected", vm.StatusMessage);
-    }
-
-    [Fact]
     public async Task A_failing_applier_is_reported_as_an_error_and_logged()
     {
         var vm = Create(applier: new ThrowingApplier());
         await vm.InitializeAsync("tamer", "awakening");
 
-        await vm.ApplyCommand.ExecuteAsync(null);
+        await vm.DryRunCommand.ExecuteAsync(null);
 
         Assert.True(vm.IsStatusOpen);
         Assert.Equal("Apply.StatusFailed", vm.StatusMessage);
         Assert.Equal(StatusSeverity.Error, vm.StatusSeverity);
+        Assert.False(vm.IsReviewOpen);
 
         var logText = File.ReadAllText(_log.Logger.FilePath);
         Assert.Contains("\"event\":\"apply.failed\"", logText);
@@ -298,6 +274,9 @@ public sealed class ApplyComboViewModelTests : IDisposable
     private sealed class ThrowingApplier : IComboApplier
     {
         public Task<ComboApplyResult> ApplyAsync(ComboApplyRequest request, CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("boom");
+
+        public Task<ComboApplyResult> DryRunAsync(ComboApplyRequest request, CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("boom");
     }
 }

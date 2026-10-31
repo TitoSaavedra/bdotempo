@@ -12,7 +12,12 @@ namespace BdoComboSetup.Core.ViewModels;
 /// </summary>
 public sealed partial class ComboStepViewModel : ObservableObject
 {
-    private const string HotkeyKeys = "Hotkey";
+    /// <summary>
+    /// The key legends that are not keys: the player binds the skill to their own key ("Hotkey") or to a bar slot ("Hotbar").
+    /// The memo is shown instead of the legend.
+    /// </summary>
+    public static bool IsPlayerKeyLegend(string? keys) =>
+        string.Equals(keys, "Hotkey", StringComparison.OrdinalIgnoreCase) || string.Equals(keys, "Hotbar", StringComparison.OrdinalIgnoreCase);
 
     private readonly ILocalizer _localizer;
     private readonly CultureInfo _culture;
@@ -66,10 +71,12 @@ public sealed partial class ComboStepViewModel : ObservableObject
     /// <summary>Annotation from the guide.</summary>
     public string? Note { get; }
 
-    public ComboSkill? PrimarySkill => Skills.Count > 0 ? Skills[0] : null;
+    /// <summary>The guide's extra line and annotation of this step, joined in one line. Empty when the guide has neither.</summary>
+    public string GuideNotes => string.Join(" · ", new[] { Extra, Note }.Where(text => !string.IsNullOrWhiteSpace(text)));
 
-    /// <summary>The second skill of a step with several skills, shown next to the first one.</summary>
-    public ComboSkill? SecondarySkill => Skills.Count > 1 ? Skills[1] : null;
+    public bool HasGuideNotes => GuideNotes.Length > 0;
+
+    public ComboSkill? PrimarySkill => Skills.Count > 0 ? Skills[0] : null;
 
     public string SkillName => PrimarySkill is { } skill ? skill.Name.For(_culture) : _localizer.Get("Apply.NoSkill");
 
@@ -94,16 +101,13 @@ public sealed partial class ComboStepViewModel : ObservableObject
     private int? _cooldownSlot;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasQuick), nameof(QuickLabel))]
     private int? _quickPosition;
 
     /// <summary>Position in the chain, counted from 1. Kept up to date by the chain.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(AutomationName))]
     private int _position;
-
-    /// <summary>True for the last step of the chain, which has no arrow after it.</summary>
-    [ObservableProperty]
-    private bool _isLast;
 
     [ObservableProperty]
     private bool _isSelected;
@@ -115,7 +119,7 @@ public sealed partial class ComboStepViewModel : ObservableObject
 
     public bool HasMemo => !string.IsNullOrWhiteSpace(Memo);
 
-    public bool IsHotkey => string.Equals(Keys, HotkeyKeys, StringComparison.OrdinalIgnoreCase);
+    public bool IsHotkey => IsPlayerKeyLegend(Keys);
 
     /// <summary>
     /// The key shown under the icon. "Hotkey" means the player's own key, so the user's memo is shown instead,
@@ -126,6 +130,13 @@ public sealed partial class ComboStepViewModel : ObservableObject
         : (Keys ?? string.Empty);
 
     public bool HasCooldown => CooldownSlot is not null;
+
+    public bool HasQuick => QuickPosition is not null;
+
+    /// <summary>The input of the quick position, such as "M2" or "5" for a key position. Empty when there is none.</summary>
+    public string QuickLabel => QuickPosition is int position
+        ? QuickSlotMap.InputFor(position).MouseButton ?? position.ToString(CultureInfo.InvariantCulture)
+        : string.Empty;
 
     /// <summary>"#n" for the cooldown slot, or empty.</summary>
     public string CooldownLabel => CooldownSlot is int slot ? "#" + slot.ToString(CultureInfo.InvariantCulture) : string.Empty;

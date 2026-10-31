@@ -5,8 +5,14 @@ Backup layout::
     <backups-dir>/<UTC yyyymmddTHHMMSSZ>/manifest.json
     <backups-dir>/<UTC yyyymmddTHHMMSSZ>/<account>/<PCID>/gameVariable.xml
 
+The default backups-dir is ``_backups`` inside the Black Desert data folder.
 Backup folders are never overwritten: if a timestamp folder already exists the
 code waits for the next second and tries again.
+
+Write rule: a game file is replaced only through ``write_game_file``, and only
+when a verified backup (every copy re-hashed, SHA-256 equal to the original)
+holds exactly the bytes the file has at that moment. A backup that fails
+verification is removed again, so no half-made backup is left behind.
 """
 
 from __future__ import annotations
@@ -15,6 +21,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass
@@ -54,11 +61,21 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _read_file(path: Path, what: str) -> bytes:
+    try:
+        return path.read_bytes()
+    except OSError as exc:
+        raise ToolError(f"cannot read {what}: {exc}") from exc
+
+
 def atomic_write(path: Path, data: bytes) -> None:
     """Write through a temporary file in the same folder, then replace the target."""
     tmp = path.with_name(path.name + ".bdo-combo.tmp")
     try:
-        tmp.write_bytes(data)
+        with open(tmp, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
         os.replace(tmp, path)
     except BaseException:
         log.error("atomic write failed", file=path.name)
@@ -146,8 +163,28 @@ def _manifest_entry(manifest: dict, pcid: str) -> dict:
     raise ToolError(f"PCID {pcid} is not in this backup")
 
 
+def _verified_copy_bytes(backup_dir: Path, account: str, entry: dict) -> bytes:
+    """Read one backup copy and refuse it unless its SHA-256 matches the manifest."""
+    pcid = entry["pcid"]
+    data = _read_file(_backup_file(backup_dir, account, pcid), f"backup file for PCID {pcid}")
+    if sha256_bytes(data) != entry["sha256"]:
+        raise ToolError(f"backup file for PCID {pcid} does not match its manifest")
+    return data
+
+
+def verify_backup(backup_dir: Path) -> dict:
+    """Re-read every copy of a backup and compare it with the manifest. Returns the manifest."""
+    manifest = read_manifest(backup_dir)
+    for entry in manifest["files"]:
+        _verified_copy_bytes(backup_dir, manifest["account"], entry)
+    return manifest
+
+
 def _new_backup_folder(backups_dir: Path) -> Path:
-    backups_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        backups_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise ToolError(f"cannot create the backups folder: {exc}") from exc
     for _ in range(_MAX_FOLDER_ATTEMPTS):
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         folder = backups_dir / stamp
@@ -157,8 +194,49 @@ def _new_backup_folder(backups_dir: Path) -> Path:
             log.debug("backup folder already exists, waiting for the next second", backup=stamp)
             time.sleep(1.0)
             continue
+        except OSError as exc:
+            raise ToolError(f"cannot create a backup folder: {exc}") from exc
         return folder
     raise ToolError("could not create a new backup folder")
+
+
+def _write_copy(dest: Path, data: bytes) -> None:
+    """Create one backup copy. Mode 'x' makes sure an existing file is never overwritten."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    with open(dest, "xb") as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _copy_target(folder: Path, target: BackupTarget, account: str) -> dict:
+    """Copy one character file into the backup folder and check the copy's SHA-256 against the original."""
+    source = _read_file(target.path, f"PCID {target.pcid} for backup")
+    digest = sha256_bytes(source)
+    dest = _backup_file(folder, account, target.pcid)
+    try:
+        _write_copy(dest, source)
+    except OSError as exc:
+        raise ToolError(f"cannot write backup copy of PCID {target.pcid}: {exc}") from exc
+    if sha256_bytes(_read_file(dest, f"backup copy of PCID {target.pcid}")) != digest:
+        raise ToolError(f"backup copy of PCID {target.pcid} does not match the original (SHA-256)")
+    log.debug("backup copy verified", pcid=target.pcid, sha256=digest)
+    return {
+        "pcid": target.pcid,
+        "path": f"{account}/{target.pcid}/{CHARACTER_FILE_NAME}",
+        "sha256": digest,
+        "size": len(source),
+    }
+
+
+def _discard_partial_backup(folder: Path) -> None:
+    """Remove a backup folder that failed, so no incomplete backup looks like a real one."""
+    try:
+        shutil.rmtree(folder)
+    except OSError as exc:
+        log.error("could not remove the partial backup folder", backup=folder.name, error=str(exc))
+        return
+    log.warn("partial backup removed after a failed backup", backup=folder.name)
 
 
 def create_backup(
@@ -168,50 +246,71 @@ def create_backup(
     backups_dir: Path,
     reason: str,
 ) -> Path:
-    """Copy each target file into a new timestamped folder and write its manifest."""
+    """Copy each target into a new timestamped folder, verify every copy, then write the manifest.
+
+    Returns the backup folder only when it is complete and verified. Otherwise the
+    partial folder is removed and a ToolError is raised, so the caller writes nothing.
+    """
     with log.span("backup.create", reason=reason, files=len(targets)):
-        folder = _new_backup_folder(backups_dir)
-        files: list[dict] = []
-        for target in targets:
-            data = target.path.read_bytes()
-            dest = _backup_file(folder, account, target.pcid)
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_bytes(data)
-            if dest.read_bytes() != data:
-                raise ToolError(f"backup copy of PCID {target.pcid} does not match the original")
-            files.append(
-                {
-                    "pcid": target.pcid,
-                    "path": f"{account}/{target.pcid}/{CHARACTER_FILE_NAME}",
-                    "sha256": sha256_bytes(data),
-                    "size": len(data),
-                }
-            )
-        manifest = {
-            "tool": TOOL_NAME,
-            "tool_version": __version__,
-            "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "reason": reason,
-            "account": account,
-            "files": files,
-        }
-        (folder / MANIFEST_NAME).write_text(
-            json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-        )
-        log.info("backup created", backup=folder.name, files=len(files), reason=reason)
+        folder: Path | None = None
+        try:
+            folder = _new_backup_folder(backups_dir)
+            files = [_copy_target(folder, target, account) for target in targets]
+            manifest = {
+                "tool": TOOL_NAME,
+                "tool_version": __version__,
+                "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "reason": reason,
+                "account": account,
+                "files": files,
+            }
+            try:
+                (folder / MANIFEST_NAME).write_text(
+                    json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+                )
+            except OSError as exc:
+                raise ToolError(f"cannot write the manifest of backup {folder.name}: {exc}") from exc
+            verify_backup(folder)
+        except BaseException as exc:
+            log.error("backup failed; nothing will be written", backup=folder.name if folder else None, error=str(exc))
+            if folder is not None:
+                _discard_partial_backup(folder)
+            if not isinstance(exc, Exception):
+                raise
+            raise ToolError(f"backup failed, nothing was written: {exc}") from exc
+        log.info("backup created and verified", backup=folder.name, files=len(files), reason=reason)
         return folder
 
 
-def restore_file(backup_dir: Path, account: str, pcid: str, dest: Path) -> None:
-    """Copy one character's file from a backup back to ``dest`` and verify it."""
-    with log.span("backup.restore_file", pcid=pcid, backup=backup_dir.name):
-        manifest = read_manifest(backup_dir)
-        entry = _manifest_entry(manifest, pcid)
-        data = _backup_file(backup_dir, account, pcid).read_bytes()
-        if sha256_bytes(data) != entry["sha256"]:
-            raise ToolError(f"backup file for PCID {pcid} does not match its manifest")
-        atomic_write(dest, data)
-        if sha256_bytes(dest.read_bytes()) != entry["sha256"]:
+def write_game_file(path: Path, data: bytes, *, guard: Path, account: str, pcid: str) -> None:
+    """Replace a game file. This is the only write path for gameVariable.xml.
+
+    ``guard`` is a backup folder created just before this write. The write is refused
+    unless that backup holds an intact copy (SHA-256 checked against its manifest) of
+    exactly the bytes the file has now, so the replaced content can always be recovered.
+    """
+    with log.span("backup.write_game_file", pcid=pcid, backup=guard.name, bytes=len(data)):
+        manifest = read_manifest(guard)
+        if manifest["account"] != account:
+            raise ToolError(f"backup {guard.name} belongs to account {manifest['account']}, not {account}")
+        copy = _verified_copy_bytes(guard, account, _manifest_entry(manifest, pcid))
+        current = _read_file(path, f"PCID {pcid} before writing")
+        if current != copy:
+            raise ToolError(f"PCID {pcid} changed after backup {guard.name} was taken; nothing was written")
+        try:
+            atomic_write(path, data)
+        except OSError as exc:
+            raise ToolError(f"cannot write PCID {pcid}: {exc}") from exc
+        log.info("game file written", pcid=pcid, backup=guard.name, bytes=len(data))
+
+
+def restore_file(backup_dir: Path, account: str, pcid: str, dest: Path, *, guard: Path) -> None:
+    """Copy one character's file from a backup back to ``dest`` (through the write gate) and verify it."""
+    with log.span("backup.restore_file", pcid=pcid, backup=backup_dir.name, guard=guard.name):
+        entry = _manifest_entry(read_manifest(backup_dir), pcid)
+        data = _verified_copy_bytes(backup_dir, account, entry)
+        write_game_file(dest, data, guard=guard, account=account, pcid=pcid)
+        if sha256_bytes(_read_file(dest, f"restored file for PCID {pcid}")) != entry["sha256"]:
             raise ToolError(f"restored file for PCID {pcid} does not match the backup")
 
 
@@ -280,36 +379,32 @@ def run_restore(settings: Settings, timestamp: str, pcids: Sequence[str], *, wri
             if pcid not in entries:
                 raise ToolError(f"PCID {pcid} is not in backup {timestamp}")
 
-        items: list[tuple[str, Path, bytes]] = []
+        items: list[tuple[str, Path]] = []
         for pcid in selected:
-            data = _backup_file(folder, account, pcid).read_bytes()
-            if sha256_bytes(data) != entries[pcid]["sha256"]:
-                raise ToolError(f"backup file for PCID {pcid} does not match its manifest")
+            data = _verified_copy_bytes(folder, account, entries[pcid])
             dest = character_file(settings.data_dir, account, pcid)
             if not dest.is_file():
                 raise ToolError(f"character {pcid} not found under account {account}")
-            same = dest.read_bytes() == data
+            same = _read_file(dest, f"PCID {pcid}") == data
             print(f"PCID {pcid}: current file {'identical to' if same else 'differs from'} the backup")
-            items.append((pcid, dest, data))
+            items.append((pcid, dest))
 
         if not write:
             print("DRY RUN: nothing was restored. Re-run with --write to restore.")
             return 0
 
-        guard_write([(pcid, dest) for pcid, dest, _ in items], force)
+        guard_write(items, force)
         pre = create_backup(
-            [BackupTarget(pcid, dest) for pcid, dest, _ in items],
+            [BackupTarget(pcid, dest) for pcid, dest in items],
             account=account,
             backups_dir=settings.backups_dir,
             reason="pre-restore",
         )
         print(f"Pre-restore backup of current files: {pre}")
-        for pcid, dest, data in items:
-            atomic_write(dest, data)
-            if sha256_bytes(dest.read_bytes()) != entries[pcid]["sha256"]:
-                raise ToolError(
-                    f"restore verification failed for PCID {pcid}; "
-                    f"the previous state is in backup {pre.name}"
-                )
+        for pcid, dest in items:
+            try:
+                restore_file(folder, account, pcid, dest, guard=pre)
+            except ToolError as exc:
+                raise ToolError(f"{exc}; the previous state is in backup {pre.name}") from exc
             print(f"PCID {pcid}: restored")
     return 0

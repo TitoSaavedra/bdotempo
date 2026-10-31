@@ -19,6 +19,12 @@ public sealed record AppSettings
     /// <summary>Account folder under UserCache that holds gamevariable.xml.</summary>
     public const string DefaultGameAccountFolder = "330";
 
+    /// <summary>Default Black Desert data folder (the one that holds UserCache and _backups).</summary>
+    public const string DefaultGameDataRoot = @"C:\Users\TitoS\OneDrive\Documentos\Black Desert";
+
+    /// <summary>Default skill table, exported by the Scrappers project.</summary>
+    public const string DefaultSkillsJsonPath = @"D:\extracted_bdo\class_skills.json";
+
     /// <summary>Background chosen by the user, as a file path. Null means the default screenshot (if it exists).</summary>
     public string? BackgroundImagePath { get; init; }
 
@@ -27,6 +33,18 @@ public sealed record AppSettings
     public string ClassHubRoot { get; init; } = DefaultClassHubRoot;
 
     public string GameAccountFolder { get; init; } = DefaultGameAccountFolder;
+
+    /// <summary>Black Desert data folder (the one with UserCache). Character files are written under it.</summary>
+    public string GameDataRoot { get; init; } = DefaultGameDataRoot;
+
+    /// <summary>Account used by the apply page. Null means auto-detection (the only account, else the most recently played).</summary>
+    public string? GameAccount { get; init; }
+
+    /// <summary>Where backup sets are written. Null means "_backups" inside <see cref="GameDataRoot"/>.</summary>
+    public string? BackupsRoot { get; init; }
+
+    /// <summary>Skill table (class_skills.json) that combos are checked against. Apply is refused without it.</summary>
+    public string SkillsJsonPath { get; init; } = DefaultSkillsJsonPath;
 
     /// <summary>Rows and columns of the cooldown bar. The default is 2 x 10 (20 slots).</summary>
     public int CooldownRows { get; init; } = 2;

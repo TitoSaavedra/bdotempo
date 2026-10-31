@@ -29,8 +29,10 @@ public sealed record SlotData(
     int QuickPosition,
     int? SkillNo = null);
 
+/// <summary>A combo for one class and mode. <see cref="ClassId"/> is the game class id used to check skills against the table.</summary>
 public sealed record ComboDefinition(
     string ClassName,
+    int ClassId,
     ComboMode Mode,
     string Description,
     string SourceUrl,

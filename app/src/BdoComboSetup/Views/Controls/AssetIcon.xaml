@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="BdoComboSetup.Views.Controls.AssetIcon"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- A skill or class icon from the app's asset bundle. Without an icon, the glyph (two letters) is drawn instead. -->
+    <Grid>
+        <Border x:Name="GlyphBorder" Background="{ThemeResource ControlFillColorSecondaryBrush}" CornerRadius="6">
+            <TextBlock
+                x:Name="GlyphText"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontSize="13"
+                FontWeight="SemiBold"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Border>
+        <Image x:Name="IconImage" Stretch="Uniform" Visibility="Collapsed" />
+    </Grid>
+</UserControl>

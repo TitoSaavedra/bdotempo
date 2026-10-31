@@ -3,11 +3,12 @@ import hashlib
 import io
 import json
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from bdo_combo import backup
 from bdo_combo.config import ToolError
-from support import ACCOUNT, PCID_A, PCID_B, CharacterFixture, quiet_logs, temp_root
+from support import ACCOUNT, PCID_A, PCID_B, CharacterFixture, corrupting_copy, quiet_logs, temp_root
 
 
 def sha(data: bytes) -> str:
@@ -35,7 +36,9 @@ class BackupRoundTripTest(unittest.TestCase):
             self.assertEqual(original, (folder / ACCOUNT / PCID_A / "gameVariable.xml").read_bytes())
 
             path.write_bytes(b"changed")
-            backup.restore_file(folder, ACCOUNT, PCID_A, path)
+            pre = backup.create_backup([backup.BackupTarget(PCID_A, path)], account=ACCOUNT,
+                                       backups_dir=fx.backups_dir, reason="pre-restore")
+            backup.restore_file(folder, ACCOUNT, PCID_A, path, guard=pre)
             self.assertEqual(original, path.read_bytes())
 
     def test_backup_folders_are_never_overwritten(self) -> None:
@@ -56,8 +59,12 @@ class BackupRoundTripTest(unittest.TestCase):
             folder = backup.create_backup([backup.BackupTarget(PCID_A, path)], account=ACCOUNT,
                                           backups_dir=fx.backups_dir, reason="test")
             (folder / ACCOUNT / PCID_A / "gameVariable.xml").write_bytes(b"corrupt")
+            pre = backup.create_backup([backup.BackupTarget(PCID_A, path)], account=ACCOUNT,
+                                       backups_dir=fx.backups_dir, reason="pre-restore")
+            before = path.read_bytes()
             with self.assertRaisesRegex(ToolError, "does not match its manifest"):
-                backup.restore_file(folder, ACCOUNT, PCID_A, path)
+                backup.restore_file(folder, ACCOUNT, PCID_A, path, guard=pre)
+            self.assertEqual(before, path.read_bytes())
 
     def test_list_backups_reports_empty_and_existing(self) -> None:
         with temp_root() as root, quiet_logs():
@@ -149,6 +156,94 @@ class RestoreTest(unittest.TestCase):
                 backup.run_restore(fx.settings(), name, [PCID_B], write=False, force=False)
             with self.assertRaisesRegex(ToolError, "must be a backup timestamp"):
                 backup.run_restore(fx.settings(), "../etc", [], write=False, force=False)
+
+
+class FailedBackupTest(unittest.TestCase):
+    """A backup that cannot be verified must abort, and no game file may be written."""
+
+    def test_copy_that_does_not_match_aborts_and_removes_partial_folder(self) -> None:
+        with temp_root() as root, quiet_logs():
+            fx = CharacterFixture(root)
+            path = fx.add_character(PCID_A)
+            with mock.patch.object(backup, "_write_copy", side_effect=corrupting_copy):
+                with self.assertRaisesRegex(ToolError, "does not match the original"):
+                    backup.create_backup([backup.BackupTarget(PCID_A, path)], account=ACCOUNT,
+                                         backups_dir=fx.backups_dir, reason="test")
+            self.assertEqual([], list(fx.backups_dir.iterdir()))
+
+    def test_io_error_while_copying_aborts_and_removes_partial_folder(self) -> None:
+        with temp_root() as root, quiet_logs():
+            fx = CharacterFixture(root)
+            path = fx.add_character(PCID_A)
+            with mock.patch.object(backup, "_write_copy", side_effect=OSError("disk full")):
+                with self.assertRaisesRegex(ToolError, "cannot write backup copy"):
+                    backup.create_backup([backup.BackupTarget(PCID_A, path)], account=ACCOUNT,
+                                         backups_dir=fx.backups_dir, reason="test")
+            self.assertEqual([], list(fx.backups_dir.iterdir()))
+
+    def test_backups_folder_that_cannot_be_created_aborts(self) -> None:
+        with temp_root() as root, quiet_logs():
+            fx = CharacterFixture(root)
+            path = fx.add_character(PCID_A)
+            original = path.read_bytes()
+            blocker = root / "blocker"
+            blocker.write_bytes(b"a file, not a folder")
+            with self.assertRaisesRegex(ToolError, "cannot create the backups folder"):
+                backup.create_backup([backup.BackupTarget(PCID_A, path)], account=ACCOUNT,
+                                     backups_dir=blocker / "_backups", reason="test")
+            self.assertEqual(original, path.read_bytes())
+
+
+class WriteGateTest(unittest.TestCase):
+    """Every game-file write needs an intact backup of the bytes it replaces."""
+
+    def _backup_of(self, fx: CharacterFixture, path: Path) -> Path:
+        return backup.create_backup([backup.BackupTarget(PCID_A, path)], account=ACCOUNT,
+                                    backups_dir=fx.backups_dir, reason="pre-apply")
+
+    def test_write_proceeds_when_backup_matches_current_file(self) -> None:
+        with temp_root() as root, quiet_logs():
+            fx = CharacterFixture(root)
+            path = fx.add_character(PCID_A)
+            folder = self._backup_of(fx, path)
+            backup.write_game_file(path, b"new content", guard=folder, account=ACCOUNT, pcid=PCID_A)
+            self.assertEqual(b"new content", path.read_bytes())
+
+    def test_write_refused_when_backup_copy_is_corrupt(self) -> None:
+        with temp_root() as root, quiet_logs():
+            fx = CharacterFixture(root)
+            path = fx.add_character(PCID_A)
+            folder = self._backup_of(fx, path)
+            (folder / ACCOUNT / PCID_A / "gameVariable.xml").write_bytes(b"corrupt")
+            before = path.read_bytes()
+            with mock.patch.object(backup, "atomic_write") as write:
+                with self.assertRaisesRegex(ToolError, "does not match its manifest"):
+                    backup.write_game_file(path, b"new", guard=folder, account=ACCOUNT, pcid=PCID_A)
+                write.assert_not_called()
+            self.assertEqual(before, path.read_bytes())
+
+    def test_write_refused_when_file_changed_after_backup(self) -> None:
+        with temp_root() as root, quiet_logs():
+            fx = CharacterFixture(root)
+            path = fx.add_character(PCID_A)
+            folder = self._backup_of(fx, path)
+            path.write_bytes(b"changed by the game")
+            with mock.patch.object(backup, "atomic_write") as write:
+                with self.assertRaisesRegex(ToolError, "changed after backup"):
+                    backup.write_game_file(path, b"new", guard=folder, account=ACCOUNT, pcid=PCID_A)
+                write.assert_not_called()
+            self.assertEqual(b"changed by the game", path.read_bytes())
+
+    def test_write_refused_for_character_not_in_backup(self) -> None:
+        with temp_root() as root, quiet_logs():
+            fx = CharacterFixture(root)
+            path = fx.add_character(PCID_A)
+            folder = self._backup_of(fx, path)
+            other = fx.add_character(PCID_B)
+            with mock.patch.object(backup, "atomic_write") as write:
+                with self.assertRaisesRegex(ToolError, "not in this backup"):
+                    backup.write_game_file(other, b"new", guard=folder, account=ACCOUNT, pcid=PCID_B)
+                write.assert_not_called()
 
 
 if __name__ == "__main__":

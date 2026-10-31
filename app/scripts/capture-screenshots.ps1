@@ -1,4 +1,4 @@
-# Launches the published BdoComboSetup.exe once per screenshot and saves ONLY the app window to docs\screenshots.
+# Launches the published BdoComboSetup.exe once per screenshot (synthetic data, --demo) and saves ONLY the app window to docs\screenshots.
 # The window is rendered by the app itself (PrintWindow with PW_RENDERFULLCONTENT), so other windows that cover it
 # never appear in the image. The frame is cropped to the visible bounds reported by DWM (no invisible shadow border).
 # Windows PowerShell 5.1 (System.Drawing is available there). Run through `mise run screenshots`.
@@ -21,14 +21,12 @@ if (-not $OutDir) {
     $OutDir = Join-Path $appRoot 'docs\screenshots'
 }
 
-# One entry per image: the command-line options that open the page and layout to capture.
+# One entry per image: the command-line options that open the page. --demo gives synthetic characters, so the
+# images never show the game account. The preview images are not taken here (the Preview page is being rebuilt).
 $shots = @(
-    @{ File = 'apply-combo.png';      Arguments = @('--page', 'apply') },
-    @{ File = 'preview-general.png';  Arguments = @('--page', 'preview', '--layout', 'general') },
-    @{ File = 'preview-general-panels.png'; Arguments = @('--page', 'preview', '--layout', 'general', '--panels') },
-    @{ File = 'preview-preset-1.png'; Arguments = @('--page', 'preview', '--layout', 'preset1') },
-    @{ File = 'preview-preset-2.png'; Arguments = @('--page', 'preview', '--layout', 'preset2') },
-    @{ File = 'preview-preset-3.png'; Arguments = @('--page', 'preview', '--layout', 'preset3') }
+    @{ File = 'apply-combo.png';       Arguments = @('--page', 'apply', '--demo') },
+    @{ File = 'apply-combo-shai.png';  Arguments = @('--page', 'apply', '--demo', '--class', 'shai', '--spec', 'talent') },
+    @{ File = 'apply-combo-review.png'; Arguments = @('--page', 'apply', '--demo-review') }
 )
 
 Add-Type @'

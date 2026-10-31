@@ -10,7 +10,7 @@ namespace BdoComboSetup.Tests;
 public sealed class ResourceParityTests
 {
     private static readonly Regex KeyLiteral = new("\"(Apply\\.[A-Za-z0-9.]+)\"", RegexOptions.CultureInvariant);
-    private static readonly Regex UidLiteral = new("x:Uid=\"(Apply\\.[A-Za-z0-9.]+)\"", RegexOptions.CultureInvariant);
+    private static readonly Regex UidLiteral = new("x:Uid=\"(Apply/[A-Za-z0-9/]+)\"", RegexOptions.CultureInvariant);
 
     private static string AppRoot()
     {
@@ -102,8 +102,9 @@ public sealed class ResourceParityTests
         Assert.NotEmpty(uids);
         foreach (var uid in uids)
         {
-            Assert.True(english.Keys.Any(key => key.StartsWith(uid + ".", StringComparison.Ordinal)), $"No English key for {uid}");
-            Assert.True(spanish.Keys.Any(key => key.StartsWith(uid + ".", StringComparison.Ordinal)), $"No Spanish key for {uid}");
+            var prefix = uid.Replace('/', '.') + ".";
+            Assert.True(english.Keys.Any(key => key.StartsWith(prefix, StringComparison.Ordinal)), $"No English key for {uid}");
+            Assert.True(spanish.Keys.Any(key => key.StartsWith(prefix, StringComparison.Ordinal)), $"No Spanish key for {uid}");
         }
     }
 }
