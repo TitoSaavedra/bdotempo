@@ -4,242 +4,167 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:core="using:BdoComboSetup.Core.ViewModels"
+    xmlns:controls="using:BdoComboSetup.Views.Controls"
     >
 
     <UserControl.Resources>
-        <!-- Colours are BDO-like: dark slots, warm gold borders, tints per cooldown group. Sizes are game pixels. -->
-        <SolidColorBrush x:Key="SlotFillBrush" Color="#E6120F0C" />
-        <SolidColorBrush x:Key="SlotBorderBrush" Color="#FF9C8A5E" />
-        <SolidColorBrush x:Key="SlotDimBorderBrush" Color="#FF8A7C5A" />
-        <SolidColorBrush x:Key="ComboTintBrush" Color="#33C9A24A" />
-        <SolidColorBrush x:Key="BuffTintBrush" Color="#333FA7A0" />
-        <SolidColorBrush x:Key="SelectedBrush" Color="#FFF3D27A" />
-        <SolidColorBrush x:Key="TextBrush" Color="#FFF5EAD0" />
-        <SolidColorBrush x:Key="PanelOutlineBrush" Color="#66FFFFFF" />
-        <SolidColorBrush x:Key="CandidateOutlineBrush" Color="#FFFFC857" />
-        <LinearGradientBrush x:Key="FallbackScreenBrush" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#FF1F1D2A" Offset="0" />
-            <GradientStop Color="#FF0B0A10" Offset="1" />
-        </LinearGradientBrush>
+        <!-- The quick slot legend is #40D7FD for a skill and #626262 when empty; the shade behind the icon is semi-transparent. -->
+        <SolidColorBrush x:Key="LegendSkillBrush" Color="#FF40D7FD" />
+        <SolidColorBrush x:Key="LegendEmptyBrush" Color="#FF626262" />
+        <SolidColorBrush x:Key="SlotShadeBrush" Color="#83000000" />
+        <SolidColorBrush x:Key="HiddenOutlineBrush" Color="#CCFFFFFF" />
 
-        <ItemsPanelTemplate x:Key="StackingGridPanel">
+        <!-- Every slot is a child of one grid, placed by its margin (game pixels, top-left corner of the panel). -->
+        <ItemsPanelTemplate x:Key="OverlayPanel">
             <Grid />
         </ItemsPanelTemplate>
 
-        <!-- One cooldown slot. Offset and size come from the view model (game pixels, relative to the bar). -->
-        <DataTemplate x:Key="SlotTemplate" x:DataType="core:SlotViewModel">
+        <!-- Cooldown slot: 50 x 50, no frame; the 42 x 42 icon at (4, 7); radial sweep and number while cooling down. -->
+        <DataTemplate x:Key="CooldownSlotTemplate" x:DataType="core:SlotViewModel">
             <Grid
-                Width="{x:Bind Size, Mode=OneWay}"
-                Height="{x:Bind Size, Mode=OneWay}"
-                Margin="{x:Bind Offset, Mode=OneWay, Converter={StaticResource OffsetToMargin}}"
+                Width="50"
+                Height="50"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Visibility="{x:Bind IsPlaced, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                Tag="{x:Bind}">
-                <!-- Empty slot: dim outline only. -->
-                <Border
-                    CornerRadius="3"
-                    Background="{StaticResource SlotFillBrush}"
-                    BorderBrush="{StaticResource SlotDimBorderBrush}"
-                    BorderThickness="1"
-                    Opacity="0.7"
-                    Visibility="{x:Bind IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-
-                <!-- Filled slot: icon (or glyph), cooldown group tint, gold border. -->
-                <Border
-                    CornerRadius="3"
-                    Background="{StaticResource SlotFillBrush}"
-                    BorderBrush="{StaticResource SlotBorderBrush}"
-                    BorderThickness="1"
-                    Visibility="{x:Bind IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-                    <Grid>
-                        <Image
-                            Source="{x:Bind IconPath, Mode=OneWay, Converter={StaticResource FilePathToImage}}"
-                            Stretch="UniformToFill"
-                            Visibility="{x:Bind HasIcon, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                        <TextBlock
-                            Text="{x:Bind Glyph, Mode=OneWay}"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            FontSize="22"
-                            Foreground="{StaticResource TextBrush}"
-                            Visibility="{x:Bind HasIcon, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-                        <Border
-                            Background="{StaticResource ComboTintBrush}"
-                            Visibility="{x:Bind IsComboSkill, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                        <Border
-                            Background="{StaticResource BuffTintBrush}"
-                            Visibility="{x:Bind IsPriorityBuff, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                    </Grid>
-                </Border>
-
-                <Border
-                    CornerRadius="3"
-                    BorderBrush="{StaticResource SelectedBrush}"
-                    BorderThickness="2"
-                    Visibility="{x:Bind IsSelected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-
-                <!-- The memo (the key that fires the skill) sits bottom-right, as in the game. -->
-                <TextBlock
-                    Text="{x:Bind Memo, Mode=OneWay}"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Bottom"
-                    Margin="0,0,3,1"
-                    FontSize="15"
-                    Foreground="{StaticResource TextBrush}" />
+                Margin="{x:Bind Offset, Mode=OneWay, Converter={StaticResource OffsetToMargin}}"
+                Opacity="{x:Bind Opacity, Mode=OneWay}"
+                RenderTransformOrigin="0,0"
+                Visibility="{x:Bind IsDrawn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <Grid.RenderTransform>
+                    <ScaleTransform ScaleX="{x:Bind Scale, Mode=OneWay}" ScaleY="{x:Bind Scale, Mode=OneWay}" />
+                </Grid.RenderTransform>
+                <controls:AssetIcon
+                    Width="42"
+                    Height="42"
+                    Margin="4,7,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Glyph="{x:Bind Glyph, Mode=OneWay}"
+                    IconSource="{x:Bind Icon, Mode=OneWay}"
+                    Visibility="{x:Bind HasSkill, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                <controls:CooldownSweep
+                    Margin="4,7,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Label="{x:Bind CooldownText, Mode=OneWay}"
+                    Ratio="{x:Bind CooldownRatio, Mode=OneWay}"
+                    Visibility="{x:Bind IsCoolingDown, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                <Rectangle
+                    Width="50"
+                    Height="50"
+                    Stroke="{StaticResource HiddenOutlineBrush}"
+                    StrokeThickness="1"
+                    StrokeDashArray="3 2"
+                    Visibility="{x:Bind ShowsDashedOutline, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
         </DataTemplate>
 
-        <!-- One quick slot: the skill of that position (icon or glyph) and the input label bottom-right. -->
+        <!-- Quick slot: 50 x 65. The legend sits on top (strip of 21 px); the shade is 44 x 44 at (3, 21); the icon 42 x 42 at (4, 22). -->
         <DataTemplate x:Key="QuickSlotTemplate" x:DataType="core:QuickSlotViewModel">
             <Grid
-                Width="{x:Bind Size, Mode=OneWay}"
-                Height="{x:Bind Size, Mode=OneWay}"
+                Width="50"
+                Height="65"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
                 Margin="{x:Bind Offset, Mode=OneWay, Converter={StaticResource OffsetToMargin}}"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Tag="{x:Bind}">
-                <!-- Position without a skill: dim outline only. -->
+                Opacity="{x:Bind Opacity, Mode=OneWay}"
+                RenderTransformOrigin="0,0"
+                Visibility="{x:Bind IsDrawn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <Grid.RenderTransform>
+                    <ScaleTransform ScaleX="{x:Bind Scale, Mode=OneWay}" ScaleY="{x:Bind Scale, Mode=OneWay}" />
+                </Grid.RenderTransform>
                 <Border
-                    CornerRadius="3"
-                    Background="{StaticResource SlotFillBrush}"
-                    BorderBrush="{StaticResource SlotDimBorderBrush}"
-                    BorderThickness="1"
-                    Opacity="0.7"
-                    Visibility="{x:Bind HasSlot, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-                <Border
-                    CornerRadius="3"
-                    Background="{StaticResource SlotFillBrush}"
-                    BorderBrush="{StaticResource SlotBorderBrush}"
-                    BorderThickness="1"
-                    Visibility="{x:Bind HasSlot, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                <Grid Visibility="{x:Bind HasSlot, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <Image
-                        Source="{x:Bind Slot.IconPath, Mode=OneWay, Converter={StaticResource FilePathToImage}}"
-                        Stretch="UniformToFill" />
-                    <TextBlock
-                        Text="{x:Bind Slot.Glyph, Mode=OneWay}"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        FontSize="22"
-                        Foreground="{StaticResource TextBrush}" />
-                </Grid>
+                    Width="44"
+                    Height="44"
+                    Margin="3,21,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Background="{StaticResource SlotShadeBrush}" />
+                <controls:AssetIcon
+                    Width="42"
+                    Height="42"
+                    Margin="4,22,0,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Glyph="{x:Bind Glyph, Mode=OneWay}"
+                    IconSource="{x:Bind Icon, Mode=OneWay}"
+                    Visibility="{x:Bind HasSkill, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                 <TextBlock
-                    Text="{x:Bind Label, Mode=OneWay}"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Bottom"
-                    Margin="0,0,3,1"
-                    FontSize="15"
-                    Foreground="{StaticResource TextBrush}" />
-            </Grid>
-        </DataTemplate>
-
-        <!-- Debug overlay: one faint outline per visible UIData panel, with its index. Candidates are gold. -->
-        <DataTemplate x:Key="UiPanelTemplate" x:DataType="core:UiPanelOverlayViewModel">
-            <Grid
-                Width="{x:Bind Width, Mode=OneTime}"
-                Height="{x:Bind Height, Mode=OneTime}"
-                Margin="{x:Bind Offset, Mode=OneTime, Converter={StaticResource OffsetToMargin}}"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                IsHitTestVisible="False">
-                <Border
-                    BorderBrush="{StaticResource PanelOutlineBrush}"
-                    BorderThickness="1"
-                    Background="#0AFFFFFF"
-                    Visibility="{x:Bind IsCandidate, Mode=OneTime, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-                    <TextBlock Text="{x:Bind Label, Mode=OneTime}" FontSize="15" Foreground="{StaticResource PanelOutlineBrush}" Margin="2,0,0,0" />
-                </Border>
-                <Border
-                    BorderBrush="{StaticResource CandidateOutlineBrush}"
-                    BorderThickness="2"
-                    Background="#18FFC857"
-                    Visibility="{x:Bind IsCandidate, Mode=OneTime, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="{x:Bind Label, Mode=OneTime}" FontSize="15" Foreground="{StaticResource CandidateOutlineBrush}" Margin="2,0,0,0" />
-                </Border>
+                    Width="50"
+                    Height="21"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    TextAlignment="Center"
+                    Text="{x:Bind KeyLabel, Mode=OneWay}"
+                    Foreground="{StaticResource LegendSkillBrush}"
+                    Visibility="{x:Bind HasSkill, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock
+                    Width="50"
+                    Height="21"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    TextAlignment="Center"
+                    Text="{x:Bind KeyLabel, Mode=OneWay}"
+                    Foreground="{StaticResource LegendEmptyBrush}"
+                    Visibility="{x:Bind HasSkill, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                <Rectangle
+                    Width="50"
+                    Height="65"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Stroke="{StaticResource HiddenOutlineBrush}"
+                    StrokeThickness="1"
+                    StrokeDashArray="3 2"
+                    Visibility="{x:Bind ShowsDashedOutline, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
         </DataTemplate>
     </UserControl.Resources>
 
-    <!-- Dark panel behind the game screen. The Viewbox scales the game-pixel screen to the space available. -->
-    <Border Style="{StaticResource PreviewSurfaceStyle}">
-        <Viewbox Stretch="Uniform">
+    <!-- The game screen in game pixels, scaled as a whole (fit times zoom). The scroll viewer shows what is larger than the window. -->
+    <Border Background="#FF000000">
+        <ScrollViewer
+            x:Name="Viewport"
+            HorizontalScrollBarVisibility="Auto"
+            VerticalScrollBarVisibility="Auto"
+            HorizontalScrollMode="Auto"
+            VerticalScrollMode="Auto"
+            ZoomMode="Disabled"
+            SizeChanged="Viewport_SizeChanged"
+            PointerWheelChanged="Viewport_PointerWheelChanged">
             <Grid
-                x:Name="ScreenGrid"
-                Width="{Binding GameWidth, Mode=OneTime}"
-                Height="{Binding GameHeight, Mode=OneTime}"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Background="{StaticResource FallbackScreenBrush}">
-
-                <!-- The real screenshot, stretched to the game size (same aspect ratio). Without it the gradient shows. -->
-                <Image
-                    Source="{Binding BackgroundPath, Converter={StaticResource FilePathToImage}}"
-                    Stretch="Fill" />
-
-                <ItemsControl
-                    ItemsSource="{Binding UiPanels}"
-                    ItemTemplate="{StaticResource UiPanelTemplate}"
-                    ItemsPanel="{StaticResource StackingGridPanel}"
-                    IsHitTestVisible="False"
-                    Visibility="{Binding ShowUiPanels, Converter={StaticResource BoolToVisibility}}" />
-
-                <!-- Cooldown bar: caption above, slots inside. Dragged when its position is not verified. -->
+                x:Name="ScreenHost"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
                 <Grid
-                    x:Name="CooldownBarGrid"
-                    Width="{Binding CooldownBar.Width}"
-                    Height="{Binding CooldownBar.Height}"
-                    Margin="{Binding CooldownBar.Offset, Converter={StaticResource OffsetToMargin}}"
+                    x:Name="ScreenGrid"
+                    Width="{Binding GameWidth, Mode=OneTime}"
+                    Height="{Binding GameHeight, Mode=OneTime}"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
-                    Background="Transparent"
-                    PointerPressed="Bar_PointerPressed"
-                    PointerMoved="Bar_PointerMoved"
-                    PointerReleased="Bar_PointerReleased"
-                    PointerCaptureLost="Bar_PointerCaptureLost">
-                    <TextBlock
-                        Text="{Binding CooldownBar.Title}"
-                        Margin="0,-24,0,0"
-                        VerticalAlignment="Top"
-                        FontSize="24"
-                        Foreground="{StaticResource TextBrush}"
-                        IsHitTestVisible="False" />
+                    Background="#FF000000"
+                    RenderTransformOrigin="0,0">
+                    <Grid.RenderTransform>
+                        <ScaleTransform x:Name="ScreenTransform" />
+                    </Grid.RenderTransform>
+
+                    <!-- The live capture of the game window, drawn to the game size. Black until a frame arrives. -->
+                    <Image x:Name="LiveImage" Stretch="Fill" />
+
                     <ItemsControl
                         ItemsSource="{Binding CooldownSlots}"
-                        ItemTemplate="{StaticResource SlotTemplate}"
-                        ItemsPanel="{StaticResource StackingGridPanel}"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Stretch" />
-                </Grid>
+                        ItemTemplate="{StaticResource CooldownSlotTemplate}"
+                        ItemsPanel="{StaticResource OverlayPanel}" />
 
-                <!-- Quick bar: the nine positions in a row. -->
-                <Grid
-                    x:Name="QuickBarGrid"
-                    Width="{Binding QuickBar.Width}"
-                    Height="{Binding QuickBar.Height}"
-                    Margin="{Binding QuickBar.Offset, Converter={StaticResource OffsetToMargin}}"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    Background="Transparent"
-                    PointerPressed="Bar_PointerPressed"
-                    PointerMoved="Bar_PointerMoved"
-                    PointerReleased="Bar_PointerReleased"
-                    PointerCaptureLost="Bar_PointerCaptureLost">
-                    <TextBlock
-                        Text="{Binding QuickBar.Title}"
-                        Margin="0,-24,0,0"
-                        VerticalAlignment="Top"
-                        FontSize="24"
-                        Foreground="{StaticResource TextBrush}"
-                        IsHitTestVisible="False" />
                     <ItemsControl
                         ItemsSource="{Binding QuickSlots}"
                         ItemTemplate="{StaticResource QuickSlotTemplate}"
-                        ItemsPanel="{StaticResource StackingGridPanel}"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Stretch" />
+                        ItemsPanel="{StaticResource OverlayPanel}" />
                 </Grid>
             </Grid>
-        </Viewbox>
+        </ScrollViewer>
     </Border>
 </UserControl>

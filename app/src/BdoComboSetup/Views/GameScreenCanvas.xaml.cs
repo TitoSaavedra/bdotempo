@@ -1,133 +1,218 @@
+using System.ComponentModel;
+using System.Runtime.InteropServices.WindowsRuntime;
 using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.ViewModels;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Windows.Foundation;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace BdoComboSetup.Views;
 
 /// <summary>
-/// The game screen on the Preview page: background, UIData overlay and the two bars, all in game pixels.
-/// A click on a slot selects it. A bar whose position is not verified can be dragged; the position is saved per layout on release.
+/// The game screen on the Preview page: the live capture behind the slots. It polls the capture source once a second while
+/// the page is visible (the poll is cheap: it only looks at the window) and stops the capture when the page is left.
+/// Frames arrive on the capture thread and are drawn on the UI thread. The view model holds the zoom; this code applies it.
 /// </summary>
 public sealed partial class GameScreenCanvas : UserControl
 {
-    /// <summary>Movement in game pixels before a press becomes a drag.</summary>
-    private const double DragThreshold = 4;
+    /// <summary>How often the window is looked at while the page is visible.</summary>
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(1);
 
-    private DragState? _drag;
+    private PreviewViewModel? _viewModel;
+    private DispatcherQueueTimer? _pollTimer;
+    private WriteableBitmap? _bitmap;
+    private long _shownVersion = -1;
+
+    /// <summary>Scroll offsets to restore after the next layout pass, so a wheel zoom keeps the pointer's point still.</summary>
+    private (double Horizontal, double Vertical)? _pendingOffset;
 
     public GameScreenCanvas()
     {
         InitializeComponent();
-        CooldownBarGrid.Tag = BarKind.Cooldown;
-        QuickBarGrid.Tag = BarKind.Quick;
+        DataContextChanged += OnDataContextChanged;
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
+        ScreenHost.LayoutUpdated += OnScreenLayoutUpdated;
     }
 
-    private void Bar_PointerPressed(object sender, PointerRoutedEventArgs e)
+    private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
     {
-        if (DataContext is not PreviewViewModel viewModel
-            || sender is not UIElement { } element
-            || element is not FrameworkElement { Tag: BarKind kind })
+        if (_viewModel is not null)
         {
-            return;
+            _viewModel.PropertyChanged -= OnViewModelChanged;
         }
 
-        if (!e.GetCurrentPoint(element).Properties.IsLeftButtonPressed)
+        _viewModel = args.NewValue as PreviewViewModel;
+        if (_viewModel is not null)
         {
-            return;
-        }
-
-        var pointer = e.GetCurrentPoint(ScreenGrid).Position;
-        var bar = kind == BarKind.Cooldown ? viewModel.CooldownBar : viewModel.QuickBar;
-        _drag = new DragState(
-            kind,
-            pointer,
-            new Point(pointer.X - bar.Offset.Left, pointer.Y - bar.Offset.Top),
-            e.OriginalSource as DependencyObject,
-            Moved: false);
-
-        if (bar.IsDraggable)
-        {
-            element.CapturePointer(e.Pointer);
+            _viewModel.PropertyChanged += OnViewModelChanged;
+            ApplyScale();
         }
     }
 
-    private void Bar_PointerMoved(object sender, PointerRoutedEventArgs e)
+    private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        if (_drag is null || DataContext is not PreviewViewModel viewModel)
+        if (_viewModel is null)
         {
             return;
         }
 
-        var pointer = e.GetCurrentPoint(ScreenGrid).Position;
-        if (!_drag.Moved && Distance(pointer, _drag.Pressed) < DragThreshold)
-        {
-            return;
-        }
-
-        _drag = _drag with { Moved = true };
-        viewModel.MoveBarTo(_drag.Kind, pointer.X - _drag.GrabOffset.X, pointer.Y - _drag.GrabOffset.Y);
+        _viewModel.GameScreen.FrameArrived += OnFrameArrived;
+        _pollTimer = DispatcherQueue.CreateTimer();
+        _pollTimer.Interval = PollInterval;
+        _pollTimer.Tick += OnPollTick;
+        _pollTimer.Start();
+        Poll();
     }
 
-    private void Bar_PointerReleased(object sender, PointerRoutedEventArgs e) => Finish(sender, select: true);
-
-    private void Bar_PointerCaptureLost(object sender, PointerRoutedEventArgs e) => Finish(sender, select: false);
-
-    private void Finish(object sender, bool select)
+    private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        var drag = _drag;
-        _drag = null;
-        if (drag is null || DataContext is not PreviewViewModel viewModel)
+        if (_pollTimer is not null)
         {
-            return;
+            _pollTimer.Stop();
+            _pollTimer.Tick -= OnPollTick;
+            _pollTimer = null;
         }
 
-        if (sender is UIElement element)
+        if (_viewModel is not null)
         {
-            element.ReleasePointerCaptures();
+            _viewModel.GameScreen.FrameArrived -= OnFrameArrived;
+            _viewModel.GameScreen.Stop();
         }
 
-        if (drag.Moved)
-        {
-            viewModel.CommitBarPosition(drag.Kind);
-            return;
-        }
-
-        if (select)
-        {
-            SelectOwner(viewModel, drag.Source);
-        }
+        ShowFrame();
     }
 
-    /// <summary>Selects the cooldown slot or quick position under the pointer. Walks up from the pressed element.</summary>
-    private static void SelectOwner(PreviewViewModel viewModel, DependencyObject? source)
+    private void OnPollTick(DispatcherQueueTimer sender, object args) => Poll();
+
+    /// <summary>Looks at the game window (start, keep or stop the capture) and shows the state. Runs on the UI thread.</summary>
+    private void Poll()
     {
-        for (var current = source; current is not null; current = VisualTreeHelper.GetParent(current))
+        if (_viewModel is null)
         {
-            if (current is FrameworkElement { Tag: SlotViewModel slot })
+            return;
+        }
+
+        _viewModel.GameScreen.Poll();
+        _viewModel.RefreshCaptureStatus();
+        ShowFrame();
+    }
+
+    /// <summary>A frame arrived on the capture thread: draw it on the UI thread.</summary>
+    private void OnFrameArrived(object? sender, EventArgs e) =>
+        DispatcherQueue.TryEnqueue(ShowFrame);
+
+    /// <summary>
+    /// Draws the newest frame, or clears the picture (black) when the source has none. A frame that is already drawn
+    /// is not copied again.
+    /// </summary>
+    private void ShowFrame()
+    {
+        var source = _viewModel?.GameScreen;
+        var frame = source?.LatestFrame;
+        if (source is null || frame is null)
+        {
+            if (LiveImage.Source is not null)
             {
-                viewModel.SelectSlotCommand.Execute(slot);
-                return;
+                LiveImage.Source = null;
+                _bitmap = null;
+                _shownVersion = -1;
             }
 
-            if (current is FrameworkElement { Tag: QuickSlotViewModel quickSlot })
-            {
-                viewModel.SelectQuickSlotCommand.Execute(quickSlot);
-                return;
-            }
+            return;
+        }
+
+        var version = source.FrameVersion;
+        if (version == _shownVersion && _bitmap is not null)
+        {
+            return;
+        }
+
+        if (_bitmap is null || _bitmap.PixelWidth != frame.Width || _bitmap.PixelHeight != frame.Height)
+        {
+            _bitmap = new WriteableBitmap(frame.Width, frame.Height);
+            LiveImage.Source = _bitmap;
+        }
+
+        using (var stream = _bitmap.PixelBuffer.AsStream())
+        {
+            stream.Position = 0;
+            stream.Write(frame.Bgra, 0, frame.Bgra.Length);
+        }
+
+        _bitmap.Invalidate();
+        _shownVersion = version;
+    }
+
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PreviewViewModel.ScreenScale))
+        {
+            ApplyScale();
         }
     }
 
-    private static double Distance(Point a, Point b)
+    private void ApplyScale()
     {
-        var dx = a.X - b.X;
-        var dy = a.Y - b.Y;
-        return Math.Sqrt((dx * dx) + (dy * dy));
+        if (_viewModel is null)
+        {
+            return;
+        }
+
+        // The render transform scales the game-size grid; the host takes the scaled size so the scroll viewer knows the extent.
+        var scale = _viewModel.ScreenScale;
+        ScreenTransform.ScaleX = scale;
+        ScreenTransform.ScaleY = scale;
+        ScreenHost.Width = _viewModel.GameWidth * scale;
+        ScreenHost.Height = _viewModel.GameHeight * scale;
     }
 
-    /// <summary>State of one press: the bar, where it started, and the grab point inside the bar.</summary>
-    private sealed record DragState(BarKind Kind, Point Pressed, Point GrabOffset, DependencyObject? Source, bool Moved);
+    private void Viewport_SizeChanged(object sender, SizeChangedEventArgs e) =>
+        _viewModel?.SetViewport(Viewport.ActualWidth, Viewport.ActualHeight);
+
+    /// <summary>Mouse wheel: zooms by notches, keeping the content under the pointer where it is.</summary>
+    private void Viewport_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+    {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        var notches = e.GetCurrentPoint(Viewport).Properties.MouseWheelDelta / 120;
+        if (notches == 0)
+        {
+            return;
+        }
+
+        var pointer = e.GetCurrentPoint(Viewport).Position;
+        var oldScale = _viewModel.ScreenScale;
+        var horizontal = Viewport.HorizontalOffset;
+        var vertical = Viewport.VerticalOffset;
+
+        _viewModel.ZoomBy(notches);
+        var newScale = _viewModel.ScreenScale;
+        if (Math.Abs(newScale - oldScale) < 1e-9)
+        {
+            return;
+        }
+
+        _pendingOffset = (
+            CanvasZoom.AnchoredOffset(horizontal, pointer.X, oldScale, newScale),
+            CanvasZoom.AnchoredOffset(vertical, pointer.Y, oldScale, newScale));
+    }
+
+    /// <summary>Applies the scroll offset that a wheel zoom asked for, once the new size is laid out.</summary>
+    private void OnScreenLayoutUpdated(object? sender, object e)
+    {
+        if (_pendingOffset is not { } offset)
+        {
+            return;
+        }
+
+        _pendingOffset = null;
+        Viewport.ChangeView(offset.Horizontal, offset.Vertical, null, disableAnimation: true);
+    }
 }

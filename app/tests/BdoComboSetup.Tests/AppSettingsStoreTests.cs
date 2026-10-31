@@ -1,4 +1,3 @@
-using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.Settings;
 
 namespace BdoComboSetup.Tests;
@@ -16,11 +15,9 @@ public sealed class AppSettingsStoreTests : IDisposable
     {
         var store = new AppSettingsStore(SettingsPath, _log.Logger);
 
-        Assert.Null(store.Settings.BackgroundImagePath);
         Assert.Equal(AppSettings.DefaultSkillIconRoot, store.Settings.SkillIconRoot);
-        Assert.Equal(2, store.Settings.CooldownRows);
-        Assert.Equal(10, store.Settings.CooldownColumns);
         Assert.Equal("330", store.Settings.GameAccountFolder);
+        Assert.Null(store.Settings.SelectedLayout);
     }
 
     [Fact]
@@ -30,18 +27,11 @@ public sealed class AppSettingsStoreTests : IDisposable
 
         store.Update(settings => settings with
         {
-            BackgroundImagePath = @"C:\shots\bg.png",
             SelectedLayout = "Preset1",
-            ManualBarPositions = new Dictionary<string, NormalizedPosition>(StringComparer.Ordinal)
-            {
-                [AppSettings.ManualBarKey(GameUiLayoutId.General, BarKind.Quick)] = new(0.25, 0.75),
-            },
         });
 
         var reloaded = new AppSettingsStore(SettingsPath, _log.Logger).Settings;
-        Assert.Equal(@"C:\shots\bg.png", reloaded.BackgroundImagePath);
         Assert.Equal("Preset1", reloaded.SelectedLayout);
-        Assert.Equal(new NormalizedPosition(0.25, 0.75), reloaded.ManualBarPositions["General.Quick"]);
         Assert.False(File.Exists(SettingsPath + ".tmp"));
     }
 
@@ -53,12 +43,5 @@ public sealed class AppSettingsStoreTests : IDisposable
         var store = new AppSettingsStore(SettingsPath, _log.Logger);
 
         Assert.Equal(AppSettings.DefaultGameAccountFolder, store.Settings.GameAccountFolder);
-    }
-
-    [Fact]
-    public void Manual_bar_key_names_the_layout_and_the_bar()
-    {
-        Assert.Equal("Preset2.Cooldown", AppSettings.ManualBarKey(GameUiLayoutId.Preset2, BarKind.Cooldown));
-        Assert.Equal("General.Quick", AppSettings.ManualBarKey(GameUiLayoutId.General, BarKind.Quick));
     }
 }

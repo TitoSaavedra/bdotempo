@@ -1,97 +1,70 @@
-using System.Globalization;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace BdoComboSetup.Core.ViewModels;
 
-/// <summary>One cooldown slot as shown on the game screen. Only the quick slot position can change.</summary>
-public sealed partial class SlotViewModel : ObservableObject
+/// <summary>One of the 20 cooldown slots on the game screen. Its skill comes from <see cref="IPreviewSlotSource"/>.</summary>
+public sealed partial class SlotViewModel : PanelViewModel
 {
     private readonly ILocalizer _localizer;
 
-    public SlotViewModel(SlotData data, ILocalizer localizer)
+    public SlotViewModel(int number, PreviewSlot? data, ILocalizer localizer)
     {
-        ArgumentNullException.ThrowIfNull(data);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(number);
         ArgumentNullException.ThrowIfNull(localizer);
 
+        Number = number;
         _localizer = localizer;
-        Index = data.Index;
-        Group = data.Group;
-        SkillName = data.SkillName;
-        SkillNo = data.SkillNo;
-        Memo = data.Memo ?? string.Empty;
-        CustomName = data.CustomName ?? string.Empty;
-        _quickPosition = data.QuickPosition;
+        Data = data;
     }
 
-    public int Index { get; }
+    /// <summary>Cooldown slot number, 1 to 20.</summary>
+    public int Number { get; }
 
-    public SlotGroup Group { get; }
+    /// <summary>The skill in the slot, or null when the slot is empty. Replaced when the combo changes.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSkill), nameof(Title), nameof(Glyph), nameof(Icon), nameof(AutomationName), nameof(Memo), nameof(CustomName), nameof(QuickPosition))]
+    private PreviewSlot? _data;
 
-    /// <summary>Null for placeholder slots, which show a localized "Skill N" title.</summary>
-    public string? SkillName { get; }
+    public bool HasSkill => Data is not null;
 
-    /// <summary>Game skill number, or null. It selects the icon.</summary>
-    public int? SkillNo { get; }
+    public string Title => Data is null
+        ? _localizer.Get("Preview.Slot.Empty")
+        : Data.SkillName ?? _localizer.Format("Preview.Slot.Placeholder", Number);
 
-    public string Memo { get; }
+    public string Memo => Data?.Memo ?? string.Empty;
 
-    public string CustomName { get; }
+    public string CustomName => Data?.CustomName ?? string.Empty;
 
-    public bool IsEmpty => Group == SlotGroup.Empty;
+    /// <summary>Quick slot (1-9) that holds this skill, or 0 when the skill is not on the quick bar.</summary>
+    public int QuickPosition => Data?.QuickPosition ?? 0;
 
-    public bool IsComboSkill => Group == SlotGroup.Combo;
+    /// <summary>Two letters of the skill name, shown when the icon is missing.</summary>
+    public string Glyph => GlyphFor(Data?.SkillName, Number);
 
-    public bool IsPriorityBuff => Group == SlotGroup.PriorityBuff;
+    /// <summary>Opens the skill icon: a <c>Func&lt;Stream?&gt;</c>, or null when the slot has no skill.</summary>
+    public Func<Stream?>? Icon => Data?.OpenIcon;
 
-    public string Title => IsEmpty
-        ? _localizer.Get("Preview_EmptySlot")
-        : SkillName ?? _localizer.Format("Preview_PlaceholderSkill", Index);
+    public string AutomationName => Data is null
+        ? _localizer.Format("Preview.Slot.Cooldown.EmptyName", Number)
+        : _localizer.Format("Preview.Slot.Cooldown.Name", Number, Title);
 
-    /// <summary>Two-letter placeholder glyph, used when no icon is found. Placeholders use the slot number.</summary>
-    public string Glyph
+    /// <summary>Remaining fraction of the cooldown shown as a dark sweep. 0 when not cooling down (only the debug demo sets it).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCoolingDown))]
+    private double _cooldownRatio;
+
+    /// <summary>Number drawn on the cooldown sweep.</summary>
+    [ObservableProperty]
+    private string _cooldownText = string.Empty;
+
+    public bool IsCoolingDown => CooldownRatio > 0;
+
+    /// <summary>Sets the demo cooldown. A ratio of 0 clears it.</summary>
+    public void SetCooldownDemo(double ratio, string text)
     {
-        get
-        {
-            if (SkillName is null)
-            {
-                return Index.ToString("00", CultureInfo.InvariantCulture);
-            }
-
-            return new string(SkillName.Where(char.IsLetter).Take(2).ToArray()).ToUpperInvariant();
-        }
+        CooldownRatio = Math.Clamp(ratio, 0, 1);
+        CooldownText = text;
     }
-
-    public string GroupLabel => Group switch
-    {
-        SlotGroup.Combo => _localizer.Get("Preview_Group_Combo"),
-        SlotGroup.PriorityBuff => _localizer.Get("Preview_Group_PriorityBuff"),
-        _ => _localizer.Get("Preview_Group_Empty"),
-    };
-
-    /// <summary>1..9 for a quick bar position, 0 when the slot is not on the quick bar.</summary>
-    [ObservableProperty]
-    private int _quickPosition;
-
-    [ObservableProperty]
-    private bool _isSelected;
-
-    /// <summary>Absolute path of the skill icon, or null (the glyph is drawn instead).</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasIcon))]
-    private string? _iconPath;
-
-    public bool HasIcon => IconPath is not null;
-
-    /// <summary>Top-left of the slot relative to the cooldown bar.</summary>
-    [ObservableProperty]
-    private PixelOffset _offset;
-
-    [ObservableProperty]
-    private double _size;
-
-    /// <summary>False when the bar has fewer cells than slots (the extra slots are hidden).</summary>
-    [ObservableProperty]
-    private bool _isPlaced = true;
 }

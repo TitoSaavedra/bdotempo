@@ -1,5 +1,4 @@
 using System.Text.Json;
-using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.Logging;
 
 namespace BdoComboSetup.Core.Settings;
@@ -24,9 +23,6 @@ public sealed record AppSettings
 
     /// <summary>Default skill table, exported by the Scrappers project.</summary>
     public const string DefaultSkillsJsonPath = @"D:\extracted_bdo\class_skills.json";
-
-    /// <summary>Background chosen by the user, as a file path. Null means the default screenshot (if it exists).</summary>
-    public string? BackgroundImagePath { get; init; }
 
     public string SkillIconRoot { get; init; } = DefaultSkillIconRoot;
 
@@ -53,14 +49,6 @@ public sealed record AppSettings
 
     /// <summary>Last layout selected on the Preview page (GameUiLayoutId name), or null for General.</summary>
     public string? SelectedLayout { get; init; }
-
-    /// <summary>
-    /// Bars the user dragged, keyed by "&lt;layout&gt;.&lt;bar&gt;" (for example "General.Cooldown").
-    /// Positions are fractions of the game screen, so they keep working at any resolution.
-    /// </summary>
-    public Dictionary<string, NormalizedPosition> ManualBarPositions { get; init; } = new(StringComparer.Ordinal);
-
-    public static string ManualBarKey(GameUiLayoutId layout, BarKind bar) => $"{layout}.{bar}";
 }
 
 /// <summary>Loads and saves <see cref="AppSettings"/>. Every change is written at once (temporary file, then move).</summary>

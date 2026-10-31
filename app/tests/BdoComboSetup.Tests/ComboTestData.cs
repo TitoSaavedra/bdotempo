@@ -30,7 +30,7 @@ internal static class ComboTestData
             new ComboChain("buffs", "Auto buffs", [], [new ComboStep("F", [Skill(300, "Summon Heuklang", "Invocar a Heuklang")], null, null)]),
         ],
         [],
-        [new ComboAddon("class-addons", Skill(500, "Skybound Stab", "Estocada celestial"), "Thrust.", [])]);
+        [new ComboAddon("class-addons", Skill(500, "Skybound Stab", "Estocada celestial"), "Thrust.", [])], []);
 
     /// <summary>
     /// The tamer guide plus a mobility chain (manual pool, skills 600 and 601) and a cancels chain (hidden, skill 700).
@@ -61,6 +61,7 @@ internal static class ComboTestData
         "Shai Talent",
         null,
         "https://bdoclasshub.com/classes/shai/index.html",
+        [],
         [],
         [],
         []);

@@ -1,40 +1,66 @@
 using BdoComboSetup.Core.Combo;
+using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace BdoComboSetup.Core.ViewModels;
 
-/// <summary>One of the nine quick bar positions. Slot is the cooldown slot assigned to it, or null.</summary>
-public sealed partial class QuickSlotViewModel : ObservableObject
+/// <summary>One of the 20 quick slots on the game screen. Its key legend is the bound key of the character, else the default.</summary>
+public sealed partial class QuickSlotViewModel : PanelViewModel
 {
-    public QuickSlotViewModel(QuickSlotInput input, ILocalizer localizer)
+    private readonly ILocalizer _localizer;
+
+    public QuickSlotViewModel(int position, PreviewSlot? data, QuickSlotKey? key, ILocalizer localizer)
     {
-        ArgumentNullException.ThrowIfNull(input);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(position);
         ArgumentNullException.ThrowIfNull(localizer);
 
-        Input = input;
-        Label = input.Kind == QuickInputKind.Mouse
-            ? input.MouseButton ?? throw new InvalidOperationException("Mouse quick inputs need a button name.")
-            : localizer.Format("Preview_KeyLabel", input.Position);
+        Position = position;
+        _localizer = localizer;
+        Data = data;
+        Key = key;
     }
 
-    public QuickSlotInput Input { get; }
+    /// <summary>Quick slot number, 1 to 20. Slot 10 is the key 0.</summary>
+    public int Position { get; }
 
-    public int Position => Input.Position;
-
-    /// <summary>Mouse button name (M1..M6) or a localized key label.</summary>
-    public string Label { get; }
-
+    /// <summary>The bound key or mouse button, or null when the slot is unbound.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasSlot))]
-    private SlotViewModel? _slot;
+    [NotifyPropertyChangedFor(nameof(KeyLabel), nameof(HasKey), nameof(KeyLabelOrNone), nameof(AutomationName))]
+    private QuickSlotKey? _key;
 
-    public bool HasSlot => Slot is not null;
+    /// <summary>The key legend at the top of the slot: M1 to M6 for mouse buttons, the character for keys, empty when unbound.</summary>
+    public string KeyLabel => Key?.Label ?? string.Empty;
 
-    /// <summary>Top-left of the quick slot relative to the quick bar.</summary>
+    public bool HasKey => Key is not null;
+
+    /// <summary>The key, or the localized "no key" text (used in automation names and the detail panel).</summary>
+    public string KeyLabelOrNone => Key?.Label ?? _localizer.Get("Preview.Quick.NoKey");
+
+    /// <summary>The skill in the slot, or null when the slot is empty. Replaced when the combo changes.</summary>
     [ObservableProperty]
-    private PixelOffset _offset;
+    [NotifyPropertyChangedFor(nameof(HasSkill), nameof(Title), nameof(Glyph), nameof(Icon), nameof(AutomationName), nameof(Memo), nameof(CustomName), nameof(CooldownNumber))]
+    private PreviewSlot? _data;
 
-    [ObservableProperty]
-    private double _size;
+    public bool HasSkill => Data is not null;
+
+    public string Memo => Data?.Memo ?? string.Empty;
+
+    public string CustomName => Data?.CustomName ?? string.Empty;
+
+    /// <summary>The cooldown slot of the same skill, or 0 when unknown.</summary>
+    public int CooldownNumber => Data?.CooldownNumber ?? 0;
+
+    public string Title => Data is null
+        ? _localizer.Get("Preview.Quick.Empty")
+        : Data.SkillName ?? _localizer.Format("Preview.Slot.Placeholder", Position);
+
+    public string Glyph => GlyphFor(Data?.SkillName, Position);
+
+    /// <summary>Opens the skill icon: a <c>Func&lt;Stream?&gt;</c>, or null when the slot has no skill.</summary>
+    public Func<Stream?>? Icon => Data?.OpenIcon;
+
+    public string AutomationName => HasSkill
+        ? _localizer.Format("Preview.Quick.Name", Position, KeyLabelOrNone, Title)
+        : _localizer.Format("Preview.Quick.EmptyName", Position, KeyLabelOrNone);
 }

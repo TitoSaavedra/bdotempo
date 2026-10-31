@@ -1,138 +1,104 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Globalization;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Game;
-using BdoComboSetup.Core.Icons;
 using BdoComboSetup.Core.Localization;
 using BdoComboSetup.Core.Logging;
 using BdoComboSetup.Core.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 
 namespace BdoComboSetup.Core.ViewModels;
 
-/// <summary>Where the game screen background comes from.</summary>
-public enum BackgroundKind
-{
-    /// <summary>A file the user picked (kept in settings).</summary>
-    Custom,
-
-    /// <summary>The default clean screenshot in Documents\Black Desert\ScreenShot.</summary>
-    Default,
-
-    /// <summary>No image: the dark gradient is shown.</summary>
-    None,
-}
-
 /// <summary>
-/// The Preview page: the game screen (background, cooldown bar, quick bar, optional UIData overlay) in game pixels,
-/// and the detail of the selected cooldown slot. Only the quick slot position is editable; it is kept in memory.
-/// Bar positions come from the layout file when verified, otherwise from the estimate or from the position the user dragged.
+/// The Preview page: only the 20 cooldown slots and the 20 quick slots, each drawn at its saved position (UIData rows of the
+/// selected layout), over the live capture of the game window (black when the game is not visible). The skills come from
+/// <see cref="IPreviewSlotSource"/>, which follows the combo edited on the Apply page; this page does not edit it.
 /// </summary>
-public sealed partial class PreviewViewModel : ObservableObject
+public sealed partial class PreviewViewModel : ObservableObject, IDisposable
 {
-    /// <summary>Background used when the user has not picked one.</summary>
-    public const string DefaultBackgroundFileName = "2026-02-15_13735792.PNG";
-
     /// <summary>Game size used when GameOption.txt cannot be read.</summary>
     public const double FallbackGameWidth = 1920;
 
     /// <summary>Game size used when GameOption.txt cannot be read.</summary>
     public const double FallbackGameHeight = 1080;
 
+    /// <summary>Debug cooldown: the dark sweep covers this fraction of the slot.</summary>
+    public const double DemoCooldownRatio = 0.6;
+
+    /// <summary>Number drawn on the debug cooldown.</summary>
+    public const string DemoCooldownText = "12";
+
+    private readonly IPreviewSlotSource _slots;
     private readonly ILocalizer _localizer;
     private readonly AppLogger _logger;
     private readonly GameUiLayoutSet? _uiLayouts;
-    private readonly GameLayoutIndices _indices;
     private readonly AppSettingsStore _settings;
-    private readonly IconCatalog _icons;
     private GameUiLayoutId _layoutId;
+    private int _missingPanelCount;
+    private bool _disposed;
 
     public PreviewViewModel(
-        ComboDefinition combo,
-        GameLayoutIndices layoutIndices,
+        IPreviewSlotSource slots,
         GameDisplaySettings? displaySettings,
-        IGameWindowSource gameWindowSource,
+        IGameScreenSource gameScreen,
         GameUiLayoutSet? uiLayouts,
-        IconCatalog icons,
         AppSettingsStore settings,
-        GameUiLayoutId? initialLayout,
-        bool initialShowUiPanels,
+        PreviewStartup startup,
         ILocalizer localizer,
         AppLogger logger)
     {
-        ArgumentNullException.ThrowIfNull(combo);
-        ArgumentNullException.ThrowIfNull(layoutIndices);
-        ArgumentNullException.ThrowIfNull(gameWindowSource);
-        ArgumentNullException.ThrowIfNull(icons);
+        ArgumentNullException.ThrowIfNull(slots);
+        ArgumentNullException.ThrowIfNull(gameScreen);
         ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(startup);
         ArgumentNullException.ThrowIfNull(localizer);
         ArgumentNullException.ThrowIfNull(logger);
 
+        _slots = slots;
+        GameScreen = gameScreen;
         _localizer = localizer;
         _logger = logger;
-        _indices = layoutIndices;
         _uiLayouts = uiLayouts;
-        _icons = icons;
         _settings = settings;
-        DisplaySettings = displaySettings;
-        WindowStatus = gameWindowSource.GetStatus();
         GameWidth = displaySettings?.Width ?? FallbackGameWidth;
         GameHeight = displaySettings?.Height ?? FallbackGameHeight;
         UiScale = displaySettings?.UiScale ?? 1.0;
 
-        _layoutId = initialLayout ?? ParseLayout(settings.Settings.SelectedLayout) ?? GameUiLayoutId.General;
-        LayoutOptions = Enum.GetValues<GameUiLayoutId>()
-            .Select(id => new LayoutOption(id, localizer.Get(LayoutLabelKey(id))))
-            .ToList();
-
-        CooldownBar = new GameBarViewModel(BarKind.Cooldown, localizer);
-        QuickBar = new GameBarViewModel(BarKind.Quick, localizer);
-        CooldownBar.PropertyChanged += OnBarPropertyChanged;
-        QuickBar.PropertyChanged += OnBarPropertyChanged;
+        _layoutId = startup.Layout ?? ParseLayout(settings.Settings.SelectedLayout) ?? GameUiLayoutId.General;
+        _showHiddenSlots = startup.ShowHiddenSlots;
+        _cooldownDemo = startup.CooldownDemo;
+        _zoom = CanvasZoom.ClampZoom(startup.Zoom ?? CanvasZoom.MinZoom);
 
         CooldownSlots = new ObservableCollection<SlotViewModel>(
-            combo.Slots.OrderBy(slot => slot.Index).Select(slot => new SlotViewModel(slot, localizer)
-            {
-                IconPath = ResolveIconPath(slot, combo.ClassName),
-            }));
+            Enumerable.Range(1, SlotAssignment.CooldownSlotCount)
+                .Select(number => new SlotViewModel(number, slots.Cooldown(number), localizer)));
         QuickSlots = new ObservableCollection<QuickSlotViewModel>(
-            QuickSlotMap.Inputs.Select(input => new QuickSlotViewModel(input, localizer)));
-        QuickPositionOptions = BuildQuickPositionOptions(localizer, QuickSlots);
-        UiPanels = new ObservableCollection<UiPanelOverlayViewModel>();
-        _showUiPanels = initialShowUiPanels;
+            Enumerable.Range(1, QuickSlotKeys.SlotCount)
+                .Select(position => new QuickSlotViewModel(position, slots.Quick(position), slots.QuickKey(position), localizer)));
+        LayoutOptions =
+        [
+            new LayoutOption(GameUiLayoutId.General, localizer.Get("Preview.Layout.General")),
+            new LayoutOption(GameUiLayoutId.Preset1, localizer.Get("Preview.Layout.Preset1")),
+            new LayoutOption(GameUiLayoutId.Preset2, localizer.Get("Preview.Layout.Preset2")),
+            new LayoutOption(GameUiLayoutId.Preset3, localizer.Get("Preview.Layout.Preset3")),
+        ];
 
-        ResolveBackground();
-        RefreshQuickSlots();
-        SelectedSlot = CooldownSlots.FirstOrDefault(slot => !slot.IsEmpty);
         Recompute();
+        slots.Changed += OnSourceChanged;
     }
 
-    /// <summary>Entries for the quick position editor: "not assigned" first, then positions 1 to 9.</summary>
-    public IReadOnlyList<QuickPositionOption> QuickPositionOptions { get; }
-
-    /// <summary>Cooldown slots in index order (20 for the tamer combo).</summary>
+    /// <summary>Cooldown slots 1 to 20.</summary>
     public ObservableCollection<SlotViewModel> CooldownSlots { get; }
 
-    /// <summary>The nine quick bar positions, in position order.</summary>
+    /// <summary>Quick slots 1 to 20 (1-9 hold the combo's quick positions; slot 10 is the key 0).</summary>
     public ObservableCollection<QuickSlotViewModel> QuickSlots { get; }
 
-    /// <summary>The layouts offered by the selector: General, Preset 1, Preset 2, Preset 3.</summary>
+    /// <summary>The four layouts of the layout selector, General first.</summary>
     public IReadOnlyList<LayoutOption> LayoutOptions { get; }
 
-    public GameBarViewModel CooldownBar { get; }
+    /// <summary>The background: the live capture of the game window, black when it is not visible.</summary>
+    public IGameScreenSource GameScreen { get; }
 
-    public GameBarViewModel QuickBar { get; }
-
-    /// <summary>Visible UIData panels of the selected layout, drawn when <see cref="ShowUiPanels"/> is on.</summary>
-    public ObservableCollection<UiPanelOverlayViewModel> UiPanels { get; }
-
-    public GameDisplaySettings? DisplaySettings { get; }
-
-    public GameWindowStatus WindowStatus { get; }
-
-    /// <summary>Game screen size in game pixels. The canvas is drawn at this size and scaled by a Viewbox.</summary>
+    /// <summary>Game screen size in game pixels. The canvas is drawn at this size and scaled.</summary>
     public double GameWidth { get; }
 
     /// <summary>Game screen size in game pixels.</summary>
@@ -141,88 +107,66 @@ public sealed partial class PreviewViewModel : ObservableObject
     /// <summary>UI scale of the game. Slot sizes are multiplied by it; positions are not.</summary>
     public double UiScale { get; }
 
-    public double CanvasAspectRatio => GameWidth / GameHeight;
-
     public GameUiLayoutId SelectedLayout => _layoutId;
 
-    /// <summary>Two-way selection of the layout selector.</summary>
+    /// <summary>The layout chosen in the selector. Setting it selects and remembers the layout.</summary>
     public LayoutOption SelectedLayoutOption
     {
         get => LayoutOptions.First(option => option.Id == _layoutId);
         set
         {
-            if (value is not null && value.Id != _layoutId)
-            {
-                SelectLayout(value.Id);
-            }
+            ArgumentNullException.ThrowIfNull(value);
+            SelectLayout(value.Id);
         }
     }
 
+    /// <summary>Set by the mouse wheel and the zoom button. 1 = fit to the window.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(BackgroundStatusText))]
-    private string? _backgroundPath;
+    [NotifyPropertyChangedFor(nameof(ScreenScale), nameof(ZoomText))]
+    private double _zoom = CanvasZoom.MinZoom;
 
+    /// <summary>Scale at which the whole game screen fits the viewport. Set by the view.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(BackgroundStatusText))]
-    private BackgroundKind _backgroundKind = BackgroundKind.None;
+    [NotifyPropertyChangedFor(nameof(ScreenScale), nameof(ZoomText))]
+    private double _fitScale = 1;
 
+    /// <summary>The scale of the canvas on screen: fit times zoom. The view applies it as a render transform.</summary>
+    public double ScreenScale => FitScale * Zoom;
+
+    /// <summary>Zoom as a percentage of the real game size (100 = the game's own pixels).</summary>
+    public string ZoomText => _localizer.Format("Preview.Zoom", (int)Math.Round(ScreenScale * 100, MidpointRounding.AwayFromZero));
+
+    /// <summary>Draws the hidden game slots dimmed with a dashed outline. Off by default.</summary>
     [ObservableProperty]
-    private bool _showUiPanels;
+    private bool _showHiddenSlots;
 
-    public string BackgroundStatusText => _localizer.Get(BackgroundKind switch
-    {
-        BackgroundKind.Custom => "Preview_Background_Custom",
-        BackgroundKind.Default => "Preview_Background_Default",
-        _ => "Preview_Background_None",
-    });
+    /// <summary>Debug: a 60% cooldown on the first cooldown slot with a skill. Off by default; never saved.</summary>
+    [ObservableProperty]
+    private bool _cooldownDemo;
 
-    public bool IsLayoutVerified => _indices.IsVerified && CooldownBar.IsVerified && QuickBar.IsVerified;
-
+    /// <summary>Empty when the layout is complete; otherwise the one line that says what is missing.</summary>
     public string LayoutStatusText => _uiLayouts is null
-        ? _localizer.Get("Preview_Layout_FileMissing")
+        ? _localizer.Get("Preview.Layout.FileMissing")
         : !_uiLayouts.Get(_layoutId).HasPanels
-            ? _localizer.Get("Preview_Layout_NoRows")
-            : IsLayoutVerified
-                ? string.Empty
-                : _localizer.Get("Preview_LayoutUnknown");
+            ? _localizer.Get("Preview.Layout.NoRows")
+            : _missingPanelCount > 0
+                ? _localizer.Format("Preview.Layout.MissingPanels", _missingPanelCount)
+                : string.Empty;
 
-    public string ResolutionText => DisplaySettings is null
-        ? _localizer.Get("Preview_Resolution_Unknown")
-        : _localizer.Format("Preview_Resolution", DisplaySettings.Width, DisplaySettings.Height);
-
-    public string GameStatusText => _localizer.Get(WindowStatus switch
+    /// <summary>
+    /// The one line about the background: empty while the game is captured, otherwise why the background is black.
+    /// The view calls <see cref="RefreshCaptureStatus"/> when it polls the source.
+    /// </summary>
+    public string CaptureStatusText => GameScreen.State switch
     {
-        GameWindowStatus.Running => "Preview_GameWindow_Running",
-        GameWindowStatus.NotRunning => "Preview_GameWindow_NotRunning",
-        _ => "Preview_GameWindow_NotConnected",
-    });
+        GameScreenState.Capturing => string.Empty,
+        GameScreenState.Minimized => _localizer.Get("Preview.Capture.Minimized"),
+        GameScreenState.Failed => _localizer.Get("Preview.Capture.Failed"),
+        _ => _localizer.Get("Preview.Capture.NotRunning"),
+    };
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasSelection), nameof(CanEdit), nameof(HasPendingChanges))]
-    [NotifyCanExecuteChangedFor(nameof(SaveChangesCommand))]
-    private SlotViewModel? _selectedSlot;
-
-    /// <summary>The quick position chosen in the editor (0 = not on the quick bar). Saved only by SaveChanges.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasPendingChanges))]
-    [NotifyCanExecuteChangedFor(nameof(SaveChangesCommand))]
-    private int _draftQuickPosition;
-
-    public bool HasSelection => SelectedSlot is not null;
-
-    public bool CanEdit => SelectedSlot is { IsEmpty: false };
-
-    public bool HasPendingChanges => SelectedSlot is not null && DraftQuickPosition != SelectedSlot.QuickPosition;
-
-    partial void OnSelectedSlotChanged(SlotViewModel? value)
-    {
-        foreach (var slot in CooldownSlots)
-        {
-            slot.IsSelected = ReferenceEquals(slot, value);
-        }
-
-        DraftQuickPosition = value?.QuickPosition ?? 0;
-    }
+    /// <summary>Raises the property that shows the capture state (called on the UI thread after a poll).</summary>
+    public void RefreshCaptureStatus() => OnPropertyChanged(nameof(CaptureStatusText));
 
     /// <summary>Picks another layout and remembers it in the settings.</summary>
     public void SelectLayout(GameUiLayoutId layout)
@@ -244,336 +188,147 @@ public sealed partial class PreviewViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedLayoutOption));
     }
 
-    /// <summary>Moves a bar that has no verified position. The move is shown at once and saved by <see cref="CommitBarPosition"/>.</summary>
-    public void MoveBarTo(BarKind kind, double left, double top)
+    /// <summary>The view reports its viewport size; the fit scale follows it.</summary>
+    public void SetViewport(double width, double height)
     {
-        var bar = BarOf(kind);
-        if (!bar.IsDraggable)
-        {
-            return;
-        }
-
-        var maxLeft = Math.Max(0, GameWidth - bar.Width);
-        var maxTop = Math.Max(0, GameHeight - bar.Height);
-        bar.Offset = new PixelOffset(Math.Clamp(left, 0, maxLeft), Math.Clamp(top, 0, maxTop));
+        FitScale = CanvasZoom.FitScale(width, height, GameWidth, GameHeight);
     }
 
-    /// <summary>Saves the current position of a dragged bar for the selected layout.</summary>
-    public void CommitBarPosition(BarKind kind)
+    /// <summary>Zooms by mouse-wheel notches (positive zooms in). Never below fit.</summary>
+    public void ZoomBy(int notches)
     {
-        var bar = BarOf(kind);
-        if (!bar.IsDraggable)
+        var before = Zoom;
+        Zoom = CanvasZoom.Step(Zoom, notches);
+        if (Zoom != before)
         {
-            return;
-        }
-
-        var normalized = GameScreenLayoutResolver.Normalize(bar.Offset.Left, bar.Offset.Top, GameWidth, GameHeight);
-        var key = AppSettings.ManualBarKey(_layoutId, kind);
-        _settings.Update(settings =>
-        {
-            var positions = new Dictionary<string, NormalizedPosition>(settings.ManualBarPositions, StringComparer.Ordinal)
+            _logger.Debug("preview.zoom.changed", "Zoom changed", new Dictionary<string, object?>
             {
-                [key] = normalized,
-            };
-            return settings with { ManualBarPositions = positions };
-        });
-
-        _logger.Info("preview.bar.position_saved", "Bar position saved for the layout", new Dictionary<string, object?>
-        {
-            ["layout"] = _layoutId.ToString(),
-            ["bar"] = kind.ToString(),
-            ["x"] = Math.Round(normalized.X, 4),
-            ["y"] = Math.Round(normalized.Y, 4),
-        });
-        Recompute();
-    }
-
-    /// <summary>Forgets the saved position of a bar for the selected layout.</summary>
-    public void ResetBarPosition(BarKind kind)
-    {
-        var key = AppSettings.ManualBarKey(_layoutId, kind);
-        _settings.Update(settings =>
-        {
-            var positions = new Dictionary<string, NormalizedPosition>(settings.ManualBarPositions, StringComparer.Ordinal);
-            positions.Remove(key);
-            return settings with { ManualBarPositions = positions };
-        });
-
-        _logger.Info("preview.bar.position_reset", "Saved bar position removed", new Dictionary<string, object?>
-        {
-            ["layout"] = _layoutId.ToString(),
-            ["bar"] = kind.ToString(),
-        });
-        Recompute();
-    }
-
-    /// <summary>Uses a picture the user chose as the background. It must be an existing file.</summary>
-    public bool SetBackgroundPath(string path)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        if (!File.Exists(path))
-        {
-            _logger.Warn("preview.background.not_found", "The chosen background file does not exist");
-            return false;
-        }
-
-        _settings.Update(settings => settings with { BackgroundImagePath = path });
-        _logger.Info("preview.background.selected", "Background image chosen");
-        ResolveBackground();
-        return true;
-    }
-
-    /// <summary>Goes back to the default screenshot (or to the gradient when it is missing).</summary>
-    public void ResetBackground()
-    {
-        _settings.Update(settings => settings with { BackgroundImagePath = null });
-        _logger.Info("preview.background.reset", "Background reset to the default");
-        ResolveBackground();
-    }
-
-    [RelayCommand]
-    private void SelectSlot(SlotViewModel? slot)
-    {
-        if (slot is null)
-        {
-            return;
-        }
-
-        SelectedSlot = slot;
-        _logger.Debug("preview.slot.selected", "Cooldown slot selected", new Dictionary<string, object?>
-        {
-            ["slot_index"] = slot.Index,
-            ["group"] = slot.Group.ToString(),
-        });
-    }
-
-    [RelayCommand]
-    private void SelectQuickSlot(QuickSlotViewModel? quickSlot)
-    {
-        if (quickSlot?.Slot is { } slot)
-        {
-            SelectSlot(slot);
+                ["zoom"] = Math.Round(Zoom, 3),
+            });
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanSaveChanges))]
-    private void SaveChanges()
+    /// <summary>Back to fit: the whole game screen in the window.</summary>
+    public void FitToView()
     {
-        var slot = SelectedSlot;
-        if (slot is null || !CanEdit)
-        {
-            return;
-        }
-
-        var previous = slot.QuickPosition;
-        var target = DraftQuickPosition;
-
-        // A position holds one slot. If another slot has the target, it takes this slot's previous position.
-        SlotViewModel? swappedWith = null;
-        if (target > 0)
-        {
-            swappedWith = CooldownSlots.FirstOrDefault(other => !ReferenceEquals(other, slot) && other.QuickPosition == target);
-            if (swappedWith is not null)
-            {
-                swappedWith.QuickPosition = previous;
-            }
-        }
-
-        slot.QuickPosition = target;
-        RefreshQuickSlots();
-        NotifyPendingChangesChanged();
-
-        _logger.Info("preview.quick_slot.saved", "Quick slot position saved in memory", new Dictionary<string, object?>
-        {
-            ["slot_index"] = slot.Index,
-            ["previous_position"] = previous,
-            ["position"] = target,
-            ["swapped_slot_index"] = swappedWith?.Index,
-        });
+        Zoom = CanvasZoom.MinZoom;
+        _logger.Debug("preview.zoom.fit", "Fit to the window");
     }
 
-    private bool CanSaveChanges() => HasPendingChanges && CanEdit;
-
-    [RelayCommand]
-    private void Reset()
+    public void Dispose()
     {
-        DraftQuickPosition = SelectedSlot?.QuickPosition ?? 0;
+        if (!_disposed)
+        {
+            _disposed = true;
+            _slots.Changed -= OnSourceChanged;
+        }
     }
 
     private static GameUiLayoutId? ParseLayout(string? text) =>
         Enum.TryParse<GameUiLayoutId>(text, out var id) ? id : null;
 
-    private static string LayoutLabelKey(GameUiLayoutId id) => id switch
+    private void OnSourceChanged(object? sender, EventArgs e)
     {
-        GameUiLayoutId.Preset1 => "Preview_Layout_Preset1",
-        GameUiLayoutId.Preset2 => "Preview_Layout_Preset2",
-        GameUiLayoutId.Preset3 => "Preview_Layout_Preset3",
-        _ => "Preview_Layout_General",
-    };
+        foreach (var slot in CooldownSlots)
+        {
+            slot.Data = _slots.Cooldown(slot.Number);
+        }
 
-    /// <summary>Resolves both bars, the slot positions and the overlay for the selected layout.</summary>
+        foreach (var quick in QuickSlots)
+        {
+            quick.Data = _slots.Quick(quick.Position);
+            quick.Key = _slots.QuickKey(quick.Position);
+        }
+
+        ApplyCooldownDemo();
+        _logger.Debug("preview.source.refreshed", "Preview slots refreshed from the combo", new Dictionary<string, object?>
+        {
+            ["cooldown_filled"] = CooldownSlots.Count(slot => slot.HasSkill),
+            ["quick_filled"] = QuickSlots.Count(quick => quick.HasSkill),
+        });
+    }
+
+    /// <summary>Places every slot panel of the selected layout. A panel without a row is skipped and counted in the warning.</summary>
     private void Recompute()
     {
         var layout = _uiLayouts?.Get(_layoutId);
-        var rows = Math.Clamp(_settings.Settings.CooldownRows, 1, 10);
-        var columns = Math.Clamp(_settings.Settings.CooldownColumns, 1, 20);
-        var input = new BarLayoutInput(
-            GameWidth,
-            GameHeight,
-            UiScale,
-            layout,
-            _indices,
-            rows,
-            columns,
-            ManualPosition(BarKind.Cooldown),
-            ManualPosition(BarKind.Quick));
+        var placements = GameSlotLayoutResolver.Resolve(layout, GameWidth, GameHeight);
 
-        var cooldown = GameScreenLayoutResolver.ResolveCooldown(input);
-        var quick = GameScreenLayoutResolver.ResolveQuick(input);
-        CooldownBar.Apply(cooldown);
-        QuickBar.Apply(quick);
-        RepositionSlots();
-
-        UiPanels.Clear();
-        foreach (var outline in GameScreenLayoutResolver.BuildOutlines(input))
+        var missing = new List<int>();
+        foreach (var placement in placements)
         {
-            var label = outline.WindowIndex is null
-                ? outline.Index.ToString(CultureInfo.InvariantCulture)
-                : $"{outline.Index}.{outline.WindowIndex}";
-            UiPanels.Add(new UiPanelOverlayViewModel(
-                new PixelOffset(outline.Left, outline.Top),
-                outline.Width,
-                outline.Height,
-                label,
-                outline.IsCandidate));
+            PanelFor(placement).Place(placement, UiScale, ShowHiddenSlots);
+            if (!placement.Present)
+            {
+                missing.Add(placement.PanelIndex);
+            }
         }
 
-        if (_indices.CooldownBarIndex is { } cooldownIndex && cooldown.Source != BarSource.UiData)
+        _missingPanelCount = missing.Count;
+        if (missing.Count > 0)
         {
-            _logger.Warn("preview.bar.index_not_found", "The cooldown bar index is not a visible panel in this layout", new Dictionary<string, object?>
+            _logger.Warn("preview.layout.panels_missing", "Some slot panels have no row in this layout and are not drawn", new Dictionary<string, object?>
             {
-                ["index"] = cooldownIndex,
                 ["layout"] = _layoutId.ToString(),
+                ["count"] = missing.Count,
+                ["panel_indices"] = missing.ToArray(),
             });
         }
 
-        _logger.Info("preview.layout.resolved", "Bars placed for the layout", new Dictionary<string, object?>
+        ApplyCooldownDemo();
+        _logger.Info("preview.layout.resolved", "Slot panels placed for the layout", new Dictionary<string, object?>
         {
             ["layout"] = _layoutId.ToString(),
             ["layout_read"] = layout is not null,
-            ["cooldown_source"] = cooldown.Source.ToString(),
-            ["quick_source"] = quick.Source.ToString(),
-            ["outlines"] = UiPanels.Count,
+            ["panels_missing"] = missing.Count,
             ["game_width"] = GameWidth,
             ["game_height"] = GameHeight,
+            ["ui_scale"] = UiScale,
         });
 
-        OnPropertyChanged(nameof(IsLayoutVerified));
         OnPropertyChanged(nameof(LayoutStatusText));
     }
 
-    private NormalizedPosition? ManualPosition(BarKind kind) =>
-        _settings.Settings.ManualBarPositions.TryGetValue(AppSettings.ManualBarKey(_layoutId, kind), out var position)
-            ? position
-            : null;
-
-    private GameBarViewModel BarOf(BarKind kind) => kind == BarKind.Cooldown ? CooldownBar : QuickBar;
-
-    private void OnBarPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void ApplyCooldownDemo()
     {
-        if (e.PropertyName == nameof(GameBarViewModel.Offset))
+        foreach (var slot in CooldownSlots)
         {
-            RepositionSlots();
-        }
-    }
-
-    /// <summary>
-    /// Places every slot relative to its bar (the view puts the bar at its own offset). Cooldown slots fill the rows left to right.
-    /// </summary>
-    private void RepositionSlots()
-    {
-        var cooldown = CooldownBar;
-        for (var i = 0; i < CooldownSlots.Count; i++)
-        {
-            var slot = CooldownSlots[i];
-            var column = cooldown.Columns > 0 ? i % cooldown.Columns : 0;
-            var row = cooldown.Columns > 0 ? i / cooldown.Columns : 0;
-            slot.IsPlaced = cooldown.Columns > 0 && row < cooldown.Rows;
-            slot.Size = cooldown.SlotSize;
-            slot.Offset = new PixelOffset(column * cooldown.PitchX, row * cooldown.PitchY);
+            slot.SetCooldownDemo(0, string.Empty);
         }
 
-        var quick = QuickBar;
-        for (var i = 0; i < QuickSlots.Count; i++)
+        if (!CooldownDemo)
         {
-            var quickSlot = QuickSlots[i];
-            quickSlot.Size = quick.SlotSize;
-            quickSlot.Offset = new PixelOffset(i * quick.PitchX, 0);
-        }
-    }
-
-    /// <summary>Picks the background: the user's file, else the default screenshot, else none (gradient).</summary>
-    private void ResolveBackground()
-    {
-        var chosen = _settings.Settings.BackgroundImagePath;
-        if (!string.IsNullOrWhiteSpace(chosen) && File.Exists(chosen))
-        {
-            BackgroundKind = BackgroundKind.Custom;
-            BackgroundPath = chosen;
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(chosen))
-        {
-            _logger.Warn("preview.background.missing", "The chosen background file is missing; the default is used");
-        }
-
-        var defaultPath = DefaultBackgroundPath;
-        if (File.Exists(defaultPath))
-        {
-            BackgroundKind = BackgroundKind.Default;
-            BackgroundPath = defaultPath;
-            return;
-        }
-
-        BackgroundKind = BackgroundKind.None;
-        BackgroundPath = null;
-        _logger.Warn("preview.background.none", "No background screenshot found; the gradient is shown");
+        CooldownSlots.FirstOrDefault(slot => slot.HasSkill)?.SetCooldownDemo(DemoCooldownRatio, DemoCooldownText);
     }
 
-    /// <summary>Default screenshot: Documents\Black Desert\ScreenShot\2026-02-15_13735792.PNG (read in place, never copied).</summary>
-    public static string DefaultBackgroundPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-        "Black Desert",
-        "ScreenShot",
-        DefaultBackgroundFileName);
+    private IEnumerable<PanelViewModel> AllPanels() => CooldownSlots.Cast<PanelViewModel>().Concat(QuickSlots);
 
-    /// <summary>Icon of the skill, or null when the skill has no number or no icon exists.</summary>
-    private string? ResolveIconPath(SlotData slot, string className) =>
-        slot.SkillNo is { } skillNo ? _icons.GetSkillIcon(skillNo, className) : null;
+    private PanelViewModel PanelFor(GameSlotPlacement placement) => placement.Kind == SlotKind.Cooldown
+        ? CooldownSlots[placement.Number - 1]
+        : QuickSlots[placement.Number - 1];
 
-    private void RefreshQuickSlots()
+    partial void OnShowHiddenSlotsChanged(bool value)
     {
-        foreach (var quick in QuickSlots)
+        foreach (var panel in AllPanels())
         {
-            quick.Slot = CooldownSlots.FirstOrDefault(slot => slot.QuickPosition == quick.Position);
+            panel.UpdateVisibility(value);
         }
+
+        _logger.Info("preview.show_hidden.changed", "Hidden slots shown or hidden", new Dictionary<string, object?>
+        {
+            ["enabled"] = value,
+        });
     }
 
-    private static IReadOnlyList<QuickPositionOption> BuildQuickPositionOptions(
-        ILocalizer localizer,
-        IEnumerable<QuickSlotViewModel> quickSlots)
+    partial void OnCooldownDemoChanged(bool value)
     {
-        var options = new List<QuickPositionOption> { new(0, localizer.Get("Preview_QuickNone")) };
-        options.AddRange(quickSlots.Select(quick => new QuickPositionOption(
-            quick.Position,
-            localizer.Format("Preview_QuickPositionOption", quick.Position, quick.Label))));
-        return options;
-    }
-
-    private void NotifyPendingChangesChanged()
-    {
-        OnPropertyChanged(nameof(HasPendingChanges));
-        SaveChangesCommand.NotifyCanExecuteChanged();
+        ApplyCooldownDemo();
+        _logger.Info("preview.cooldown_demo.changed", "Cooldown demo switched", new Dictionary<string, object?>
+        {
+            ["enabled"] = value,
+        });
     }
 }

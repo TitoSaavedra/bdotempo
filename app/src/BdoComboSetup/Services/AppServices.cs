@@ -1,3 +1,4 @@
+using BdoComboSetup.Capture;
 using BdoComboSetup.Core.Assets;
 using BdoComboSetup.Core.Backup;
 using BdoComboSetup.Core.Combo;
@@ -14,10 +15,14 @@ namespace BdoComboSetup.Services;
 
 /// <summary>
 /// Creates the logger, the localizer, the settings, the icon catalog, the layouts and the view models.
-/// Stubs stand in for the core and the game capture until those exist.
+/// In demo mode (--demo) nothing of the player is read or written: the settings and the saved combos go to a temporary
+/// folder, the layouts and the display are synthetic, the quick keys are the defaults, and the applier writes nothing.
 /// </summary>
 public sealed class AppServices : IDisposable
 {
+    /// <summary>Temporary folder of the demo mode. It is recreated on every demo start.</summary>
+    private const string DemoFolderName = "BdoComboSetup-demo";
+
     private AppServices(
         AppLogger logger,
         ResourceLocalizer localizer,
@@ -62,12 +67,21 @@ public sealed class AppServices : IDisposable
 
         var logger = AppLogger.CreateDefault("app.session");
         var localizer = new ResourceLocalizer(logger);
-        var settings = new AppSettingsStore(AppSettingsStore.DefaultPath, logger);
+        var demoFolder = Path.Combine(Path.GetTempPath(), DemoFolderName);
+        if (startup.DemoData)
+        {
+            ResetDemoFolder(demoFolder, logger);
+        }
+
+        var settings = new AppSettingsStore(
+            startup.DemoData ? Path.Combine(demoFolder, "settings.json") : AppSettingsStore.DefaultPath,
+            logger);
 
         var mockData = new MockComboDataSource();
-        var combo = mockData.GetCombo("Tamer", ComboMode.Awakening);
-        var display = GameOptionLoader.Load(GameOptionLoader.DefaultPath, logger);
-        var layouts = GameUiLayoutReader.Load(GameUiLayoutReader.DefaultPath(settings.Settings.GameAccountFolder), logger);
+        var display = startup.DemoData ? DemoGameLayouts.Display : GameOptionLoader.Load(GameOptionLoader.DefaultPath, logger);
+        var layouts = startup.DemoData
+            ? DemoGameLayouts.Create()
+            : GameUiLayoutReader.Load(GameUiLayoutReader.DefaultPath(settings.Settings.GameAccountFolder), logger);
         var icons = IconCatalog.Load(settings.Settings.SkillIconRoot, settings.Settings.ClassHubRoot, logger);
         var embedded = new AssemblyEmbeddedResources(typeof(AppServices).Assembly);
         var assets = new BundledAssetProvider(embedded, icons, logger);
@@ -89,7 +103,9 @@ public sealed class AppServices : IDisposable
                 () => SkillTable.Load(settings.Settings.SkillsJsonPath, logger),
                 logger);
         IComboDataSource dataSource = startup.DemoData ? mockData : new GameDataComboSource(locator, mockData, logger);
-        var profiles = new ComboProfileStore(ComboProfileStore.DefaultDirectory, logger);
+        var profiles = new ComboProfileStore(
+            startup.DemoData ? Path.Combine(demoFolder, "profiles") : ComboProfileStore.DefaultDirectory,
+            logger);
 
         var applyCombo = new ApplyComboViewModel(
             combos,
@@ -101,16 +117,26 @@ public sealed class AppServices : IDisposable
             CultureInfo.CurrentUICulture,
             logger);
 
+        // The quick keys of the character chosen on the Apply page. The demo uses the defaults and never opens a character file.
+        Func<CharacterOption?, IReadOnlyDictionary<int, int>?> boundKeysOf = startup.DemoData
+            ? _ => null
+            : character => character is null
+                ? null
+                : QuickSlotKeyReader.Load(locator.CharacterFilePath(settings.Settings.GameAccountFolder, character.Pcid), logger);
+        var slots = new ComboPreviewSlotSource(applyCombo, boundKeysOf);
+
+        // The background is the live capture of the game window. The demo never captures: its images stay black.
+        IGameScreenSource gameScreen = startup.DemoData
+            ? new BlackGameScreenSource()
+            : new GameScreenSource(new Win32GameWindowLocator(logger), new WindowsGraphicsCapture(logger), logger);
+
         var preview = new PreviewViewModel(
-            combo,
-            GameLayoutIndices.Default,
+            slots,
             display,
-            new StubGameWindowSource(),
+            gameScreen,
             layouts,
-            icons,
             settings,
-            startup.Layout,
-            startup.ShowPanels,
+            new PreviewStartup(startup.Layout, startup.ShowHiddenSlots, startup.CooldownDemo, startup.Zoom),
             localizer,
             logger);
 
@@ -118,4 +144,23 @@ public sealed class AppServices : IDisposable
     }
 
     public void Dispose() => Logger.Dispose();
+
+    /// <summary>Deletes the demo folder of an earlier run so every demo starts from the same empty state. Only that folder is touched.</summary>
+    private static void ResetDemoFolder(string folder, AppLogger logger)
+    {
+        try
+        {
+            if (Directory.Exists(folder))
+            {
+                Directory.Delete(folder, recursive: true);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.Warn("demo.reset_failed", "The demo folder of an earlier run could not be cleared; its files are used", new Dictionary<string, object?>
+            {
+                ["error"] = ex.GetType().Name,
+            });
+        }
+    }
 }
