@@ -1,241 +1,274 @@
 using BdoComboSetup.Core.Combo;
-using BdoComboSetup.Core.GameData;
-using BdoComboSetup.Core.Operations;
 using BdoComboSetup.Core.ViewModels;
 
 namespace BdoComboSetup.Tests;
 
+/// <summary>The Apply page view model: startup selection, spec switching, and profiles. The write flow is in ApplyComboWriteTests.</summary>
 public sealed class ApplyComboViewModelTests : IDisposable
 {
     private readonly TempLogger _log = new();
+    private readonly ApplyTestHelpers.ProfileFolder _profiles;
 
-    public void Dispose() => _log.Dispose();
+    public ApplyComboViewModelTests()
+    {
+        _profiles = new ApplyTestHelpers.ProfileFolder(_log.Logger);
+    }
 
-    private ApplyComboViewModel Create(IComboApplier applier) => new(
+    public void Dispose()
+    {
+        _profiles.Dispose();
+        _log.Dispose();
+    }
+
+    private ApplyComboViewModel Create(IComboApplier? applier = null, ICombosCatalog? catalog = null, ComboProfileStore? store = null) => new(
+        catalog ?? FakeCombosCatalog.Sample(),
+        new NoIconAssets(),
         new MockComboDataSource(),
-        TestCombos.Tamer(),
-        applier,
+        store ?? _profiles.Store,
+        applier ?? new RecordingApplier(),
         new KeyLocalizer(),
+        ApplyTestHelpers.Culture,
         _log.Logger);
 
-    private static ComboApplyResult Outcome(OperationOutcome outcome, OperationProblem problem = OperationProblem.None, string? detail = null) =>
-        new(outcome, problem, detail, null, null, null, []);
+    private static SpecOptionViewModel Spec(ApplyComboViewModel vm, string id) => vm.Specs.Single(spec => spec.Id == id);
 
     [Fact]
-    public void Defaults_to_awakening_with_all_options_checked_and_the_first_character()
+    public async Task Startup_without_arguments_uses_the_first_characters_class_and_its_first_spec()
     {
-        var vm = Create(new FakeApplier());
+        var vm = Create();
 
-        Assert.Equal(ComboMode.Awakening, vm.Mode);
-        Assert.True(vm.IsAwakening);
-        Assert.False(vm.IsSuccession);
-        Assert.True(vm.IncludeCooldownBar);
-        Assert.True(vm.IncludeMemos);
-        Assert.True(vm.IncludeQuickSlots);
-        Assert.Equal("AhrinSong", vm.SelectedCharacter?.Name);
-        Assert.Equal("Tamer", vm.SelectedClassName);
+        await vm.InitializeAsync();
+
+        Assert.Equal("Demo Tamer", vm.SelectedCharacter?.Name);
+        Assert.Equal("tamer", vm.SelectedClass?.Slug);
+        Assert.Equal("awakening", vm.SelectedSpec?.Id);
+        Assert.True(vm.HasEditor);
         Assert.True(vm.CanRun);
     }
 
     [Fact]
-    public void Summary_counts_come_from_the_combo()
+    public async Task Startup_class_and_spec_arguments_select_them_and_the_character_of_that_class()
     {
-        var vm = Create(new FakeApplier());
+        var vm = Create();
 
-        Assert.Equal(12, vm.ComboSkillCount);
-        Assert.Equal(3, vm.PriorityBuffCount);
-        Assert.Equal(9, vm.QuickSlotCount);
-        Assert.Equal("Apply_ComboSkillsCount(12)", vm.ComboSkillsText);
-        Assert.Equal("Apply_PriorityBuffsCount(3)", vm.PriorityBuffsText);
-        Assert.Equal("Apply_QuickSlotsCount(9)", vm.QuickSlotsText);
+        await vm.InitializeAsync("shai", "talent");
+
+        Assert.Equal("shai", vm.SelectedClass?.Slug);
+        Assert.Equal("talent", vm.SelectedSpec?.Id);
+        Assert.Equal("Demo Shai", vm.SelectedCharacter?.Name);
+        Assert.Equal("Shai Talent", vm.Editor?.Title);
     }
 
     [Fact]
-    public void Changing_mode_updates_the_summary_title()
+    public async Task Initialize_runs_once()
     {
-        var vm = Create(new FakeApplier());
+        var vm = Create();
+        await vm.InitializeAsync("tamer", "awakening");
 
-        vm.IsSuccession = true;
+        await vm.InitializeAsync("shai", "talent");
 
-        Assert.Equal(ComboMode.Succession, vm.Mode);
-        Assert.Equal("Apply_SummaryTitle(Tamer,Mode_Succession)", vm.SummaryTitle);
+        Assert.Equal("tamer", vm.SelectedClass?.Slug);
     }
 
     [Fact]
-    public async Task Apply_sends_the_combo_as_cooldown_slots_and_quick_slots_for_the_selected_character()
+    public async Task Choosing_a_character_selects_its_class()
     {
-        var applier = new FakeApplier { Result = Outcome(OperationOutcome.Written) };
-        var vm = Create(applier);
+        var vm = Create();
+        await vm.InitializeAsync("warrior", "awakening");
 
-        await vm.ApplyCommand.ExecuteAsync(null);
+        await vm.SelectCharacterCommand.ExecuteAsync(vm.Characters.Single(item => item.Name == "Demo Tamer"));
 
-        var request = Assert.Single(applier.Applied);
-        Assert.Empty(applier.DryRuns);
-        Assert.Equal("10000000006346933", request.Pcid);
-        Assert.Equal(16, request.ClassId);
-        Assert.True(request.WriteCooldownBar);
-        Assert.True(request.WriteMemos);
-        Assert.True(request.WriteQuickSlots);
-
-        // UI slots 1, 2, 8, 13, 14 become XML slots 0, 1, 7, 12, 13; the empty ones are not sent.
-        Assert.Equal(new[] { 0, 1, 7, 12, 13 }, request.CooldownSlots.Select(s => s.Slot).ToArray());
-        Assert.Equal(1937, request.CooldownSlots[0].SkillNo);
-        Assert.Equal("R 1", request.CooldownSlots[0].Memo);
-        Assert.Equal("Flujo: Intimidación", request.CooldownSlots[0].SkillName);
-
-        Assert.Equal(
-            new (int Position, int SkillNo)[] { (7, 1937), (8, 1932), (1, 1347), (2, 231) },
-            request.QuickSlots.Select(q => (q.Position, SkillNo: q.SkillNo!.Value)).ToArray());
+        Assert.Equal("tamer", vm.SelectedClass?.Slug);
+        Assert.Equal("Demo Tamer", vm.SelectedCharacter?.Name);
     }
 
     [Fact]
-    public async Task Turning_quick_slots_off_sends_no_quick_assignments()
+    public async Task Choosing_a_class_selects_its_first_spec_and_marks_only_that_class()
     {
-        var applier = new FakeApplier { Result = Outcome(OperationOutcome.Written) };
-        var vm = Create(applier);
-        vm.IncludeQuickSlots = false;
+        var vm = Create();
+        await vm.InitializeAsync("warrior", "awakening");
 
-        await vm.ApplyCommand.ExecuteAsync(null);
+        await vm.Classes.Single(item => item.Slug == "tamer").SelectCommand.ExecuteAsync(null);
 
-        var request = Assert.Single(applier.Applied);
-        Assert.False(request.WriteQuickSlots);
-        Assert.Empty(request.QuickSlots);
+        Assert.Equal("awakening", vm.SelectedSpec?.Id);
+        Assert.Equal(["awakening", "succession"], vm.Specs.Select(spec => spec.Id));
+        Assert.Equal(["tamer"], vm.Classes.Where(item => item.IsSelected).Select(item => item.Slug));
     }
 
     [Fact]
-    public async Task Dry_run_calls_the_dry_run_and_shows_the_summary_without_applying()
+    public async Task Switching_spec_loads_that_spec_guide()
     {
-        var diff = new CharacterDiff(
-            "10000000006346933",
-            @"C:\data\gameVariable.xml",
-            true,
-            [new SlotChange(0, 0, 1937, "(empty)", "Flujo: Intimidación")],
-            [new MemoChange(1937, null, "R 1", MemoStatus.Added)],
-            []);
-        var applier = new FakeApplier
-        {
-            Result = new ComboApplyResult(OperationOutcome.DryRun, OperationProblem.None, null, diff, null, null, []),
-        };
-        var vm = Create(applier);
+        var vm = Create();
+        await vm.InitializeAsync("tamer", "awakening");
+        Assert.Equal("Tamer Awakening", vm.Editor?.Title);
 
-        await vm.DryRunCommand.ExecuteAsync(null);
+        await Spec(vm, "succession").SelectCommand.ExecuteAsync(null);
 
-        Assert.Empty(applier.Applied);
-        Assert.Single(applier.DryRuns);
+        Assert.Equal("succession", vm.SelectedSpec?.Id);
+        Assert.Equal("Tamer Succession", vm.Editor?.Title);
+        Assert.True(Spec(vm, "succession").IsSelected);
+        Assert.False(Spec(vm, "awakening").IsSelected);
+    }
+
+    [Fact]
+    public async Task Shai_experts_share_a_guide_but_keep_their_own_profile_file()
+    {
+        var vm = Create();
+        await vm.InitializeAsync("shai", "talent");
+        vm.Editor!.AllSteps().First().Memo = "shared memo";
+        await vm.SaveProfileCommand.ExecuteAsync(null);
+
+        await Spec(vm, "azminek").SelectCommand.ExecuteAsync(null);
+
+        Assert.Equal("azminek", vm.SelectedSpec?.Id);
+        Assert.False(vm.Editor!.HasSavedProfile);
+        Assert.Null(vm.Editor.AllSteps().First().Memo);
+    }
+
+    [Fact]
+    public async Task Working_copy_is_kept_when_switching_away_and_back()
+    {
+        var vm = Create();
+        await vm.InitializeAsync("tamer", "awakening");
+        var first = vm.Editor;
+        first!.AllSteps().First().CustomName = "Opener";
+
+        await Spec(vm, "succession").SelectCommand.ExecuteAsync(null);
+        await Spec(vm, "awakening").SelectCommand.ExecuteAsync(null);
+
+        Assert.Same(first, vm.Editor);
+        Assert.Equal("Opener", vm.Editor!.AllSteps().First().CustomName);
+        Assert.True(vm.Editor.HasUnsavedChanges);
+    }
+
+    [Fact]
+    public async Task A_spec_without_a_guide_has_no_editor_and_is_reported_as_missing()
+    {
+        var catalog = new FakeCombosCatalog(
+            [new ClassInfo(16, "tamer", new BilingualText("Tamer", "Domadora"), [new SpecInfo("awakening", new BilingualText("Awakening", "Despertar"), "tamer.missing")])],
+            new Dictionary<(int, string), ComboGuide>());
+        var vm = Create(catalog: catalog);
+
+        await vm.InitializeAsync();
+
+        Assert.Null(vm.Editor);
+        Assert.False(vm.HasEditor);
+        Assert.True(vm.IsGuideMissing);
+        Assert.False(vm.CanRun);
+    }
+
+    [Fact]
+    public async Task Profile_state_text_follows_the_guide_then_unsaved_then_saved()
+    {
+        var vm = Create();
+        await vm.InitializeAsync("tamer", "awakening");
+        Assert.Equal("Apply.StateBase", vm.ProfileStateText);
+
+        vm.Editor!.AllSteps().First().Memo = "R 1";
+        Assert.Equal("Apply.StateUnsaved", vm.ProfileStateText);
+
+        await vm.SaveProfileCommand.ExecuteAsync(null);
+        Assert.Equal("Apply.StateSaved", vm.ProfileStateText);
+    }
+
+    [Fact]
+    public async Task Save_writes_the_profile_and_a_new_page_loads_it_over_the_guide()
+    {
+        var vm = Create();
+        await vm.InitializeAsync("tamer", "awakening");
+        var step = vm.Editor!.AllSteps().First();
+        step.CustomName = "Intim.";
+        step.Memo = "R 1";
+        vm.Editor.AssignCooldown(step, 3);
+
+        await vm.SaveProfileCommand.ExecuteAsync(null);
+
         Assert.True(vm.IsStatusOpen);
-        Assert.Equal(StatusSeverity.Information, vm.StatusSeverity);
-        Assert.Contains("Apply_Result_DryRun(Apply_Result_Summary(1,1,0,0))", vm.StatusMessage);
+        Assert.Equal("Apply.StatusSaved", vm.StatusMessage);
+        Assert.Equal(StatusSeverity.Success, vm.StatusSeverity);
+        Assert.True(File.Exists(_profiles.Store.PathFor(16, "awakening")));
+
+        var reopened = Create();
+        await reopened.InitializeAsync("tamer", "awakening");
+        var restored = reopened.Editor!.AllSteps().First();
+        Assert.True(reopened.Editor.HasSavedProfile);
+        Assert.Equal("Intim.", restored.CustomName);
+        Assert.Equal("R 1", restored.Memo);
+        Assert.Equal(3, restored.CooldownSlot);
+        Assert.Equal("Apply.StateSaved", reopened.ProfileStateText);
     }
 
     [Fact]
-    public async Task Dry_run_without_changes_says_so()
+    public async Task Restore_base_deletes_the_profile_and_goes_back_to_the_guide()
     {
-        var applier = new FakeApplier
-        {
-            Result = new ComboApplyResult(
-                OperationOutcome.DryRun,
-                OperationProblem.None,
-                null,
-                new CharacterDiff("10000000006346933", "x", false, [], [], []),
-                null,
-                null,
-                []),
-        };
-        var vm = Create(applier);
+        var vm = Create();
+        await vm.InitializeAsync("tamer", "awakening");
+        vm.Editor!.AllSteps().First().Memo = "R 1";
+        await vm.SaveProfileCommand.ExecuteAsync(null);
 
-        await vm.DryRunCommand.ExecuteAsync(null);
+        vm.RestoreBaseCommand.Execute(null);
 
-        Assert.Equal("Apply_Result_DryRunUnchanged", vm.StatusMessage);
+        Assert.False(File.Exists(_profiles.Store.PathFor(16, "awakening")));
+        Assert.False(vm.Editor!.HasSavedProfile);
+        Assert.False(vm.Editor.HasUnsavedChanges);
+        Assert.Null(vm.Editor.AllSteps().First().Memo);
+        Assert.Equal("Apply.StatusRestored", vm.StatusMessage);
+        Assert.Equal("Apply.StateBase", vm.ProfileStateText);
     }
 
     [Fact]
-    public async Task A_written_result_shows_the_summary_and_the_backup_path()
+    public async Task A_failed_save_is_shown_as_an_error_and_logged()
     {
-        var applier = new FakeApplier
+        // A file where the profile folder should be makes the save fail with an IOException.
+        var blocked = Path.Combine(Path.GetTempPath(), "BdoComboSetup.Tests.Profiles", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.GetDirectoryName(blocked)!);
+        File.WriteAllText(blocked, "not a folder");
+        try
         {
-            Result = new ComboApplyResult(
-                OperationOutcome.Written,
-                OperationProblem.None,
-                null,
-                null,
-                "20261031T120000Z",
-                @"C:\data\_backups\20261031T120000Z",
-                []),
-        };
-        var vm = Create(applier);
+            var vm = Create(store: new ComboProfileStore(blocked, _log.Logger));
+            await vm.InitializeAsync("tamer", "awakening");
 
-        await vm.ApplyCommand.ExecuteAsync(null);
+            await vm.SaveProfileCommand.ExecuteAsync(null);
 
-        Assert.Equal(StatusSeverity.Information, vm.StatusSeverity);
-        Assert.Contains("Apply_Result_Written", vm.StatusMessage);
-        Assert.Contains(@"Apply_Result_Backup(C:\data\_backups\20261031T120000Z)", vm.StatusMessage);
-    }
-
-    [Fact]
-    public async Task A_refused_result_is_a_warning_with_the_problem_and_its_detail()
-    {
-        var applier = new FakeApplier
+            Assert.Equal("Apply.StatusSaveFailed", vm.StatusMessage);
+            Assert.Equal(StatusSeverity.Error, vm.StatusSeverity);
+            Assert.Contains("\"event\":\"apply.profile.save_failed\"", File.ReadAllText(_log.Logger.FilePath));
+        }
+        finally
         {
-            Result = Outcome(OperationOutcome.Refused, OperationProblem.GameRunning, "PCID 1 was modified 3s ago"),
-        };
-        var vm = Create(applier);
-
-        await vm.ApplyCommand.ExecuteAsync(null);
-
-        Assert.Equal(StatusSeverity.Warning, vm.StatusSeverity);
-        Assert.Contains("Apply_Result_Refused(Apply_ProblemDetail(Apply_Problem_GameRunning,PCID 1 was modified 3s ago))", vm.StatusMessage);
-    }
-
-    [Fact]
-    public async Task A_rolled_back_result_is_an_error()
-    {
-        var applier = new FakeApplier
-        {
-            Result = Outcome(OperationOutcome.RolledBack, OperationProblem.ValidationFailed, "slot list"),
-        };
-        var vm = Create(applier);
-
-        await vm.ApplyCommand.ExecuteAsync(null);
-
-        Assert.Equal(StatusSeverity.Error, vm.StatusSeverity);
-        Assert.Contains("Apply_Result_RolledBack", vm.StatusMessage);
+            File.Delete(blocked);
+        }
     }
 
     [Fact]
     public async Task A_failing_applier_is_reported_as_an_error_and_logged()
     {
-        var vm = Create(new ThrowingApplier());
+        var vm = Create(applier: new ThrowingApplier());
+        await vm.InitializeAsync("tamer", "awakening");
 
-        await vm.ApplyCommand.ExecuteAsync(null);
+        await vm.DryRunCommand.ExecuteAsync(null);
 
         Assert.True(vm.IsStatusOpen);
-        Assert.Equal("Apply_Status_Failed", vm.StatusMessage);
+        Assert.Equal("Apply.StatusFailed", vm.StatusMessage);
         Assert.Equal(StatusSeverity.Error, vm.StatusSeverity);
+        Assert.False(vm.IsReviewOpen);
 
         var logText = File.ReadAllText(_log.Logger.FilePath);
         Assert.Contains("\"event\":\"apply.failed\"", logText);
         Assert.Contains("\"level\":\"error\"", logText);
     }
 
-    private sealed class FakeApplier : IComboApplier
+    [Fact]
+    public async Task Apply_and_dry_run_are_disabled_without_an_editor()
     {
-        public List<ComboApplyRequest> Applied { get; } = [];
+        var catalog = new FakeCombosCatalog([], new Dictionary<(int, string), ComboGuide>());
+        var vm = Create(catalog: catalog);
 
-        public List<ComboApplyRequest> DryRuns { get; } = [];
+        await vm.InitializeAsync();
 
-        public ComboApplyResult Result { get; init; } = Outcome(OperationOutcome.DryRun);
-
-        public Task<ComboApplyResult> ApplyAsync(ComboApplyRequest request, CancellationToken cancellationToken = default)
-        {
-            Applied.Add(request);
-            return Task.FromResult(Result);
-        }
-
-        public Task<ComboApplyResult> DryRunAsync(ComboApplyRequest request, CancellationToken cancellationToken = default)
-        {
-            DryRuns.Add(request);
-            return Task.FromResult(Result);
-        }
+        Assert.False(vm.ApplyCommand.CanExecute(null));
+        Assert.False(vm.DryRunCommand.CanExecute(null));
+        Assert.False(vm.SaveProfileCommand.CanExecute(null));
     }
 
     private sealed class ThrowingApplier : IComboApplier

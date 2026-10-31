@@ -54,7 +54,9 @@ fixtures (`Fixtures\bundle\`, embedded in the test assembly).
 
 ## Command line
 
-`--page apply|preview`, `--layout general|preset1|preset2|preset3`, `--panels`. Used by `mise run screenshots`.
+`--page apply|preview`, `--layout general|preset1|preset2|preset3`, `--panels`, `--class <slug> --spec <id>` (the Apply page starts
+on that guide, for example `--class tamer --spec awakening`), `--demo` (synthetic characters and a demo applier that reads and
+writes nothing), `--demo-review` (the same, and opens the review of the combo at startup). `mise run screenshots` uses `--demo`.
 Options given on the command line are not saved.
 
 ## Logs

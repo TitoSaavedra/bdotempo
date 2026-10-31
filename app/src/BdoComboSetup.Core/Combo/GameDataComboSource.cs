@@ -31,7 +31,5 @@ public sealed class GameDataComboSource(GameDataLocator locator, IComboDataSourc
         }
     }
 
-    public IReadOnlyList<string> GetClassNames() => fallback.GetClassNames();
-
     public ComboDefinition GetCombo(string className, ComboMode mode) => fallback.GetCombo(className, mode);
 }

@@ -8,6 +8,7 @@ using BdoComboSetup.Core.Icons;
 using BdoComboSetup.Core.Logging;
 using BdoComboSetup.Core.Settings;
 using BdoComboSetup.Core.ViewModels;
+using System.Globalization;
 
 namespace BdoComboSetup.Services;
 
@@ -77,20 +78,27 @@ public sealed class AppServices : IDisposable
         var locator = new GameDataLocator(settings.Settings.GameDataRoot, settings.Settings.GameAccount, logger);
         var backupsRoot = settings.Settings.BackupsRoot ?? Path.Combine(settings.Settings.GameDataRoot, "_backups");
         var backups = new BackupService(backupsRoot, locator, files, guard, logger);
-        var applier = new ComboApplier(
-            locator,
-            backups,
-            guard,
-            files,
-            () => SkillTable.Load(settings.Settings.SkillsJsonPath, logger),
-            logger);
-        var dataSource = new GameDataComboSource(locator, mockData, logger);
+        // --demo never reads or writes the game files: its applier only describes what a write would do.
+        IComboApplier applier = startup.DemoData
+            ? new DemoComboApplier(logger)
+            : new ComboApplier(
+                locator,
+                backups,
+                guard,
+                files,
+                () => SkillTable.Load(settings.Settings.SkillsJsonPath, logger),
+                logger);
+        IComboDataSource dataSource = startup.DemoData ? mockData : new GameDataComboSource(locator, mockData, logger);
+        var profiles = new ComboProfileStore(ComboProfileStore.DefaultDirectory, logger);
 
         var applyCombo = new ApplyComboViewModel(
+            combos,
+            assets,
             dataSource,
-            combo,
+            profiles,
             applier,
             localizer,
+            CultureInfo.CurrentUICulture,
             logger);
 
         var preview = new PreviewViewModel(
