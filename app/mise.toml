@@ -31,8 +31,20 @@ description = "Run the xUnit tests for the core (view models, parsers, logger)"
 run = "dotnet test tests/BdoComboSetup.Tests/BdoComboSetup.Tests.csproj"
 
 [tasks.publish]
-description = "Publish ONE self-contained single-file BdoComboSetup.exe (Release, win-x64)"
+description = "Publish the framework-dependent win-x64 app (Release): needs the .NET 10 Desktop Runtime on the machine"
 run = "dotnet publish src/BdoComboSetup/BdoComboSetup.csproj -c Release -r win-x64 -p:Platform=x64"
+
+[tasks.package-installer]
+description = "Build dist/BdoComboSetup-Setup-<version>.exe (Inno Setup 6 installer with the app and the asset parts) and dist/SHA256SUMS.txt. Needs Inno Setup 6 (see installer/README.md)"
+run = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1 -Target installer"
+
+[tasks.package-portable]
+description = "Build dist/BdoComboSetup-Portable-<version>.zip (app + assets.bdoa + portable.flag, no installer) and dist/SHA256SUMS.txt"
+run = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1 -Target portable"
+
+[tasks.package]
+description = "Build the installer and the portable zip into dist/ (git-ignored), with dist/SHA256SUMS.txt. Needs Inno Setup 6 (see installer/README.md)"
+run = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1 -Target all"
 
 [tasks.screenshots]
 description = "Publish, then launch the exe once per image (demo data) and save only the app window (Apply, Preview per layout, hidden slots) to docs/screenshots (git-ignored)"

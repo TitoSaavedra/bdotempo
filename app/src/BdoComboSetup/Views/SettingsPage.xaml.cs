@@ -2,6 +2,7 @@ using System.Diagnostics;
 using BdoComboSetup.Core.Characters;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Search;
+using BdoComboSetup.Core.Updates;
 using BdoComboSetup.Core.ViewModels;
 using BdoComboSetup.Views.Controls;
 using Microsoft.UI.Xaml;
@@ -31,6 +32,18 @@ public sealed partial class SettingsPage : Page
     }
 
     public SettingsViewModel ViewModel { get; }
+
+    /// <summary>The update controls of the page (a getter: the x:Bind bindings are evaluated inside InitializeComponent).</summary>
+    public UpdateViewModel Updates => App.Services.Updates;
+
+    /// <summary>Turns the check at startup on or off. The switch only forwards the change; the view model saves it.</summary>
+    private void UpdatesStartup_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (sender is ToggleSwitch toggle && toggle.IsOn != Updates.CheckOnStartup)
+        {
+            Updates.SetCheckOnStartup(toggle.IsOn);
+        }
+    }
 
     /// <summary>Maps the view model's severity to the InfoBar's enum (the view models do not reference WinUI).</summary>
     public InfoBarSeverity ToInfoBarSeverity(StatusSeverity severity) => severity switch

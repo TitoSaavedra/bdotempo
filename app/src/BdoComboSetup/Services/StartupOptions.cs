@@ -10,7 +10,9 @@ namespace BdoComboSetup.Services;
 /// relative to fit). For the Apply page "--class &lt;slug&gt;" and "--spec &lt;id&gt;" (for example --class tamer --spec awakening),
 /// "--demo" (synthetic characters, synthetic layouts and display, a demo applier; used for screenshots, never writes, never
 /// reads the game account), "--demo-review" (the same, and opens the review of the combo at startup) and
-/// "--demo-write-hint" (the same, and asks to write, so the reminder before a write is shown).
+/// "--demo-write-hint" (the same, and asks to write, so the reminder before a write is shown), "--demo-update" (the same, and
+/// the update feed answers "a newer version exists", so the update banner and the Settings controls can be shown; the check
+/// runs at startup in this mode only).
 /// Options given on the command line apply to this run only; they are not saved in the settings.
 /// </summary>
 public sealed record StartupOptions(
@@ -25,7 +27,8 @@ public sealed record StartupOptions(
     double? Zoom = null,
     bool DemoWriteHint = false,
     int DemoCharacters = 0,
-    bool DemoCharacterPicker = false)
+    bool DemoCharacterPicker = false,
+    bool DemoUpdate = false)
 {
     public const string ApplyPage = "apply";
     public const string PreviewPage = "preview";
@@ -44,6 +47,7 @@ public sealed record StartupOptions(
         var demoReview = false;
         var cooldownDemo = false;
         var demoWriteHint = false;
+        var demoUpdate = false;
         double? zoom = null;
         var demoCharacters = 0;
         var demoCharacterPicker = false;
@@ -103,6 +107,10 @@ public sealed record StartupOptions(
                     demoData = true;
                     demoCharacterPicker = true;
                     break;
+                case "--demo-update":
+                    demoData = true;
+                    demoUpdate = true;
+                    break;
             }
         }
 
@@ -118,7 +126,8 @@ public sealed record StartupOptions(
             zoom,
             demoWriteHint,
             demoCharacters,
-            demoCharacterPicker);
+            demoCharacterPicker,
+            demoUpdate);
     }
 
     private static string ParsePage(string text) => text.ToLowerInvariant() switch

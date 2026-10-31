@@ -7,7 +7,8 @@
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <RootNamespace>BdoComboSetup</RootNamespace>
     <AssemblyName>BdoComboSetup</AssemblyName>
-    <Version>0.1.0</Version>
+    <!-- Version: app/Directory.Build.props (single source of truth). -->
+
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
@@ -20,8 +21,7 @@
     <!-- The exe icon (Explorer, taskbar). Original art, see app/assets/icon/ (rebuild with mise run build-icon). -->
     <ApplicationIcon>..\..\assets\icon\app-icon.ico</ApplicationIcon>
 
-    <!-- Unpackaged: no MSIX identity, no installer. The tooling flag is required by the single-file targets
-         so that resources.pri (the .resw strings) is embedded in the exe. -->
+    <!-- Unpackaged: no MSIX identity. The tooling flag makes resources.pri (the .resw strings) part of the build output. -->
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <EnableMsixTooling>true</EnableMsixTooling>
@@ -36,12 +36,10 @@
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
 
-    <!-- ONE self-contained single-file exe: no .NET and no Windows App SDK needed on the machine. -->
-    <SelfContained>true</SelfContained>
-    <PublishSingleFile>true</PublishSingleFile>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    <!-- Symbols embedded in the assemblies, so the publish folder holds only the exe. -->
+    <!-- Framework-dependent: the machine needs the .NET 10 Desktop Runtime (checked by the installer). The Windows App SDK
+         runtime is bundled (WindowsAppSDKSelfContained), so it is never needed on the machine. -->
+    <SelfContained>false</SelfContained>
+    <!-- Symbols embedded in the assemblies, so the publish folder holds only the exe and its runtime files. -->
     <DebugType>embedded</DebugType>
     <PublishReadyToRun>false</PublishReadyToRun>
     <PublishTrimmed>false</PublishTrimmed>

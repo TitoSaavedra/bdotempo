@@ -1,0 +1,12 @@
+<Project>
+
+  <!--
+    Single source of truth for the app version (SemVer 2.0). It is shown in Settings, read by the updater
+    (compared with the latest GitHub release) and by the packaging scripts (installer and portable zip names).
+    Bump it here only. Pre-releases use a suffix, for example 0.2.0-beta.1.
+  -->
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+</Project>

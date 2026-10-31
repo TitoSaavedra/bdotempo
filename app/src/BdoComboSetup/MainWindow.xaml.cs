@@ -1,3 +1,4 @@
+using BdoComboSetup.Core.ViewModels;
 using BdoComboSetup.Services;
 using BdoComboSetup.Views;
 using Microsoft.UI.Xaml;
@@ -8,6 +9,9 @@ namespace BdoComboSetup;
 
 public sealed partial class MainWindow : Window
 {
+    /// <summary>The update state for the banner. A getter, because the x:Bind bindings are evaluated inside InitializeComponent.</summary>
+    public UpdateViewModel Updates => App.Services.Updates;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -68,5 +72,35 @@ public sealed partial class MainWindow : Window
             ["page"] = target.Name,
         });
         ContentFrame.Navigate(target);
+    }
+
+    /// <summary>Closing the banner (its X) is the same as "Later": hidden for this session.</summary>
+    private void UpdateBar_Closed(InfoBar sender, InfoBarClosedEventArgs args) => Updates.DismissCommand.Execute(null);
+
+    /// <summary>Shows the full release notes of the release in a dialog. Reads only; nothing is installed here.</summary>
+    private async void UpdateNotes_Click(object sender, RoutedEventArgs e)
+    {
+        var release = Updates.Release;
+        if (release is null || Content?.XamlRoot is null)
+        {
+            return;
+        }
+
+        var notes = new TextBlock
+        {
+            Text = Updates.ReleaseNotes.Length > 0 ? Updates.ReleaseNotes : App.Services.Localizer.Get("Update.Notes.Empty"),
+            TextWrapping = TextWrapping.Wrap,
+            IsTextSelectionEnabled = true,
+        };
+        var dialog = new ContentDialog
+        {
+            XamlRoot = Content.XamlRoot,
+            Title = Updates.BannerTitle,
+            Content = new ScrollViewer { Content = notes, MaxHeight = 420 },
+            CloseButtonText = App.Services.Localizer.Get("Update.Dialog.Close"),
+            DefaultButton = ContentDialogButton.Close,
+        };
+        App.Services.Logger.Debug("update.notes.opened", "Release notes dialog opened");
+        await dialog.ShowAsync();
     }
 }
