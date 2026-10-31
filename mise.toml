@@ -20,6 +20,20 @@ run = [
 description = "Download bdoclasshub.com class pages into data/classhub/ (pass --force to download again)"
 run = "python scripts/fetch_classhub.py"
 
+[tasks.import-guides]
+description = "Read the saved class pages and the client export into data/combos/ and reports/unresolved_skills.txt"
+run = "python -m bdo_combo.guides import"
+
+[tasks.build-assets]
+description = "Build the app's asset bundle (only the icons and JSON the guides reference) into app/src/BdoComboSetup/Assets/generated"
+depends = ["import-guides"]
+run = "python -m bdo_combo.guides bundle"
+
+[tasks.test-real-data]
+description = "Check the importer on the real saved pages and client export (reads game data; writes nothing)"
+env = { BDO_REAL_DATA = "1" }
+run = "python -m unittest discover -s tests -p test_guides_real_data.py -v"
+
 [tasks.validate]
 description = "Cross-check the tamer awakening combo against class_skills.json"
 run = "python -m bdo_combo validate --combo combos/tamer.awakening.json"

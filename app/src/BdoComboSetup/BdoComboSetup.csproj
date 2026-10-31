@@ -52,4 +52,11 @@
     <ProjectReference Include="..\BdoComboSetup.Core\BdoComboSetup.Core.csproj" />
   </ItemGroup>
 
+  <!-- The asset bundle from `mise run build-assets` (git-ignored, copyrighted game art): every file is embedded in the
+       exe under its own file name (catalog.json, skill-<no>.png, ...), so the single-file exe needs no loose files.
+       With no bundle folder the wildcard matches nothing and the app falls back to the file catalogs and glyphs. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\generated\*" LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

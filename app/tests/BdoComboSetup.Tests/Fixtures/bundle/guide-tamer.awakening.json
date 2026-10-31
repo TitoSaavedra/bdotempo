@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "classType": 16,
+  "classSlug": "tamer",
+  "spec": "awakening",
+  "title": "Tamer Awakening",
+  "description": "PvE Combo Guide",
+  "source": "https://bdoclasshub.com/classes/tamer/awakening/index.html",
+  "chains": [
+    {
+      "section": "skill-rotation",
+      "title": "Damage Combo (Dragon LBD)",
+      "notes": ["After Moonlight Strike, go back to Allround Spinner."],
+      "steps": [
+        {
+          "keys": "Hotkey",
+          "skills": [{ "skillNo": 1937, "nameEn": "Flow: Intimidation", "nameEs": "Flujo: Intimidación" }],
+          "extra": "opener",
+          "note": null
+        },
+        {
+          "keys": "A+RMB",
+          "skills": [{ "skillNo": 1926, "nameEn": "Legendary Beast Dance", "nameEs": "Baile de la Bestia Legendaria IV" }],
+          "extra": null,
+          "note": "Dragon stance"
+        },
+        {
+          "keys": "Hotkey",
+          "skills": [{ "skillNo": 1932, "nameEn": "Moonlight Strike", "nameEs": null }],
+          "extra": null,
+          "note": null
+        }
+      ]
+    },
+    {
+      "section": "class-specifics",
+      "title": "Skills to Lock",
+      "notes": [],
+      "steps": [
+        {
+          "keys": null,
+          "skills": [{ "skillNo": 2927, "nameEn": "Absolute: Throat-Burn", "nameEs": null }],
+          "extra": null,
+          "note": null
+        }
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "section": "skill-rotation",
+      "text": "Core DPS first: Moonlight Strike.",
+      "skills": [{ "skillNo": 1932, "nameEn": "Moonlight Strike", "nameEs": null }]
+    }
+  ],
+  "addons": [
+    {
+      "section": "class-addons",
+      "skill": { "skillNo": 1910, "nameEn": "Skybound Stab I", "nameEs": "Garuda I" },
+      "description": "Thrust the staff up and down.",
+      "effects": [{ "label": "Attack/Casting Speed", "value": "+10% for 12 sec" }]
+    }
+  ]
+}

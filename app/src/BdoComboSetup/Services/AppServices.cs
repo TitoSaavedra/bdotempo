@@ -1,3 +1,4 @@
+using BdoComboSetup.Core.Assets;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.Icons;
@@ -19,7 +20,9 @@ public sealed class AppServices : IDisposable
         AppSettingsStore settings,
         StartupOptions startup,
         ApplyComboViewModel applyCombo,
-        PreviewViewModel preview)
+        PreviewViewModel preview,
+        ICombosCatalog combos,
+        IAssetProvider assets)
     {
         Logger = logger;
         Localizer = localizer;
@@ -27,6 +30,8 @@ public sealed class AppServices : IDisposable
         Startup = startup;
         ApplyCombo = applyCombo;
         Preview = preview;
+        Combos = combos;
+        Assets = assets;
     }
 
     public AppLogger Logger { get; }
@@ -41,6 +46,12 @@ public sealed class AppServices : IDisposable
 
     public PreviewViewModel Preview { get; }
 
+    /// <summary>Classes and guides read from the embedded asset bundle.</summary>
+    public ICombosCatalog Combos { get; }
+
+    /// <summary>Skill and class icons: embedded bundle, then the file catalogs.</summary>
+    public IAssetProvider Assets { get; }
+
     public static AppServices Create(StartupOptions startup)
     {
         ArgumentNullException.ThrowIfNull(startup);
@@ -54,6 +65,9 @@ public sealed class AppServices : IDisposable
         var display = GameOptionLoader.Load(GameOptionLoader.DefaultPath, logger);
         var layouts = GameUiLayoutReader.Load(GameUiLayoutReader.DefaultPath(settings.Settings.GameAccountFolder), logger);
         var icons = IconCatalog.Load(settings.Settings.SkillIconRoot, settings.Settings.ClassHubRoot, logger);
+        var embedded = new AssemblyEmbeddedResources(typeof(AppServices).Assembly);
+        var assets = new BundledAssetProvider(embedded, icons, logger);
+        var combos = JsonCombosCatalog.Load(embedded, assets, logger);
 
         var applyCombo = new ApplyComboViewModel(
             dataSource,
@@ -75,7 +89,7 @@ public sealed class AppServices : IDisposable
             localizer,
             logger);
 
-        return new AppServices(logger, localizer, settings, startup, applyCombo, preview);
+        return new AppServices(logger, localizer, settings, startup, applyCombo, preview, combos, assets);
     }
 
     public void Dispose() => Logger.Dispose();

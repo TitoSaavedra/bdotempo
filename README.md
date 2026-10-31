@@ -179,6 +179,42 @@ link (for example a translation in another language) that answer 404 are only
 recorded. Exit code 1 means a file failed (other than 404) or the class list could
 not be read.
 
+## Combo guides and the app's asset bundle
+
+The app shows the guides of `data/classhub/` and the icons of the client export, so both are turned into files
+the app embeds. Two inputs, one run each:
+
+- `data/classhub/` (fetched above) and the client export `D:\extracted_bdo\client` (override with `BDO_CLIENT_DIR`
+  or `--client-dir`).
+
+```bash
+mise run import-guides   # saved class pages + client names -> data/combos/ and reports/unresolved_skills.txt
+mise run build-assets    # runs import-guides, then copies what the guides reference into
+                         # app/src/BdoComboSetup/Assets/generated/ (git-ignored: it holds game art)
+```
+
+- `data/combos/catalog.json`: the 32 classes with their names (English, Spanish) and the specs that have a guide.
+  Shai's three experts (Azminek, Talent, Wootaru) share the Talent guide.
+- `data/combos/guides/<class>.<spec>.json`: one guide per key, with chains (title, steps with keys, skills, extra
+  and note), tips, and add-ons. Each skill is `{skillNo, nameEn, nameEs}`. The skill number is the numeric prefix
+  of the icon file name on the site.
+- `reports/unresolved_skills.txt`: skills the guides name but `skills_es.json` does not have (their `nameEs` stays
+  null), skills with no icon in the export, and the specs that have no saved guide.
+- The bundle holds only what the guides reference: `catalog.json`, `skills.json` (names and Spanish descriptions,
+  game markup removed), `guide-<class>.<spec>.json`, `skill-<skillNo>.png` and the 32 `class-<classType>.png`.
+  Icons above 64 px are refused.
+
+The app embeds the bundle (`EmbeddedResource`, one file name per resource), so the single-file exe needs no loose
+files. Without a bundle the app still builds and runs, with glyphs for the icons.
+
+Import and bundle are standard library Python. The client export is read as UTF-8 only.
+
+Checks against real data (the saved site and the export, nothing written):
+
+```bash
+mise run test-real-data  # Tamer Awakening: 13 steps in the damage chain, 1937 first, 1932 last; 1926 and 5467 resolve
+```
+
 ## Tests and checks
 
 ```bash

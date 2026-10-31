@@ -24,6 +24,29 @@ so positions are exact at any window size.
   (`ClassHubRoot`), then a two-letter glyph. Icons are matched by skill number, never by file number.
 - **Live**: disabled ("coming next").
 
+## Combo data and assets (contract)
+
+Core types, in `BdoComboSetup.Core`:
+
+- `ICombosCatalog`: `IReadOnlyList<ClassInfo> Classes` (classType order, only classes with a guide) and
+  `Task<ComboGuide?> LoadGuideAsync(int classType, string specId)`. `JsonCombosCatalog` implements it over the embedded
+  bundle, caches each guide, and logs (never throws) on a missing or invalid file.
+- `ClassInfo(ClassType, Slug, Name, Specs)`, `SpecInfo(Id, DisplayName, GuideKey)`. Names are `BilingualText(En, Es)`;
+  `Name.For(culture)` picks Spanish for `es` cultures and falls back to English.
+- `ComboGuide(Title, Description, Source, Chains, Notes, Addons)`; `ComboChain(Section, Title, Notes, Steps)`;
+  `ComboStep(Keys, Skills, Extra, Note)`; `ComboNote(Section, Text, Skills)`; `ComboAddon(Section, Skill, Description, Effects)`.
+- `ComboSkill(SkillNo, Name, DescriptionEs, OpenIcon)`: `OpenIcon` is a `Func<Stream?>` for the icon (caller disposes).
+- `IAssetProvider`: `Stream? OpenSkillIcon(int skillNo, string? className)` and `Stream? OpenClassIcon(int classType)`.
+  `BundledAssetProvider` answers from the embedded bundle, then from `IconCatalog` (Scrappers, bdoclasshub), then null.
+  Null means: draw the glyph.
+- `IEmbeddedResources` / `AssemblyEmbeddedResources`: the bundle names are in `BundleResourceNames`.
+
+`AppServices` builds `Combos` and `Assets`. The Apply and Preview pages still use `MockComboDataSource` (characters and
+the 20 cooldown slots) and the `IconCatalog` path contract; they do not read `Combos` or `Assets` yet.
+
+Tests: `mise run test-real-data` is a Python test of the importer on the real data; the C# tests use synthetic bundle
+fixtures (`Fixtures\bundle\`, embedded in the test assembly).
+
 ## Settings
 
 `%LOCALAPPDATA%\BdoComboSetup\settings.json` (created on the first change). Keys: `BackgroundImagePath`, `SkillIconRoot`,

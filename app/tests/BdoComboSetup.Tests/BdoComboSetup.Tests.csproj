@@ -24,4 +24,9 @@
     <ProjectReference Include="..\..\src\BdoComboSetup.Core\BdoComboSetup.Core.csproj" />
   </ItemGroup>
 
+  <!-- A small synthetic bundle (same names as the app's generated bundle), embedded to test the real resource path. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Fixtures\bundle\*.json" LogicalName="%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>
