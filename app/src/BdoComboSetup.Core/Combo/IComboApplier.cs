@@ -4,11 +4,8 @@ namespace BdoComboSetup.Core.Combo;
 
 public sealed record ComboApplyRequest(
     string ClassName,
-    ComboMode Mode,
+    string SpecId,
     CharacterOption Character,
-    bool IncludeCooldownBar,
-    bool IncludeMemos,
-    bool IncludeQuickSlots,
     bool DryRun);
 
 public enum ComboApplyStatus
@@ -39,11 +36,8 @@ public sealed class StubComboApplier(AppLogger logger) : IComboApplier
         using var scope = logger.BeginOperation("combo.apply", new Dictionary<string, object?>
         {
             ["class"] = request.ClassName,
-            ["mode"] = request.Mode.ToString(),
+            ["spec"] = request.SpecId,
             ["dry_run"] = request.DryRun,
-            ["include_cooldown_bar"] = request.IncludeCooldownBar,
-            ["include_memos"] = request.IncludeMemos,
-            ["include_quick_slots"] = request.IncludeQuickSlots,
         });
 
         logger.Warn("combo.apply.not_connected", "Combo applier is a stub; nothing was written");

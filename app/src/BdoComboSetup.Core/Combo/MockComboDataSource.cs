@@ -6,14 +6,14 @@ namespace BdoComboSetup.Core.Combo;
 /// </summary>
 public sealed class MockComboDataSource : IComboDataSource
 {
-    private const string TamerClass = "Tamer";
     private const string MockDescription = "LBD Dragon damage combo";
     private const string MockSourceUrl = "https://bdoclasshub.com/classes/tamer/awakening/index.html";
 
-    public IReadOnlyList<CharacterOption> GetCharacters() =>
-        [new CharacterOption("AhrinSong", "10000000006346933")];
+    /// <summary>Tamer's classType in the game data.</summary>
+    private const int TamerClassType = 16;
 
-    public IReadOnlyList<string> GetClassNames() => [TamerClass];
+    public IReadOnlyList<CharacterOption> GetCharacters() =>
+        [new CharacterOption("AhrinSong", "10000000006346933", TamerClassType)];
 
     public ComboDefinition GetCombo(string className, ComboMode mode) =>
         new(className, mode, MockDescription, MockSourceUrl, BuildSlots());

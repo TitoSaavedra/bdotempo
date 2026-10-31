@@ -14,7 +14,8 @@ public enum SlotGroup
     Empty,
 }
 
-public sealed record CharacterOption(string Name, string Pcid);
+/// <summary>A character of the account. ClassType is the game's classType when known; it selects the default class.</summary>
+public sealed record CharacterOption(string Name, string Pcid, int? ClassType = null);
 
 /// <summary>One cooldown slot as stored in a combo. QuickPosition is 1..9, or 0 when not on the quick bar.</summary>
 /// <param name="SkillName">Null for a placeholder slot. The view shows it as "Skill N".</param>

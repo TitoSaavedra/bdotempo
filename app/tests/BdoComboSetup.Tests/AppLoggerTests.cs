@@ -76,12 +76,9 @@ public sealed class AppLoggerTests : IDisposable
     {
         var applier = new StubComboApplier(_log.Logger);
         var request = new ComboApplyRequest(
-            "Tamer",
-            ComboMode.Awakening,
+            "tamer",
+            "awakening",
             new CharacterOption("TestName", "1"),
-            IncludeCooldownBar: true,
-            IncludeMemos: true,
-            IncludeQuickSlots: true,
             DryRun: true);
 
         var result = await applier.ApplyAsync(request);
