@@ -363,6 +363,15 @@
   <data name="Preview.Capture.Failed" xml:space="preserve">
     <value>No se pudo capturar la ventana del juego: fondo negro.</value>
   </data>
+  <data name="Preview.SlotEditHint.Text" xml:space="preserve">
+    <value>Haz clic en un slot de enfriamiento para cambiar su habilidad. La guía no cambia: el cambio queda en tu combo.</value>
+  </data>
+  <data name="Preview.SlotEdit.NoCombo" xml:space="preserve">
+    <value>Elige una clase y una guía en Aplicar combo para cambiar habilidades.</value>
+  </data>
+  <data name="Preview.SlotEdit.NoStep" xml:space="preserve">
+    <value>El slot {0} no tiene ningún paso en el combo. Añade la habilidad desde Aplicar combo.</value>
+  </data>
   <data name="NavSettingsItem.Content" xml:space="preserve"><value>Configuración</value></data>
   <data name="Settings.Title.Text" xml:space="preserve"><value>Configuración</value></data>
   <data name="Settings.RestartBar.Title" xml:space="preserve"><value>Reinicia para aplicar los cambios</value></data>

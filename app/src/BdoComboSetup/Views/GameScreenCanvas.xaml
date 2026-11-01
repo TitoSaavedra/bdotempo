@@ -18,7 +18,8 @@
             <Grid />
         </ItemsPanelTemplate>
 
-        <!-- Cooldown slot: 50 x 50, no frame, no background; the 42 x 42 icon at (4, 7); the sweep and the time at (3, 6) while cooling down. -->
+        <!-- Cooldown slot: 50 x 50, no frame, no background; the 42 x 42 icon at (4, 7); the sweep and the time at (3, 6) while cooling down.
+             A click opens the skill picker of the slot (the class skills at their top rank). -->
         <DataTemplate x:Key="CooldownSlotTemplate" x:DataType="core:SlotViewModel">
             <Grid
                 Width="50"
@@ -28,6 +29,8 @@
                 Margin="{x:Bind Offset, Mode=OneWay, Converter={StaticResource OffsetToMargin}}"
                 Opacity="{x:Bind Opacity, Mode=OneWay}"
                 RenderTransformOrigin="0,0"
+                Background="Transparent"
+                Tapped="CooldownSlot_Tapped"
                 Visibility="{x:Bind IsDrawn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <Grid.RenderTransform>
                     <ScaleTransform ScaleX="{x:Bind Scale, Mode=OneWay}" ScaleY="{x:Bind Scale, Mode=OneWay}" />
@@ -138,6 +141,25 @@
                     StrokeThickness="1"
                     StrokeDashArray="3 2"
                     Visibility="{x:Bind ShowsDashedOutline, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- One row of the skill picker of a cooldown slot: the skill icon and its name. -->
+        <DataTemplate x:Key="SkillPickTemplate" x:DataType="core:SkillOption">
+            <Grid Padding="4,2" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <controls:AssetIcon
+                    Width="28"
+                    Height="28"
+                    IconSource="{x:Bind Skill.OpenIcon, Mode=OneTime}" />
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Text="{x:Bind Name, Mode=OneTime}"
+                    TextTrimming="CharacterEllipsis" />
             </Grid>
         </DataTemplate>
     </UserControl.Resources>

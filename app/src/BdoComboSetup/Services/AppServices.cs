@@ -31,6 +31,9 @@ public sealed class AppServices : IDisposable
     /// <summary>The skill class table entry of the asset pack (written by <c>mise run build-assets</c>, packed by <c>mise run pack-assets</c>).</summary>
     private const string SkillClassesResource = "skill_classes.json";
 
+    /// <summary>The per-class skill catalog of the asset pack: every class at its top rank, for the slot editor.</summary>
+    private const string ClassSkillsResource = "class-skills.json";
+
     private AppServices(
         AppLogger logger,
         ResourceLocalizer localizer,
@@ -122,6 +125,7 @@ public sealed class AppServices : IDisposable
         var assetPackLoad = AssetPackLoader.LoadFile(AssetPackLoader.DefaultPath, logger);
         var packResources = new AssetPackResources(assetPackLoad.Pack);
         var skillClasses = LoadSkillClasses(packResources, logger);
+        var classSkillCatalog = LoadClassSkills(packResources, logger);
         var demoRoot = Path.Combine(demoFolder, "BlackDesert");
         if (startup.DemoData)
         {
@@ -137,6 +141,10 @@ public sealed class AppServices : IDisposable
         var display = startup.DemoData ? DemoGameLayouts.Display : GameOptionLoader.Load(GameOptionLoader.DefaultPath, logger);
         var assets = new BundledAssetProvider(packResources, logger);
         var combos = JsonCombosCatalog.Load(packResources, assets, logger);
+
+        // The skills of every class at their top rank: the rows of the slot editor's picker, and what brings a skill the
+        // user put in a slot back when the saved combo is opened again.
+        var classSkills = new ClassSkillSource(classSkillCatalog, assets);
 
         // The data folder and the account are read live: a change in the settings applies to the Apply page at once.
         var locator = new GameDataLocator(() => settings.Settings.GameDataRoot, () => settings.Settings.GameAccount, logger);
@@ -183,7 +191,8 @@ public sealed class AppServices : IDisposable
             writeConfirmation,
             localizer,
             culture,
-            logger);
+            logger,
+            classSkills);
 
         // The Preview page reads its layouts and the quick keys of the active account once, at startup (restart applies a change).
         var activeAccount = startup.DemoData ? DemoGameFiles.AccountMain : locator.TryResolveAccount();
@@ -199,7 +208,7 @@ public sealed class AppServices : IDisposable
             : character => character is null || activeAccount is null
                 ? null
                 : QuickSlotKeyReader.Load(locator.CharacterFilePath(activeAccount, character.Pcid), logger);
-        var slots = new ComboPreviewSlotSource(applyCombo, boundKeysOf);
+        var slots = new ComboPreviewSlotSource(applyCombo, boundKeysOf, classSkills);
 
         // The background is the live capture of the game window. The demo never captures: its images stay black.
         IGameScreenSource gameScreen = startup.DemoData
@@ -214,7 +223,8 @@ public sealed class AppServices : IDisposable
             settings,
             new PreviewStartup(startup.Layout, startup.ShowHiddenSlots, startup.CooldownDemo, startup.Zoom),
             localizer,
-            logger);
+            logger,
+            slots);
 
         var settingsView = new SettingsViewModel(settings, locator, localizer, logger, language);
 
@@ -293,6 +303,36 @@ public sealed class AppServices : IDisposable
         {
             logger.Error("skill_classes.invalid", "The skill class table could not be read; classes are unknown", ex);
             return SkillClassTable.Empty;
+        }
+    }
+
+    /// <summary>
+    /// The per-class skill catalog of the asset pack (every class at its top rank), the same way as the skill class table:
+    /// a missing or broken catalog is logged and the slot editor's picker stays empty; the rest of the app still works.
+    /// </summary>
+    private static SkillCatalog LoadClassSkills(IEmbeddedResources packResources, AppLogger logger)
+    {
+        using var stream = packResources.Open(ClassSkillsResource);
+        if (stream is null)
+        {
+            logger.Warn("class_skills.missing", "The asset pack has no class skill catalog; the slot editor cannot offer skills");
+            return SkillCatalog.Empty;
+        }
+
+        try
+        {
+            using var reader = new StreamReader(stream);
+            var catalog = SkillCatalog.Parse(reader.ReadToEnd());
+            logger.Info("class_skills.loaded", "Class skill catalog loaded", new Dictionary<string, object?>
+            {
+                ["classes"] = catalog.ClassCount,
+            });
+            return catalog;
+        }
+        catch (FormatException ex)
+        {
+            logger.Error("class_skills.invalid", "The class skill catalog could not be read; the slot editor cannot offer skills", ex);
+            return SkillCatalog.Empty;
         }
     }
 

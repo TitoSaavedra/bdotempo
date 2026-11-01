@@ -363,6 +363,15 @@
   <data name="Preview.Capture.Failed" xml:space="preserve">
     <value>The game window could not be captured: black background.</value>
   </data>
+  <data name="Preview.SlotEditHint.Text" xml:space="preserve">
+    <value>Click a cooldown slot to change its skill. The guide is not touched: the change stays in your combo.</value>
+  </data>
+  <data name="Preview.SlotEdit.NoCombo" xml:space="preserve">
+    <value>Choose a class and a guide in Apply combo to change skills.</value>
+  </data>
+  <data name="Preview.SlotEdit.NoStep" xml:space="preserve">
+    <value>Slot {0} has no step in the combo. Add the skill from Apply combo.</value>
+  </data>
   <data name="NavSettingsItem.Content" xml:space="preserve"><value>Settings</value></data>
   <data name="Settings.Title.Text" xml:space="preserve"><value>Settings</value></data>
   <data name="Settings.RestartBar.Title" xml:space="preserve"><value>Restart to apply the changes</value></data>

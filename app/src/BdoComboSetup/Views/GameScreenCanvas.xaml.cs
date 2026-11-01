@@ -1,7 +1,9 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices.WindowsRuntime;
 using BdoComboSetup.Core.Game;
+using BdoComboSetup.Core.Search;
 using BdoComboSetup.Core.ViewModels;
+using BdoComboSetup.Views.Controls;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -185,6 +187,49 @@ public sealed partial class GameScreenCanvas : UserControl
         {
             Poll();
         }
+    }
+
+    /// <summary>
+    /// A click on a cooldown slot opens the skill picker of that slot: the searchable list of the class skills at their top
+    /// rank (icon and name). Picking one replaces the skill of that slot in the combo the Apply page is editing; the guide is
+    /// never touched. Quick slots are not edited here: they follow the quick positions of the combo.
+    /// </summary>
+    private void CooldownSlot_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (_viewModel is not { CanPickSkill: true } viewModel || sender is not FrameworkElement { DataContext: SlotViewModel slot } anchor)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        viewModel.ClearSlotEditMessage();
+        ShowSkillPicker(anchor, slot, viewModel);
+    }
+
+    /// <summary>Opens the picker of one slot under the slot itself. It is built here because every slot opens its own.</summary>
+    private void ShowSkillPicker(FrameworkElement anchor, SlotViewModel slot, PreviewViewModel viewModel)
+    {
+        var list = new SearchableList
+        {
+            Width = 320,
+            ItemsSource = viewModel.SkillOptions,
+            ItemTemplate = (DataTemplate)Resources["SkillPickTemplate"],
+        };
+        list.SetFields(item => SearchFields.ForSkill((SkillOption)item));
+
+        var flyout = new Flyout { Content = list };
+        list.ItemChosen += (_, item) =>
+        {
+            if (item is SkillOption option)
+            {
+                viewModel.TryAssignSkill(slot.Number, option);
+            }
+
+            flyout.Hide();
+            list.Reset();
+        };
+
+        flyout.ShowAt(anchor);
     }
 
     private void ApplyScale()

@@ -41,6 +41,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     private readonly ILocalizer _localizer;
     private readonly CultureInfo _culture;
     private readonly AppLogger _logger;
+    private readonly ClassSkillSource? _classSkills;
     private readonly Dictionary<(int ClassType, string SpecId), ComboEditorViewModel> _editors = new();
     private ComboEditorViewModel? _observedEditor;
     private int _loadVersion;
@@ -60,7 +61,8 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         WriteConfirmation confirmation,
         ILocalizer localizer,
         CultureInfo culture,
-        AppLogger logger)
+        AppLogger logger,
+        ClassSkillSource? classSkills = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(assets);
@@ -80,6 +82,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         _localizer = localizer;
         _culture = culture;
         _logger = logger;
+        _classSkills = classSkills;
 
         Characters = new ObservableCollection<CharacterOption>();
         Classes = new ObservableCollection<ClassOptionViewModel>(
@@ -638,7 +641,15 @@ public sealed partial class ApplyComboViewModel : ObservableObject
                     return;
                 }
 
-                editor = ComboEditorViewModel.Create(classOption.ClassType, spec.Id, guide, profile, _localizer, _culture, _logger);
+                editor = ComboEditorViewModel.Create(
+                    classOption.ClassType,
+                    spec.Id,
+                    guide,
+                    profile,
+                    _localizer,
+                    _culture,
+                    _logger,
+                    classSkills: _classSkills);
                 _editors[key] = editor;
             }
 

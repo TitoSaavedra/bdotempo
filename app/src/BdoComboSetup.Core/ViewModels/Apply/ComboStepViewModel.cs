@@ -9,6 +9,7 @@ namespace BdoComboSetup.Core.ViewModels;
 /// One step of a chain: a guide step (<see cref="BaseStep"/> is its index in the guide chain) or a skill the user added
 /// (<see cref="IsAdded"/>). The customization fields are what the user can change; the rest comes from the guide.
 /// Every change of a customization field raises <see cref="Edited"/>, which the editor uses to track unsaved changes.
+/// The skill itself can be replaced too (<see cref="ReplacedSkill"/>): the slot editor does it, and it is a customization.
 /// </summary>
 public sealed partial class ComboStepViewModel : ObservableObject
 {
@@ -21,6 +22,9 @@ public sealed partial class ComboStepViewModel : ObservableObject
 
     private readonly ILocalizer _localizer;
     private readonly CultureInfo _culture;
+
+    /// <summary>The skill the slot editor picked for this step, or null for the guide's own skill.</summary>
+    private ComboSkill? _replacedSkill;
 
     public ComboStepViewModel(
         int? baseStep,
@@ -76,7 +80,15 @@ public sealed partial class ComboStepViewModel : ObservableObject
 
     public bool HasGuideNotes => GuideNotes.Length > 0;
 
-    public ComboSkill? PrimarySkill => Skills.Count > 0 ? Skills[0] : null;
+    /// <summary>
+    /// The skill the slot editor put in this step, or null when the step uses the guide's skill. The keys, the extra line,
+    /// the note, the memo and the custom name stay the guide's: only the skill changes.
+    /// </summary>
+    public ComboSkill? ReplacedSkill => _replacedSkill;
+
+    public bool HasReplacedSkill => _replacedSkill is not null;
+
+    public ComboSkill? PrimarySkill => _replacedSkill ?? (Skills.Count > 0 ? Skills[0] : null);
 
     public string SkillName => PrimarySkill is { } skill ? skill.Name.For(_culture) : _localizer.Get("Apply.NoSkill");
 
@@ -147,6 +159,49 @@ public sealed partial class ComboStepViewModel : ObservableObject
         : _localizer.Format("Apply.StepAutomationNameWithKey", Position, DisplayName, KeyLegend);
 
     internal void RaiseEdited() => Edited?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>
+    /// Puts another skill in the step: the edit of the slot editor. It is a customization of the step, so it counts as
+    /// unsaved, it is saved in the profile (the step writes its skill number) and the guide keeps its own skill.
+    /// </summary>
+    public void ReplacePrimarySkill(ComboSkill skill)
+    {
+        ArgumentNullException.ThrowIfNull(skill);
+        if (_replacedSkill?.SkillNo == skill.SkillNo)
+        {
+            return;
+        }
+
+        _replacedSkill = skill;
+        RaisePrimarySkillChanged();
+        RaiseEdited();
+    }
+
+    /// <summary>Back to the skill of the guide: drops the replacement of the slot editor. Nothing happens without one.</summary>
+    public void RestoreGuideSkill()
+    {
+        if (_replacedSkill is null)
+        {
+            return;
+        }
+
+        _replacedSkill = null;
+        RaisePrimarySkillChanged();
+        RaiseEdited();
+    }
+
+    private void RaisePrimarySkillChanged()
+    {
+        OnPropertyChanged(nameof(PrimarySkill));
+        OnPropertyChanged(nameof(ReplacedSkill));
+        OnPropertyChanged(nameof(HasReplacedSkill));
+        OnPropertyChanged(nameof(SkillName));
+        OnPropertyChanged(nameof(SkillDescription));
+        OnPropertyChanged(nameof(HasDescription));
+        OnPropertyChanged(nameof(Glyph));
+        OnPropertyChanged(nameof(DisplayName));
+        OnPropertyChanged(nameof(AutomationName));
+    }
 
     partial void OnCustomNameChanged(string? value) => RaiseEdited();
 

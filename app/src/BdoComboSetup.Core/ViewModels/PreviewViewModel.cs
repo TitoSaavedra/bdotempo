@@ -11,7 +11,9 @@ namespace BdoComboSetup.Core.ViewModels;
 /// <summary>
 /// The Preview page: only the 20 cooldown slots and the 20 quick slots, each drawn at its saved position (UIData rows of the
 /// selected layout), over the live capture of the game window (black when the game is not visible). The skills come from
-/// <see cref="IPreviewSlotSource"/>, which follows the combo edited on the Apply page; this page does not edit it.
+/// <see cref="IPreviewSlotSource"/>, which follows the combo edited on the Apply page. The page also edits that combo: a click
+/// on a cooldown slot opens the class skill catalog and the picked skill replaces the one of that slot (see
+/// <see cref="ISlotSkillEditor"/>).
 /// </summary>
 public sealed partial class PreviewViewModel : ObservableObject, IDisposable
 {
@@ -31,16 +33,21 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
     public const double FrameMargin = 12;
 
     private readonly IPreviewSlotSource _slots;
+    private readonly ISlotSkillEditor? _slotEditor;
     private readonly ILocalizer _localizer;
     private readonly AppLogger _logger;
     private readonly GameUiLayoutSet? _uiLayouts;
     private readonly AppSettingsStore _settings;
     private GameUiLayoutId _layoutId;
+    private int? _skillClassType;
     private int _missingPanelCount;
     private double _viewportWidth;
     private double _viewportHeight;
     private bool _disposed;
 
+    /// <param name="slotEditor">
+    /// The write side of the page: what a pick in a cooldown slot changes. Null (the preview alone) leaves the slots read-only.
+    /// </param>
     public PreviewViewModel(
         IPreviewSlotSource slots,
         GameDisplaySettings? displaySettings,
@@ -49,7 +56,8 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         AppSettingsStore settings,
         PreviewStartup startup,
         ILocalizer localizer,
-        AppLogger logger)
+        AppLogger logger,
+        ISlotSkillEditor? slotEditor = null)
     {
         ArgumentNullException.ThrowIfNull(slots);
         ArgumentNullException.ThrowIfNull(gameScreen);
@@ -59,6 +67,7 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(logger);
 
         _slots = slots;
+        _slotEditor = slotEditor;
         GameScreen = gameScreen;
         _localizer = localizer;
         _logger = logger;
@@ -79,6 +88,7 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         QuickSlots = new ObservableCollection<QuickSlotViewModel>(
             Enumerable.Range(1, QuickSlotKeys.SlotCount)
                 .Select(position => new QuickSlotViewModel(position, slots.Quick(position), slots.QuickKey(position), localizer)));
+        SkillOptions = new ObservableCollection<SkillOption>();
         LayoutOptions =
         [
             new LayoutOption(GameUiLayoutId.General, localizer.Get("Preview.Layout.General")),
@@ -87,6 +97,7 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
             new LayoutOption(GameUiLayoutId.Preset3, localizer.Get("Preview.Layout.Preset3")),
         ];
 
+        RefreshSkillOptions();
         Recompute();
         slots.Changed += OnSourceChanged;
     }
@@ -99,6 +110,64 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
 
     /// <summary>The four layouts of the layout selector, General first.</summary>
     public IReadOnlyList<LayoutOption> LayoutOptions { get; }
+
+    /// <summary>
+    /// The skills a cooldown slot can take: the class of the combo being edited at its top rank, from the class skill
+    /// catalog. Refilled when the Apply page opens another class; empty when there is no catalog for the class.
+    /// </summary>
+    public ObservableCollection<SkillOption> SkillOptions { get; }
+
+    /// <summary>True when clicking a cooldown slot can change its skill: a combo is open and its class has skills to pick.</summary>
+    public bool CanPickSkill => _slotEditor is not null && SkillOptions.Count > 0;
+
+    /// <summary>
+    /// The line the slot picker leaves behind: empty normally, otherwise why the last pick did nothing (there is no combo
+    /// open, or the slot has no step in the combo). The view shows it under the slots.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSlotEditMessage))]
+    private string _slotEditMessage = string.Empty;
+
+    public bool HasSlotEditMessage => SlotEditMessage.Length > 0;
+
+    /// <summary>Clears the line of the last pick (the view calls it when another slot is clicked).</summary>
+    public void ClearSlotEditMessage() => SlotEditMessage = string.Empty;
+
+    /// <summary>
+    /// Puts a skill of the class catalog in a cooldown slot of the combo being edited: the one edit this page makes. The guide
+    /// is never touched; the change is an edit of the working copy, so the Apply page shows it as unsaved and "Save my combo"
+    /// keeps it. False when nothing was changed (see <see cref="SlotEditMessage"/>).
+    /// </summary>
+    public bool TryAssignSkill(int cooldownNumber, SkillOption option)
+    {
+        ArgumentNullException.ThrowIfNull(option);
+        SlotEditMessage = string.Empty;
+
+        if (_slotEditor is not { } editor)
+        {
+            return false;
+        }
+
+        if (editor.ClassType is null)
+        {
+            SlotEditMessage = _localizer.Get("Preview.SlotEdit.NoCombo");
+            return false;
+        }
+
+        if (!editor.ReplaceCooldownSkill(cooldownNumber, option.SkillNo))
+        {
+            SlotEditMessage = _localizer.Format("Preview.SlotEdit.NoStep", cooldownNumber);
+            return false;
+        }
+
+        _logger.Info("preview.slot_skill.replaced", "A skill was put in a cooldown slot from the slot editor", new Dictionary<string, object?>
+        {
+            ["slot"] = cooldownNumber,
+            ["skill_no"] = option.SkillNo,
+            ["class_type"] = editor.ClassType,
+        });
+        return true;
+    }
 
     /// <summary>The background: the live capture of the game window, black when it is not visible.</summary>
     public IGameScreenSource GameScreen { get; }
@@ -273,11 +342,43 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
             quick.Key = _slots.QuickKey(quick.Position);
         }
 
+        // Another guide can be a class with other skills: the picker follows the class of the combo being edited.
+        RefreshSkillOptions();
         ApplyCooldownDemo();
         _logger.Debug("preview.source.refreshed", "Preview slots refreshed from the combo", new Dictionary<string, object?>
         {
             ["cooldown_filled"] = CooldownSlots.Count(slot => slot.HasSkill),
             ["quick_filled"] = QuickSlots.Count(quick => quick.HasSkill),
+        });
+    }
+
+    /// <summary>
+    /// Fills <see cref="SkillOptions"/> from the class of the combo being edited. It only rebuilds when the class changed:
+    /// the options are the same SkillOption rows the editor resolves a saved skill with, so replacing one twice is cheap.
+    /// </summary>
+    private void RefreshSkillOptions()
+    {
+        var classType = _slotEditor?.ClassType;
+        if (classType == _skillClassType)
+        {
+            return;
+        }
+
+        _skillClassType = classType;
+        SkillOptions.Clear();
+        if (classType is not null && _slotEditor is { } editor)
+        {
+            foreach (var option in editor.Skills)
+            {
+                SkillOptions.Add(option);
+            }
+        }
+
+        OnPropertyChanged(nameof(CanPickSkill));
+        _logger.Info("preview.skills.loaded", "Skills offered by the slot editor", new Dictionary<string, object?>
+        {
+            ["class_type"] = classType,
+            ["skills"] = SkillOptions.Count,
         });
     }
 

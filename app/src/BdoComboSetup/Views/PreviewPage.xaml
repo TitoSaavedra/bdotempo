@@ -46,8 +46,20 @@
             Grid.Row="1"
             DataContext="{x:Bind ViewModel}" />
 
-        <!-- Status: only what the user needs to know (a missing layout, or why the background is black). -->
+        <!-- Status: only what the user needs to know (a missing layout, why the background is black, how the slot editor works
+             and why the last pick did nothing). -->
         <StackPanel Grid.Row="2" Spacing="2">
+            <TextBlock
+                Text="{x:Bind ViewModel.SlotEditMessage, Mode=OneWay}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                TextWrapping="Wrap"
+                Visibility="{x:Bind ViewModel.HasSlotEditMessage, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+            <TextBlock
+                x:Uid="Preview/SlotEditHint"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Opacity="0.7"
+                TextWrapping="Wrap" />
             <TextBlock
                 Text="{x:Bind ViewModel.LayoutStatusText, Mode=OneWay}"
                 Style="{StaticResource CaptionTextBlockStyle}"

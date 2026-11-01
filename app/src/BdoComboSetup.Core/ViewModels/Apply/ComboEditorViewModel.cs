@@ -29,6 +29,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     private readonly CultureInfo _culture;
     private readonly AppLogger _logger;
     private readonly IChainKindResolver _kinds;
+    private readonly ClassSkillSource? _classSkills;
     private readonly Dictionary<int, ComboSkill> _skillsByNo;
     private bool _tracking;
 
@@ -39,7 +40,8 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         ILocalizer localizer,
         CultureInfo culture,
         AppLogger logger,
-        IChainKindResolver kinds)
+        IChainKindResolver kinds,
+        ClassSkillSource? classSkills)
     {
         ClassType = classType;
         SpecId = specId;
@@ -48,6 +50,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         _culture = culture;
         _logger = logger;
         _kinds = kinds;
+        _classSkills = classSkills;
 
         AvailableSkills = BuildAvailableSkills(guide, culture);
         _skillsByNo = AvailableSkills.ToDictionary(option => option.SkillNo, option => option.Skill);
@@ -154,6 +157,10 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     /// Builds the working copy of a guide. The profile, when given, orders the steps, drops the removed ones, adds the
     /// added ones and sets the names, memos and slots. Anything in the profile that does not fit the guide is skipped and logged.
     /// </summary>
+    /// <param name="classSkills">
+    /// The class skill catalog: it brings back a skill the slot editor put in a step and it is not in the guide. Null: such a
+    /// saved step falls back to the guide's skill.
+    /// </param>
     public static ComboEditorViewModel Create(
         int classType,
         string specId,
@@ -162,19 +169,31 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         ILocalizer localizer,
         CultureInfo culture,
         AppLogger logger,
-        IChainKindResolver? kinds = null)
+        IChainKindResolver? kinds = null,
+        ClassSkillSource? classSkills = null)
     {
         ArgumentNullException.ThrowIfNull(guide);
         ArgumentNullException.ThrowIfNull(localizer);
         ArgumentNullException.ThrowIfNull(culture);
         ArgumentNullException.ThrowIfNull(logger);
 
-        var editor = new ComboEditorViewModel(classType, specId, guide, localizer, culture, logger, kinds ?? TitleChainKindResolver.Instance);
+        var editor = new ComboEditorViewModel(
+            classType,
+            specId,
+            guide,
+            localizer,
+            culture,
+            logger,
+            kinds ?? TitleChainKindResolver.Instance,
+            classSkills);
         editor.LoadChains(profile);
         return editor;
     }
 
-    /// <summary>The profile that reproduces this working copy: every chain, in order, with the customization.</summary>
+    /// <summary>
+    /// The profile that reproduces this working copy: every chain, in order, with the customization. A step whose skill the
+    /// slot editor replaced writes that skill number, so opening the combo again shows the same skill.
+    /// </summary>
     public ComboProfile ToProfile() =>
         new(
             ClassType,
@@ -183,7 +202,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
                 chain.Index,
                 chain.Steps.Select(step => new ComboProfileStep(
                     step.BaseStep,
-                    step.IsAdded ? step.PrimarySkill?.SkillNo : null,
+                    step.IsAdded || step.HasReplacedSkill ? step.PrimarySkill?.SkillNo : null,
                     NullIfBlank(step.CustomName),
                     NullIfBlank(step.Memo),
                     step.CooldownSlot,
@@ -250,6 +269,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         step.Memo = null;
         step.CooldownSlot = null;
         step.QuickPosition = null;
+        step.RestoreGuideSkill();
         _logger.Debug("apply.step.reset", "Step customization reset", new Dictionary<string, object?>
         {
             ["base_step"] = step.BaseStep,
@@ -357,6 +377,44 @@ public sealed partial class ComboEditorViewModel : ObservableObject
 
         SlotAssignment.Assign(AllSteps(), step, position, item => item.QuickPosition, (item, value) => item.QuickPosition = value);
         OnPropertyChanged(nameof(SelectedQuickOption));
+    }
+
+    /// <summary>
+    /// Puts another skill in the step that holds a cooldown slot: the edit that the "Slot editor" page makes. The step keeps
+    /// its place in the chain, its keys, notes, memo, quick position and custom name; only the skill changes.
+    /// <para>
+    /// It is a customization of the working copy, so the guide is never touched, the change counts as unsaved, the preview
+    /// refreshes (<see cref="ContentChanged"/>) and <see cref="ToProfile"/> writes the skill number, which
+    /// <see cref="Create"/> resolves again through the class skill catalog. False when no step holds that slot.
+    /// </para>
+    /// </summary>
+    public bool ReplaceCooldownSkill(int cooldownSlot, ComboSkill skill)
+    {
+        ArgumentNullException.ThrowIfNull(skill);
+        if (!SlotAssignment.IsCooldownSlot(cooldownSlot))
+        {
+            throw new ArgumentOutOfRangeException(nameof(cooldownSlot), cooldownSlot, "Cooldown slots are 1 to 20.");
+        }
+
+        var step = AllSteps().FirstOrDefault(item => item.CooldownSlot == cooldownSlot);
+        if (step is null)
+        {
+            _logger.Info("apply.slot_skill.no_step", "A cooldown slot with no step in the combo cannot take a skill", new Dictionary<string, object?>
+            {
+                ["slot"] = cooldownSlot,
+            });
+            return false;
+        }
+
+        step.ReplacePrimarySkill(skill);
+        _skillsByNo[skill.SkillNo] = skill;
+        _logger.Info("apply.slot_skill.replaced", "The skill of a cooldown slot was replaced", new Dictionary<string, object?>
+        {
+            ["slot"] = cooldownSlot,
+            ["skill_no"] = skill.SkillNo,
+            ["added_step"] = step.IsAdded,
+        });
+        return true;
     }
 
     /// <summary>Called by a chain when its steps changed (moved, added, removed).</summary>
@@ -621,7 +679,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
                 }
 
                 var guideStep = chain.Steps[baseStep];
-                steps.Add(new ComboStepViewModel(
+                var step = new ComboStepViewModel(
                     baseStep,
                     guideStep.Skills,
                     guideStep.Keys,
@@ -632,9 +690,11 @@ public sealed partial class ComboEditorViewModel : ObservableObject
                     entry.CustomName,
                     entry.Memo,
                     entry.CooldownSlot,
-                    entry.QuickPosition));
+                    entry.QuickPosition);
+                RestoreReplacedSkill(step, entry.SkillNo);
+                steps.Add(step);
             }
-            else if (entry.SkillNo is { } skillNo && _skillsByNo.TryGetValue(skillNo, out var skill))
+            else if (entry.SkillNo is { } skillNo && ResolveSkill(skillNo) is { } skill)
             {
                 steps.Add(new ComboStepViewModel(null, [skill], null, null, null, _localizer, _culture, entry.CustomName, entry.Memo, entry.CooldownSlot, entry.QuickPosition));
             }
@@ -653,6 +713,46 @@ public sealed partial class ComboEditorViewModel : ObservableObject
             ["chain"] = chainIndex,
             ["reason"] = reason,
         });
+
+    /// <summary>
+    /// A saved step of the guide may name another skill: the one the slot editor put there. It is resolved through the guide
+    /// first and the class skill catalog second; when neither has it, the guide's own skill stays and the difference is logged.
+    /// </summary>
+    private void RestoreReplacedSkill(ComboStepViewModel step, int? savedSkillNo)
+    {
+        if (savedSkillNo is not { } skillNo || step.PrimarySkill?.SkillNo == skillNo)
+        {
+            return;
+        }
+
+        if (ResolveSkill(skillNo) is { } skill)
+        {
+            step.ReplacePrimarySkill(skill);
+            return;
+        }
+
+        _logger.Warn("apply.profile.skill_skipped", "A saved step names a skill that is not in the guide or the class catalog; the guide's skill stays", new Dictionary<string, object?>
+        {
+            ["skill_no"] = skillNo,
+        });
+    }
+
+    /// <summary>The skill of the guide or, failing that, of the class catalog of this class. Null when both do not know it.</summary>
+    private ComboSkill? ResolveSkill(int skillNo)
+    {
+        if (_skillsByNo.TryGetValue(skillNo, out var known))
+        {
+            return known;
+        }
+
+        var resolved = _classSkills?.Find(ClassType, skillNo);
+        if (resolved is not null)
+        {
+            _skillsByNo[skillNo] = resolved;
+        }
+
+        return resolved;
+    }
 
     /// <summary>Clears cooldown slots and quick positions that are out of range or held twice (the first holder keeps them).</summary>
     private void ClearInvalidSlots(IReadOnlyList<ComboStepViewModel> steps)
