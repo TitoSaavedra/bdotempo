@@ -658,7 +658,7 @@
     <value>Character names (OCR)</value>
   </data>
   <data name="Settings.ScanHint.Text" xml:space="preserve">
-    <value>First open Black Desert and leave it at the character selection screen with the list scrolled to the top. When you start, the app reads the visible rows and draws a green box over the game; scroll the list down slowly to the end and press Finish. You can scroll up and down: rows already read are not counted twice. Nothing is ever sent to the game.</value>
+    <value>First open Black Desert and stay at the character selection screen. The list does not need to be at the top: the app reads the scroll bar to know where you are. When you start, it reads the visible rows and draws a green box over the game; scroll up or down until every character is read, then press Finish. Rows already read are not counted twice. Nothing is ever sent to the game.</value>
   </data>
   <data name="Settings.ScanDialogTitle" xml:space="preserve">
     <value>Open Black Desert</value>

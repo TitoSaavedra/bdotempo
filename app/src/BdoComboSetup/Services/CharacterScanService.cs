@@ -21,10 +21,10 @@ namespace BdoComboSetup.Services;
 public sealed class CharacterScanService : IDisposable
 {
     /// <summary>How often the game window is looked at and the capture is kept alive.</summary>
-    private const int PollIntervalMs = 500;
+    private const int PollIntervalMs = 200;
 
-    /// <summary>At most one OCR pass per interval: recognizing a 3440x1440 frame is not free.</summary>
-    private const int OcrIntervalMs = 1100;
+    /// <summary>At most one OCR pass per interval; the overlay is redrawn after each pass.</summary>
+    private const int OcrIntervalMs = 250;
 
     private readonly AppLogger _logger;
     private readonly IReadOnlyList<ClassChoice> _classes;

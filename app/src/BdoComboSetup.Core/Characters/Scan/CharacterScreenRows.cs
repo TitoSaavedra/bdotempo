@@ -29,7 +29,11 @@ public sealed record CharacterRowCandidate(
     double Right,
     double Bottom,
     double LevelLeft,
-    string? Memo = null);
+    string? Memo = null,
+    double MemoLeft = 0,
+    double MemoTop = 0,
+    double MemoRight = 0,
+    double MemoBottom = 0);
 
 /// <summary>
 /// Reads the rows of the character selection screen out of the words of an OCR pass. The screen shows, one row per
@@ -70,7 +74,15 @@ public static partial class CharacterScreenRowParser
         {
             if (ReadBand(band, frameWidth, frameHeight) is { } row)
             {
-                rows.Add(row with { Memo = FindMemo(band, bands, row) });
+                var memo = FindMemo(band, bands, row);
+                rows.Add(row with
+                {
+                    Memo = memo?.Text,
+                    MemoLeft = memo?.Left ?? 0,
+                    MemoTop = memo?.Top ?? 0,
+                    MemoRight = memo?.Right ?? 0,
+                    MemoBottom = memo?.Bottom ?? 0,
+                });
             }
         }
 
@@ -82,7 +94,7 @@ public static partial class CharacterScreenRowParser
     /// The memo of a row is the warm (orange) line just above its level, such as "FARM" or "KUTUM". Not every character has
     /// one; the gray location line below the name is not a memo. Only color tells them apart, so no text is guessed.
     /// </summary>
-    private static string? FindMemo(Band band, List<Band> bands, CharacterRowCandidate row)
+    private static Band? FindMemo(Band band, List<Band> bands, CharacterRowCandidate row)
     {
         var height = Math.Max(1, row.Bottom - row.Top);
         Band? best = null;
@@ -104,7 +116,7 @@ public static partial class CharacterScreenRowParser
             bestGap = gap;
         }
 
-        return best?.Text;
+        return best;
     }
 
     /// <summary>True when the band holds a level word (it is a character row, not a memo).</summary>
@@ -282,6 +294,10 @@ public static partial class CharacterScreenRowParser
         public double Top => Words.Min(word => word.Y);
 
         public double Bottom => Words.Max(word => word.Y + word.Height);
+
+        public double Left => Words.Min(word => word.X);
+
+        public double Right => Words.Max(word => word.X + word.Width);
 
         /// <summary>The band's words joined in reading order (left to right).</summary>
         public string Text => string.Join(" ", Words.OrderBy(word => word.X).Select(word => word.Text.Trim()));

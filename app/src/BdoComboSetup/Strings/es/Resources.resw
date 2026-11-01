@@ -658,7 +658,7 @@
     <value>Nombres de personaje (OCR)</value>
   </data>
   <data name="Settings.ScanHint.Text" xml:space="preserve">
-    <value>Primero abre Black Desert y déjalo en la pantalla de selección de personaje con la lista arriba del todo. Al empezar, la app lee las filas visibles y dibuja un recuadro verde sobre el juego; baja la lista poco a poco hasta el final y pulsa Terminar. Puedes subir y bajar: las filas ya leídas no se cuentan dos veces. Nunca se envía nada al juego.</value>
+    <value>Primero abre Black Desert y quédate en la pantalla de selección de personaje. No hace falta que la lista esté arriba: la app lee la barra de desplazamiento para saber en qué posición estás. Al empezar, lee las filas visibles y dibuja un recuadro verde sobre el juego; sube o baja la lista hasta completar los personajes y pulsa Terminar. Las filas ya leídas no se cuentan dos veces. Nunca se envía nada al juego.</value>
   </data>
   <data name="Settings.ScanDialogTitle" xml:space="preserve">
     <value>Abre Black Desert</value>

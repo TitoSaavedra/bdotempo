@@ -146,6 +146,16 @@ internal sealed partial class CharacterRowOverlay : IDisposable
                 var bottom = (int)Math.Round(row.Bottom * scaleY);
                 SelectObject(memory, GetStockObject(NullBrushStockObject));
                 RoundRect(memory, left, top, right, bottom, 12, 12);
+
+                if (row.Memo is not null && row.MemoRight > row.MemoLeft && row.MemoBottom > row.MemoTop)
+                {
+                    // The memo line above the level gets its own box, so everything the scan reads is marked.
+                    var memoLeft = (int)Math.Round((row.MemoLeft - 4) * scaleX);
+                    var memoTop = (int)Math.Round((row.MemoTop - 2) * scaleY);
+                    var memoRight = (int)Math.Round((row.MemoRight + 8) * scaleX);
+                    var memoBottom = (int)Math.Round((row.MemoBottom + 2) * scaleY);
+                    RoundRect(memory, memoLeft, memoTop, memoRight, memoBottom, 8, 8);
+                }
             }
 
             // The running count sits in its own small box at the top of the window.
