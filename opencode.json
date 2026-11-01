@@ -1,0 +1,62 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permissions": [
+    {
+      "action": "edit",
+      "resource": "C:/Users/TitoS/OneDrive/Documentos/Black Desert/*",
+      "effect": "deny"
+    },
+    {
+      "action": "edit",
+      "resource": "G:/SteamLibrary/steamapps/common/Black Desert Online/*",
+      "effect": "deny"
+    },
+    {
+      "action": "edit",
+      "resource": "D:/extracted_bdo/*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git push *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git push",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "Stop-Process *",
+      "effect": "ask"
+    },
+    {
+      "action": "shell",
+      "resource": "kill *",
+      "effect": "ask"
+    }
+  ],
+  "watcher": {
+    "ignore": [
+      "dist/**",
+      "backups/**",
+      "data/**",
+      "reports/**",
+      "app/assets/parts/**",
+      "app/docs/screenshots/**",
+      "app/**/bin/**",
+      "app/**/obj/**"
+    ]
+  },
+  "commands": {
+    "estado": {
+      "description": "Resume the project: read the handoff and the git state, change nothing",
+      "template": "Read docs/PROJECT_STATE.md, then run `git status`, `git log -10 --oneline` and `git diff --stat`. Tell the user, in Spanish, where the project stands, what was left uncommitted and the most likely next step. Do not modify any file."
+    },
+    "build": {
+      "description": "Build the WinUI app once and report only the errors",
+      "template": "Run `mise run build` inside app/ (one dotnet process only) and report the result: errors, warnings, and nothing else. Do not launch the app."
+    }
+  }
+}
