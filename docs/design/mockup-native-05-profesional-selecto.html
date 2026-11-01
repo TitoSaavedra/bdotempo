@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BDOTempo — Concepto 5: Profesional selecto</title>
+<style>
+  :root {
+    --slate-0: #10161d;
+    --slate-1: #16202a;
+    --slate-2: #1b2632;
+    --slate-3: #223040;
+    --line: rgba(150,180,210,.146);
+    --line-hi: rgba(160,195,230,.24);
+    --text: #e4eaf1;
+    --text-2: #a3b2c2;
+    --text-3: #6f8095;
+    --accent: #cba967;
+    --accent-soft: rgba(203,169,103,.13);
+    --accent-line: rgba(203,169,103,.34);
+    --steel: #74a3cc;
+    --steel-soft: rgba(116,163,204,.13);
+    --steel-line: rgba(116,163,204,.3);
+    --r: 10px;
+    --r-s: 6px;
+    --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 22px; --s6: 28px;
+    --serif: "Georgia", "Cambria", "Times New Roman", serif;
+    --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: radial-gradient(1100px 620px at 50% -15%, #1b2733 0%, #080b0f 72%);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13.5px; line-height: 20px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 26px 16px 36px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .stage { width: 1180px; max-width: 100%; }
+
+  .window {
+    border-radius: 12px; overflow: hidden;
+    background: var(--slate-1);
+    border: 1px solid var(--line-hi);
+    box-shadow: 0 0 0 1px #05080b, 0 36px 80px rgba(0,0,0,.7);
+  }
+  .titlebar {
+    height: 38px; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 16px;
+    background: linear-gradient(180deg, #1d2a37, #17212b);
+    border-bottom: 1px solid var(--line);
+  }
+  .tb-emblem {
+    width: 20px; height: 20px; border-radius: 4px;
+    background: linear-gradient(145deg, #e4cd97, var(--accent) 55%, #8d7136);
+    color: #1d1708; font: 700 11px/20px var(--serif); text-align: center;
+  }
+  .tb-title { font-size: 12px; color: var(--text-3); letter-spacing: .5px; }
+  .tb-title b { color: var(--text-2); font-weight: 600; letter-spacing: .3px; }
+  .tb-sp { flex: 1; }
+  .tb-btn { width: 40px; height: 28px; border: 0; background: transparent; color: var(--text-3); font-size: 10px; display: grid; place-items: center; border-radius: 4px; }
+  .tb-btn:hover { background: rgba(255,255,255,.06); color: var(--text); }
+  .tb-btn.c:hover { background: #93322f; color: #fff; }
+
+  .shell { display: grid; grid-template-columns: 214px 1fr; min-height: 752px; }
+
+  .rail {
+    background: linear-gradient(180deg, #17212b, #131b23);
+    border-right: 1px solid var(--line);
+    padding: 18px 14px; display: flex; flex-direction: column;
+  }
+  .rail-brand { display: flex; align-items: center; gap: 10px; padding: 0 6px 20px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+  .rail-brand .t { font-family: var(--serif); font-size: 15px; letter-spacing: .6px; }
+  .rail-brand .s { font-size: 10.5px; letter-spacing: 1.1px; text-transform: uppercase; color: var(--text-3); }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px; height: 36px; padding: 0 10px;
+    color: var(--text-2); text-decoration: none; font-size: 13.5px; border-radius: var(--r-s);
+    border: 1px solid transparent;
+  }
+  .nav-item .g { width: 16px; text-align: center; font-size: 13px; color: var(--text-3); }
+  .nav-item:hover { background: rgba(255,255,255,.04); color: var(--text); }
+  .nav-item.active {
+    color: var(--text); font-weight: 600;
+    background: linear-gradient(90deg, rgba(203,169,103,.16), rgba(203,169,103,.03));
+    border-color: var(--accent-line);
+  }
+  .nav-item.active .g { color: var(--accent); }
+  .nav-item .badge { margin-left: auto; font-size: 10.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+  .rail-card { margin-top: auto; border: 1px solid var(--line); border-radius: var(--r); padding: 12px; background: rgba(255,255,255,.022); }
+  .emblem {
+    width: 38px; height: 38px; border-radius: 8px;
+    background: linear-gradient(150deg, #33465b, #1d2a37);
+    border: 1px solid var(--line-hi); display: grid; place-items: center;
+    font-size: 19px; color: var(--accent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .rail-card .row { display: flex; gap: 10px; align-items: center; }
+  .rail-card .nm { font-size: 13px; font-weight: 600; letter-spacing: .2px; }
+  .rail-card .mt { font-size: 11px; color: var(--text-3); }
+  .rail-card .meta { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11px; color: var(--text-3); display: flex; justify-content: space-between; }
+
+  .content { display: flex; flex-direction: column; min-width: 0; }
+
+  /* hero header with gradient */
+  .hero {
+    position: relative;
+    padding: 24px var(--s6) 20px;
+    background:
+      radial-gradient(700px 220px at 0% 0%, rgba(203,169,103,.14), transparent 70%),
+      linear-gradient(115deg, #1e2b38 0%, #19242f 55%, #16202a 100%);
+    border-bottom: 1px solid var(--line);
+  }
+  .hero::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-line) 22%, transparent 65%);
+  }
+  .hero-top { display: flex; align-items: center; gap: 16px; }
+  .crest {
+    width: 52px; height: 52px; border-radius: 11px; flex: none;
+    background: linear-gradient(150deg, #3b5068, #1f2c3a);
+    border: 1px solid var(--line-hi);
+    display: grid; place-items: center; font-size: 25px; color: var(--accent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 6px 16px rgba(0,0,0,.35);
+  }
+  .eyebrow { font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .h-title { margin: 4px 0 0; font-family: var(--serif); font-size: 27px; line-height: 33px; letter-spacing: .3px; font-weight: 400; }
+  .h-title i { font-style: normal; color: var(--text-3); }
+  .h-sub { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+  .h-sub b { color: var(--text-2); font-weight: 500; }
+  .hero .sp { flex: 1; }
+  .hero-actions { display: flex; gap: 8px; align-self: flex-start; }
+
+  .btn {
+    font-family: inherit; font-size: 12.5px; height: 32px; padding: 0 13px; border-radius: var(--r-s);
+    border: 1px solid var(--line-hi); background: rgba(255,255,255,.035); color: var(--text);
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; white-space: nowrap;
+    transition: background .13s, border-color .13s;
+  }
+  .btn:hover { background: rgba(255,255,255,.075); border-color: rgba(170,205,240,.38); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn.accent {
+    background: linear-gradient(180deg, #dcbd7c, #c19f5d); border-color: #e0c78c; color: #221a09; font-weight: 650;
+    box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 4px 12px rgba(203,169,103,.16);
+  }
+  .btn.accent:hover { background: linear-gradient(180deg, #e7c98b, #cbab69); }
+  .btn.text { border-color: transparent; background: transparent; color: var(--text-2); }
+  .btn.text:hover { background: rgba(255,255,255,.05); color: var(--text); }
+  .btn:disabled { color: #4c5967; background: rgba(255,255,255,.02); border-color: rgba(150,180,210,.10); cursor: default; }
+  .btn.xs { height: 26px; font-size: 11.5px; padding: 0 10px; }
+
+  .body-scroll { padding: 18px var(--s6) 16px; display: flex; flex-direction: column; gap: 14px; }
+
+  .panel { border: 1px solid var(--line); border-radius: var(--r); background: var(--slate-2); }
+  .panel.flat { background: var(--slate-1); }
+  .panel-hd {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; border-bottom: 1px solid var(--line);
+  }
+  .panel-hd .ttl { font-size: 12.5px; font-weight: 650; letter-spacing: .5px; text-transform: uppercase; color: var(--text); }
+  .panel-hd .sub { font-size: 11.5px; color: var(--text-3); letter-spacing: .2px; }
+  .panel-hd .sp { flex: 1; }
+  .panel-bd { padding: 14px 16px 16px; }
+
+  .combo-bar { display: flex; align-items: flex-end; gap: 12px; padding-bottom: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .lbl { font-size: 11px; letter-spacing: .9px; text-transform: uppercase; color: var(--text-3); font-weight: 600; }
+  .slot-pick {
+    height: 32px; display: flex; align-items: center; gap: 9px; padding: 0 9px 0 10px;
+    border: 1px solid var(--line-hi); border-radius: var(--r-s); background: var(--slate-0); cursor: default;
+  }
+  .slot-pick .n { font-size: 12px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .slot-pick .t { font-size: 12.5px; color: var(--text); }
+  .slot-pick .c { color: var(--text-3); font-size: 9px; }
+  .slot-pick:hover { border-color: rgba(170,205,240,.4); }
+  .input {
+    flex: 1; height: 32px; border: 1px solid var(--line-hi); border-radius: var(--r-s);
+    background: var(--slate-0); color: var(--text); padding: 0 10px; font: 13px var(--sans);
+  }
+  .input:focus { outline: none; border-color: var(--accent-line); box-shadow: 0 0 0 3px rgba(203,169,103,.12); }
+
+  .steps { border-top: 1px solid var(--line); }
+  .step {
+    display: grid; grid-template-columns: 30px 42px 1fr auto; gap: 13px; align-items: center;
+    padding: 9px 8px; border-bottom: 1px solid var(--line); position: relative;
+  }
+  .step:last-child { border-bottom: 0; }
+  .step:hover { background: rgba(255,255,255,.026); }
+  .step:hover::before { content: ""; position: absolute; left: 0; top: 0; bottom: -1px; width: 2px; background: var(--accent); }
+  .step-no { font-family: var(--serif); font-size: 13px; color: var(--text-3); text-align: center; font-variant-numeric: tabular-nums; }
+  .icon {
+    width: 36px; height: 36px; border-radius: 7px; display: grid; place-items: center;
+    font-size: 17px; color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.13), 0 1px 3px rgba(0,0,0,.45);
+  }
+  .ic-a { background: linear-gradient(150deg, #c49a52, #7b5620); }
+  .ic-b { background: linear-gradient(150deg, #5f80a8, #29394f); }
+  .ic-c { background: linear-gradient(150deg, #558a6b, #24412f); }
+  .ic-d { background: linear-gradient(150deg, #8b6aa6, #422e56); }
+  .nm { font-size: 13.5px; font-weight: 600; letter-spacing: .1px; }
+  .mt { font-size: 11.5px; color: var(--text-3); margin-top: 1px; }
+  .side { display: flex; align-items: center; gap: 9px; }
+  .keycap {
+    font-family: "Cascadia Mono", Consolas, monospace; font-size: 11px; padding: 3px 7px; border-radius: 4px;
+    border: 1px solid var(--line-hi); background: var(--slate-0); color: var(--text-2);
+    box-shadow: 0 1px 0 rgba(0,0,0,.5);
+  }
+  .chip { font-size: 10.5px; font-weight: 650; padding: 3px 9px; border-radius: 4px; letter-spacing: .4px; white-space: nowrap; }
+  .chip.gold { background: var(--accent-soft); color: #dfc187; border: 1px solid var(--accent-line); }
+  .chip.steel { background: var(--steel-soft); color: #96bfe3; border: 1px solid var(--steel-line); }
+  .chip.mute { background: rgba(255,255,255,.03); color: var(--text-3); border: 1px solid var(--line); }
+  .cd { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--text-2); min-width: 42px; text-align: right; font-weight: 600; }
+
+  .row2 { display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px; }
+  .extra { display: grid; grid-template-columns: 36px 1fr; gap: 12px; padding: 11px 0; }
+  .extra + .extra { border-top: 1px solid var(--line); }
+  .extra-name { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .extra-desc { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+  .extra-fx { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .kv { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; font-size: 12px; color: var(--text-2); border-bottom: 1px solid var(--line); }
+  .kv:last-child { border-bottom: 0; }
+  .kv b { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 650; font-size: 12.5px; }
+
+  /* refined status bar */
+  .statusbar {
+    margin-top: auto;
+    display: flex; align-items: center; gap: 14px;
+    padding: 9px 16px; border-top: 1px solid var(--line);
+    background: linear-gradient(180deg, #141d26, #111820);
+    font-size: 11.5px; color: var(--text-3); letter-spacing: .2px;
+  }
+  .statusbar .ok { width: 6px; height: 6px; border-radius: 50%; background: #4fa06b; box-shadow: 0 0 0 3px rgba(79,160,107,.16); }
+  .statusbar b { color: var(--text-2); font-weight: 550; }
+  .statusbar .sep { width: 1px; height: 12px; background: var(--line-hi); }
+  .statusbar .dirty { color: var(--accent); display: inline-flex; align-items: center; gap: 6px; }
+  .statusbar .dirty .b { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .statusbar .sp { flex: 1; }
+  .statusbar .pill { border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--text-2); }
+
+  .caption { margin: 16px 2px 0; font-size: 13px; color: #8f9daa; line-height: 21px; }
+  .caption strong { color: #dbe3ea; }
+  .footer { margin-top: 10px; font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; color: #5a6672; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="window">
+    <div class="titlebar">
+      <div class="tb-emblem">B</div>
+      <div class="tb-title"><b>BDOTempo</b> — Combos</div>
+      <div class="tb-sp"></div>
+      <button class="tb-btn">─</button>
+      <button class="tb-btn">□</button>
+      <button class="tb-btn c">✕</button>
+    </div>
+
+    <div class="shell">
+      <nav class="rail">
+        <div class="rail-brand">
+          <div class="emblem" style="width:28px;height:28px;font-size:14px;">⚔</div>
+          <div>
+            <div class="t">BDOTempo</div>
+            <div class="s">Black Desert Online</div>
+          </div>
+        </div>
+
+        <a class="nav-item active" href="#"><span class="g">⚔</span>Combos<span class="badge">3</span></a>
+        <a class="nav-item" href="#"><span class="g">✧</span>Editor<span class="badge">40</span></a>
+        <a class="nav-item" href="#"><span class="g">⚙</span>Configuración</a>
+
+        <div class="rail-card">
+          <div class="row">
+            <div class="emblem">🐾</div>
+            <div>
+              <div class="nm">AhrinSong</div>
+              <div class="mt">Domadora · Awakening</div>
+            </div>
+          </div>
+          <div class="meta"><span>Cuenta 330</span><span>3 pasos</span></div>
+        </div>
+      </nav>
+
+      <main class="content">
+        <header class="hero">
+          <div class="hero-top">
+            <div class="crest">🐾</div>
+            <div>
+              <div class="eyebrow">bdoclasshub · guía verificada</div>
+              <h1 class="h-title">Domadora <i>· Awakening</i></h1>
+              <div class="h-sub"><b>AhrinSong</b> · cuenta 330 · 3 pasos · 1 buff adicional</div>
+            </div>
+            <div class="sp"></div>
+            <div class="hero-actions">
+              <button class="btn text">↻ Actualizar</button>
+              <button class="btn accent">✎ Editar en el Editor</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="body-scroll">
+          <section class="panel">
+            <div class="panel-hd">
+              <span class="ttl">Mis combos</span>
+              <span class="sub">10 ranuras · clase y especialización</span>
+              <span class="sp"></span>
+              <button class="btn xs text">Restaurar guía</button>
+            </div>
+            <div class="panel-bd" style="padding-bottom:0;">
+              <div class="combo-bar">
+                <div class="field">
+                  <span class="lbl">Ranura</span>
+                  <div class="slot-pick" tabindex="0"><span class="n">3</span><span class="t">PvE Aguas Prietas</span><span class="c">▾</span></div>
+                </div>
+                <div class="field" style="flex:1;">
+                  <span class="lbl">Nombre del combo</span>
+                  <input class="input" value="PvE Aguas Prietas" />
+                </div>
+                <button class="btn accent">Guardar en la ranura</button>
+                <button class="btn">Cargar</button>
+                <button class="btn" disabled>Borrar</button>
+              </div>
+
+              <div class="steps">
+                <div class="step">
+                  <div class="step-no">I</div>
+                  <div class="icon ic-a">🐾</div>
+                  <div>
+                    <div class="nm">Baile de la Bestia IV</div>
+                    <div class="mt">Daño en área · 3 golpes</div>
+                  </div>
+                  <div class="side">
+                    <span class="chip gold">Casilla 1</span>
+                    <span class="chip steel">Q. rápida 4</span>
+                    <span class="keycap">Shift + Q</span>
+                    <span class="cd">18 s</span>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="step-no">II</div>
+                  <div class="icon ic-b">🌀</div>
+                  <div>
+                    <div class="nm">Onda de Tumbo III</div>
+                    <div class="mt">Control · derribo</div>
+                  </div>
+                  <div class="side">
+                    <span class="chip mute">Casilla 2</span>
+                    <span class="chip steel">Q. rápida 5</span>
+                    <span class="keycap">W + E</span>
+                    <span class="cd">12 s</span>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="step-no">III</div>
+                  <div class="icon ic-c">🗡</div>
+                  <div>
+                    <div class="nm">Sacudida del Suelo</div>
+                    <div class="mt">Remate · contraataca</div>
+                  </div>
+                  <div class="side">
+                    <span class="chip mute">Casilla 3</span>
+                    <span class="chip steel">Q. rápida 6</span>
+                    <span class="keycap">F</span>
+                    <span class="cd">9 s</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="row2">
+            <section class="panel flat">
+              <div class="panel-hd">
+                <span class="ttl">Adicionales de la clase</span>
+                <span class="sp"></span>
+                <span class="chip mute">Solo lectura</span>
+              </div>
+              <div class="panel-bd" style="padding-top:4px;">
+                <div class="extra">
+                  <div class="icon ic-d">✦</div>
+                  <div>
+                    <div class="extra-name">Aura de Bestia <span class="keycap">Shift + X</span></div>
+                    <div class="extra-desc">Invoca el aura de tu acompañante durante 30 s.</div>
+                    <div class="extra-fx">
+                      <span class="chip gold">Casilla 13</span>
+                      <span class="chip mute">+12 % daño</span>
+                      <span class="chip mute">Enfriamiento −8 %</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="extra">
+                  <div class="icon ic-b">✺</div>
+                  <div>
+                    <div class="extra-name">Instinto salvaje <span class="keycap">Shift + Z</span></div>
+                    <div class="extra-desc">Aumenta la velocidad de movimiento del vínculo.</div>
+                    <div class="extra-fx">
+                      <span class="chip mute">+6 % vel. movimiento</span>
+                      <span class="chip mute">Pasiva</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel flat">
+              <div class="panel-hd"><span class="ttl">Resumen</span></div>
+              <div class="panel-bd" style="padding-top:4px;">
+                <div class="kv"><span>Enfriamiento total</span><b>39 s</b></div>
+                <div class="kv"><span>Casillas usadas</span><b>4 / 20</b></div>
+                <div class="kv"><span>Q. rápidas usadas</span><b>3 / 20</b></div>
+                <div class="kv"><span>Última escritura</span><b>hace 2 días</b></div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="statusbar">
+          <span class="ok"></span>
+          <b>Guía (bdoclasshub)</b>
+          <span class="sep"></span>
+          <span class="dirty"><span class="b"></span>Cambios sin guardar</span>
+          <span class="sp"></span>
+          <span>Domadora · Awakening</span>
+          <span class="sep"></span>
+          <span>AhrinSong</span>
+          <span class="pill">cuenta 330</span>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <p class="caption">
+    <strong>Profesional selecto.</strong> Superficies pizarra azuladas con cabecera en degradado sutil, emblema de clase,
+    contornos elegantes de 1 px y una barra de estado depurada. Densidad media, tono editorial.
+  </p>
+  <div class="footer">Concepto 5 de 10 — BDOTempo</div>
+</div>
+</body>
+</html>

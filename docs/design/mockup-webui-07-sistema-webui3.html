@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>BDOTempo · Concepto 7 · WebUI 3</title>
+<style>
+  :root{
+    --ink:#141325; --ink-2:#3b3a52; --muted:#6f6d86; --faint:#9d9bb4;
+    --line:rgba(20,19,37,.08); --line-strong:rgba(20,19,37,.14);
+    --violet:#6f5cff; --violet-2:#a06bff; --mint:#25c9a3; --amber:#f0a33a; --rose:#ff6b9a;
+    --r-xl:22px; --r-lg:18px; --r-md:14px; --r-sm:12px; --pill:999px;
+    --s1:6px; --s2:10px; --s3:14px; --s4:20px; --s5:28px; --s6:36px;
+    --glass:rgba(255,255,255,.62);
+    --shadow-soft:0 1px 1px rgba(20,19,37,.03),0 8px 24px -12px rgba(20,19,37,.16);
+    --shadow-float:0 12px 30px -10px rgba(80,60,200,.45),0 4px 10px -4px rgba(80,60,200,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    min-height:100vh;
+    font-family:"Segoe UI Variable Display","Segoe UI",ui-sans-serif,system-ui,Arial,sans-serif;
+    font-size:15px;line-height:1.5;color:var(--ink);
+    font-variant-numeric:tabular-nums;
+    -webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center;
+    padding:30px 16px 44px;gap:16px;
+    background:
+      radial-gradient(900px 520px at 8% -6%,rgba(160,107,255,.30),transparent 62%),
+      radial-gradient(820px 520px at 92% 4%,rgba(37,201,163,.22),transparent 60%),
+      radial-gradient(760px 620px at 50% 108%,rgba(255,107,154,.18),transparent 62%),
+      linear-gradient(170deg,#f7f5ff 0%,#f4f8fb 46%,#fdf7f6 100%);
+  }
+  .caption{max-width:980px;text-align:center;font-size:13px;color:var(--muted);line-height:1.55}
+  .caption b{color:var(--ink-2);font-weight:600}
+
+  .win{
+    width:min(1180px,100%);height:790px;
+    border-radius:var(--r-xl);
+    background:rgba(255,255,255,.55);
+    border:1px solid rgba(255,255,255,.75);
+    backdrop-filter:blur(26px) saturate(140%);
+    box-shadow:0 40px 80px -40px rgba(50,40,120,.35),0 2px 6px rgba(20,19,37,.04);
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .titlebar{
+    height:52px;flex:0 0 52px;display:flex;align-items:center;gap:14px;padding:0 14px 0 22px;
+    border-bottom:1px solid var(--line);
+  }
+  .dots{display:flex;gap:7px}
+  .dots i{width:10px;height:10px;border-radius:50%;display:block}
+  .dots i:nth-child(1){background:#ff6b9a55;border:1px solid #ff6b9a88}
+  .dots i:nth-child(2){background:#f0a33a55;border:1px solid #f0a33a88}
+  .dots i:nth-child(3){background:#25c9a355;border:1px solid #25c9a388}
+  .appmark{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:650;letter-spacing:-.015em}
+  .logo{
+    width:26px;height:26px;border-radius:9px;display:grid;place-items:center;font-size:13px;color:#fff;
+    background:linear-gradient(150deg,var(--violet-2),var(--violet));
+    box-shadow:0 6px 14px -6px rgba(111,92,255,.75);
+  }
+  .appmark .sub{font-weight:500;color:var(--faint);font-size:13px}
+  .wincontrols{margin-left:auto;display:flex;gap:4px}
+  .wincontrols i{
+    width:36px;height:32px;border-radius:var(--r-sm);display:grid;place-items:center;
+    color:var(--muted);font-size:12px;font-style:normal;cursor:default;transition:background .15s;
+  }
+  .wincontrols i:hover{background:rgba(20,19,37,.06)}
+
+  .body{flex:1;display:flex;min-height:0}
+
+  /* ---- nav rail ---- */
+  nav{
+    width:236px;flex:0 0 236px;padding:22px 16px;display:flex;flex-direction:column;gap:8px;
+    border-right:1px solid var(--line);
+  }
+  .micro{
+    font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+    font-weight:700;padding:0 12px;margin:0 0 6px;
+  }
+  .navitem{
+    display:flex;align-items:center;gap:12px;height:46px;padding:0 12px;border-radius:var(--r-md);
+    color:var(--ink-2);font-size:14.5px;font-weight:550;cursor:pointer;
+    border:1px solid transparent;transition:background .16s,border-color .16s;
+  }
+  .iconchip{
+    width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:13px;
+    background:rgba(20,19,37,.055);color:var(--ink-2);flex:0 0 28px;
+  }
+  .navitem:hover{background:rgba(255,255,255,.7);border-color:rgba(255,255,255,.9)}
+  .navitem.active{
+    background:#fff;border-color:rgba(255,255,255,.95);
+    box-shadow:var(--shadow-soft);color:var(--ink);font-weight:650;
+  }
+  .navitem.active .iconchip{
+    background:linear-gradient(150deg,var(--violet-2),var(--violet));color:#fff;
+    box-shadow:0 4px 10px -4px rgba(111,92,255,.7);
+  }
+  .navitem .count{
+    margin-left:auto;font-size:11.5px;font-weight:650;padding:2px 8px;border-radius:var(--pill);
+    background:rgba(20,19,37,.055);color:var(--muted);
+  }
+  .navitem.active .count{background:rgba(111,92,255,.12);color:#5b48e0}
+
+  .charpick{
+    margin-top:auto;display:flex;gap:12px;align-items:center;padding:12px;border-radius:var(--r-lg);
+    background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.9);box-shadow:var(--shadow-soft);
+  }
+  .avatar{
+    width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-size:16px;color:#fff;
+    background:linear-gradient(150deg,#5ad1c2,#1f9e94);flex:0 0 36px;
+    box-shadow:0 6px 14px -8px rgba(31,158,148,.9);
+  }
+  .charpick .n{font-size:13.5px;font-weight:650;line-height:1.25}
+  .charpick .m{font-size:11.5px;color:var(--faint)}
+
+  /* ---- main ---- */
+  main{flex:1;min-width:0;overflow:auto;padding:24px 28px 96px;display:flex;flex-direction:column;gap:18px}
+  .pagehead{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .heroicon{
+    width:52px;height:52px;border-radius:18px;display:grid;place-items:center;font-size:24px;color:#fff;
+    background:linear-gradient(150deg,var(--violet-2),var(--violet));
+    box-shadow:0 16px 30px -16px rgba(111,92,255,.9);
+  }
+  h1{font-size:28px;font-weight:680;letter-spacing:-.03em;line-height:1.15;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .pill{
+    display:inline-flex;align-items:center;gap:7px;border-radius:var(--pill);
+    padding:5px 12px;font-size:12.5px;font-weight:600;border:1px solid transparent;white-space:nowrap;
+  }
+  .pill.violet{background:rgba(111,92,255,.12);color:#5441d8;border-color:rgba(111,92,255,.18);font-size:12px}
+  .pill.gray{background:rgba(20,19,37,.055);color:var(--muted);border-color:var(--line)}
+  .pill.gold{background:rgba(240,163,58,.14);color:#9a5c05;border-color:rgba(240,163,58,.28)}
+  .pill.blue{background:rgba(60,134,255,.12);color:#2b62c4;border-color:rgba(60,134,255,.2)}
+  .pill.ok{background:rgba(37,201,163,.14);color:#11795f;border-color:rgba(37,201,163,.26)}
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .subcrumb{font-size:13px;color:var(--muted);margin-top:2px}
+  .subcrumb b{color:var(--ink-2);font-weight:650}
+
+  .btn{
+    height:40px;padding:0 18px;border-radius:var(--pill);border:1px solid rgba(255,255,255,.95);
+    background:rgba(255,255,255,.82);color:var(--ink-2);font-size:13.5px;font-weight:600;font-family:inherit;
+    cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:var(--shadow-soft);
+    transition:transform .12s,box-shadow .16s,background .16s;white-space:nowrap;
+  }
+  .btn:hover{background:#fff;box-shadow:0 6px 18px -8px rgba(20,19,37,.28)}
+  .btn:active{transform:translateY(1px)}
+  .btn:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(111,92,255,.28)}
+  .btn.primary{
+    background:linear-gradient(150deg,#7d68ff,#5a45f0);color:#fff;border-color:transparent;
+    box-shadow:var(--shadow-float);
+  }
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.sm{height:34px;font-size:12.5px;padding:0 14px}
+  .btn:disabled{background:rgba(20,19,37,.045);color:var(--faint);border-color:transparent;box-shadow:none;cursor:not-allowed;filter:none}
+
+  /* cards */
+  .card{
+    background:var(--glass);border:1px solid rgba(255,255,255,.85);border-radius:var(--r-lg);
+    box-shadow:var(--shadow-soft);backdrop-filter:blur(14px);
+  }
+  .card-h{display:flex;align-items:center;gap:10px;padding:18px 20px 0}
+  .card-h h2{font-size:16px;font-weight:660;letter-spacing:-.015em}
+  .card-h .side{margin-left:auto;font-size:12px;color:var(--faint)}
+  .card-b{padding:16px 20px 20px}
+
+  .cols{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:18px;align-items:start}
+
+  /* field */
+  .fieldlabel{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:700;margin-bottom:7px}
+  .field{
+    height:44px;border-radius:var(--r-md);background:rgba(255,255,255,.9);
+    border:1px solid rgba(255,255,255,.95);
+    box-shadow:inset 0 0 0 1px rgba(20,19,37,.06),0 1px 2px rgba(20,19,37,.04);
+    display:flex;align-items:center;padding:0 14px;font-size:14px;font-weight:550;
+    transition:box-shadow .15s;
+  }
+  .field:hover{box-shadow:inset 0 0 0 1px rgba(20,19,37,.12),0 1px 2px rgba(20,19,37,.05)}
+  .field.sel{cursor:pointer;justify-content:space-between}
+  .field .caret{color:var(--faint);font-size:11px}
+  .rowflex{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .rowbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+  /* steps */
+  .steps{display:flex;flex-direction:column;gap:10px}
+  .step{
+    display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:var(--r-md);
+    background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.95);
+    transition:background .16s,box-shadow .16s,transform .12s;
+  }
+  .step:hover{background:#fff;box-shadow:0 10px 24px -16px rgba(20,19,37,.4)}
+  .stepnum{
+    width:26px;height:26px;flex:0 0 26px;border-radius:var(--pill);display:grid;place-items:center;
+    font-size:11.5px;font-weight:700;color:var(--muted);background:rgba(20,19,37,.055);
+  }
+  .skillicon{
+    width:44px;height:44px;border-radius:14px;flex:0 0 44px;display:grid;place-items:center;
+    color:#fff;font-size:20px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 10px 20px -12px rgba(20,19,37,.55);
+  }
+  .g1{background:linear-gradient(150deg,#b57bff,#7b3ff2)}
+  .g2{background:linear-gradient(150deg,#4fc3ff,#1673e6)}
+  .g3{background:linear-gradient(150deg,#ffca6b,#e08912)}
+  .g4{background:linear-gradient(150deg,#5ae2c0,#119d7e)}
+  .g5{background:linear-gradient(150deg,#ff8fb4,#e5427a)}
+  .sname{font-size:14.5px;font-weight:640;letter-spacing:-.01em}
+  .smeta{font-size:12px;color:var(--muted);margin-top:2px}
+  .right{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+  .keys{display:flex;gap:5px}
+  kbd{
+    font-family:inherit;font-size:11.5px;font-weight:650;color:var(--ink-2);
+    background:#fff;border:1px solid var(--line-strong);border-radius:7px;padding:3px 8px;
+    box-shadow:0 1px 0 rgba(20,19,37,.08);min-width:24px;text-align:center;
+  }
+
+  /* addons */
+  .addon{display:flex;gap:12px;padding:14px;border-radius:var(--r-md);background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.9)}
+  .addon + .addon{margin-top:10px}
+  .addon h3{font-size:13.5px;font-weight:650;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .addon p{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .eff{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .eff span{
+    font-size:11px;font-weight:600;color:var(--ink-2);padding:3px 9px;border-radius:var(--pill);
+    background:rgba(20,19,37,.05);
+  }
+
+  /* meta list */
+  .metarow{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:9px 0;border-bottom:1px dashed var(--line)}
+  .metarow:last-of-type{border-bottom:0}
+  .metarow .k{color:var(--muted)}
+  .metarow .v{font-weight:640}
+
+  /* floating action */
+  .floating{
+    position:relative;margin:8px 0 -84px;align-self:flex-end;
+    display:flex;align-items:center;gap:10px;
+    background:linear-gradient(150deg,#7d68ff,#5a45f0);color:#fff;
+    border-radius:var(--pill);padding:8px 8px 8px 22px;
+    box-shadow:0 18px 40px -14px rgba(90,69,240,.65),0 2px 6px rgba(90,69,240,.25);
+    font-size:14px;font-weight:640;
+  }
+  .floating .go{
+    width:40px;height:40px;border-radius:var(--pill);display:grid;place-items:center;
+    background:rgba(255,255,255,.2);font-size:16px;cursor:pointer;transition:background .15s;
+  }
+  .floating .go:hover{background:rgba(255,255,255,.34)}
+  .floatwrap{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:12px;align-items:center}
+  .floatnote{font-size:12px;color:var(--muted);margin-right:auto}
+
+  .statusbar{
+    display:flex;align-items:center;gap:12px;padding:12px 22px;border-top:1px solid var(--line);
+    font-size:12.5px;color:var(--muted);background:rgba(255,255,255,.42);
+  }
+  .statusbar b{color:var(--ink-2);font-weight:640}
+  .statusbar .right{margin-left:auto;display:flex;gap:10px;align-items:center}
+
+  footer{font-size:12px;color:var(--faint);letter-spacing:.03em}
+</style>
+</head>
+<body>
+
+<div class="win">
+  <div class="titlebar">
+    <div class="dots"><i></i><i></i><i></i></div>
+    <div class="appmark"><div class="logo">⚔</div>BDOTempo <span class="sub">Combo de enfriamientos</span></div>
+    <div class="wincontrols"><i>—</i><i>▢</i><i>✕</i></div>
+  </div>
+
+  <div class="body">
+    <nav>
+      <div class="micro">Trabajo</div>
+      <div class="navitem active"><span class="iconchip">⚔</span>Combos<span class="count">2</span></div>
+      <div class="navitem"><span class="iconchip">✧</span>Editor</div>
+      <div class="navitem"><span class="iconchip">⚙</span>Configuración</div>
+
+      <div style="height:12px"></div>
+      <div class="micro">Ranuras guardadas</div>
+      <div class="navitem" style="height:40px;font-size:13.5px;font-weight:560">
+        <span class="iconchip" style="width:24px;height:24px;flex:0 0 24px;font-size:11px;border-radius:8px">3</span>PvE Aguas Prietas
+      </div>
+      <div class="navitem" style="height:40px;font-size:13.5px;font-weight:560">
+        <span class="iconchip" style="width:24px;height:24px;flex:0 0 24px;font-size:11px;border-radius:8px">5</span>Jefes
+      </div>
+
+      <div class="charpick">
+        <div class="avatar">🐾</div>
+        <div>
+          <div class="n">AhrinSong</div>
+          <div class="m">Domadora · Awakening</div>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <div class="pagehead">
+        <div class="heroicon">🐾</div>
+        <div>
+          <h1>Domadora <span class="pill violet">Awakening</span></h1>
+          <div class="subcrumb">Personaje <b>AhrinSong</b> · cuenta 330 · guía de bdoclasshub</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn">⟲ Restaurar guía</button>
+          <button class="btn primary">Abrir editor →</button>
+        </div>
+      </div>
+
+      <div class="cols">
+        <!-- LEFT -->
+        <div style="display:flex;flex-direction:column;gap:18px">
+
+          <section class="card">
+            <div class="card-h"><h2>Mis combos</h2><span class="side">10 ranuras por clase y especialización</span></div>
+            <div class="card-b">
+              <div class="rowflex">
+                <div style="flex:0 0 220px">
+                  <div class="fieldlabel">Ranura</div>
+                  <div class="field sel"><span>5 · Jefes</span><span class="caret">▾</span></div>
+                </div>
+                <div style="flex:1;min-width:200px">
+                  <div class="fieldlabel">Nombre del combo</div>
+                  <div class="field">Jefes</div>
+                </div>
+              </div>
+              <div class="rowbtns">
+                <button class="btn primary">Guardar en la ranura</button>
+                <button class="btn">Cargar</button>
+                <button class="btn">Borrar</button>
+                <button class="btn" disabled>Restaurar guía</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-h"><h2>Pasos del combo</h2><span class="side">3 pasos</span></div>
+            <div class="card-b">
+              <div class="steps">
+                <div class="step">
+                  <div class="stepnum">1</div>
+                  <div class="skillicon g1">🐾</div>
+                  <div>
+                    <div class="sname">Baile de la Bestia IV</div>
+                    <div class="smeta">Enfriamiento 18 s · abre después del agarre</div>
+                  </div>
+                  <div class="right">
+                    <span class="pill gold">Casilla 1</span>
+                    <div class="keys"><kbd>Shift</kbd><kbd>Q</kbd></div>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="stepnum">2</div>
+                  <div class="skillicon g2">🌪</div>
+                  <div>
+                    <div class="sname">Onda de Tumbo III</div>
+                    <div class="smeta">Enfriamiento 9 s · encadena si hay esquiva</div>
+                  </div>
+                  <div class="right">
+                    <span class="pill blue">⌨ Casilla rápida 2</span>
+                    <div class="keys"><kbd>W</kbd><kbd>E</kbd></div>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="stepnum">3</div>
+                  <div class="skillicon g3">✦</div>
+                  <div>
+                    <div class="sname">Sacudida del Suelo</div>
+                    <div class="smeta">Enfriamiento 6 s · golpe de relleno</div>
+                  </div>
+                  <div class="right">
+                    <span class="pill gray">Sin casilla</span>
+                    <div class="keys"><kbd>F</kbd></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="floatwrap">
+            <span class="floatnote">La ranura 5 aún no incluye la última edición de Onda de Tumbo III.</span>
+            <div class="floating">Guardar en la ranura 5<div class="go">↓</div></div>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <section class="card">
+            <div class="card-h"><h2>Adicionales de la clase</h2><span class="side">Solo lectura</span></div>
+            <div class="card-b" style="padding-top:14px">
+              <div class="addon">
+                <div class="skillicon g4">✺</div>
+                <div>
+                  <h3>Aura de Bestia <span class="pill gold">Casilla 13</span></h3>
+                  <p>Aumenta el daño crítico mientras el invocador esté activo.</p>
+                  <div class="eff"><span>+10 % daño crítico</span><span>40 s</span><span>Shift + X</span></div>
+                </div>
+              </div>
+              <div class="addon">
+                <div class="skillicon g5">✧</div>
+                <div>
+                  <h3>Vínculo de la Bestia</h3>
+                  <p>Reduce el enfriamiento de las invocaciones de la clase.</p>
+                  <div class="eff"><span>−3 s enfriamiento</span><span>Pasivo</span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-h"><h2>Estado</h2></div>
+            <div class="card-b" style="padding-top:8px">
+              <div class="metarow"><span class="k">Origen</span><span class="v">bdoclasshub</span></div>
+              <div class="metarow"><span class="k">Guía</span><span class="v">Awakening PvE</span></div>
+              <div class="metarow"><span class="k">Importada</span><span class="v">12 oct 2026</span></div>
+              <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px">
+                <span class="pill ok"><span class="dot"></span>Guía cargada</span>
+                <span class="pill gold"><span class="dot"></span>Cambios sin guardar</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="statusbar">
+    <b>Guía (bdoclasshub)</b>
+    <span class="pill gold" style="padding:3px 10px;font-size:11.5px">Cambios sin guardar</span>
+    <div class="right">
+      <span>Domadora · Awakening</span><span>·</span><span>AhrinSong · cuenta 330</span>
+    </div>
+  </div>
+</div>
+
+<p class="caption"><b>WebUI 3 — nueva generación:</b> fondo aurora suave, tarjetas de cristal, radios de 16–20 px, pastillas e iconos con chips. La acción primaria flota sobre el contenido.</p>
+<footer>Concepto 7 de 10 — BDOTempo</footer>
+
+</body>
+</html>

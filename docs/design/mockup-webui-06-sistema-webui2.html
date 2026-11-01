@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>BDOTempo · Concepto 6 · WebUI 2</title>
+<style>
+  :root{
+    --gray-50:#f9fafb; --gray-100:#f3f4f6; --gray-200:#e5e7eb; --gray-300:#d1d5db;
+    --gray-400:#9ca3af; --gray-500:#6b7280; --gray-600:#4b5563; --gray-700:#374151;
+    --gray-900:#111827;
+    --blue-50:#eff6ff; --blue-100:#dbeafe; --blue-500:#3b82f6; --blue-600:#2563eb; --blue-700:#1d4ed8;
+    --green-50:#f0fdf4; --green-700:#15803d;
+    --amber-50:#fffbeb; --amber-700:#b45309;
+    --gold-50:#fdf8ec; --gold-200:#f0dfae; --gold-700:#8a6512;
+    --r:8px; --r-lg:10px; --r-sm:6px;
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:40px;
+    --shadow-xs:0 1px 2px rgba(16,24,40,.05);
+    --shadow-sm:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+    --ring:0 0 0 3px rgba(37,99,235,.22);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--gray-50); color:var(--gray-900);
+    font-family:ui-sans-serif,"Segoe UI",Inter,Roboto,system-ui,Arial,sans-serif;
+    font-size:14px; line-height:1.45;
+    font-variant-numeric:tabular-nums;
+    display:flex; flex-direction:column; align-items:center;
+    padding:28px 16px 40px; gap:14px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .caption{max-width:1000px;color:var(--gray-500);font-size:12.5px;text-align:center;line-height:1.5}
+  .caption b{color:var(--gray-700);font-weight:600}
+
+  /* ---------- window frame ---------- */
+  .win{
+    width:min(1180px,100%); height:780px;
+    background:#fff; border:1px solid var(--gray-200); border-radius:12px;
+    box-shadow:0 12px 32px -12px rgba(16,24,40,.18),0 2px 6px rgba(16,24,40,.05);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .titlebar{
+    height:44px; flex:0 0 44px; display:flex; align-items:center; gap:12px;
+    padding:0 8px 0 16px; border-bottom:1px solid var(--gray-200); background:#fff;
+  }
+  .dots{display:flex;gap:6px}
+  .dots i{width:9px;height:9px;border-radius:50%;background:var(--gray-200);display:block}
+  .appmark{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;letter-spacing:-.01em}
+  .appmark .logo{
+    width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-size:11px;color:#fff;
+    background:linear-gradient(145deg,#3b82f6,#1d4ed8);
+  }
+  .appmark span.sub{color:var(--gray-400);font-weight:500}
+  .wincontrols{margin-left:auto;display:flex;gap:2px}
+  .wincontrols i{
+    width:34px;height:30px;border-radius:4px;display:grid;place-items:center;
+    color:var(--gray-500);font-size:11px;font-style:normal;cursor:default;
+  }
+  .wincontrols i:hover{background:var(--gray-100)}
+  .wincontrols i.close:hover{background:#fee2e2;color:#b91c1c}
+
+  .body{flex:1;display:flex;min-height:0}
+
+  /* ---------- nav ---------- */
+  nav{
+    width:212px;flex:0 0 212px;border-right:1px solid var(--gray-200);background:var(--gray-50);
+    padding:16px 12px; display:flex; flex-direction:column; gap:20px;
+  }
+  .navlabel{
+    font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--gray-400);
+    font-weight:600;padding:0 8px;margin-bottom:6px;
+  }
+  .navitem{
+    display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:var(--r-sm);
+    color:var(--gray-700);font-size:13.5px;font-weight:500;cursor:pointer;border:1px solid transparent;
+  }
+  .navitem .g{width:16px;text-align:center;color:var(--gray-400);font-size:12px}
+  .navitem:hover{background:var(--gray-100)}
+  .navitem.active{background:#fff;border-color:var(--gray-200);box-shadow:var(--shadow-xs);color:var(--gray-900);font-weight:600}
+  .navitem.active .g{color:var(--blue-600)}
+  .navitem .count{margin-left:auto;font-size:11px;color:var(--gray-400);background:var(--gray-100);border-radius:999px;padding:1px 6px}
+  .navitem.active .count{background:var(--blue-50);color:var(--blue-700)}
+  .navdiv{height:1px;background:var(--gray-200);margin:8px 4px}
+  .charpick{
+    margin-top:auto;border:1px solid var(--gray-200);background:#fff;border-radius:var(--r);
+    padding:10px;display:flex;gap:10px;align-items:center;box-shadow:var(--shadow-xs);
+  }
+  .avatar{
+    width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:13px;color:#fff;
+    background:linear-gradient(145deg,#6b7280,#374151);flex:0 0 30px;
+  }
+  .charpick .n{font-size:12.5px;font-weight:600;line-height:1.2}
+  .charpick .m{font-size:11px;color:var(--gray-400)}
+
+  /* ---------- main ---------- */
+  main{flex:1;min-width:0;overflow:auto;padding:20px 24px 24px;display:flex;flex-direction:column;gap:16px}
+
+  /* 12 col grid */
+  .grid12{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+
+  .pagehead{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .pagehead h1{font-size:19px;font-weight:650;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+  .pagehead h1 .clsicon{
+    width:28px;height:28px;border-radius:7px;display:grid;place-items:center;font-size:14px;color:#fff;
+    background:linear-gradient(145deg,#3b82f6,#1d4ed8);box-shadow:var(--shadow-xs);
+  }
+  .pagehead .crumb{font-size:12px;color:var(--gray-500);margin-top:4px}
+  .pagehead .crumb i{font-style:normal;color:var(--gray-300);padding:0 6px}
+  .topactions{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+  /* buttons */
+  .btn{
+    height:32px;padding:0 12px;border-radius:var(--r-sm);border:1px solid var(--gray-300);background:#fff;
+    color:var(--gray-700);font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;box-shadow:var(--shadow-xs);white-space:nowrap;
+  }
+  .btn:hover{background:var(--gray-50);border-color:var(--gray-400)}
+  .btn:focus-visible{outline:none;box-shadow:var(--ring)}
+  .btn.primary{background:var(--blue-600);border-color:var(--blue-600);color:#fff}
+  .btn.primary:hover{background:var(--blue-700);border-color:var(--blue-700)}
+  .btn.ghost{border-color:transparent;box-shadow:none;background:transparent}
+  .btn.ghost:hover{background:var(--gray-100)}
+  .btn.sm{height:28px;font-size:12.5px;padding:0 9px}
+  .btn:disabled,.btn[aria-disabled="true"]{background:var(--gray-100);border-color:var(--gray-200);color:var(--gray-400);cursor:not-allowed;box-shadow:none}
+  .btn.primary:disabled{background:var(--blue-100);border-color:var(--blue-100);color:#93b4f7}
+
+  /* cards */
+  .card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--r);box-shadow:var(--shadow-sm)}
+  .card-h{
+    display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--gray-200);
+  }
+  .card-h h2{font-size:13px;font-weight:600;letter-spacing:-.005em}
+  .card-h .hint{font-size:11.5px;color:var(--gray-400);margin-left:auto}
+  .card-b{padding:16px}
+
+  .label{
+    font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--gray-500);
+    font-weight:600;margin-bottom:6px;display:block;
+  }
+  .field{height:32px;border:1px solid var(--gray-300);border-radius:var(--r-sm);background:#fff;display:flex;align-items:center;padding:0 10px;font-size:13px;color:var(--gray-900);box-shadow:var(--shadow-xs)}
+  .field.ghostish{background:var(--gray-50)}
+  .select{position:relative}
+  .select .field{padding-right:26px;justify-content:space-between;cursor:pointer}
+  .select .field:hover{border-color:var(--gray-400)}
+  .select .caret{color:var(--gray-400);font-size:10px}
+  .row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+
+  /* step table-ish list */
+  .steplist{border:1px solid var(--gray-200);border-radius:var(--r);overflow:hidden}
+  .steprow{display:grid;grid-template-columns:34px 1fr auto auto;gap:12px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--gray-200);background:#fff}
+  .steprow:last-child{border-bottom:0}
+  .steprow:hover{background:var(--gray-50)}
+  .steprow .idx{font-size:11.5px;color:var(--gray-400);text-align:right;font-weight:600}
+  .stepmain{display:flex;align-items:center;gap:10px;min-width:0}
+  .skillicon{
+    width:44px;height:44px;border-radius:var(--r);flex:0 0 44px;display:grid;place-items:center;
+    color:#fff;font-size:19px;border:1px solid rgba(0,0,0,.06);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .g1{background:linear-gradient(150deg,#8b5cf6,#6d28d9)}
+  .g2{background:linear-gradient(150deg,#0ea5e9,#0369a1)}
+  .g3{background:linear-gradient(150deg,#f59e0b,#b45309)}
+  .g4{background:linear-gradient(150deg,#10b981,#047857)}
+  .g5{background:linear-gradient(150deg,#ef4444,#b91c1c)}
+  .sname{font-size:13.5px;font-weight:600;letter-spacing:-.005em}
+  .smeta{font-size:11.5px;color:var(--gray-500);margin-top:2px}
+  .keycaps{display:flex;gap:4px}
+  kbd{
+    font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px;color:var(--gray-700);
+    background:var(--gray-100);border:1px solid var(--gray-300);border-bottom-width:2px;border-radius:4px;
+    padding:2px 5px;min-width:20px;text-align:center;line-height:1.3;
+  }
+  .chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .chip{
+    font-size:11.5px;font-weight:600;border-radius:999px;padding:3px 9px;border:1px solid transparent;
+    display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+  }
+  .chip.gold{background:var(--gold-50);border-color:var(--gold-200);color:var(--gold-700)}
+  .chip.blue{background:var(--blue-50);border-color:var(--blue-100);color:var(--blue-700)}
+  .chip.gray{background:var(--gray-100);border-color:var(--gray-200);color:var(--gray-600)}
+  .chip.ok{background:var(--green-50);border-color:#bbe7c7;color:var(--green-700)}
+  .chip.warn{background:var(--amber-50);border-color:#f5e0a8;color:var(--amber-700)}
+  .chip .dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+  /* stat strip */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--gray-200);border-radius:var(--r);overflow:hidden;background:#fff}
+  .stat{padding:12px 14px;border-right:1px solid var(--gray-200)}
+  .stat:last-child{border-right:0}
+  .stat .k{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--gray-500);font-weight:600}
+  .stat .v{font-size:20px;font-weight:650;letter-spacing:-.02em;margin-top:4px}
+  .stat .v small{font-size:11.5px;color:var(--gray-400);font-weight:500;margin-left:4px}
+
+  /* class addons */
+  .addon{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-200)}
+  .addon:last-child{border-bottom:0;padding-bottom:0}
+  .addon:first-child{padding-top:0}
+  .addon .txt{min-width:0}
+  .addon h3{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .addon p{font-size:12.5px;color:var(--gray-500);margin-top:3px;line-height:1.45}
+  .eff{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .eff span{font-size:11px;border:1px solid var(--gray-200);background:var(--gray-50);color:var(--gray-600);border-radius:4px;padding:1px 6px}
+
+  /* status line */
+  .statusline{
+    display:flex;align-items:center;gap:10px;border-top:1px solid var(--gray-200);background:#fff;
+    padding:9px 16px;font-size:12px;color:var(--gray-500);
+  }
+  .statusline .left{display:flex;align-items:center;gap:8px}
+  .statusline .sep{width:1px;height:14px;background:var(--gray-200)}
+  .statusline .right{margin-left:auto;display:flex;gap:14px;align-items:center}
+  .st-a{color:var(--gray-700);font-weight:500}
+  .st-b{color:var(--amber-700);font-weight:600;display:inline-flex;align-items:center;gap:5px}
+
+  footer{font-size:11.5px;color:var(--gray-400);letter-spacing:.02em}
+  .spacer{flex:1}
+</style>
+</head>
+<body>
+
+<div class="win">
+  <div class="titlebar">
+    <div class="dots"><i></i><i></i><i></i></div>
+    <div class="appmark">
+      <div class="logo">⚔</div>
+      BDOTempo <span class="sub">· Combo de enfriamientos</span>
+    </div>
+    <div class="wincontrols"><i>—</i><i>▢</i><i class="close">✕</i></div>
+  </div>
+
+  <div class="body">
+    <nav>
+      <div>
+        <div class="navlabel">Trabajo</div>
+        <div class="navitem active"><span class="g">⚔</span>Combos <span class="count">2</span></div>
+        <div class="navitem"><span class="g">✧</span>Editor</div>
+        <div class="navitem"><span class="g">⚙</span>Configuración</div>
+      </div>
+      <div>
+        <div class="navdiv"></div>
+        <div class="navlabel">Personaje</div>
+        <div class="charpick">
+          <div class="avatar">🐾</div>
+          <div>
+            <div class="n">AhrinSong</div>
+            <div class="m">Domadora · Awakening</div>
+          </div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="navlabel" style="padding:0 8px">Versión 1.4.2 · estable</div>
+    </nav>
+
+    <main>
+      <!-- PAGE HEAD -->
+      <div class="pagehead">
+        <div>
+          <h1><span class="clsicon">🐾</span>Domadora <span class="chip gray">Awakening</span></h1>
+          <div class="crumb">Combos<i>/</i>Personaje <b style="color:var(--gray-700);font-weight:600">AhrinSong</b><i>/</i>cuenta 330</div>
+        </div>
+        <div class="topactions">
+          <button class="btn">⟲ Restaurar guía</button>
+          <button class="btn primary">Abrir editor →</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">Pasos en la guía</div><div class="v">3 <small>de 3 visibles</small></div></div>
+        <div class="stat"><div class="k">Casillas con enfriamiento</div><div class="v">2 <small>/ 20</small></div></div>
+        <div class="stat"><div class="k">Combos guardados</div><div class="v">2 <small>/ 10</small></div></div>
+      </div>
+
+      <div class="grid12">
+        <!-- MAIN COLUMN -->
+        <div style="grid-column:span 8;display:flex;flex-direction:column;gap:16px">
+
+          <!-- mis combos -->
+          <section class="card">
+            <div class="card-h">
+              <h2>Mis combos</h2>
+              <span class="hint">Hasta 10 ranuras por clase y especialización</span>
+            </div>
+            <div class="card-b" style="display:flex;flex-direction:column;gap:12px">
+              <div class="row">
+                <div style="flex:0 0 210px">
+                  <label class="label">Ranura</label>
+                  <div class="select"><div class="field"><span>5 · Jefes</span><span class="caret">▾</span></div></div>
+                </div>
+                <div style="flex:1;min-width:180px">
+                  <label class="label">Nombre del combo</label>
+                  <div class="field">Jefes</div>
+                </div>
+              </div>
+              <div class="row">
+                <button class="btn primary">Guardar en la ranura</button>
+                <button class="btn">Cargar</button>
+                <button class="btn">Borrar</button>
+                <button class="btn" aria-disabled="true">Restaurar guía</button>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:var(--gray-500)">
+                <span class="chip ok"><span class="dot"></span>Ranura 5 guardada</span>
+                <span>La ranura 5 conserva 3 pasos y 2 casillas.</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- pasos -->
+          <section class="card">
+            <div class="card-h">
+              <h2>Pasos del combo</h2>
+              <span class="hint">Edita el nombre y la nota de cada paso</span>
+              <button class="btn sm" style="margin-left:8px">+ Añadir paso</button>
+            </div>
+            <div class="card-b" style="padding:0">
+              <div class="steplist" style="border:0;border-radius:0">
+                <div class="steprow">
+                  <div class="idx">01</div>
+                  <div class="stepmain">
+                    <div class="skillicon g1">🐾</div>
+                    <div style="min-width:0">
+                      <div class="sname">Baile de la Bestia IV</div>
+                      <div class="smeta">Enfriamiento 18 s · Nota: abre después del agarre</div>
+                    </div>
+                  </div>
+                  <div class="keycaps"><kbd>Shift</kbd><kbd>Q</kbd></div>
+                  <div class="chips"><span class="chip gold">Casilla 1</span></div>
+                </div>
+                <div class="steprow">
+                  <div class="idx">02</div>
+                  <div class="stepmain">
+                    <div class="skillicon g2">🌪</div>
+                    <div style="min-width:0">
+                      <div class="sname">Onda de Tumbo III</div>
+                      <div class="smeta">Enfriamiento 9 s · Nota: encadena si hay esquiva</div>
+                    </div>
+                  </div>
+                  <div class="keycaps"><kbd>W</kbd><kbd>E</kbd></div>
+                  <div class="chips"><span class="chip blue">⌨ Casilla rápida 2</span></div>
+                </div>
+                <div class="steprow">
+                  <div class="idx">03</div>
+                  <div class="stepmain">
+                    <div class="skillicon g3">✦</div>
+                    <div style="min-width:0">
+                      <div class="sname">Sacudida del Suelo</div>
+                      <div class="smeta">Enfriamiento 6 s · Nota: golpe de relleno</div>
+                    </div>
+                  </div>
+                  <div class="keycaps"><kbd>F</kbd></div>
+                  <div class="chips"><span class="chip gray">Sin casilla</span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- SIDE COLUMN -->
+        <div style="grid-column:span 4;display:flex;flex-direction:column;gap:16px">
+
+          <section class="card">
+            <div class="card-h">
+              <h2>Adicionales de la clase</h2>
+              <span class="chip gray" style="margin-left:auto;font-weight:500">Solo lectura</span>
+            </div>
+            <div class="card-b">
+              <div class="addon">
+                <div class="skillicon g4">✺</div>
+                <div class="txt">
+                  <h3>Aura de Bestia <span class="chip gold">Casilla 13</span></h3>
+                  <p>Aumenta el daño crítico mientras el invocador esté activo.</p>
+                  <div class="eff"><span>+10 % daño crítico</span><span>40 s</span><span><kbd>Shift</kbd> <kbd>X</kbd></span></div>
+                </div>
+              </div>
+              <div class="addon">
+                <div class="skillicon g5">✧</div>
+                <div class="txt">
+                  <h3>Vínculo de la Bestia</h3>
+                  <p>Reduce el enfriamiento de las invocaciones de la clase.</p>
+                  <div class="eff"><span>−3 s enfriamiento</span><span>Pasivo</span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-h"><h2>Estado de la guía</h2></div>
+            <div class="card-b" style="display:flex;flex-direction:column;gap:10px;font-size:12.5px">
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">Origen</span><b style="font-weight:600">bdoclasshub</b></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">Guía</span><b style="font-weight:600">Awakening PvE</b></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--gray-500)">Última importación</span><b style="font-weight:600">12 oct 2026</b></div>
+              <div style="height:1px;background:var(--gray-200)"></div>
+              <span class="chip warn" style="align-self:flex-start"><span class="dot"></span>Cambios sin guardar</span>
+              <button class="btn primary" style="width:100%;justify-content:center">Guardar en la ranura 5</button>
+              <button class="btn" style="width:100%;justify-content:center">Descartar cambios</button>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="statusline">
+    <div class="left">
+      <span class="st-a">Guía (bdoclasshub)</span>
+      <span class="sep"></span>
+      <span class="st-b"><span class="chip warn" style="padding:1px 7px;font-size:11px">●</span>Cambios sin guardar</span>
+    </div>
+    <div class="right">
+      <span>Domadora · Awakening</span>
+      <span class="sep"></span>
+      <span>AhrinSong · cuenta 330</span>
+    </div>
+  </div>
+</div>
+
+<p class="caption"><b>WebUI 2 — sistema de administración neutro y maduro:</b> rejilla de 12 columnas, escala de 8 px y tarjetas blancas de borde fino. Una sola acción primaria azul por vista.</p>
+<footer>Concepto 6 de 10 — BDOTempo</footer>
+
+</body>
+</html>

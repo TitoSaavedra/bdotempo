@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BDOTempo — Concepto 3: Consola de juego</title>
+<style>
+  :root {
+    --bg: #0e1013;
+    --panel: #14171b;
+    --panel-2: #191d22;
+    --row: #171a1f;
+    --row-hi: #1d2229;
+    --rule: #272c33;
+    --rule-2: #1f242a;
+    --txt: #d8dce1;
+    --txt-2: #8e969f;
+    --txt-3: #5f666e;
+    --gold: #e0b862;
+    --gold-bg: rgba(224,184,98,.11);
+    --blue: #62a6e8;
+    --blue-bg: rgba(98,166,232,.12);
+    --green: #58b57c;
+    --mono: "Cascadia Mono", "Consolas", ui-monospace, monospace;
+    --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    --r: 6px;
+    --r-s: 4px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: #060708;
+    color: var(--txt);
+    font-family: var(--sans);
+    font-size: 13px; line-height: 18px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px 16px 32px;
+    min-height: 100vh;
+  }
+  .stage { width: 1180px; max-width: 100%; }
+
+  .window {
+    border: 1px solid #23282f; border-radius: 8px; overflow: hidden;
+    background: var(--bg);
+    box-shadow: 0 30px 70px rgba(0,0,0,.85);
+  }
+  .titlebar {
+    height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 0 0 12px;
+    background: #111418; border-bottom: 1px solid var(--rule);
+  }
+  .tb-mark { width: 16px; height: 16px; border-radius: 3px; background: var(--gold); color: #17120a; font: 800 10px/16px var(--mono); text-align: center; }
+  .tb-title { font: 11px/1 var(--mono); color: var(--txt-3); letter-spacing: .5px; }
+  .tb-title b { color: var(--txt-2); font-weight: 600; }
+  .tb-sp { flex: 1; }
+  .tb-btn { width: 34px; height: 30px; border: 0; background: transparent; color: var(--txt-3); font-size: 10px; cursor: default; }
+  .tb-btn:hover { background: #1b2026; color: var(--txt); }
+  .tb-btn.c:hover { background: #8e2626; color: #fff; }
+
+  .shell { display: grid; grid-template-columns: 176px 1fr; min-height: 774px; }
+
+  /* rail = tool rail, icon + label mono */
+  .rail { background: #101317; border-right: 1px solid var(--rule); padding: 8px 6px; display: flex; flex-direction: column; }
+  .nav-head { font: 600 9.5px/1 var(--mono); letter-spacing: 1.4px; color: var(--txt-3); padding: 10px 10px 8px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px; height: 30px; padding: 0 10px;
+    color: var(--txt-2); text-decoration: none; border-radius: var(--r-s); font-size: 12.5px;
+    border-left: 2px solid transparent;
+  }
+  .nav-item .g { font-size: 13px; width: 14px; text-align: center; color: var(--txt-3); }
+  .nav-item .cnt { margin-left: auto; font: 600 10px/1 var(--mono); color: var(--txt-3); background: #1a1f25; padding: 2px 5px; border-radius: 3px; }
+  .nav-item:hover { background: #161a20; color: var(--txt); }
+  .nav-item.active { background: #1a1f25; color: #fff; border-left-color: var(--gold); }
+  .nav-item.active .g { color: var(--gold); }
+  .nav-item.active .cnt { background: var(--gold-bg); color: var(--gold); }
+
+  .rail-bottom { margin-top: auto; border-top: 1px solid var(--rule); padding: 10px; font: 11px/16px var(--mono); color: var(--txt-3); }
+  .rail-bottom .nm { color: var(--txt); font: 600 12px/16px var(--sans); }
+  .rail-bottom .live { color: var(--green); }
+  .blink { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 5px; vertical-align: middle; }
+
+  .content { display: flex; flex-direction: column; min-width: 0; }
+
+  /* header bar, compact */
+  .hdr {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 16px; border-bottom: 1px solid var(--rule); background: #11151a;
+  }
+  .hdr h1 { margin: 0; font: 600 15px/20px var(--sans); letter-spacing: .2px; display: flex; align-items: center; gap: 8px; }
+  .hdr h1 .spec { font: 10px/1 var(--mono); letter-spacing: 1px; color: var(--gold); background: var(--gold-bg); border: 1px solid rgba(224,184,98,.25); padding: 3px 6px; border-radius: 3px; }
+  .hdr .ctx { font: 11px/1 var(--mono); color: var(--txt-3); }
+  .hdr .ctx b { color: var(--txt-2); font-weight: 500; }
+  .hdr .sp { flex: 1; }
+
+  .btn {
+    font-family: var(--sans); font-size: 12px; height: 26px; padding: 0 10px; border-radius: var(--r-s);
+    border: 1px solid #2b3138; background: #1a1f25; color: var(--txt);
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap;
+  }
+  .btn:hover { background: #22282f; border-color: #39414a; }
+  .btn:focus-visible { outline: 1px solid var(--gold); outline-offset: 1px; }
+  .btn.gold { background: #c9a659; border-color: #d9b76b; color: #17120a; font-weight: 600; }
+  .btn.gold:hover { background: #d8b66a; }
+  .btn.ghost { background: transparent; border-color: transparent; color: var(--txt-2); }
+  .btn.ghost:hover { background: #1a1f25; color: var(--txt); }
+  .btn:disabled { color: #4a5158; background: #14171b; border-color: #20262c; cursor: default; }
+  .btn.xs { height: 22px; font-size: 11px; padding: 0 8px; }
+
+  .body-scroll { padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 12px; }
+
+  .panel { border: 1px solid var(--rule); border-radius: var(--r); background: var(--panel); overflow: hidden; }
+  .panel-hd {
+    display: flex; align-items: center; gap: 10px; height: 30px; padding: 0 10px;
+    background: #12161a; border-bottom: 1px solid var(--rule);
+    font: 600 10.5px/1 var(--mono); letter-spacing: 1.1px; text-transform: uppercase; color: var(--txt-2);
+  }
+  .panel-hd .sp { flex: 1; }
+  .panel-hd .hint { font: 10.5px/1 var(--mono); color: var(--txt-3); letter-spacing: .4px; text-transform: none; }
+
+  /* toolbar */
+  .combo-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--rule-2); background: var(--panel-2); }
+  .lbl { font: 10px/1 var(--mono); text-transform: uppercase; letter-spacing: 1px; color: var(--txt-3); }
+  .slot-sel {
+    display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 8px;
+    border: 1px solid #2b3138; border-radius: var(--r-s); background: #101317; cursor: default;
+  }
+  .slot-sel .n { font: 700 13px/1 var(--mono); color: var(--gold); font-variant-numeric: tabular-nums; min-width: 14px; text-align: center; }
+  .slot-sel .t { font-size: 12px; color: var(--txt); }
+  .slot-sel .c { color: var(--txt-3); font-size: 9px; }
+  .slot-sel:hover { border-color: #3a424b; }
+  .name-input {
+    flex: 1; height: 26px; border: 1px solid #2b3138; border-radius: var(--r-s);
+    background: #101317; color: var(--txt); padding: 0 8px; font: 12px var(--sans);
+  }
+  .name-input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px rgba(224,184,98,.12); }
+
+  /* table rows */
+  .tbl-hd {
+    display: grid; grid-template-columns: 34px 44px 1fr 96px 104px 92px 60px;
+    gap: 8px; align-items: center; padding: 5px 10px;
+    font: 600 9.5px/1 var(--mono); letter-spacing: 1px; text-transform: uppercase; color: var(--txt-3);
+    border-bottom: 1px solid var(--rule-2); background: #12161a;
+  }
+  .tbl-hd .r { text-align: right; } .tbl-hd .c { text-align: center; }
+  .trow {
+    display: grid; grid-template-columns: 34px 44px 1fr 96px 104px 92px 60px;
+    gap: 8px; align-items: center; padding: 5px 10px;
+    border-bottom: 1px solid var(--rule-2); background: var(--row);
+  }
+  .trow:hover { background: var(--row-hi); }
+  .trow.sel { background: #1e242b; box-shadow: inset 2px 0 0 var(--gold); }
+  .idx { font: 12px/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--txt-3); text-align: center; }
+  .icon {
+    width: 30px; height: 30px; border-radius: 5px; display: grid; place-items: center;
+    font-size: 15px; color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
+  }
+  .ic-a { background: linear-gradient(150deg, #c99b43, #74511b); }
+  .ic-b { background: linear-gradient(150deg, #5c6c9e, #29324e); }
+  .ic-c { background: linear-gradient(150deg, #518468, #224334); }
+  .ic-d { background: linear-gradient(150deg, #865f9c, #402b55); }
+  .nm { font-size: 12.5px; color: #e6e9ec; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nm .dx { font: 10.5px/1 var(--mono); color: var(--txt-3); margin-left: 6px; }
+  .keycap {
+    font: 600 11px/1 var(--mono); color: #c6ccd3; background: #0e1114;
+    border: 1px solid #2e353d; border-radius: 3px; padding: 3px 6px; display: inline-block;
+  }
+  .chip { font: 600 10px/1 var(--mono); padding: 3px 7px; border-radius: 3px; letter-spacing: .5px; white-space: nowrap; display: inline-block; }
+  .chip.gold { background: var(--gold-bg); color: var(--gold); border: 1px solid rgba(224,184,98,.3); }
+  .chip.blue { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(98,166,232,.3); }
+  .chip.mute { background: #1b2026; color: var(--txt-2); border: 1px solid #262d35; }
+  .cd { font: 600 12px/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--txt-2); text-align: right; }
+  .cd.warn { color: var(--gold); }
+
+  /* two panel row */
+  .row2 { display: grid; grid-template-columns: 1.3fr .7fr; gap: 12px; }
+  .extra-row {
+    display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center;
+    padding: 6px 10px; border-bottom: 1px solid var(--rule-2);
+  }
+  .extra-row:last-child { border-bottom: 0; }
+  .extra-row .icon { width: 26px; height: 26px; font-size: 13px; border-radius: 4px; }
+  .extra-row .n { font-size: 12.5px; }
+  .extra-row .d { font: 10.5px/15px var(--mono); color: var(--txt-3); }
+  .extra-row .chips { display: flex; gap: 5px; }
+  .kv { display: flex; justify-content: space-between; padding: 5px 10px; border-bottom: 1px solid var(--rule-2); font-size: 12px; color: var(--txt-2); }
+  .kv:last-child { border-bottom: 0; }
+  .kv b { font: 600 12px/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--txt); }
+
+  /* status */
+  .statusbar {
+    margin-top: auto; display: flex; align-items: center; gap: 10px;
+    height: 26px; padding: 0 12px; border-top: 1px solid var(--rule); background: #101317;
+    font: 10.5px/1 var(--mono); color: var(--txt-3); letter-spacing: .3px;
+  }
+  .statusbar .ok { color: var(--green); }
+  .statusbar .sep { width: 1px; height: 12px; background: var(--rule); }
+  .statusbar .dirty { color: var(--gold); }
+  .statusbar .sp { flex: 1; }
+
+  .caption { margin-top: 14px; font-size: 12.5px; color: #7f8791; line-height: 19px; }
+  .caption strong { color: #d3d8de; }
+  .footer { margin-top: 8px; font: 10px var(--mono); letter-spacing: 1.2px; text-transform: uppercase; color: #4d545c; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="window">
+    <div class="titlebar">
+      <span class="tb-mark">B</span>
+      <span class="tb-title"><b>BDOTempo</b> / combos / domadora / awakening</span>
+      <span class="tb-sp"></span>
+      <button class="tb-btn">─</button>
+      <button class="tb-btn">▢</button>
+      <button class="tb-btn c">✕</button>
+    </div>
+
+    <div class="shell">
+      <nav class="rail">
+        <div class="nav-head">Secciones</div>
+        <a class="nav-item active" href="#"><span class="g">⚔</span>Combos<span class="cnt">3</span></a>
+        <a class="nav-item" href="#"><span class="g">✧</span>Editor<span class="cnt">40</span></a>
+        <a class="nav-item" href="#"><span class="g">⚙</span>Configuración</a>
+
+        <div class="nav-head" style="margin-top:8px;">Ranuras</div>
+        <a class="nav-item" href="#"><span class="g">3</span>PvE Aguas Prietas</a>
+        <a class="nav-item" href="#"><span class="g">5</span>Jefes</a>
+        <a class="nav-item" href="#"><span class="g">7</span>Mundo abierto</a>
+        <a class="nav-item" href="#"><span class="g">9</span>Vacía</a>
+
+        <div class="rail-bottom">
+          <div class="nm">AhrinSong</div>
+          <div>Domadora · 330</div>
+          <div style="margin-top:6px;"><span class="blink"></span><span class="live">juego abierto</span></div>
+        </div>
+      </nav>
+
+      <main class="content">
+        <div class="hdr">
+          <h1>Domadora <span class="spec">AWAKENING</span></h1>
+          <span class="ctx">char=<b>AhrinSong</b> cuenta=<b>330</b></span>
+          <span class="sp"></span>
+          <button class="btn ghost">↻ Actualizar guía</button>
+          <button class="btn gold">✎ Editar en el Editor</button>
+        </div>
+
+        <div class="body-scroll">
+          <section class="panel">
+            <div class="panel-hd">Mis combos <span class="hint">10 ranuras · clase + specialización</span><span class="sp"></span><button class="btn xs ghost">Restaurar guía</button></div>
+            <div class="combo-bar">
+              <span class="lbl">Ranura</span>
+              <div class="slot-sel" tabindex="0"><span class="n">3</span><span class="t">PvE Aguas Prietas</span><span class="c">▾</span></div>
+              <span class="lbl">Nombre</span>
+              <input class="name-input" value="PvE Aguas Prietas" />
+              <button class="btn gold">Guardar en la ranura</button>
+              <button class="btn">Cargar</button>
+              <button class="btn" disabled>Borrar</button>
+            </div>
+            <div class="tbl-hd">
+              <span class="c">#</span><span></span><span>Habilidad</span><span class="c">Casilla</span><span class="c">Q. rápida</span><span class="c">Tecla</span><span class="r">Enfriam.</span>
+            </div>
+            <div class="trow sel">
+              <span class="idx">01</span>
+              <div class="icon ic-a">🐾</div>
+              <div class="nm">Baile de la Bestia IV<span class="dx">AoE · 3 golpes</span></div>
+              <span style="text-align:center;"><span class="chip gold">01</span></span>
+              <span style="text-align:center;"><span class="chip blue">QR 4</span></span>
+              <span style="text-align:center;"><span class="keycap">Shift+Q</span></span>
+              <span class="cd">18 s</span>
+            </div>
+            <div class="trow">
+              <span class="idx">02</span>
+              <div class="icon ic-b">🌀</div>
+              <div class="nm">Onda de Tumbo III<span class="dx">control · derribo</span></div>
+              <span style="text-align:center;"><span class="chip mute">02</span></span>
+              <span style="text-align:center;"><span class="chip blue">QR 5</span></span>
+              <span style="text-align:center;"><span class="keycap">W+E</span></span>
+              <span class="cd">12 s</span>
+            </div>
+            <div class="trow">
+              <span class="idx">03</span>
+              <div class="icon ic-c">🗡</div>
+              <div class="nm">Sacudida del Suelo<span class="dx">remate · contraataca</span></div>
+              <span style="text-align:center;"><span class="chip mute">03</span></span>
+              <span style="text-align:center;"><span class="chip blue">QR 6</span></span>
+              <span style="text-align:center;"><span class="keycap">F</span></span>
+              <span class="cd">9 s</span>
+            </div>
+            <div class="trow" style="border-bottom:0;color:var(--txt-3);font:11px var(--mono);">
+              <span class="idx">＋</span><span></span><span>añadir paso…</span><span></span><span></span><span></span><span></span>
+            </div>
+          </section>
+
+          <div class="row2">
+            <section class="panel">
+              <div class="panel-hd">Adicionales de la clase <span class="hint">solo lectura</span><span class="sp"></span><span class="chip mute">2</span></div>
+              <div class="extra-row">
+                <div class="icon ic-d">✦</div>
+                <div>
+                  <div class="n">Aura de Bestia <span class="keycap">Shift+X</span></div>
+                  <div class="d">aura del acompañante · 30 s</div>
+                </div>
+                <div class="chips">
+                  <span class="chip gold">CASILLA 13</span>
+                  <span class="chip mute">+12% DMG</span>
+                  <span class="chip mute">CD −8%</span>
+                </div>
+              </div>
+              <div class="extra-row">
+                <div class="icon ic-b">✺</div>
+                <div>
+                  <div class="n">Instinto salvaje <span class="keycap">Shift+Z</span></div>
+                  <div class="d">vínculo · movimiento</div>
+                </div>
+                <div class="chips">
+                  <span class="chip mute">+6% VEL</span>
+                  <span class="chip mute">PASIVA</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-hd">Resumen</div>
+              <div class="kv"><span>Enfriamiento total</span><b>39 s</b></div>
+              <div class="kv"><span>Casillas usadas</span><b>4 / 20</b></div>
+              <div class="kv"><span>Q. rápidas usadas</span><b>3 / 20</b></div>
+              <div class="kv"><span>Pasos</span><b>3</b></div>
+            </section>
+          </div>
+        </div>
+
+        <div class="statusbar">
+          <span class="ok">●</span><span>Guía (bdoclasshub)</span>
+          <span class="sep"></span>
+          <span class="dirty">△ Cambios sin guardar</span>
+          <span class="sp"></span>
+          <span>Domadora / Awakening</span>
+          <span class="sep"></span>
+          <span>AhrinSong · 330</span>
+          <span class="sep"></span>
+          <span>v0.9.4</span>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <p class="caption">
+    <strong>Consola de juego.</strong> Herramienta gamer densa: filas compactas tipo tabla, números tabulares monoespaciados,
+    separadores finos y máxima información por píxel sin perder la jerarquía.
+  </p>
+  <div class="footer">Concepto 3 de 10 — BDOTempo</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>BDOTempo · Concepto 10 · Monospace dev</title>
+<style>
+  :root{
+    --bg:#0e1116; --bg-2:#12161c; --panel:#151a21; --panel-2:#1a2029;
+    --edge:#232b36; --edge-2:#2f3947;
+    --txt:#cdd6e2; --txt-2:#8b97a8; --txt-3:#5d6979;
+    --green:#4ec9a4; --cyan:#57b6e0; --blue:#6aa8ff; --amber:#e0b34a; --red:#e06c75; --violet:#b48ead;
+    --mono:ui-monospace,"Cascadia Mono","JetBrains Mono",Consolas,"SFMono-Regular",Menlo,monospace;
+    --r:6px; --r-sm:4px; --r-pill:999px;
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:22px; --s6:30px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:#090b0e;color:var(--txt);font-family:var(--mono);font-size:13px;line-height:1.55;
+    font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center;gap:16px;padding:26px 16px 38px;
+    background-image:radial-gradient(circle at 50% 0%,rgba(106,168,255,.07),transparent 55%);
+  }
+  .caption{max-width:960px;text-align:center;font-size:12px;color:var(--txt-3);line-height:1.65}
+  .caption b{color:var(--txt-2);font-weight:600}
+  .caption code{color:var(--cyan)}
+
+  .win{
+    width:min(1180px,100%);height:800px;background:var(--bg);
+    border:1px solid var(--edge);border-radius:8px;overflow:hidden;
+    box-shadow:0 30px 60px -30px #000,0 0 0 1px rgba(255,255,255,.02) inset;
+    display:flex;flex-direction:column;
+  }
+
+  /* titlebar terminal-ish */
+  .titlebar{
+    height:40px;flex:0 0 40px;display:flex;align-items:center;gap:12px;padding:0 8px 0 12px;
+    background:var(--bg-2);border-bottom:1px solid var(--edge);
+  }
+  .dots{display:flex;gap:6px}
+  .dots i{width:9px;height:9px;border-radius:50%;display:block;border:1px solid rgba(255,255,255,.12)}
+  .dots i:nth-child(1){background:#3a2530}
+  .dots i:nth-child(2){background:#3a3222}
+  .dots i:nth-child(3){background:#20352c}
+  .tabtitle{font-size:12px;color:var(--txt-2)}
+  .tabtitle b{color:var(--txt);font-weight:600}
+  .tabtitle .p{color:var(--green)}
+  .branches{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--txt-3)}
+  .wincontrols{display:flex;gap:2px;margin-left:12px}
+  .wincontrols i{width:32px;height:26px;border-radius:var(--r-sm);display:grid;place-items:center;color:var(--txt-3);font-size:11px;font-style:normal}
+  .wincontrols i:hover{background:var(--panel-2);color:var(--txt)}
+
+  .body{flex:1;display:flex;min-height:0}
+
+  /* sidebar */
+  nav{
+    width:230px;flex:0 0 230px;background:var(--bg-2);border-right:1px solid var(--edge);
+    padding:14px 10px;display:flex;flex-direction:column;gap:2px;overflow:auto;
+  }
+  .navsec{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt-3);padding:10px 8px 6px}
+  .navitem{
+    display:flex;align-items:center;gap:9px;height:30px;padding:0 9px;border-radius:var(--r-sm);
+    font-size:12.5px;color:var(--txt-2);cursor:pointer;border-left:2px solid transparent;
+  }
+  .navitem .g{width:14px;text-align:center;color:var(--txt-3);font-size:11px}
+  .navitem:hover{background:var(--panel);color:var(--txt)}
+  .navitem.active{background:var(--panel-2);color:var(--txt);border-left-color:var(--blue)}
+  .navitem.active .g{color:var(--blue)}
+  .navitem .tag{margin-left:auto;font-size:10px;color:var(--txt-3)}
+  .fileitem{
+    display:flex;align-items:center;gap:8px;height:28px;padding:0 9px 0 22px;border-radius:var(--r-sm);
+    font-size:12px;color:var(--txt-3);cursor:pointer;
+  }
+  .fileitem:hover{background:var(--panel);color:var(--txt-2)}
+  .fileitem.active{color:var(--txt);background:rgba(106,168,255,.08)}
+  .fileitem .n{color:var(--amber);font-weight:600;width:10px}
+  .whomargin{margin-top:auto;border-top:1px solid var(--edge);padding-top:10px;font-size:11px;color:var(--txt-3);line-height:1.7}
+  .whomargin b{color:var(--txt-2);font-weight:600}
+
+  /* main */
+  main{flex:1;min-width:0;overflow:auto;display:flex;flex-direction:column}
+  .toolbar{
+    height:44px;flex:0 0 44px;display:flex;align-items:center;gap:10px;padding:0 16px;
+    border-bottom:1px solid var(--edge);background:var(--bg);
+  }
+  .crumb{font-size:12px;color:var(--txt-3)}
+  .crumb b{color:var(--txt);font-weight:600}
+  .crumb .sl{color:var(--edge-2)}
+  .toolspacer{flex:1}
+
+  .btn{
+    height:28px;padding:0 10px;border-radius:var(--r-sm);border:1px solid var(--edge-2);
+    background:var(--panel);color:var(--txt-2);font-family:var(--mono);font-size:12px;font-weight:500;
+    cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn:hover{background:var(--panel-2);color:var(--txt);border-color:#3b4858}
+  .btn:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg),0 0 0 4px rgba(106,168,255,.6)}
+  .btn.primary{background:#1d3a5c;border-color:#2c5580;color:#cfe2ff}
+  .btn.primary:hover{background:#244a75;border-color:#3a6795}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+
+  .scroll{flex:1;overflow:auto;padding:16px}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+
+  .panel{background:var(--panel);border:1px solid var(--edge);border-radius:var(--r)}
+  .panel-head{
+    display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--edge);
+    background:var(--panel-2);border-radius:var(--r) var(--r) 0 0;
+  }
+  .panel-head h2{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-2);font-weight:600}
+  .panel-head .hint{margin-left:auto;font-size:11px;color:var(--txt-3)}
+  .panel-body{padding:12px}
+
+  /* pills */
+  .pill{
+    display:inline-flex;align-items:center;gap:5px;border-radius:var(--r-pill);padding:1px 8px;
+    font-size:10.5px;font-weight:600;letter-spacing:.02em;border:1px solid transparent;white-space:nowrap;
+  }
+  .pill::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+  .pill.ok{color:var(--green);background:rgba(78,201,164,.10);border-color:rgba(78,201,164,.28)}
+  .pill.warn{color:var(--amber);background:rgba(224,179,74,.10);border-color:rgba(224,179,74,.30)}
+  .pill.info{color:var(--blue);background:rgba(106,168,255,.10);border-color:rgba(106,168,255,.28)}
+  .pill.gold{color:var(--amber);background:rgba(224,179,74,.10);border-color:rgba(224,179,74,.30)}
+  .pill.blue{color:var(--cyan);background:rgba(87,182,224,.10);border-color:rgba(87,182,224,.28)}
+  .pill.muted{color:var(--txt-3);background:rgba(255,255,255,.03);border-color:var(--edge-2)}
+  .pill.muted::before{display:none}
+
+  /* inputs */
+  .fieldrow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .fgroup{display:flex;flex-direction:column;gap:5px}
+  .flabel{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-3)}
+  .input{
+    height:28px;min-width:150px;display:flex;align-items:center;padding:0 8px;font-family:var(--mono);font-size:12.5px;
+    background:var(--bg);border:1px solid var(--edge-2);border-radius:var(--r-sm);color:var(--txt);
+  }
+  .input:focus-within{border-color:var(--blue);box-shadow:0 0 0 2px rgba(106,168,255,.22)}
+  .input.sel{cursor:pointer;justify-content:space-between;gap:10px}
+  .input.sel:hover{border-color:#3b4858}
+  .input .caret{color:var(--txt-3);font-size:10px}
+  .hintline{font-size:11px;color:var(--txt-3);margin-top:10px}
+  .hintline code{color:var(--cyan)}
+
+  /* code list w/ gutter */
+  .code{font-family:var(--mono);font-size:12.5px}
+  .codelist{border-top:1px solid var(--edge)}
+  .cline{
+    display:grid;grid-template-columns:38px 26px 44px minmax(0,1fr) auto;gap:10px;align-items:center;
+    padding:6px 12px 6px 0;border-bottom:1px solid rgba(35,43,54,.6);
+  }
+  .cline:last-child{border-bottom:0}
+  .cline:hover{background:var(--panel-2)}
+  .gutter{
+    text-align:right;color:var(--txt-3);font-size:11.5px;user-select:none;
+    border-right:1px solid var(--edge);padding-right:8px;align-self:stretch;display:flex;align-items:center;justify-content:flex-end;
+  }
+  .ln-num{color:var(--violet);font-size:11.5px}
+  .skillicon{
+    width:44px;height:44px;border-radius:var(--r);flex:0 0 44px;display:grid;place-items:center;font-size:18px;color:#fff;
+    border:1px solid rgba(255,255,255,.1);margin:2px 0;
+  }
+  .g1{background:linear-gradient(150deg,#6d4aa0,#3c2560)}
+  .g2{background:linear-gradient(150deg,#2d6f8c,#17414f)}
+  .g3{background:linear-gradient(150deg,#9a7328,#5c4510)}
+  .g4{background:linear-gradient(150deg,#3f7d5f,#1d4635)}
+  .g5{background:linear-gradient(150deg,#9a4a41,#5c2720)}
+  .code-t{min-width:0;padding:4px 0}
+  .sname{font-size:12.5px;color:var(--txt)}
+  .sname .kw{color:var(--blue)}
+  .sname .fn{color:var(--green)}
+  .smeta{font-size:11px;color:var(--txt-3);margin-top:2px}
+  .smeta .str{color:var(--amber)}
+  .sidecol{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding-right:2px}
+  kbd{
+    font-family:var(--mono);font-size:11px;color:var(--txt);background:var(--panel-2);
+    border:1px solid var(--edge-2);border-bottom-color:#3d4a5c;border-radius:4px;
+    padding:1px 6px;min-width:20px;text-align:center;box-shadow:0 1px 0 #000;
+  }
+  .keys{display:flex;gap:4px;align-items:center}
+
+  /* right column */
+  .addon{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid rgba(35,43,54,.8)}
+  .addon:last-child{border-bottom:0;padding-bottom:0}
+  .addon:first-child{padding-top:0}
+  .addon h3{font-size:12.5px;font-weight:600;color:var(--txt);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .addon p{font-size:11.5px;color:var(--txt-3);margin-top:3px;line-height:1.5}
+  .addon .eff{margin-top:5px;display:flex;gap:4px;flex-wrap:wrap}
+  .addon .eff span{font-size:10.5px;color:var(--txt-2);background:var(--bg);border:1px solid var(--edge-2);border-radius:3px;padding:0 5px}
+
+  /* kv */
+  .kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;font-size:11.5px}
+  .kv .k{color:var(--txt-3)}
+  .kv .v{color:var(--txt);display:flex;gap:6px;align-items:center}
+  .kv .v .str{color:var(--amber)}
+
+  /* review block */
+  .review{background:var(--bg);border:1px solid var(--edge-2);border-radius:var(--r-sm);padding:10px;font-size:11.5px}
+  .review .rrow{display:flex;align-items:center;gap:8px;padding:3px 0;color:var(--txt-2)}
+  .review .rrow .box{color:var(--green);width:12px}
+  .review .rrow .box.off{color:var(--txt-3)}
+  .review .rrow .cnt{margin-left:auto;color:var(--txt-3)}
+
+  /* statusbar */
+  .statusbar{
+    height:28px;flex:0 0 28px;display:flex;align-items:center;gap:14px;padding:0 12px;
+    background:var(--bg-2);border-top:1px solid var(--edge);font-size:11px;color:var(--txt-3);
+  }
+  .statusbar .st{color:var(--txt-2)}
+  .statusbar .st b{color:var(--amber);font-weight:600}
+  .statusbar .sep{width:1px;height:12px;background:var(--edge-2)}
+  .statusbar .right{margin-left:auto;display:flex;gap:14px;align-items:center}
+  .statusbar .ok{color:var(--green)}
+
+  footer{font-size:11.5px;color:var(--txt-3);letter-spacing:.03em}
+</style>
+</head>
+<body>
+
+<div class="win">
+  <div class="titlebar">
+    <div class="dots"><i></i><i></i><i></i></div>
+    <div class="tabtitle"><b>bdotempo</b> — <span class="p">combos</span> · domadora/awakening</div>
+    <div class="branches">⎇ main · <span>v1.4.2</span></div>
+    <div class="wincontrols"><i>—</i><i>▢</i><i>✕</i></div>
+  </div>
+
+  <div class="body">
+    <nav>
+      <div class="navsec">secciones</div>
+      <div class="navitem active"><span class="g">⚔</span>combos<span class="tag">2</span></div>
+      <div class="navitem"><span class="g">✧</span>editor</div>
+      <div class="navitem"><span class="g">⚙</span>configuración</div>
+
+      <div class="navsec">ranuras guardadas</div>
+      <div class="fileitem"><span class="n">3</span>pve-aguas-prietas.combo</div>
+      <div class="fileitem active"><span class="n">5</span>jefes.combo</div>
+
+      <div class="whomargin">
+        personaje<br><b>AhrinSong</b><br>
+        domadora · awakening<br>
+        cuenta 330
+      </div>
+    </nav>
+
+    <main>
+      <div class="toolbar">
+        <div class="crumb"><b>domadora</b><span class="sl"> / </span>awakening<span class="sl"> / </span>AhrinSong<span class="sl"> / </span>ranura 5</div>
+        <div class="toolspacer"></div>
+        <button class="btn">⟲ restaurar guía</button>
+        <button class="btn primary">abrir editor →</button>
+      </div>
+
+      <div class="scroll">
+        <div class="grid">
+
+          <!-- LEFT -->
+          <div style="display:flex;flex-direction:column;gap:14px">
+
+            <!-- mis combos -->
+            <section class="panel">
+              <div class="panel-head">
+                <h2>mis combos</h2>
+                <span class="pill muted">10 ranuras / clase+spec</span>
+                <span class="hint">ranura 5</span>
+              </div>
+              <div class="panel-body">
+                <div class="fieldrow">
+                  <div class="fgroup" style="flex:0 0 190px">
+                    <span class="flabel">ranura</span>
+                    <div class="input sel"><span>5 · Jefes</span><span class="caret">▼</span></div>
+                  </div>
+                  <div class="fgroup" style="flex:1;min-width:170px">
+                    <span class="flabel">nombre</span>
+                    <div class="input">Jefes</div>
+                  </div>
+                </div>
+                <div class="fieldrow" style="margin-top:12px">
+                  <button class="btn primary">guardar en la ranura</button>
+                  <button class="btn">cargar</button>
+                  <button class="btn">borrar</button>
+                  <button class="btn" disabled>restaurar guía</button>
+                  <span class="pill ok" style="margin-left:auto">guardada</span>
+                </div>
+                <div class="hintline">la ranura 5 conserva <code>3</code> pasos y <code>2</code> casillas.</div>
+              </div>
+            </section>
+
+            <!-- pasos -->
+            <section class="panel">
+              <div class="panel-head">
+                <h2>pasos del combo</h2>
+                <span class="hint">3 pasos</span>
+              </div>
+              <div class="codelist">
+                <div class="cline">
+                  <div class="gutter">1</div>
+                  <div class="ln-num">01</div>
+                  <div class="skillicon g1">🐾</div>
+                  <div class="code-t">
+                    <div class="sname"><span class="kw">skill</span> <span class="fn">"Baile de la Bestia IV"</span> <span style="color:var(--txt-3)">·</span> <span style="color:var(--txt-3)">Shift+Q</span></div>
+                    <div class="smeta">cd: <span class="str">18s</span> · nota: "abre después del agarre"</div>
+                  </div>
+                  <div class="sidecol">
+                    <span class="pill gold">casilla 1</span>
+                    <div class="keys"><kbd>Shift</kbd><kbd>Q</kbd></div>
+                  </div>
+                </div>
+                <div class="cline">
+                  <div class="gutter">2</div>
+                  <div class="ln-num">02</div>
+                  <div class="skillicon g2">🌪</div>
+                  <div class="code-t">
+                    <div class="sname"><span class="kw">skill</span> <span class="fn">"Onda de Tumbo III"</span> <span style="color:var(--txt-3)">·</span> <span style="color:var(--txt-3)">W+E</span></div>
+                    <div class="smeta">cd: <span class="str">9s</span> · nota: "encadena si hay esquiva"</div>
+                  </div>
+                  <div class="sidecol">
+                    <span class="pill blue">casilla rápida 2</span>
+                    <div class="keys"><kbd>W</kbd><kbd>E</kbd></div>
+                  </div>
+                </div>
+                <div class="cline">
+                  <div class="gutter">3</div>
+                  <div class="ln-num">03</div>
+                  <div class="skillicon g3">✦</div>
+                  <div class="code-t">
+                    <div class="sname"><span class="kw">skill</span> <span class="fn">"Sacudida del Suelo"</span> <span style="color:var(--txt-3)">·</span> <span style="color:var(--txt-3)">F</span></div>
+                    <div class="smeta">cd: <span class="str">6s</span> · nota: "golpe de relleno"</div>
+                  </div>
+                  <div class="sidecol">
+                    <span class="pill muted">sin casilla</span>
+                    <div class="keys"><kbd>F</kbd></div>
+                  </div>
+                </div>
+                <div class="cline" style="color:var(--txt-3)">
+                  <div class="gutter">4</div>
+                  <div class="ln-num" style="color:var(--txt-3)">+</div>
+                  <div style="display:grid;place-items:center;height:44px;border:1px dashed var(--edge-2);border-radius:var(--r);color:var(--txt-3)">＋</div>
+                  <div class="code-t"><div class="sname" style="color:var(--txt-3)">añadir paso…</div></div>
+                  <div class="sidecol"><span class="pill muted">opcional</span></div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- RIGHT -->
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <section class="panel">
+              <div class="panel-head"><h2>adicionales de la clase</h2><span class="pill muted">solo lectura</span></div>
+              <div class="panel-body">
+                <div class="addon">
+                  <div class="skillicon g4" style="width:36px;height:36px;flex:0 0 36px;font-size:15px;border-radius:var(--r-sm)">✺</div>
+                  <div>
+                    <h3>Aura de Bestia <span class="pill gold">casilla 13</span></h3>
+                    <p>Aumenta el daño crítico mientras el invocador esté activo.</p>
+                    <div class="eff"><span>+10 % daño crítico</span><span>40 s</span><span>Shift+X</span></div>
+                  </div>
+                </div>
+                <div class="addon">
+                  <div class="skillicon g5" style="width:36px;height:36px;flex:0 0 36px;font-size:15px;border-radius:var(--r-sm)">✧</div>
+                  <div>
+                    <h3>Vínculo de la Bestia</h3>
+                    <p>Reduce el enfriamiento de las invocaciones de la clase.</p>
+                    <div class="eff"><span>−3 s enfriamiento</span><span>pasivo</span></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head"><h2>guía (bdoclasshub)</h2><span class="pill warn">cambios sin guardar</span></div>
+              <div class="panel-body">
+                <div class="kv">
+                  <div class="k">origen</div><div class="v"><span class="str">"bdoclasshub"</span></div>
+                  <div class="k">guía</div><div class="v"><span class="str">"Awakening PvE"</span></div>
+                  <div class="k">importada</div><div class="v">12 oct 2026</div>
+                  <div class="k">estado</div><div class="v"><span class="pill warn">dirty</span></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head"><h2>revisión de escritura</h2></div>
+              <div class="panel-body">
+                <div class="review">
+                  <div class="rrow"><span class="box">✓</span>casillas de enfriamiento<span class="cnt">20</span></div>
+                  <div class="rrow"><span class="box">✓</span>nombres y notas<span class="cnt">3</span></div>
+                  <div class="rrow"><span class="box">✓</span>casillas rápidas<span class="cnt">20</span></div>
+                  <div class="rrow"><span class="box off">–</span>ajustes de cuenta<span class="cnt">0</span></div>
+                </div>
+                <button class="btn primary" style="width:100%;justify-content:center;height:32px;margin-top:10px">escribir en el personaje</button>
+                <div class="hintline">se crea una copia de seguridad antes de escribir.</div>
+              </div>
+            </section>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="statusbar">
+    <span class="st">guía (bdoclasshub) · <b>cambios sin guardar</b></span>
+    <span class="sep"></span>
+    <span>domadora · awakening</span>
+    <span class="sep"></span>
+    <span>ahrinsong · cuenta 330</span>
+    <div class="right"><span class="ok">● conectado</span><span>utf-8</span></div>
+  </div>
+</div>
+
+<p class="caption"><b>Monospace dev:</b> producto para desarrolladores. Tipografía monoespaciada, cromo de terminal, canal de números en la lista de combos, píldoras de estado y atajos <code>&lt;kbd&gt;</code>.</p>
+<footer>Concepto 10 de 10 — BDOTempo</footer>
+
+</body>
+</html>

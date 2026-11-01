@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BDOTempo — Concepto 4: Minimal claro</title>
+<style>
+  :root {
+    --paper: #fbfaf8;
+    --surface: #ffffff;
+    --surface-soft: #f6f5f2;
+    --line: #e7e5e0;
+    --line-strong: #d6d3cd;
+    --ink: #17181a;
+    --ink-2: #55585d;
+    --ink-3: #8d9095;
+    --warm: #b4722a;
+    --warm-soft: #f3e8db;
+    --warm-line: #e2cdb4;
+    --cool: #3f6f9e;
+    --cool-soft: #eaf0f6;
+    --cool-line: #cddcea;
+    --radius: 14px;
+    --radius-s: 9px;
+    --shadow: 0 1px 2px rgba(23,24,26,.04), 0 6px 18px rgba(23,24,26,.035);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: #efede9;
+    color: var(--ink);
+    font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    font-size: 14px; line-height: 22px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 16px 40px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .stage { width: 1160px; max-width: 100%; }
+
+  .window {
+    background: var(--paper);
+    border: 1px solid var(--line-strong);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,.04), 0 30px 60px rgba(0,0,0,.10);
+  }
+  .titlebar {
+    height: 46px; display: flex; align-items: center; gap: 10px;
+    padding: 0 12px 0 22px; border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .tb-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--warm); }
+  .tb-title { font-size: 12.5px; color: var(--ink-3); letter-spacing: .2px; }
+  .tb-title b { color: var(--ink); font-weight: 600; }
+  .tb-sp { flex: 1; }
+  .tb-btn { width: 40px; height: 30px; border: 0; border-radius: 7px; background: transparent; color: var(--ink-3); font-size: 11px; display: grid; place-items: center; }
+  .tb-btn:hover { background: var(--surface-soft); color: var(--ink); }
+
+  .shell { display: grid; grid-template-columns: 212px 1fr; min-height: 748px; }
+
+  /* rail = very quiet, text only */
+  .rail { border-right: 1px solid var(--line); padding: 26px 18px; display: flex; flex-direction: column; }
+  .brand { font-size: 14px; font-weight: 700; letter-spacing: -.2px; padding: 0 10px 26px; }
+  .brand span { display: block; font-size: 11.5px; font-weight: 400; color: var(--ink-3); letter-spacing: .1px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 10px;
+    color: var(--ink-2); text-decoration: none; font-size: 14px; border-radius: var(--radius-s);
+  }
+  .nav-item .g { font-size: 14px; width: 16px; color: var(--ink-3); }
+  .nav-item:hover { background: var(--surface-soft); color: var(--ink); }
+  .nav-item.active { color: var(--ink); font-weight: 600; background: var(--warm-soft); }
+  .nav-item.active .g { color: var(--warm); }
+  .rail-foot { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--line); }
+  .rail-foot .nm { font-size: 13.5px; font-weight: 600; }
+  .rail-foot .mt { font-size: 12px; color: var(--ink-3); }
+
+  .content { padding: 34px 44px 30px; display: flex; flex-direction: column; gap: 26px; }
+
+  .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+  .h-title { margin: 0; font-size: 32px; line-height: 40px; font-weight: 650; letter-spacing: -1px; }
+  .h-title em { font-style: normal; color: var(--ink-3); font-weight: 400; }
+  .h-sub { margin-top: 6px; font-size: 13px; color: var(--ink-3); }
+  .h-sub b { color: var(--ink-2); font-weight: 500; }
+
+  .btn {
+    font-family: inherit; font-size: 13.5px; height: 38px; padding: 0 16px; border-radius: var(--radius-s);
+    border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; white-space: nowrap;
+    transition: background .12s, border-color .12s;
+  }
+  .btn:hover { background: var(--surface-soft); }
+  .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .btn.warm { background: var(--warm); border-color: var(--warm); color: #fff; font-weight: 600; }
+  .btn.warm:hover { background: #a3651f; border-color: #a3651f; }
+  .btn.text { border-color: transparent; background: transparent; color: var(--ink-2); padding: 0 10px; }
+  .btn.text:hover { background: var(--surface-soft); color: var(--ink); }
+  .btn:disabled { color: #b3b5b8; background: var(--paper); border-color: var(--line); cursor: default; }
+  .btn.sm { height: 32px; font-size: 12.5px; padding: 0 12px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .card-head { display: flex; align-items: baseline; justify-content: space-between; padding: 22px 26px 0; }
+  .card-title { font-size: 15px; font-weight: 650; letter-spacing: -.2px; }
+  .card-note { font-size: 12.5px; color: var(--ink-3); }
+  .card-body { padding: 18px 26px 24px; }
+
+  .combo-bar { display: grid; grid-template-columns: 220px 1fr; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .label { font-size: 12px; color: var(--ink-3); letter-spacing: .1px; }
+  .input, .select {
+    font-family: inherit; font-size: 14px; height: 38px; border-radius: var(--radius-s);
+    border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); padding: 0 12px;
+  }
+  .input:focus, .select:focus { outline: none; border-color: var(--warm); box-shadow: 0 0 0 3px rgba(180,114,42,.13); }
+  .input::placeholder { color: #b5b6b9; }
+  .bar-actions { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; }
+  .bar-actions .sp { flex: 1; }
+
+  .steps { display: flex; flex-direction: column; }
+  .step { display: grid; grid-template-columns: 28px 44px 1fr auto; gap: 14px; align-items: center; padding: 15px 4px; }
+  .step + .step { border-top: 1px solid var(--line); }
+  .step-num { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; text-align: center; }
+  .icon {
+    width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center;
+    font-size: 20px; color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.10);
+  }
+  .ic-a { background: linear-gradient(145deg, #d9a860, #a4672a); }
+  .ic-b { background: linear-gradient(145deg, #7f93b3, #4a5b78); }
+  .ic-c { background: linear-gradient(145deg, #86a992, #4d705c); }
+  .ic-d { background: linear-gradient(145deg, #b090c2, #6f5084); }
+  .step-name { font-size: 15px; font-weight: 600; letter-spacing: -.1px; }
+  .step-meta { font-size: 12.5px; color: var(--ink-3); margin-top: 1px; }
+  .step-side { display: flex; align-items: center; gap: 9px; }
+  .keycap {
+    font-family: "Cascadia Mono", Consolas, monospace; font-size: 12px; padding: 3px 8px;
+    border-radius: 6px; border: 1px solid var(--line-strong); background: var(--surface-soft); color: var(--ink-2);
+  }
+  .chip { font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+  .chip.gold { background: var(--warm-soft); color: var(--warm); border: 1px solid var(--warm-line); }
+  .chip.blue { background: var(--cool-soft); color: var(--cool); border: 1px solid var(--cool-line); }
+  .chip.mute { background: var(--surface-soft); color: var(--ink-3); border: 1px solid var(--line); }
+  .cd { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--ink-2); min-width: 42px; text-align: right; }
+
+  .row2 { display: grid; grid-template-columns: 1.15fr .85fr; gap: 20px; }
+  .extra { display: grid; grid-template-columns: 44px 1fr; gap: 14px; padding: 14px 0; }
+  .extra + .extra { border-top: 1px solid var(--line); }
+  .extra-name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .extra-desc { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; line-height: 19px; }
+  .extra-fx { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .kv { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; font-size: 13px; color: var(--ink-2); }
+  .kv + .kv { border-top: 1px solid var(--line); }
+  .kv b { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 650; }
+
+  .statusbar {
+    margin-top: auto;
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 18px; border: 1px solid var(--line); border-radius: var(--radius-s);
+    background: var(--surface); font-size: 12.5px; color: var(--ink-3);
+  }
+  .statusbar .ok { width: 7px; height: 7px; border-radius: 50%; background: #3f8f5a; }
+  .statusbar b { color: var(--ink-2); font-weight: 500; }
+  .statusbar .sep { width: 1px; height: 13px; background: var(--line); }
+  .statusbar .dirty { color: var(--warm); font-weight: 500; }
+  .statusbar .sp { flex: 1; }
+
+  .caption { margin-top: 18px; font-size: 13px; color: #5b5d61; line-height: 21px; }
+  .caption strong { color: #17181a; }
+  .footer { margin-top: 10px; font-size: 11px; color: #9b9d9f; letter-spacing: .8px; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="window">
+    <div class="titlebar">
+      <span class="tb-dot"></span>
+      <span class="tb-title"><b>BDOTempo</b> · Combos</span>
+      <span class="tb-sp"></span>
+      <button class="tb-btn">─</button>
+      <button class="tb-btn">□</button>
+      <button class="tb-btn">✕</button>
+    </div>
+
+    <div class="shell">
+      <nav class="rail">
+        <div class="brand">BDOTempo<span>Black Desert Online</span></div>
+        <a class="nav-item active" href="#"><span class="g">⚔</span>Combos</a>
+        <a class="nav-item" href="#"><span class="g">✧</span>Editor</a>
+        <a class="nav-item" href="#"><span class="g">⚙</span>Configuración</a>
+        <div class="rail-foot">
+          <div class="nm">AhrinSong</div>
+          <div class="mt">Domadora · cuenta 330</div>
+        </div>
+      </nav>
+
+      <main class="content">
+        <header class="page-header">
+          <div>
+            <h1 class="h-title">Domadora <em>/ Awakening</em></h1>
+            <div class="h-sub">Guía de bdoclasshub · <b>AhrinSong</b> · 3 pasos · 1 buff</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn text">↻ Actualizar</button>
+            <button class="btn warm">✎ Editar en el Editor</button>
+          </div>
+        </header>
+
+        <section class="card">
+          <div class="card-head">
+            <div class="card-title">Mis combos</div>
+            <div class="card-note">10 ranuras por clase y especialización</div>
+          </div>
+          <div class="card-body">
+            <div class="combo-bar">
+              <div class="field">
+                <span class="label">Ranura</span>
+                <select class="select">
+                  <option>3 · PvE Aguas Prietas</option>
+                  <option>5 · Jefes</option>
+                  <option>7 · Mundo abierto</option>
+                  <option>9 · Vacía</option>
+                </select>
+              </div>
+              <div class="field">
+                <span class="label">Nombre del combo</span>
+                <input class="input" value="PvE Aguas Prietas" />
+              </div>
+              <div class="bar-actions">
+                <button class="btn warm">Guardar en la ranura</button>
+                <button class="btn">Cargar</button>
+                <button class="btn" disabled>Borrar</button>
+                <span class="sp"></span>
+                <button class="btn text">Restaurar guía</button>
+              </div>
+            </div>
+
+            <div class="steps">
+              <div class="step">
+                <div class="step-num">1</div>
+                <div class="icon ic-a">🐾</div>
+                <div>
+                  <div class="step-name">Baile de la Bestia IV</div>
+                  <div class="step-meta">Daño en área · 3 golpes</div>
+                </div>
+                <div class="step-side">
+                  <span class="chip gold">Casilla 1</span>
+                  <span class="chip blue">Q. rápida 4</span>
+                  <span class="keycap">Shift + Q</span>
+                  <span class="cd">18 s</span>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num">2</div>
+                <div class="icon ic-b">🌀</div>
+                <div>
+                  <div class="step-name">Onda de Tumbo III</div>
+                  <div class="step-meta">Control · derribo</div>
+                </div>
+                <div class="step-side">
+                  <span class="chip mute">Casilla 2</span>
+                  <span class="chip blue">Q. rápida 5</span>
+                  <span class="keycap">W + E</span>
+                  <span class="cd">12 s</span>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num">3</div>
+                <div class="icon ic-c">🗡</div>
+                <div>
+                  <div class="step-name">Sacudida del Suelo</div>
+                  <div class="step-meta">Remate · contraataca</div>
+                </div>
+                <div class="step-side">
+                  <span class="chip mute">Casilla 3</span>
+                  <span class="chip blue">Q. rápida 6</span>
+                  <span class="keycap">F</span>
+                  <span class="cd">9 s</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="row2">
+          <section class="card">
+            <div class="card-head">
+              <div class="card-title">Adicionales de la clase</div>
+              <span class="chip mute">Solo lectura</span>
+            </div>
+            <div class="card-body" style="padding-top:6px;">
+              <div class="extra">
+                <div class="icon ic-d">✦</div>
+                <div>
+                  <div class="extra-name">Aura de Bestia <span class="keycap">Shift + X</span></div>
+                  <div class="extra-desc">Invoca el aura de tu acompañante durante 30 s.</div>
+                  <div class="extra-fx">
+                    <span class="chip gold">Casilla 13</span>
+                    <span class="chip mute">+12 % daño</span>
+                    <span class="chip mute">Enfriamiento −8 %</span>
+                  </div>
+                </div>
+              </div>
+              <div class="extra">
+                <div class="icon ic-b">✺</div>
+                <div>
+                  <div class="extra-name">Instinto salvaje <span class="keycap">Shift + Z</span></div>
+                  <div class="extra-desc">Aumenta la velocidad de movimiento del vínculo.</div>
+                  <div class="extra-fx">
+                    <span class="chip mute">+6 % vel. movimiento</span>
+                    <span class="chip mute">Pasiva</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-head"><div class="card-title">Resumen</div></div>
+            <div class="card-body" style="padding-top:6px;">
+              <div class="kv"><span>Enfriamiento total</span><b>39 s</b></div>
+              <div class="kv"><span>Casillas usadas</span><b>4 / 20</b></div>
+              <div class="kv"><span>Q. rápidas usadas</span><b>3 / 20</b></div>
+              <div class="kv"><span>Pasos</span><b>3</b></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="statusbar">
+          <span class="ok"></span>
+          <b>Guía (bdoclasshub)</b>
+          <span class="sep"></span>
+          <span class="dirty">Cambios sin guardar</span>
+          <span class="sp"></span>
+          <span>Domadora · Awakening</span>
+          <span class="sep"></span>
+          <span>AhrinSong · cuenta 330</span>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <p class="caption">
+    <strong>Minimal claro.</strong> Superficies casi blancas, divisores grises suaves y un único acento cálido.
+    Mucho aire, tamaños de texto legibles y jerarquía por peso tipográfico más que por color.
+  </p>
+  <div class="footer">Concepto 4 de 10 — BDOTempo</div>
+</div>
+</body>
+</html>

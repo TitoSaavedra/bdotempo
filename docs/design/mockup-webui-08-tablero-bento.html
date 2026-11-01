@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>BDOTempo · Concepto 8 · Tablero bento</title>
+<style>
+  :root{
+    --bg:#171716; --bg-2:#1e1e1d; --tile:#242423; --tile-2:#2b2b29;
+    --edge:rgba(255,255,255,.09); --edge-2:rgba(255,255,255,.16);
+    --txt:#f4f2ee; --txt-2:#b7b4ad; --txt-3:#7f7c76;
+    --lime:#c6f24e; --violet:#8b7bff; --cyan:#4fd6e8; --amber:#ffb648; --coral:#ff7a5c;
+    --r:20px; --r-sm:12px; --r-pill:999px;
+    --s1:6px; --s2:10px; --s3:14px; --s4:18px; --s5:24px; --s6:32px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    min-height:100vh;background:var(--bg);color:var(--txt);
+    font-family:"Segoe UI Variable Display","Segoe UI",ui-sans-serif,system-ui,Arial,sans-serif;
+    font-size:14px;line-height:1.45;font-variant-numeric:tabular-nums;
+    -webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;align-items:center;gap:16px;padding:28px 16px 40px;
+  }
+  .caption{max-width:980px;text-align:center;font-size:13px;color:var(--txt-3);line-height:1.55}
+  .caption b{color:var(--txt-2);font-weight:600}
+
+  .win{
+    width:min(1180px,100%);height:800px;border-radius:24px;overflow:hidden;
+    background:linear-gradient(180deg,#121211,#181817 40%,#131312);
+    border:1px solid var(--edge);box-shadow:0 30px 70px -30px rgba(0,0,0,.9);
+    display:flex;flex-direction:column;
+  }
+  .titlebar{
+    height:50px;flex:0 0 50px;display:flex;align-items:center;gap:14px;padding:0 12px 0 20px;
+    border-bottom:1px solid var(--edge);
+  }
+  .dots{display:flex;gap:7px}
+  .dots i{width:10px;height:10px;border-radius:50%;background:#3a3a38;display:block;border:1px solid rgba(255,255,255,.06)}
+  .appmark{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:650;letter-spacing:-.01em}
+  .logo{
+    width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font-size:12px;color:#171716;
+    background:linear-gradient(150deg,#e4ff8e,var(--lime));
+  }
+  .appmark .sub{color:var(--txt-3);font-weight:500;font-size:12.5px}
+  .wincontrols{margin-left:auto;display:flex;gap:2px}
+  .wincontrols i{width:36px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--txt-3);font-size:11px;font-style:normal}
+  .wincontrols i:hover{background:rgba(255,255,255,.07);color:var(--txt)}
+
+  /* top nav (horizontal pills) */
+  .topnav{display:flex;align-items:center;gap:6px;padding:14px 24px;border-bottom:1px solid var(--edge)}
+  .navpill{
+    display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:var(--r-pill);
+    font-size:13.5px;font-weight:600;color:var(--txt-2);cursor:pointer;border:1px solid transparent;
+  }
+  .navpill:hover{background:rgba(255,255,255,.05);color:var(--txt)}
+  .navpill.active{background:var(--txt);color:#161615;border-color:transparent}
+  .navpill .n{font-size:11px;opacity:.6}
+  .character{
+    margin-left:auto;display:flex;align-items:center;gap:10px;padding:5px 6px 5px 12px;border-radius:var(--r-pill);
+    border:1px solid var(--edge);background:var(--tile);font-size:12.5px;
+  }
+  .character .who b{font-weight:650;color:var(--txt)}
+  .character .who span{color:var(--txt-3)}
+  .avatar{
+    width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;color:#0f1414;
+    background:linear-gradient(150deg,#8cf0f8,var(--cyan));
+  }
+
+  /* bento grid */
+  .board{
+    flex:1;min-height:0;overflow:auto;padding:20px 24px 18px;
+    display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;
+    grid-template-rows:auto auto auto;
+  }
+  .tile{
+    background:var(--tile);border:1px solid var(--edge);border-radius:var(--r);
+    padding:16px;display:flex;flex-direction:column;min-width:0;position:relative;overflow:hidden;
+  }
+  .tile-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .tile-head h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--txt-3)}
+  .tile-head .more{margin-left:auto;color:var(--txt-3);font-size:13px;cursor:pointer;border-radius:6px;padding:0 4px}
+  .tile-head .more:hover{color:var(--txt)}
+
+  /* hero tile */
+  .hero{
+    grid-column:span 8;grid-row:span 2;
+    background:
+      radial-gradient(500px 300px at 88% -20%,rgba(198,242,78,.22),transparent 62%),
+      linear-gradient(160deg,#2a2d24,#20211e 60%,#1c1d1a);
+    border-color:rgba(198,242,78,.22);
+  }
+  .hero .classline{display:flex;align-items:center;gap:14px}
+  .heroicon{
+    width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:26px;color:#14160f;
+    background:linear-gradient(150deg,#e7ff9b,var(--lime));
+    box-shadow:0 18px 36px -18px rgba(198,242,78,.9);
+  }
+  .hero h1{font-size:26px;font-weight:680;letter-spacing:-.035em;line-height:1.1}
+  .hero .spec{
+    display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-size:11.5px;font-weight:650;
+    color:var(--lime);background:rgba(198,242,78,.12);border:1px solid rgba(198,242,78,.26);
+    border-radius:var(--r-pill);padding:2px 10px;letter-spacing:.02em;
+  }
+  .hero .stepsbig{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+  .bigstep{
+    display:flex;align-items:center;gap:14px;padding:11px 12px;border-radius:var(--r-sm);
+    background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);
+    transition:background .16s,border-color .16s,transform .12s;
+  }
+  .bigstep:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14)}
+  .bignum{font-size:22px;font-weight:720;letter-spacing:-.04em;color:rgba(255,255,255,.16);width:34px;text-align:center;flex:0 0 34px}
+  .skillicon{
+    width:44px;height:44px;border-radius:14px;flex:0 0 44px;display:grid;place-items:center;font-size:20px;color:#fff;
+    border:1px solid rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.3);
+  }
+  .g1{background:linear-gradient(150deg,#a78bfa,#6d28d9)}
+  .g2{background:linear-gradient(150deg,#22d3ee,#0e7490)}
+  .g3{background:linear-gradient(150deg,#fbbf24,#b45309)}
+  .g4{background:linear-gradient(150deg,#34d399,#047857)}
+  .g5{background:linear-gradient(150deg,#fb7185,#be123c)}
+  .sname{font-size:14.5px;font-weight:640;letter-spacing:-.01em}
+  .smeta{font-size:11.5px;color:var(--txt-3);margin-top:2px}
+  .stepright{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;border-radius:var(--r-pill);padding:3px 10px;
+    font-size:11px;font-weight:700;letter-spacing:.01em;white-space:nowrap;border:1px solid transparent;
+  }
+  .chip.gold{background:rgba(255,182,72,.14);color:var(--amber);border-color:rgba(255,182,72,.32)}
+  .chip.blue{background:rgba(79,214,232,.13);color:var(--cyan);border-color:rgba(79,214,232,.3)}
+  .chip.gray{background:rgba(255,255,255,.06);color:var(--txt-3);border-color:var(--edge-2)}
+  .chip.lime{background:rgba(198,242,78,.14);color:var(--lime);border-color:rgba(198,242,78,.3)}
+  .chip.warn{background:rgba(255,182,72,.13);color:var(--amber);border-color:rgba(255,182,72,.3)}
+  .keys{display:flex;gap:4px}
+  kbd{
+    font-family:inherit;font-size:11px;font-weight:700;color:var(--txt);
+    background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);
+    border-radius:6px;padding:2px 6px;min-width:20px;text-align:center;
+  }
+  .hero .dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+  /* slots tile — accent */
+  .slots{
+    grid-column:span 4;
+    background:linear-gradient(160deg,#7b6bff,#5a48e6);
+    border-color:rgba(255,255,255,.24);
+  }
+  .slots .tile-head h2{color:rgba(255,255,255,.75)}
+  .slots .tile-head .more{color:rgba(255,255,255,.65)}
+  .slotgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:auto}
+  .slot{
+    aspect-ratio:1/1;border-radius:10px;display:grid;place-items:center;position:relative;
+    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);
+    font-size:11px;font-weight:700;color:rgba(255,255,255,.82);
+  }
+  .slot i{position:absolute;top:2px;left:4px;font-size:8px;font-style:normal;opacity:.65}
+  .slot:hover{background:rgba(255,255,255,.24)}
+  .slot.empty{background:rgba(255,255,255,.06);border-style:dashed;color:rgba(255,255,255,.4)}
+  .slot.filled span{font-size:15px}
+  .slot.gold{border-color:rgba(255,214,120,.9);box-shadow:0 0 0 2px rgba(255,214,120,.35) inset}
+  .slot-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:10.5px;color:rgba(255,255,255,.75)}
+  .slot-legend span{display:inline-flex;align-items:center;gap:5px}
+  .sw{width:8px;height:8px;border-radius:3px;display:block}
+
+  /* saved combos tile */
+  .saved{grid-column:span 4}
+  .saveditem{
+    display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r-sm);
+    border:1px solid transparent;cursor:pointer;
+  }
+  .saveditem:hover{background:rgba(255,255,255,.05);border-color:var(--edge)}
+  .saveditem.active{background:rgba(198,242,78,.09);border-color:rgba(198,242,78,.3)}
+  .slotnum{
+    width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:720;
+    background:rgba(255,255,255,.07);color:var(--txt-2);flex:0 0 26px;
+  }
+  .saveditem.active .slotnum{background:var(--lime);color:#171a10}
+  .saveditem .nm{font-size:13px;font-weight:600}
+  .saveditem .mt{font-size:10.5px;color:var(--txt-3)}
+
+  /* addons tile — coral accent */
+  .addons{grid-column:span 4;background:linear-gradient(165deg,#2f221f,#241b19);border-color:rgba(255,122,92,.24)}
+  .addons .tile-head h2{color:rgba(255,255,255,.55)}
+  .addrow{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+  .addrow:last-child{border-bottom:0}
+  .addrow h3{font-size:12.5px;font-weight:650;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .addrow p{font-size:11px;color:var(--txt-3);margin-top:2px;line-height:1.4}
+
+  /* write tile */
+  .write{grid-column:span 4;background:linear-gradient(160deg,#25301f,#1d2419);border-color:rgba(198,242,78,.2);
+    display:flex;flex-direction:column;justify-content:space-between}
+  .writeboard{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+  .chk{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt-2)}
+  .box{width:15px;height:15px;border-radius:4px;border:1px solid rgba(255,255,255,.28);display:grid;place-items:center;font-size:9px;color:#15170f}
+  .box.on{background:var(--lime);border-color:var(--lime)}
+
+  /* buttons */
+  .btn{
+    height:36px;padding:0 14px;border-radius:var(--r-pill);border:1px solid var(--edge-2);
+    background:rgba(255,255,255,.05);color:var(--txt);font-family:inherit;font-size:12.5px;font-weight:650;
+    cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    transition:background .16s,border-color .16s;
+  }
+  .btn:hover{background:rgba(255,255,255,.11);border-color:rgba(255,255,255,.28)}
+  .btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(198,242,78,.4)}
+  .btn.lime{background:var(--lime);color:#15170f;border-color:transparent}
+  .btn.lime:hover{background:#d6ff6b}
+  .btn:disabled{opacity:.38;cursor:not-allowed}
+  .btnrow{display:flex;gap:6px;flex-wrap:wrap}
+
+  /* field */
+  .field{
+    height:34px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid var(--edge-2);
+    display:flex;align-items:center;padding:0 10px;font-size:12.5px;font-weight:600;color:var(--txt);
+  }
+  .field.sel{justify-content:space-between;cursor:pointer}
+  .field.sel:hover{background:rgba(255,255,255,.09)}
+  .field .caret{color:var(--txt-3);font-size:10px}
+  .micro{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--txt-3);font-weight:700;margin-bottom:6px}
+
+  /* statusbar */
+  .statusbar{
+    display:flex;align-items:center;gap:10px;padding:10px 24px;border-top:1px solid var(--edge);
+    font-size:12px;color:var(--txt-3);background:rgba(0,0,0,.2);
+  }
+  .statusbar b{color:var(--txt-2);font-weight:650}
+  .statusbar .right{margin-left:auto;display:flex;gap:12px;align-items:center}
+
+  footer{font-size:12px;color:var(--txt-3);letter-spacing:.03em}
+</style>
+</head>
+<body>
+
+<div class="win">
+  <div class="titlebar">
+    <div class="dots"><i></i><i></i><i></i></div>
+    <div class="appmark"><div class="logo">⚔</div>BDOTempo <span class="sub">/ tablero de combo</span></div>
+    <div class="wincontrols"><i>—</i><i>▢</i><i>✕</i></div>
+  </div>
+
+  <div class="topnav">
+    <div class="navpill active">⚔ Combos <span class="n">2</span></div>
+    <div class="navpill">✧ Editor</div>
+    <div class="navpill">⚙ Configuración</div>
+    <div class="character">
+      <div class="who"><b>AhrinSong</b> <span>· cuenta 330</span></div>
+      <div class="avatar">🐾</div>
+    </div>
+  </div>
+
+  <div class="board">
+
+    <!-- HERO -->
+    <section class="tile hero">
+      <div class="tile-head">
+        <h2>Combo activo</h2>
+        <span class="chip lime" style="margin-left:auto">bdoclasshub</span>
+      </div>
+      <div class="classline">
+        <div class="heroicon">🐾</div>
+        <div>
+          <h1>Domadora</h1>
+          <span class="spec">◆ Awakening</span>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn">⟲ Restaurar guía</button>
+          <button class="btn lime">Abrir editor →</button>
+        </div>
+      </div>
+
+      <div class="stepsbig">
+        <div class="bigstep">
+          <div class="bignum">01</div>
+          <div class="skillicon g1">🐾</div>
+          <div>
+            <div class="sname">Baile de la Bestia IV</div>
+            <div class="smeta">Enfriamiento 18 s · abre después del agarre</div>
+          </div>
+          <div class="stepright">
+            <span class="chip gold">Casilla 1</span>
+            <div class="keys"><kbd>Shift</kbd><kbd>Q</kbd></div>
+          </div>
+        </div>
+        <div class="bigstep">
+          <div class="bignum">02</div>
+          <div class="skillicon g2">🌪</div>
+          <div>
+            <div class="sname">Onda de Tumbo III</div>
+            <div class="smeta">Enfriamiento 9 s · encadena si hay esquiva</div>
+          </div>
+          <div class="stepright">
+            <span class="chip blue">⌨ Casilla rápida 2</span>
+            <div class="keys"><kbd>W</kbd><kbd>E</kbd></div>
+          </div>
+        </div>
+        <div class="bigstep">
+          <div class="bignum">03</div>
+          <div class="skillicon g3">✦</div>
+          <div>
+            <div class="sname">Sacudida del Suelo</div>
+            <div class="smeta">Enfriamiento 6 s · golpe de relleno</div>
+          </div>
+          <div class="stepright">
+            <span class="chip gray">Sin casilla</span>
+            <div class="keys"><kbd>F</kbd></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLOTS -->
+    <section class="tile slots">
+      <div class="tile-head"><h2>Casillas 1–20</h2><span class="more">⋯</span></div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
+        <div style="font-size:30px;font-weight:720;letter-spacing:-.04em;line-height:1">2</div>
+        <div style="font-size:11.5px;color:rgba(255,255,255,.7)">casillas con enfriamiento</div>
+      </div>
+      <div class="slotgrid">
+        <div class="slot filled gold"><i>1</i><span>🐾</span></div>
+        <div class="slot filled"><i>2</i><span>🌪</span></div>
+        <div class="slot empty"><i>3</i></div>
+        <div class="slot empty"><i>4</i></div>
+        <div class="slot empty"><i>5</i></div>
+        <div class="slot empty"><i>6</i></div>
+        <div class="slot empty"><i>7</i></div>
+        <div class="slot empty"><i>8</i></div>
+        <div class="slot empty"><i>9</i></div>
+        <div class="slot empty"><i>10</i></div>
+        <div class="slot empty"><i>11</i></div>
+        <div class="slot empty"><i>12</i></div>
+        <div class="slot filled"><i>13</i><span>✺</span></div>
+        <div class="slot empty"><i>14</i></div>
+        <div class="slot empty"><i>15</i></div>
+        <div class="slot empty"><i>16</i></div>
+        <div class="slot empty"><i>17</i></div>
+        <div class="slot empty"><i>18</i></div>
+        <div class="slot empty"><i>19</i></div>
+        <div class="slot empty"><i>20</i></div>
+      </div>
+      <div class="slot-legend">
+        <span><i class="sw" style="background:#ffd678"></i>Paso</span>
+        <span><i class="sw" style="background:rgba(255,255,255,.6)"></i>Buff</span>
+        <span><i class="sw" style="background:rgba(255,255,255,.2);border:1px dashed rgba(255,255,255,.5)"></i>Vacía</span>
+      </div>
+    </section>
+
+    <!-- SAVED -->
+    <section class="tile saved">
+      <div class="tile-head"><h2>Mis combos</h2><span class="chip gray" style="margin-left:auto">2 / 10</span></div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div class="saveditem">
+          <div class="slotnum">3</div>
+          <div><div class="nm">PvE Aguas Prietas</div><div class="mt">3 pasos · 2 casillas</div></div>
+        </div>
+        <div class="saveditem active">
+          <div class="slotnum">5</div>
+          <div><div class="nm">Jefes</div><div class="mt">3 pasos · 2 casillas</div></div>
+          <span class="chip lime" style="margin-left:auto">Activa</span>
+        </div>
+        <div class="saveditem">
+          <div class="slotnum">+</div>
+          <div><div class="nm" style="color:var(--txt-3);font-weight:500">Ranura libre</div></div>
+        </div>
+      </div>
+      <div style="margin-top:auto;padding-top:12px;display:flex;flex-direction:column;gap:8px">
+        <div class="micro">Nombre de la ranura 5</div>
+        <div class="field">Jefes</div>
+        <div class="btnrow">
+          <button class="btn lime" style="flex:1">Guardar en la ranura</button>
+        </div>
+        <div class="btnrow">
+          <button class="btn" style="flex:1">Cargar</button>
+          <button class="btn" style="flex:1">Borrar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADDONS -->
+    <section class="tile addons">
+      <div class="tile-head"><h2>Adicionales de la clase</h2><span class="chip gray" style="margin-left:auto">Solo lectura</span></div>
+      <div class="addrow">
+        <div class="skillicon g4" style="width:36px;height:36px;flex:0 0 36px;font-size:16px;border-radius:11px">✺</div>
+        <div>
+          <h3>Aura de Bestia <span class="chip gold">Casilla 13</span></h3>
+          <p>Aumenta el daño crítico mientras el invocador esté activo. +10 % · 40 s · Shift + X</p>
+        </div>
+      </div>
+      <div class="addrow">
+        <div class="skillicon g5" style="width:36px;height:36px;flex:0 0 36px;font-size:16px;border-radius:11px">✧</div>
+        <div>
+          <h3>Vínculo de la Bestia</h3>
+          <p>Reduce el enfriamiento de las invocaciones de la clase. −3 s · pasivo</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- WRITE -->
+    <section class="tile write">
+      <div>
+        <div class="tile-head"><h2>Resumen de escritura</h2></div>
+        <div class="writeboard">
+          <label class="chk"><span class="box on">✓</span>20 casillas de enfriamiento</label>
+          <label class="chk"><span class="box on">✓</span>Nombres y notas de los pasos</label>
+          <label class="chk"><span class="box on">✓</span>20 casillas rápidas</label>
+          <label class="chk"><span class="box">–</span>Ajustes de cuenta</label>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:11px;color:var(--txt-3)">
+          <span class="chip warn">●</span>Cambios sin guardar
+        </div>
+        <button class="btn lime" style="width:100%;height:40px;font-size:13px">Escribir en el personaje</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="statusbar">
+    <b>Guía (bdoclasshub)</b>
+    <span class="chip warn" style="padding:2px 8px;font-size:10.5px">Cambios sin guardar</span>
+    <div class="right"><span>Domadora · Awakening</span><span>·</span><span>AhrinSong · cuenta 330</span></div>
+  </div>
+</div>
+
+<p class="caption"><b>Tablero bento:</b> rejilla asimétrica con un bloque héroe para el combo y mosaicos con su propio encabezado. Carbón profundo con acentos vibrantes por tipo de dato.</p>
+<footer>Concepto 8 de 10 — BDOTempo</footer>
+
+</body>
+</html>
