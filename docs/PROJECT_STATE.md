@@ -111,9 +111,16 @@ Order agreed with the user. Do not launch the app; the user tests at the end and
 4. **Class add-ons in "Aplicar combo".** `guide.addons` is already loaded (`ComboEditorViewModel` line ~716), where it
    only feeds the skill pool. Show a read-only section "Adicionales de la clase": skill icon + name + description and
    the effects in two columns.
-5. **Character names by OCR** (idea, user asked): at the character selection screen, one capture + `Windows.Media.Ocr`
-   over the name strip, then a review table to fix mistakes before saving to `%LOCALAPPDATA%\BDOTempo\characters.json`.
-   The names are not in any local file (checked: the lobby file only has the user's memos).
+5. **Character names by OCR** (idea, user asked): at the character selection screen, the rows are `class icon + Nv. NN + name`
+   (real screen checked 2026-11-01). The list order is exactly `CharacterOrderList` sorted by `Order` (0-based); verified
+   with four known pairs: order 0 = Clodetthe (…891118), 1 = Zeodoum (…000169), 2 = AhrinSong (…346933),
+   3 = Zeoclot (…3309831). So the pcid comes from the order and the OCR only supplies name and level.
+   The list has ~35 characters and only ~15 rows fit on screen, so it must be read in pages: the user scrolls the list
+   himself (never send input to the game), the app captures the visible rows and accumulates them, detecting the overlap
+   of the last row, until the user says done; then the accumulated list is matched to the pcid order and shown in a
+   review table (name, level, class) where OCR mistakes are fixed before saving to
+   `%LOCALAPPDATA%\BDOTempo\characters.json`. Class comes from the row icon against the 32 class icons in the pack.
+   If the number of read rows does not match the pcids, the table must say so instead of guessing.
 6. **Not now:** the rotation overlay (see the decision above: only with real key-press detection).
 
 ## Deferred TODO list (user: "note it, do it later")
