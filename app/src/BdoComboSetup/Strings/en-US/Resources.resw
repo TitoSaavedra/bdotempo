@@ -60,6 +60,15 @@
   <data name="Apply.IncludeQuickSlotsCheck.Content" xml:space="preserve">
     <value>Quick slots</value>
   </data>
+  <data name="Apply.WriteDialogTitle" xml:space="preserve">
+    <value>What do you want to write?</value>
+  </data>
+  <data name="Apply.WriteDialogHint" xml:space="preserve">
+    <value>Check what will be written to the character. Anything unchecked is left untouched.</value>
+  </data>
+  <data name="Apply.WriteDialogContinue" xml:space="preserve">
+    <value>Continue</value>
+  </data>
   <data name="Apply.RestoreButton.Content" xml:space="preserve">
     <value>Restore guide</value>
   </data>

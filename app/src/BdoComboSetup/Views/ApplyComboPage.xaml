@@ -348,13 +348,18 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- The account the characters come from. Changed in the Settings page. -->
-            <TextBlock
-                Grid.Column="1"
-                Text="{x:Bind ViewModel.ActiveAccountText, Mode=OneWay}"
-                VerticalAlignment="Top"
-                FontSize="12"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <!-- The account the characters come from and which copy is on screen. Changed in the Settings page. -->
+            <StackPanel Grid.Column="1" Spacing="2" HorizontalAlignment="Right">
+                <TextBlock
+                    Text="{x:Bind ViewModel.ActiveAccountText, Mode=OneWay}"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.ProfileStateText, Mode=OneWay}"
+                    FontSize="12"
+                    HorizontalAlignment="Right"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
         </Grid>
 
         <!-- Row 1: class, character, guide and the apply actions; then the write options. -->
@@ -406,27 +411,10 @@
                     <Button x:Uid="Apply/DryRunButton" Command="{x:Bind ViewModel.DryRunCommand}" />
                     <Button
                         x:Uid="Apply/ApplyButton"
-                        Command="{x:Bind ViewModel.ApplyCommand}"
+                        Click="Apply_Click"
+                        IsEnabled="{x:Bind ViewModel.CanRun, Mode=OneWay}"
                         Style="{StaticResource AccentButtonStyle}" />
                 </StackPanel>
-            </Grid>
-
-            <Grid ColumnSpacing="12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
-                    <CheckBox x:Uid="Apply/IncludeCooldownBarCheck" IsChecked="{x:Bind ViewModel.IncludeCooldownBar, Mode=TwoWay}" />
-                    <CheckBox x:Uid="Apply/IncludeMemosCheck" IsChecked="{x:Bind ViewModel.IncludeMemos, Mode=TwoWay}" />
-                    <CheckBox x:Uid="Apply/IncludeQuickSlotsCheck" IsChecked="{x:Bind ViewModel.IncludeQuickSlots, Mode=TwoWay}" />
-                </StackPanel>
-                <TextBlock
-                    Grid.Column="1"
-                    Text="{x:Bind ViewModel.ProfileStateText, Mode=OneWay}"
-                    VerticalAlignment="Center"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </Grid>
 
             <TextBlock
