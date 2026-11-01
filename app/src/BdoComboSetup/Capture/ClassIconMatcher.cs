@@ -193,10 +193,10 @@ internal sealed class ClassIconMatcher
     private static float[]? CropSignature(GameScreenFrame frame, CharacterRowCandidate row)
     {
         var height = (int)Math.Max(1, row.Bottom - row.Top);
-        var left = (int)Math.Max(0, row.LevelLeft - (height * 2.2));
+        var left = (int)Math.Max(0, row.LevelLeft - (height * 3.0));
         var right = (int)Math.Min(frame.Width - 1, row.LevelLeft - 4);
-        var top = (int)Math.Max(0, row.Top - (height * 0.9));
-        var bottom = (int)Math.Min(frame.Height - 1, row.Bottom + (height * 0.9));
+        var top = (int)Math.Max(0, row.Top - (height * 1.1));
+        var bottom = (int)Math.Min(frame.Height - 1, row.Bottom + (height * 1.1));
         var width = right - left + 1;
         var cropHeight = bottom - top + 1;
         if (width < 8 || cropHeight < 8)
