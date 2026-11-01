@@ -7,9 +7,16 @@ using Windows.Security.Cryptography;
 
 namespace BdoComboSetup.Capture;
 
+/// <summary>One OCR pass: the rows of the list, the scroll bar fraction (null when not found) and whether the selection screen is open.</summary>
+internal sealed record CharacterOcrPage(
+    IReadOnlyList<CharacterRowReading> Rows,
+    double? ScrollFraction,
+    bool IsSelectionScreen);
+
 /// <summary>
 /// Reads the visible rows of the character selection screen with the Windows OCR engine. It only runs while the scan is
 /// active: the game window is captured (never written to), the frame is recognized and the words are grouped into rows.
+/// The frame also gives the scroll bar position and whether the wide "enter the game" bar is visible, without OCR.
 /// The engine is created once; a machine without any OCR language reports it and the scan does not start.
 /// </summary>
 internal sealed class CharacterNameOcr
@@ -50,8 +57,8 @@ internal sealed class CharacterNameOcr
         }
     }
 
-    /// <summary>Recognizes one captured frame and turns its words into character rows.</summary>
-    public async Task<IReadOnlyList<CharacterRowReading>> ReadAsync(
+    /// <summary>Recognizes one captured frame: the character rows, the scroll bar position and the selection screen check.</summary>
+    public async Task<CharacterOcrPage> ReadAsync(
         GameScreenFrame frame,
         ClassIconMatcher? classIcons)
     {
@@ -87,7 +94,10 @@ internal sealed class CharacterNameOcr
             readings.Add(new CharacterRowReading(row, classIcons?.Match(frame, row)));
         }
 
-        return readings;
+        return new CharacterOcrPage(
+            readings,
+            CharacterScreenVisuals.ScrollFraction(frame, rows),
+            CharacterScreenVisuals.IsSelectionScreen(frame));
     }
 
     private static OcrEngine? ChooseEngine()

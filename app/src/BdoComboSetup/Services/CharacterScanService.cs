@@ -39,6 +39,7 @@ public sealed class CharacterScanService : IDisposable
     private long _lastFrameVersion;
     private long _lastOcrMs;
     private bool _busy;
+    private bool _selectionChecked;
     private bool _disposed;
 
     public CharacterScanService(
@@ -130,6 +131,7 @@ public sealed class CharacterScanService : IDisposable
         ViewModel.BeginScan();
         _lastFrameVersion = 0;
         _lastOcrMs = 0;
+        _selectionChecked = false;
         _screen.Poll();
         EnsureTimer().Start();
         _logger.Info("character_scan.started", "Character scan capture started", new Dictionary<string, object?>
@@ -236,16 +238,27 @@ public sealed class CharacterScanService : IDisposable
             _lastOcrMs = now;
             try
             {
-                var readings = await _ocr.ReadAsync(frame, _classIcons);
+                var page = await _ocr.ReadAsync(frame, _classIcons);
                 if (!ViewModel.IsScanning)
                 {
                     return;
                 }
 
-                ViewModel.AddPage(readings);
+                if (!_selectionChecked)
+                {
+                    _selectionChecked = true;
+                    if (!page.IsSelectionScreen)
+                    {
+                        StopCapture("not_selection");
+                        ViewModel.ReportFailure("Characters.ScanNotSelectionScreen");
+                        return;
+                    }
+                }
+
+                ViewModel.AddPage(page.Rows, page.ScrollFraction);
                 _overlay.Draw(
                     _window,
-                    readings.Select(reading => reading.Row).ToList(),
+                    page.Rows.Select(reading => reading.Row).ToList(),
                     ViewModel.CountText,
                     frame.Width,
                     frame.Height);

@@ -247,7 +247,7 @@ public sealed partial class CharacterScanViewModel : ObservableObject
     /// Adds one page of visible rows (what the OCR just read). The page must overlap the rows already known; a page that
     /// cannot be placed adds nothing, so a repeated or misread page never invents characters.
     /// </summary>
-    public void AddPage(IReadOnlyList<CharacterRowReading> page)
+    public void AddPage(IReadOnlyList<CharacterRowReading> page, double? scrollFraction = null)
     {
         ArgumentNullException.ThrowIfNull(page);
         if (!IsScanning)
@@ -255,7 +255,7 @@ public sealed partial class CharacterScanViewModel : ObservableObject
             return;
         }
 
-        var result = _accumulator.AddPage(page, _entries.Count);
+        var result = _accumulator.AddPage(page, _entries.Count, scrollFraction);
         PageHint = result.Outcome switch
         {
             RowMergeOutcome.Unplaced => _localizer.Get("Characters.ScanPageUnplaced"),
@@ -270,6 +270,7 @@ public sealed partial class CharacterScanViewModel : ObservableObject
             ["added"] = result.Added,
             ["total"] = result.Total,
             ["characters"] = _entries.Count,
+            ["scroll"] = scrollFraction is { } fraction ? Math.Round(fraction, 3) : null,
             ["top"] = page.FirstOrDefault()?.Row.Name,
             ["bottom"] = page.LastOrDefault()?.Row.Name,
         });
@@ -292,7 +293,7 @@ public sealed partial class CharacterScanViewModel : ObservableObject
             CanSave = false;
             ShowMessage(
                 StatusSeverity.Warning,
-                _localizer.Format("Characters.ScanCountMismatch", read.Count, _entries.Count));
+                _localizer.Format("Characters.ScanCountMismatch", _entries.Count - read.Count, _entries.Count));
             _logger.Warn("character_scan.count_mismatch", "The scan did not read the same number of characters as the account file", new Dictionary<string, object?>
             {
                 ["read"] = read.Count,

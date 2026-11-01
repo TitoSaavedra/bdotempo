@@ -718,7 +718,10 @@
     <value>All {0} characters are read. Press Finish.</value>
   </data>
   <data name="Characters.ScanCountMismatch" xml:space="preserve">
-    <value>I read {0} rows and the account has {1} characters. They are not paired, so no name is saved on the wrong character: start again from the first row and scroll the list slowly.</value>
+    <value>{0} of {1} characters are missing. Scroll the list up or down until they are all read, then press Finish again.</value>
+  </data>
+  <data name="Characters.ScanNotSelectionScreen" xml:space="preserve">
+    <value>I do not see the character selection screen. Open the character list (with the enter-the-game button at the bottom) and start again.</value>
   </data>
   <data name="Characters.ScanReady" xml:space="preserve">
     <value>{0} characters read. Review the names and classes before saving.</value>

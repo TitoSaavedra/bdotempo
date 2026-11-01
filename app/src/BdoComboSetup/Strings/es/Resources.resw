@@ -718,7 +718,10 @@
     <value>Ya están los {0} personajes. Pulsa Terminar.</value>
   </data>
   <data name="Characters.ScanCountMismatch" xml:space="preserve">
-    <value>Leí {0} filas y la cuenta tiene {1} personajes. No se emparejan para no guardar nombres en el personaje equivocado: vuelve a empezar desde la primera fila y baja la lista despacio.</value>
+    <value>Faltan {0} de {1} personajes. Sube o baja la lista hasta leerlos todos y vuelve a pulsar Terminar.</value>
+  </data>
+  <data name="Characters.ScanNotSelectionScreen" xml:space="preserve">
+    <value>No veo la pantalla de selección de personaje. Entra en la lista de personajes (con el botón de entrar al juego abajo) y vuelve a empezar.</value>
   </data>
   <data name="Characters.ScanReady" xml:space="preserve">
     <value>{0} personajes leídos. Revisa los nombres y las clases antes de guardar.</value>

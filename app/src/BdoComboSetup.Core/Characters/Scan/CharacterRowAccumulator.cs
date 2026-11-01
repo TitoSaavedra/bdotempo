@@ -9,102 +9,175 @@ public sealed record CharacterRowReading(CharacterRowCandidate Row, int? ClassTy
 /// <summary>What merging one page did.</summary>
 public enum RowMergeOutcome
 {
-    /// <summary>The accumulator was empty: the page became the known list.</summary>
-    FirstPage,
+    /// <summary>The page was placed (by overlap or by the scroll bar) and its new rows were added.</summary>
+    Added,
 
     /// <summary>The page was already known (the player scrolled up, or the list did not move).</summary>
     Confirmed,
 
-    /// <summary>Rows were added after the known list.</summary>
-    Added,
-
-    /// <summary>The page could not be placed with the known rows: nothing was added.</summary>
+    /// <summary>The page could not be placed: nothing was added.</summary>
     Unplaced,
 
     /// <summary>The account already has every character: nothing more is added.</summary>
     Full,
 }
 
-/// <summary>The result of merging one page: what happened, how many rows it added and the total known.</summary>
+/// <summary>The result of merging one page: what happened, how many rows it added and how many characters are known.</summary>
 public readonly record struct RowMergeResult(RowMergeOutcome Outcome, int Added, int Total);
 
 /// <summary>
-/// Accumulates the rows of the selection screen while the player scrolls the list. A page is merged by finding where it
-/// overlaps the known rows (a contiguous run of same level and similar name), not by trusting its first row: a page read
-/// while scrolling up is recognized as already known, and a page that cannot be placed adds nothing. The list never grows
-/// past the number of characters of the account, so a repeated or misread page cannot invent characters.
-/// <para>
-/// Only rows with a level and a name count; a row whose name is missing is left out (the level alone is not a character).
-/// </para>
+/// Accumulates the rows of the selection screen while the player scrolls the list, keyed by their position in the list.
+/// A page is placed by finding where it overlaps the known rows (a contiguous run of same level and similar name); when
+/// there is no overlap it can be placed by the scroll bar fraction, which gives the first visible row. Rows already known
+/// are never replaced, so scrolling up and down cannot duplicate a character, and a page that cannot be placed adds
+/// nothing. The list never grows past the number of characters of the account.
 /// </summary>
 public sealed class CharacterRowAccumulator
 {
-    private readonly List<CharacterRowReading> _rows = [];
+    private readonly SortedDictionary<int, CharacterRowReading> _known = [];
 
-    /// <summary>Every row read so far, in list order.</summary>
-    public IReadOnlyList<CharacterRowReading> Rows => _rows;
+    /// <summary>The rows read so far, in list order (positions with no reading are simply absent).</summary>
+    public IReadOnlyList<CharacterRowReading> Rows => _known.Values.ToList();
 
-    public int Count => _rows.Count;
+    /// <summary>How many characters have a reading. When it equals the account's count, the list is complete.</summary>
+    public int Count => _known.Count;
 
-    public void Reset() => _rows.Clear();
+    public void Reset() => _known.Clear();
 
-    /// <summary>Merges one visible page. <paramref name="expectedCount"/> is the number of characters of the account (0: no limit).</summary>
-    public RowMergeResult AddPage(IReadOnlyList<CharacterRowReading> page, int expectedCount)
+    /// <summary>
+    /// Merges one visible page. <paramref name="expectedCount"/> is the number of characters of the account (0: no limit);
+    /// <paramref name="scrollFraction"/> is the scroll bar position (0 at the top, 1 at the bottom), or null.
+    /// </summary>
+    public RowMergeResult AddPage(
+        IReadOnlyList<CharacterRowReading> page,
+        int expectedCount,
+        double? scrollFraction = null)
     {
         ArgumentNullException.ThrowIfNull(page);
         var limit = expectedCount > 0 ? expectedCount : int.MaxValue;
         var cleaned = Clean(page);
         if (cleaned.Count == 0)
         {
-            return new RowMergeResult(RowMergeOutcome.Confirmed, 0, _rows.Count);
+            return new RowMergeResult(RowMergeOutcome.Confirmed, 0, Count);
         }
 
-        if (_rows.Count == 0)
+        if (Count >= limit)
         {
-            var take = Math.Min(cleaned.Count, limit);
-            _rows.AddRange(cleaned.Take(take));
-            return new RowMergeResult(
-                _rows.Count >= limit ? RowMergeOutcome.Full : RowMergeOutcome.FirstPage,
-                take,
-                _rows.Count);
+            return new RowMergeResult(RowMergeOutcome.Full, 0, Count);
         }
 
-        if (_rows.Count >= limit)
+        var (placement, fromOverlap) = Place(cleaned, limit, scrollFraction);
+        if (placement is not { } start || start < 0 || start + cleaned.Count > limit)
         {
-            return new RowMergeResult(RowMergeOutcome.Full, 0, _rows.Count);
-        }
-
-        var (overlap, pageOffset, rowIndex) = FindBestOverlap(cleaned);
-        if (overlap < MinimumOverlap(cleaned.Count, _rows.Count))
-        {
-            return new RowMergeResult(RowMergeOutcome.Unplaced, 0, _rows.Count);
-        }
-
-        // The accumulator always starts at the top of the list: a page above it cannot be placed without guessing.
-        var start = rowIndex - pageOffset;
-        if (start < 0 || start > _rows.Count)
-        {
-            return new RowMergeResult(RowMergeOutcome.Unplaced, 0, _rows.Count);
+            return new RowMergeResult(RowMergeOutcome.Unplaced, 0, Count);
         }
 
         var added = 0;
-        for (var index = 0; index < cleaned.Count && _rows.Count < limit; index++)
+        for (var index = 0; index < cleaned.Count; index++)
         {
-            var target = start + index;
-            if (target < _rows.Count)
+            var position = start + index;
+            if (_known.ContainsKey(position))
             {
-                // The row is already known: the first reading is kept, so OCR noise does not rewrite it.
+                // The first reading is kept: OCR noise never rewrites a row once it is placed.
+                if (!fromOverlap && !SameRow(_known[position].Row, cleaned[index].Row))
+                {
+                    // A scroll bar placement is only accepted when it does not contradict what is known.
+                    return new RowMergeResult(RowMergeOutcome.Unplaced, 0, Count);
+                }
+
                 continue;
             }
 
-            _rows.Add(cleaned[index]);
+            _known[position] = cleaned[index];
             added++;
         }
 
-        var outcome = _rows.Count >= limit
+        var outcome = Count >= limit
             ? RowMergeOutcome.Full
             : added > 0 ? RowMergeOutcome.Added : RowMergeOutcome.Confirmed;
-        return new RowMergeResult(outcome, added, _rows.Count);
+        return new RowMergeResult(outcome, added, Count);
+    }
+
+    /// <summary>
+    /// Where the page starts: the overlap first (exact), the scroll bar second (estimated, tried at the estimate and its
+    /// neighbours until one does not contradict the known rows). Null when neither works.
+    /// </summary>
+    private (int? Start, bool FromOverlap) Place(
+        List<CharacterRowReading> page,
+        int limit,
+        double? scrollFraction)
+    {
+        if (Count > 0)
+        {
+            var (overlap, pageOffset, rowIndex) = FindBestOverlap(page);
+            if (overlap >= MinimumOverlap(page.Count, Count))
+            {
+                var start = rowIndex - pageOffset;
+                if (start >= 0 && start + page.Count <= limit)
+                {
+                    return (start, true);
+                }
+            }
+        }
+
+        if (scrollFraction is { } fraction && limit != int.MaxValue)
+        {
+            var estimate = (int)Math.Round(fraction * Math.Max(0, limit - page.Count));
+            var best = -1;
+            var bestScore = int.MinValue;
+            foreach (var delta in new[] { 0, -1, 1, -2, 2 })
+            {
+                var start = estimate + delta;
+                if (start < 0 || start + page.Count > limit)
+                {
+                    continue;
+                }
+
+                var matches = 0;
+                var conflicts = 0;
+                for (var index = 0; index < page.Count; index++)
+                {
+                    if (!_known.TryGetValue(start + index, out var known))
+                    {
+                        continue;
+                    }
+
+                    if (SameRow(known.Row, page[index].Row))
+                    {
+                        matches++;
+                    }
+                    else
+                    {
+                        conflicts++;
+                    }
+                }
+
+                if (conflicts > 0)
+                {
+                    continue;
+                }
+
+                var score = (matches * 10) - Math.Abs(delta);
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    best = start;
+                }
+            }
+
+            if (best >= 0)
+            {
+                return (best, false);
+            }
+        }
+
+        // The first page with no scroll bar: the list is assumed to start at the top.
+        if (Count == 0)
+        {
+            return (0, false);
+        }
+
+        return (null, false);
     }
 
     /// <summary>Rows that can be matched: a name is required and consecutive duplicates inside the page are dropped.</summary>
@@ -129,18 +202,18 @@ public sealed class CharacterRowAccumulator
         return result;
     }
 
-    /// <summary>The longest contiguous run of the page that matches the known rows, and where it is.</summary>
+    /// <summary>The longest contiguous run of the page that matches known consecutive rows, and where it is.</summary>
     private (int Overlap, int PageOffset, int RowIndex) FindBestOverlap(List<CharacterRowReading> page)
     {
         var best = (Overlap: 0, PageOffset: 0, RowIndex: 0);
         for (var pageOffset = 0; pageOffset < page.Count; pageOffset++)
         {
-            for (var rowIndex = 0; rowIndex < _rows.Count; rowIndex++)
+            foreach (var rowIndex in _known.Keys)
             {
                 var count = 0;
                 while (pageOffset + count < page.Count
-                    && rowIndex + count < _rows.Count
-                    && SameRow(page[pageOffset + count].Row, _rows[rowIndex + count].Row))
+                    && _known.TryGetValue(rowIndex + count, out var known)
+                    && SameRow(page[pageOffset + count].Row, known.Row))
                 {
                     count++;
                 }
