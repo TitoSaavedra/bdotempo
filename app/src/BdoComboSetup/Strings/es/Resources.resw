@@ -44,12 +44,12 @@
 
     <data name="AppTitle" xml:space="preserve"><value>BDOTempo</value></data>
   <data name="AppTitleBar.Title" xml:space="preserve"><value>BDOTempo</value></data>
-  <data name="NavApplyItem.Content" xml:space="preserve"><value>Aplicar combo</value></data>
+  <data name="NavApplyItem.Content" xml:space="preserve"><value>Combos</value></data>
   <data name="NavPreviewItem.Content" xml:space="preserve"><value>Editor de slots</value></data>
   <data name="Preview.CaptureToggle.Header" xml:space="preserve"><value>Capturar el juego</value></data>
   <data name="Preview.CaptureToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Muestra el juego en vivo detrás de los slots. Desactívalo para no capturar la ventana del juego.</value></data>
   <data name="Apply.Title.Text" xml:space="preserve">
-    <value>Aplicar combo</value>
+    <value>Combos</value>
   </data>
   <data name="Apply.IncludeCooldownBarCheck.Content" xml:space="preserve">
     <value>Barra de enfriamiento</value>
@@ -415,10 +415,10 @@
     <value>Haz clic en un slot de enfriamiento para cambiar su habilidad. La guía no cambia: el cambio queda en tu combo.</value>
   </data>
   <data name="Preview.SlotEdit.NoCombo" xml:space="preserve">
-    <value>Elige una clase y una guía en Aplicar combo para cambiar habilidades.</value>
+    <value>Elige una clase y una guía en Combos para cambiar habilidades.</value>
   </data>
   <data name="Preview.SlotEdit.NoStep" xml:space="preserve">
-    <value>El slot {0} no tiene ningún paso en el combo. Añade la habilidad desde Aplicar combo.</value>
+    <value>El slot {0} no tiene ningún paso en el combo. Añade la habilidad desde Combos.</value>
   </data>
   <data name="NavSettingsItem.Content" xml:space="preserve"><value>Configuración</value></data>
   <data name="Settings.Title.Text" xml:space="preserve"><value>Configuración</value></data>

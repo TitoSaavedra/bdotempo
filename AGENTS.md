@@ -26,6 +26,11 @@ deferred TODOs. Read it and `git status` / `git log -10 --oneline` before planni
 
 ## Hard rules (user-mandated)
 
+- **No code in the chat (user, 2026-11-01).** Never print diffs, file contents, build logs or test output. Run the
+  command and report only the outcome: one line ("compila", "falla por X"), with the single relevant error if any.
+  Use filters (`Select-Object -Last N`, `Select-String`) so the terminal output stays short.
+- **Status by milestones (user, 2026-11-01).** Report progress every few items in one or two lines, without being
+  asked; the user does not want to ask "how is it going". Do not narrate every file.
 - **Backups first.** Never write a BDO file without a verified backup
   (`<game data>\_backups\<UTC stamp>Z\<account>\<pcid>\` + SHA-256 manifest); abort if it fails.
 - **Do not apply to real character files** without an explicit go-ahead in the current session.
