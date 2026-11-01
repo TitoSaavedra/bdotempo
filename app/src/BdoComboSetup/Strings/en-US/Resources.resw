@@ -432,6 +432,18 @@
   <data name="Preview.SlotEditHint.Text" xml:space="preserve">
     <value>These are the slots of the selected combo. Click a cooldown slot to change its skill; when it is ready, press Apply to character. The guide is not touched.</value>
   </data>
+  <data name="Preview.SlotClickTooltip.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Click to change the skill of this slot of the combo.</value>
+  </data>
+  <data name="Preview.QuickSlotTooltip.ToolTipService.ToolTip" xml:space="preserve">
+    <value>The quick slots are shown only. Their keys and positions are edited in Combos.</value>
+  </data>
+  <data name="Preview.LegendCooldown.Text" xml:space="preserve">
+    <value>Cooldown slots: click to change the skill</value>
+  </data>
+  <data name="Preview.LegendQuick.Text" xml:space="preserve">
+    <value>Quick slots: read-only</value>
+  </data>
   <data name="Preview.SlotEdit.NoCombo" xml:space="preserve">
     <value>Choose a class and a guide in Combos to change skills.</value>
   </data>

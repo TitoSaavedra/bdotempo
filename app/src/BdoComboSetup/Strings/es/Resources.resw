@@ -432,6 +432,18 @@
   <data name="Preview.SlotEditHint.Text" xml:space="preserve">
     <value>Estas son las ranuras del combo seleccionado. Haz clic en una casilla de enfriamiento para cambiar su habilidad; cuando esté listo, pulsa Aplicar al personaje. La guía no cambia.</value>
   </data>
+  <data name="Preview.SlotClickTooltip.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Haz clic para cambiar la habilidad de esta casilla del combo.</value>
+  </data>
+  <data name="Preview.QuickSlotTooltip.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Los accesos rápidos solo se muestran. Sus teclas y posiciones se editan en Combos.</value>
+  </data>
+  <data name="Preview.LegendCooldown.Text" xml:space="preserve">
+    <value>Casillas de enfriamiento: haz clic para cambiar la habilidad</value>
+  </data>
+  <data name="Preview.LegendQuick.Text" xml:space="preserve">
+    <value>Accesos rápidos: solo lectura</value>
+  </data>
   <data name="Preview.SlotEdit.NoCombo" xml:space="preserve">
     <value>Elige una clase y una guía en Combos para cambiar habilidades.</value>
   </data>

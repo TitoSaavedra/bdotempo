@@ -8,6 +8,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace BdoComboSetup.Views;
@@ -186,6 +187,27 @@ public sealed partial class GameScreenCanvas : UserControl
         if (e.PropertyName == nameof(PreviewViewModel.CaptureGame))
         {
             Poll();
+        }
+    }
+
+    /// <summary>Highlights the slot under the pointer, so it is obvious that a cooldown slot can be clicked.</summary>
+    private void CooldownSlot_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is Border border)
+        {
+            border.Background = (Brush)Resources["SlotHoverFill"];
+            border.BorderBrush = (Brush)Resources["SlotHoverBorder"];
+            border.BorderThickness = new Thickness(2);
+        }
+    }
+
+    private void CooldownSlot_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is Border border)
+        {
+            border.Background = (Brush)Resources["SlotIdleFill"];
+            border.BorderBrush = (Brush)Resources["SlotIdleBorder"];
+            border.BorderThickness = new Thickness(1);
         }
     }
 
