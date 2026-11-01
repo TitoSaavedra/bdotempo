@@ -1,4 +1,21 @@
-# BDOTempo (repo `bdotempo`, formerly bdo-combo-setup) — project state and handoff (end of 2026-10-31)
+# BDOTempo (repo `bdotempo`, formerly bdo-combo-setup) — project state and handoff (end of 2026-11-01)
+
+## Resume here first
+
+1. Run `git status`: the tree has **uncommitted work from two background subagents** (2026-11-01):
+   - **combos 1-10 storage (finished by the agent, not compiled, not committed)**: `Core/Combo/Profile/*`
+     (schema 2 with `ComboProfileSlot`, slots 1..10 per class+spec, legacy `Load/Save/Delete` aliased to slot 1).
+   - **catalog + slot picker (agent was still running when the session ended)**: `Core/Combo/ClassSkillSource.cs`,
+     `Core/Combo/ISlotSkillEditor.cs`, `Core/Combo/ComboPreviewSlotSource.cs`, `Core/ViewModels/Apply/ComboStepViewModel.cs`,
+     `Core/ViewModels/Apply/ComboEditorViewModel.cs` and probably `Services/AppServices.cs` / `Views/PreviewPage*`.
+     Inspect these files before trusting them; a half-written file may be there.
+2. `cd app && mise run build` once (no app open first), fix what does not compile, THEN commit each agent's work
+   separately (`feat(core): ten custom combo slots per class and spec`, `feat(app): skill catalog and slot picker`).
+3. Continue with the "Next work batch" section below.
+
+The user asked to be told progress item by item, and to be warned before the final test session (they test by hand).
+Do not open the app in loops; one launch + one screenshot per change is fine when they ask. The game is theirs: never
+touch it. Session ended with the app closed.
 
 Resume from here. Verify paths before relying on them. The user said the app is "very bad" and will send a bug report: WAIT FOR THAT REPORT before changing anything big.
 
