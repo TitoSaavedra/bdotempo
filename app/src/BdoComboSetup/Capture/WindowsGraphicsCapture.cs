@@ -97,6 +97,7 @@ public sealed partial class WindowsGraphicsCapture(AppLogger logger) : IGameFram
         private ID3D11Texture2D? _staging;
         private SizeInt32 _size;
         private long _lastCopyMs;
+        private bool _firstFrameLogged;
         private bool _disposed;
 
         private CaptureSession(
@@ -212,6 +213,17 @@ public sealed partial class WindowsGraphicsCapture(AppLogger logger) : IGameFram
                     }
 
                     var pixels = ReadPixels(frame);
+                    if (!_firstFrameLogged)
+                    {
+                        _firstFrameLogged = true;
+                        _logger.Info("capture.first_frame", "The first captured frame was read", new Dictionary<string, object?>
+                        {
+                            ["width"] = _size.Width,
+                            ["height"] = _size.Height,
+                            ["mean_luminance"] = Math.Round(MeanLuminance(pixels, _size.Width, _size.Height), 2),
+                        });
+                    }
+
                     _onFrame(new GameScreenFrame(_size.Width, _size.Height, pixels));
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
@@ -256,9 +268,12 @@ public sealed partial class WindowsGraphicsCapture(AppLogger logger) : IGameFram
         /// <summary>Copies the frame to CPU memory as BGRA, top row first, stride width x 4.</summary>
         private byte[] ReadPixels(Direct3D11CaptureFrame frame)
         {
-            var access = (IDirect3DDxgiInterfaceAccess)(object)frame.Surface;
+            // The projected surface is an IInspectable: the DXGI access is a COM query on its native object (CsWinRT
+            // As<T>), not a managed cast. The texture comes back AddRef'd, so the Vortice wrapper owns and releases it.
+            var access = frame.Surface.As<IDirect3DDxgiInterfaceAccess>();
             var textureIid = Texture2DIid;
-            using var texture = new ID3D11Texture2D(access.GetInterface(ref textureIid));
+            access.GetInterface(ref textureIid, out var texturePointer);
+            using var texture = new ID3D11Texture2D(texturePointer);
 
             var width = (int)frame.ContentSize.Width;
             var height = (int)frame.ContentSize.Height;
@@ -339,12 +354,35 @@ public sealed partial class WindowsGraphicsCapture(AppLogger logger) : IGameFram
     [LibraryImport("d3d11.dll", EntryPoint = "CreateDirect3D11DeviceFromDXGIDevice")]
     private static partial int CreateDirect3D11DeviceFromDXGIDevice(nint dxgiDevice, out nint graphicsDevice);
 
-    /// <summary>The DXGI access of a Windows.Graphics.DirectX surface: the texture behind a captured frame.</summary>
+    /// <summary>
+    /// The DXGI access of a Windows.Graphics.DirectX surface: the texture behind a captured frame. Native signature:
+    /// HRESULT GetInterface(REFIID iid, void** p). It derives from IUnknown, so it is declared as such (CsWinRT: invoking
+    /// methods of an IInspectable-typed ComImport interface is not supported by the CLR).
+    /// </summary>
     [ComImport]
     [Guid("A9B3D012-3DF2-4EE3-B8D1-8695F457D3C1")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     private interface IDirect3DDxgiInterfaceAccess
     {
-        nint GetInterface(ref Guid iid);
+        void GetInterface(ref Guid iid, out nint pointer);
+    }
+
+    /// <summary>Mean luminance (0-255, Rec. 601) of a sample of the BGRA pixels. Near 0 means a black frame.</summary>
+    private static double MeanLuminance(byte[] bgra, int width, int height)
+    {
+        const int step = 16;
+        double sum = 0;
+        long count = 0;
+        for (var y = 0; y < height; y += step)
+        {
+            for (var x = 0; x < width; x += step)
+            {
+                var offset = ((y * width) + x) * 4;
+                sum += (0.114 * bgra[offset]) + (0.587 * bgra[offset + 1]) + (0.299 * bgra[offset + 2]);
+                count++;
+            }
+        }
+
+        return count == 0 ? 0 : sum / count;
     }
 }

@@ -6,10 +6,20 @@ namespace BdoComboSetup.Core.Game;
 /// The live background of the Preview: capture of the visible Black Desert window, black otherwise.
 /// Rules: no window or no game process: black. Minimized window: black, and the capture stops (a frozen frame is never
 /// shown). Visible window: captured. A window whose capture cannot start is black, logged once, and not retried on every
-/// poll (only after the window is minimized and restored, or closed and opened again). Nothing here touches the game.
+/// poll (only after the window is minimized and restored, or closed and opened again). A capture whose frames cannot be
+/// read is black and retried after <see cref="FrameRetryDelayMs"/>; after <see cref="MaxFrameFailures"/> failures in a
+/// row it stays black like a window that cannot start. Nothing here touches the game.
 /// </summary>
 public sealed class GameScreenSource : IGameScreenSource, IDisposable
 {
+    /// <summary>Delay before a capture whose frames failed is started again.</summary>
+    public const long FrameRetryDelayMs = 5000;
+
+    /// <summary>Frame failures in a row for one window before the background stays black until the window is restored.</summary>
+    public const int MaxFrameFailures = 3;
+
+    private const string FrameFailedReason = "frame_failed";
+
     private readonly IGameWindowLocator _locator;
     private readonly IGameFrameCapture _capture;
     private readonly AppLogger _logger;
@@ -17,6 +27,9 @@ public sealed class GameScreenSource : IGameScreenSource, IDisposable
     private GameScreenState _state = GameScreenState.NotRunning;
     private nint? _capturedWindow;
     private nint? _failedWindow;
+    private nint? _retryWindow;
+    private long _retryNotBeforeMs;
+    private int _frameFailures;
     private GameScreenFrame? _latest;
     private long _frameVersion;
 
@@ -33,6 +46,9 @@ public sealed class GameScreenSource : IGameScreenSource, IDisposable
 
     /// <summary>Raised on the capture thread for every delivered frame.</summary>
     public event EventHandler? FrameArrived;
+
+    /// <summary>Raised when the state changes (from any thread).</summary>
+    public event EventHandler? StateChanged;
 
     public GameScreenState State
     {
@@ -72,43 +88,48 @@ public sealed class GameScreenSource : IGameScreenSource, IDisposable
         var window = _locator.Find();
         if (window is null)
         {
+            ForgetFailures();
             Release("game_screen.window_missing", GameScreenState.NotRunning);
-            _failedWindow = null;
             return;
         }
 
         if (window.IsMinimized)
         {
             // Restoring the window must try again, so the failure memory is cleared with it.
-            _failedWindow = null;
+            ForgetFailures();
             Release("game_screen.minimized", GameScreenState.Minimized);
             return;
         }
 
-        bool capturing;
+        bool retryDue;
         lock (_gate)
         {
-            capturing = _capturedWindow == window.Handle;
+            if (_capturedWindow == window.Handle || _failedWindow == window.Handle)
+            {
+                return;
+            }
+
+            retryDue = _retryWindow == window.Handle;
+            if (retryDue && Environment.TickCount64 < _retryNotBeforeMs)
+            {
+                // A frame failure is waiting for its retry: the background stays black until the delay has passed.
+                return;
+            }
         }
 
-        if (capturing)
+        if (!retryDue)
         {
-            return;
+            // Another window than the one being captured (the game was restarted): stop the old capture first.
+            ForgetFailures();
+            Release("game_screen.window_changed", GameScreenState.NotRunning);
         }
 
-        if (_failedWindow == window.Handle)
-        {
-            return;
-        }
-
-        // Another window than the one being captured (the game was restarted): stop the old capture first.
-        Release("game_screen.window_changed", GameScreenState.NotRunning);
         Start(window.Handle);
     }
 
     public void Stop()
     {
-        _failedWindow = null;
+        ForgetFailures();
         Release("game_screen.stopped", GameScreenState.NotRunning);
     }
 
@@ -126,7 +147,11 @@ public sealed class GameScreenSource : IGameScreenSource, IDisposable
         }
         catch (Exception ex)
         {
-            _failedWindow = handle;
+            lock (_gate)
+            {
+                _failedWindow = handle;
+            }
+
             SetState(GameScreenState.Failed, "game_screen.capture_failed", "The game window could not be captured; the background is black", ex);
             return;
         }
@@ -151,6 +176,10 @@ public sealed class GameScreenSource : IGameScreenSource, IDisposable
 
             _latest = frame;
             _frameVersion++;
+
+            // A frame arrived: the failures before it no longer count.
+            _frameFailures = 0;
+            _retryWindow = null;
         }
 
         FrameArrived?.Invoke(this, EventArgs.Empty);
@@ -169,7 +198,64 @@ public sealed class GameScreenSource : IGameScreenSource, IDisposable
             _latest = null;
         }
 
+        if (reason == FrameFailedReason)
+        {
+            FrameFailed(handle);
+            return;
+        }
+
         SetState(GameScreenState.NotRunning, "game_screen.capture_ended", "The capture of the game window ended", null, reason);
+    }
+
+    /// <summary>
+    /// A capture whose frames could not be read has ended. The window is black and retried after the delay. The state
+    /// change is logged once; after <see cref="MaxFrameFailures"/> failures in a row the window stays black for good
+    /// (until it is minimized and restored, or closed and opened again).
+    /// </summary>
+    private void FrameFailed(nint handle)
+    {
+        int attempts;
+        bool exhausted;
+        lock (_gate)
+        {
+            _frameFailures = _retryWindow == handle ? _frameFailures + 1 : 1;
+            _retryWindow = handle;
+            _retryNotBeforeMs = Environment.TickCount64 + FrameRetryDelayMs;
+            attempts = _frameFailures;
+            exhausted = attempts >= MaxFrameFailures;
+            if (exhausted)
+            {
+                _failedWindow = handle;
+            }
+        }
+
+        SetState(
+            GameScreenState.Failed,
+            "game_screen.frame_failed",
+            "Frames of the game window could not be read; the background is black",
+            null,
+            FrameFailedReason);
+
+        if (exhausted)
+        {
+            _logger.Warn("game_screen.retries_exhausted", "The game window kept failing to deliver frames; the background stays black until it is restored", new Dictionary<string, object?>
+            {
+                ["attempts"] = attempts,
+                ["max_attempts"] = MaxFrameFailures,
+            });
+        }
+    }
+
+    /// <summary>Forgets the failures of earlier tries, so the next poll tries the window again from the start.</summary>
+    private void ForgetFailures()
+    {
+        lock (_gate)
+        {
+            _failedWindow = null;
+            _retryWindow = null;
+            _retryNotBeforeMs = 0;
+            _frameFailures = 0;
+        }
     }
 
     /// <summary>Stops the capture (when there is one) and sets the state. The capture is stopped outside the lock.</summary>
@@ -226,7 +312,4 @@ public sealed class GameScreenSource : IGameScreenSource, IDisposable
 
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
-
-    /// <summary>Raised when the state changes (from any thread).</summary>
-    public event EventHandler? StateChanged;
 }
