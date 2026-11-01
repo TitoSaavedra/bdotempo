@@ -24,6 +24,10 @@
                 DisplayMemberPath="Label"
                 SelectedItem="{x:Bind ViewModel.SelectedLayoutOption, Mode=TwoWay}" />
             <ToggleSwitch
+                x:Name="CaptureToggle"
+                x:Uid="Preview/CaptureToggle"
+                IsOn="{x:Bind ViewModel.CaptureGame, Mode=TwoWay}" />
+            <ToggleSwitch
                 x:Name="HiddenToggle"
                 x:Uid="Preview/HiddenToggle"
                 IsOn="{x:Bind ViewModel.ShowHiddenSlots, Mode=TwoWay}" />

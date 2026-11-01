@@ -69,6 +69,26 @@ are already summarized here; nothing else from that session is needed.
 - Default game folder is the user's OneDrive Documentos path; detect per machine.
 - Skill names in guides come from the Spanish LATAM client; guide texts are English.
 
+## Ideas (deferred, noted by the user)
+
+### Rotation overlay ("Hekili Priority Helper")
+
+Goal: an overlay that shows which skill to press next, in the style of WeakAuras/Hekili.
+
+- Suggested design: a priority list per class/spec (the guide's chain order is a first draft, the user will edit it),
+  filtered by which skills are actually usable (cooldown finished, resource cost affordable, target in range).
+- Input: it must stay **display-only**. Never send input, never inject into the game. Garmoth App already ships an
+  overlay, so the user considers display-only overlays acceptable (see the Garmoth study in
+  `X:\Github\Personal\garmoth-app-study-2026-10`).
+- Cooldown data: `skills.json` tooltips already carry `tooltip.cooldownSec` (sample: Jolt Wave I = 8 s); coverage per
+  skill still has to be counted. Cooldown *state* is the open problem: read the on-screen cooldown number/sweep from the
+  live capture (OCR of the 20 cooldown slots at their saved positions, `Windows.Media.Ocr`, offline) or track key presses.
+- Key presses: the user wants the overlay to detect them. Without injecting into the game, the options are a global
+  keyboard hook (low-level, still read-only) or reading the cooldown that appears after the press. Decide with the user.
+- Needs a first-run "review configuration" mode like Garmoth's: calibrate the regions to the real resolution and UI
+  scale, preview what the OCR reads, checklist.
+- Depends on: the full per-class skill catalog (max rank) in the asset pack, and the custom combos.
+
 ## Deferred TODO list (user: "note it, do it later")
 README in English, marketing style, no build instructions (documenter agent); rewrite unpushed commits (no game art) then decide public repo; prune tests; seed names Clodetthe (10000000001891118), Zeodoum (10000000000000169), Zeoclot (10000000003309831), AhrinSong (10000000006346933) once the roster is confirmed; unify QuickSlotMap/QuickSlotKeys; `traceparent` on outgoing requests; WoW-style display-only rotation overlay ("which skill to press next", idea using `cooldownSec`; Garmoth App already ships an overlay, study in `X:\Github\Personal\garmoth-app-study-2026-10\decompiled\overlay`; must never send input); real-time Preview polish (sweep/number fonts/colors unknown: candidates `pearl.ttf`); clean-machine test of the installer; Spanish translation of guide texts; remaining sections (changelog, videos).
 

@@ -160,6 +160,13 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _showHiddenSlots;
 
+    /// <summary>
+    /// Draws the live game behind the slots. Turned off, the capture is stopped: nothing of the game window is read.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CaptureStatusText))]
+    private bool _captureGame = true;
+
     /// <summary>Debug: a 60% cooldown on the first cooldown slot with a skill. Off by default; never saved.</summary>
     [ObservableProperty]
     private bool _cooldownDemo;
@@ -177,13 +184,15 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
     /// The one line about the background: empty while the game is captured, otherwise why the background is black.
     /// The view calls <see cref="RefreshCaptureStatus"/> when it polls the source.
     /// </summary>
-    public string CaptureStatusText => GameScreen.State switch
-    {
-        GameScreenState.Capturing => string.Empty,
-        GameScreenState.Minimized => _localizer.Get("Preview.Capture.Minimized"),
-        GameScreenState.Failed => _localizer.Get("Preview.Capture.Failed"),
-        _ => _localizer.Get("Preview.Capture.NotRunning"),
-    };
+    public string CaptureStatusText => !CaptureGame
+        ? string.Empty
+        : GameScreen.State switch
+        {
+            GameScreenState.Capturing => string.Empty,
+            GameScreenState.Minimized => _localizer.Get("Preview.Capture.Minimized"),
+            GameScreenState.Failed => _localizer.Get("Preview.Capture.Failed"),
+            _ => _localizer.Get("Preview.Capture.NotRunning"),
+        };
 
     /// <summary>Raises the property that shows the capture state (called on the UI thread after a poll).</summary>
     public void RefreshCaptureStatus() => OnPropertyChanged(nameof(CaptureStatusText));

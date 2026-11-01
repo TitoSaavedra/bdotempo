@@ -31,6 +31,9 @@ public sealed partial class GameScreenCanvas : UserControl
     /// <summary>True when the scroll position should move to the frame of the slots once the new size is laid out.</summary>
     private bool _frameRequested;
 
+    /// <summary>True while the game capture is stopped because the capture switch is off.</summary>
+    private bool _capturePaused;
+
     public GameScreenCanvas()
     {
         InitializeComponent();
@@ -105,6 +108,21 @@ public sealed partial class GameScreenCanvas : UserControl
             return;
         }
 
+        if (!_viewModel.CaptureGame)
+        {
+            // The switch is off: the capture is stopped once and nothing of the game window is read until it is on again.
+            if (!_capturePaused)
+            {
+                _capturePaused = true;
+                _viewModel.GameScreen.Stop();
+                ShowFrame();
+                _viewModel.RefreshCaptureStatus();
+            }
+
+            return;
+        }
+
+        _capturePaused = false;
         _viewModel.GameScreen.Poll();
         _viewModel.RefreshCaptureStatus();
         ShowFrame();
@@ -161,6 +179,11 @@ public sealed partial class GameScreenCanvas : UserControl
         if (e.PropertyName == nameof(PreviewViewModel.ScreenScale))
         {
             ApplyScale();
+        }
+
+        if (e.PropertyName == nameof(PreviewViewModel.CaptureGame))
+        {
+            Poll();
         }
     }
 
