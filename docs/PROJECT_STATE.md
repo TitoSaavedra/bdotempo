@@ -95,6 +95,27 @@ from the raw guide: they configure the order, the overlay follows it.
 - Needs a first-run "review configuration" mode like Garmoth's: checklist, and a preview of what the overlay shows.
 - Depends on: the full per-class skill catalog (max rank) in the asset pack, and the custom combos.
 
+## Next work batch (user, 2026-11-01: "haz todo menos el overlay de rotación")
+
+Order agreed with the user. Do not launch the app; the user tests at the end and reports errors.
+
+1. **Skill catalog, wire-up (in progress).** `class-skills.json` is generated (`7d0c107`), packed and verified
+   (`4b77894`, 9.279 entries) and read by `Core/GameData/SkillCatalog.cs` (`632c2e0`). Missing: load it in
+   `Services/AppServices.cs` next to `SkillClassesResource` (same loader pattern) and expose it to the page view models.
+2. **Slot editor: pick a skill for a slot.** Click a slot in "Editor de slots" -> searchable list with icon + name
+   (only the top rank; the catalog already contains exactly that) -> the chosen skill replaces the slot's skill in the
+   combo being edited. Never touches the guide.
+3. **Custom combos 1..10, per class + spec** (`ComboProfileStore` today keeps one profile per class+spec). Add ten
+   named slots, a selector in "Aplicar combo", and save/load/delete. The bdoclasshub guide always stays intact; a custom
+   combo is always a copy.
+4. **Class add-ons in "Aplicar combo".** `guide.addons` is already loaded (`ComboEditorViewModel` line ~716), where it
+   only feeds the skill pool. Show a read-only section "Adicionales de la clase": skill icon + name + description and
+   the effects in two columns.
+5. **Character names by OCR** (idea, user asked): at the character selection screen, one capture + `Windows.Media.Ocr`
+   over the name strip, then a review table to fix mistakes before saving to `%LOCALAPPDATA%\BDOTempo\characters.json`.
+   The names are not in any local file (checked: the lobby file only has the user's memos).
+6. **Not now:** the rotation overlay (see the decision above: only with real key-press detection).
+
 ## Deferred TODO list (user: "note it, do it later")
 README in English, marketing style, no build instructions (documenter agent); rewrite unpushed commits (no game art) then decide public repo; prune tests; seed names Clodetthe (10000000001891118), Zeodoum (10000000000000169), Zeoclot (10000000003309831), AhrinSong (10000000006346933) once the roster is confirmed; unify QuickSlotMap/QuickSlotKeys; `traceparent` on outgoing requests; WoW-style display-only rotation overlay ("which skill to press next", idea using `cooldownSec`; Garmoth App already ships an overlay, study in `X:\Github\Personal\garmoth-app-study-2026-10\decompiled\overlay`; must never send input); real-time Preview polish (sweep/number fonts/colors unknown: candidates `pearl.ttf`); clean-machine test of the installer; Spanish translation of guide texts; remaining sections (changelog, videos).
 
