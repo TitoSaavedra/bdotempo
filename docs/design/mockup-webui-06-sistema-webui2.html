@@ -34,7 +34,7 @@
 
   /* ---------- window frame ---------- */
   .win{
-    width:min(1180px,100%); height:780px;
+    width:min(1180px,100%); height:840px;
     background:#fff; border:1px solid var(--gray-200); border-radius:12px;
     box-shadow:0 12px 32px -12px rgba(16,24,40,.18),0 2px 6px rgba(16,24,40,.05);
     display:flex; flex-direction:column; overflow:hidden;
@@ -213,6 +213,127 @@
   footer{font-size:11.5px;color:var(--gray-400);letter-spacing:.02em}
   .spacer{flex:1}
 </style>
+<style id="bdotempo-extras-styles">
+  /* ---------- pantallas 2 y 3 · misma piel WebUI 2 ---------- */
+  main{flex:1;min-width:0;min-height:0;overflow:auto;padding:20px 24px 24px;display:flex;flex-direction:column;gap:16px}
+  .scr{display:none;flex-direction:column;gap:16px;min-height:0}
+  html[data-screen="2"] .scr-editor,
+  html[data-screen="3"] .scr-config{display:flex;flex:1}
+  .editorwrap{display:grid;grid-template-columns:minmax(0,1fr) 268px;gap:16px;align-items:stretch;min-height:0}
+  .editormain{display:flex;flex-direction:column;gap:12px;min-width:0}
+
+  /* toolbar del editor */
+  .etool{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px}
+  .etool .sep{width:1px;height:18px;background:var(--gray-200);margin:0 2px}
+  .etool .zoom{font-size:12px;font-weight:600;color:var(--gray-600);display:inline-flex;align-items:center;gap:4px}
+  .zoom .btn{width:24px;height:24px;padding:0;justify-content:center;font-size:12px}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;margin-left:auto;align-items:center;font-size:11.5px;color:var(--gray-500)}
+  .legend span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .legend i{width:11px;height:11px;border-radius:3px;display:block}
+  .legend .gold{background:var(--gold-50);border:1px solid #d4a72c;box-shadow:inset 0 0 0 1px rgba(255,255,255,.7)}
+  .legend .blue{background:var(--blue-50);border:1px solid var(--blue-500);box-shadow:inset 0 0 0 1px rgba(255,255,255,.7)}
+
+  /* toggle */
+  .tog{display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 9px;border:1px solid var(--gray-300);border-radius:var(--r-sm);background:#fff;font-size:12.5px;font-weight:500;color:var(--gray-700);box-shadow:var(--shadow-xs);cursor:pointer;white-space:nowrap}
+  .tog:hover{border-color:var(--gray-400)}
+  .tog .sw{width:24px;height:14px;border-radius:999px;background:var(--gray-300);position:relative;flex:0 0 24px;transition:background .15s}
+  .tog .sw::after{content:"";position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#fff;box-shadow:var(--shadow-xs)}
+  .tog.on .sw{background:var(--blue-600)}
+  .tog.on .sw::after{left:12px}
+
+  /* juego */
+  .game{
+    position:relative;border-radius:var(--r-lg);overflow:hidden;padding:16px 18px 18px;
+    background:
+      radial-gradient(420px 220px at 18% 0%,rgba(59,130,246,.22),transparent 65%),
+      radial-gradient(380px 240px at 92% 100%,rgba(139,92,246,.18),transparent 62%),
+      linear-gradient(165deg,#0f172a,#111827 55%,#0b1120);
+    border:1px solid #1f2937;box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+    display:flex;flex-direction:column;gap:12px;min-height:0;
+  }
+  .game .glabel{display:flex;align-items:center;gap:8px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;font-weight:600}
+  .game .glabel .live{width:6px;height:6px;border-radius:50%;background:#34d399;box-shadow:0 0 0 3px rgba(52,211,153,.18)}
+  .game .glabel .right{margin-left:auto;letter-spacing:.02em;text-transform:none;font-weight:500;color:#8794a7;font-size:11.5px}
+  .slotgrids{display:flex;flex-direction:column;gap:12px}
+  .grid10{display:grid;grid-template-columns:repeat(10,48px);gap:6px;justify-content:center}
+  .gridrow{display:grid;grid-template-columns:repeat(10,48px);gap:6px;justify-content:center;align-items:center}
+  .gslot{width:48px;height:48px;border-radius:8px;position:relative;display:grid;place-items:center;font-size:21px;line-height:1;color:#e2e8f0;
+    background:linear-gradient(160deg,#2b3444,#1e2533);overflow:hidden}
+  .gslot.filled{border:1px solid #d4a72c;box-shadow:0 0 0 1px rgba(212,167,44,.22),0 2px 6px rgba(0,0,0,.45)}
+  .gslot.empty{border:1px dashed rgba(148,163,184,.28);color:#475569;font-size:14px;background:rgba(255,255,255,.025)}
+  .gslot .n{position:absolute;top:1px;left:4px;font-size:9px;font-weight:600;color:#cbd5e1;opacity:.75}
+  .gslot .pen{position:absolute;top:1px;right:4px;font-size:8.5px;color:#e9c46a;opacity:.95}
+  .gslot .sweep{position:absolute;inset:0;background:conic-gradient(rgba(59,130,246,.62) 0turn 0.62turn,rgba(15,23,42,.42) 0.62turn 1turn)}
+  .gslot .cd{position:relative;font-size:13px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+  .gslot.sel{outline:2px solid #93c4fd;outline-offset:2px}
+  .gslot.quick{border:1px solid #3b82f6;box-shadow:0 0 0 1px rgba(59,130,246,.25),0 2px 6px rgba(0,0,0,.4)}
+  .gslot.quick.empty{border-style:solid;border-color:rgba(59,130,246,.55);color:#3f608c;background:rgba(59,130,246,.06)}
+  .klabel{width:48px;text-align:center;font-size:11px;font-weight:700;color:#9fb6d4;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+  .gsep{height:1px;background:linear-gradient(90deg,transparent,rgba(148,163,184,.22),transparent);margin:0 -4px}
+  .gfoot{display:flex;gap:10px;align-items:center;font-size:11px;color:#7c8aa0;flex-wrap:wrap}
+  .gfoot .pillr{border:1px solid rgba(148,163,184,.22);border-radius:999px;padding:1px 8px;font-weight:600}
+
+  /* picker */
+  .gslot.anchor{outline:2px solid #93c4fd;outline-offset:2px}
+  .gwrapper{position:relative}
+  .picker{
+    position:absolute;top:80px;left:calc(50% - 152px);width:304px;z-index:5;
+    background:#fff;border:1px solid var(--gray-200);border-radius:var(--r);box-shadow:0 18px 36px -14px rgba(16,24,40,.38),0 2px 6px rgba(16,24,40,.1);
+    padding:10px;display:flex;flex-direction:column;gap:8px;
+  }
+  .picker .arrow{position:absolute;top:-6px;left:50%;width:10px;height:10px;background:#fff;border-left:1px solid var(--gray-200);border-top:1px solid var(--gray-200);transform:translateX(-50%) rotate(45deg)}
+  .search{height:30px;border:1px solid var(--gray-300);border-radius:var(--r-sm);display:flex;align-items:center;gap:6px;padding:0 8px;font-size:12.5px;color:var(--gray-400);box-shadow:var(--ring);border-color:var(--blue-500);background:#fff}
+  .search b{color:var(--gray-900);font-weight:500}
+  .prow{display:flex;align-items:center;gap:9px;padding:6px 7px;border-radius:var(--r-sm);cursor:pointer}
+  .prow:hover{background:var(--gray-50)}
+  .prow.sel{background:var(--blue-50)}
+  .prow .sico{width:26px;height:26px;border-radius:6px;flex:0 0 26px;display:grid;place-items:center;font-size:13px;color:#fff}
+  .prow .nm{font-size:12.5px;font-weight:600;letter-spacing:-.005em}
+  .prow .mt{font-size:10.5px;color:var(--gray-500)}
+  .prow .rank{margin-left:auto;font-size:10px;font-weight:600;color:var(--green-700);background:var(--green-50);border:1px solid #bbe7c7;border-radius:999px;padding:0 6px}
+  .pfoot{font-size:10.5px;color:var(--gray-400);display:flex;gap:8px;align-items:center;border-top:1px solid var(--gray-200);padding-top:7px}
+
+  /* revisión */
+  .review{display:flex;flex-direction:column;gap:10px}
+  .changeline{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.4;padding:8px 10px;border:1px solid var(--gray-200);border-radius:var(--r-sm);background:var(--gray-50)}
+  .changeline .k{color:var(--gray-500);flex:0 0 auto}
+  .changeline b{font-weight:600;color:var(--gray-900)}
+  .changeline .old{color:var(--gray-500);text-decoration:line-through;text-decoration-color:rgba(107,114,128,.5)}
+  .reviewnote{font-size:11.5px;color:var(--gray-500);line-height:1.45;display:flex;gap:7px;align-items:flex-start}
+  .reviewnote .ic{color:var(--green-700);flex:0 0 auto}
+  .stack{display:flex;flex-direction:column;gap:8px}
+  .stack .btn{width:100%;justify-content:center}
+
+  /* configuración */
+  .cfg{display:flex;flex-direction:column;gap:16px}
+  .cfg .formrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .cfg .path{flex:1;min-width:240px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;color:var(--gray-700)}
+  .cfg .link{background:none;border:0;padding:0;font:inherit;font-size:12px;font-weight:600;color:var(--blue-600);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+  .cfg .link:hover{color:var(--blue-700)}
+  .cfg .explain{font-size:12.5px;color:var(--gray-600);line-height:1.5;margin-bottom:12px;max-width:640px}
+  .ocrhead{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+  .counter{display:flex;flex-direction:column;gap:3px}
+  .counter .v{font-size:20px;font-weight:650;letter-spacing:-.02em}
+  .counter .v small{font-size:12px;color:var(--gray-400);font-weight:500}
+  .bar{width:200px;height:6px;border-radius:999px;background:var(--gray-100);overflow:hidden;border:1px solid var(--gray-200)}
+  .bar i{display:block;height:100%;width:71%;background:linear-gradient(90deg,var(--blue-500),var(--blue-700))}
+  .cfgtable{border:1px solid var(--gray-200);border-radius:var(--r);overflow:hidden}
+  .cfgtr{display:grid;grid-template-columns:36px minmax(120px,1.1fr) 92px minmax(150px,1fr) 96px;gap:12px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--gray-200);background:#fff}
+  .cfgtr:last-child{border-bottom:0}
+  .cfgtr.head{background:var(--gray-50);padding:6px 12px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--gray-500);font-weight:600}
+  .cfgtr .idx{font-size:11.5px;color:var(--gray-400);font-weight:600;text-align:right}
+  .cfgtr .namebox{height:28px;border:1px solid var(--gray-300);border-radius:var(--r-sm);display:flex;align-items:center;padding:0 8px;font-size:12.5px;font-weight:600;background:#fff}
+  .cfgtr .namebox.edit{border-color:var(--blue-500);box-shadow:var(--ring)}
+  .cfgtr .lvl{font-size:12px;color:var(--gray-600)}
+  .cfgtr .cls{height:28px;border:1px solid var(--gray-300);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:space-between;padding:0 8px;font-size:12px;color:var(--gray-900);cursor:pointer;background:#fff}
+  .cfgtr .cls .caret{color:var(--gray-400);font-size:9px}
+  .cfgtr .btn{justify-self:end}
+  .cfgr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .kvrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--gray-200);font-size:12.5px}
+  .kvrow:last-of-type{border-bottom:0}
+  .kvrow .k{color:var(--gray-500)}
+  .kvrow .v{font-weight:600;color:var(--gray-900)}
+</style>
 </head>
 <body>
 
@@ -250,6 +371,7 @@
     </nav>
 
     <main>
+      <div class="scr scr-combos">
       <!-- PAGE HEAD -->
       <div class="pagehead">
         <div>
@@ -395,6 +517,271 @@
 
         </div>
       </div>
+      </div>
+
+      <!-- ============ PANTALLA 2 · EDITOR ============ -->
+      <div class="scr scr-editor">
+        <div class="pagehead">
+          <div>
+            <h1><span class="clsicon">🐾</span>Editor de casillas <span class="chip gray">Domadora · Awakening</span></h1>
+            <div class="crumb">Editor<i>/</i>Personaje <b style="color:var(--gray-700);font-weight:600">AhrinSong · cuenta 330</b><i>/</i>Preset 3</div>
+          </div>
+          <div class="topactions">
+            <button class="btn primary">Aplicar al personaje</button>
+          </div>
+        </div>
+
+        <div class="editorwrap">
+          <div class="editormain">
+            <section class="card">
+              <div class="card-b etool">
+                <div class="select" style="width:150px">
+                  <div class="field"><span>Preset 3</span><span class="caret">▾</span></div>
+                </div>
+                <span class="sep"></span>
+                <span class="tog on"><span class="sw"></span>Capturar el juego</span>
+                <span class="tog"><span class="sw"></span>Mostrar slots ocultos</span>
+                <button class="btn sm">Ajustar vista</button>
+                <span class="sep"></span>
+                <span class="zoom"><button class="btn sm">−</button>100 %<button class="btn sm">+</button></span>
+                <div class="legend">
+                  <span><i class="gold"></i>Casillas de enfriamiento: haz clic para cambiar la habilidad</span>
+                  <span><i class="blue"></i>Accesos rápidos: solo lectura</span>
+                </div>
+              </div>
+            </section>
+
+            <div class="gwrapper">
+              <div class="game">
+                <div class="glabel"><span class="live"></span>Juego en vivo · BlackDesert64.exe<span class="right">Domadora · Awakening · Preset 3</span></div>
+                <div class="slotgrids">
+                  <div class="grid10">
+                    <div class="gslot filled sel"><span class="n">1</span><span class="pen">✎</span>⚔</div>
+                    <div class="gslot filled"><span class="n">2</span><span class="pen">✎</span>🌀</div>
+                    <div class="gslot filled"><span class="n">3</span><span class="pen">✎</span>🗡</div>
+                    <div class="gslot filled"><span class="n">4</span><span class="pen">✎</span>✦</div>
+                    <div class="gslot filled"><span class="n">5</span><span class="pen">✎</span>✧</div>
+                    <div class="gslot filled"><span class="n">6</span><span class="pen">✎</span>✺</div>
+                    <div class="gslot filled"><span class="n">7</span><span class="pen">✎</span>🐾</div>
+                    <div class="gslot filled"><span class="n">8</span><span class="pen">✎</span>🏹</div>
+                    <div class="gslot filled"><span class="n">9</span><span class="pen">✎</span>🔮</div>
+                    <div class="gslot filled"><span class="n">10</span><span class="pen">✎</span>🌪</div>
+                    <div class="gslot filled"><span class="n">11</span><span class="pen">✎</span>⚔</div>
+                    <div class="gslot filled"><span class="n">12</span><span class="pen">✎</span>🌀</div>
+                    <div class="gslot filled"><span class="n">13</span><span class="pen">✎</span>✺</div>
+                    <div class="gslot empty"><span class="n">14</span>·</div>
+                    <div class="gslot empty"><span class="n">15</span>·</div>
+                    <div class="gslot empty"><span class="n">16</span>·</div>
+                    <div class="gslot empty"><span class="n">17</span>·</div>
+                    <div class="gslot empty"><span class="n">18</span>·</div>
+                    <div class="gslot empty"><span class="n">19</span>·</div>
+                    <div class="gslot empty"><span class="n">20</span>·</div>
+                  </div>
+                  <div class="gsep"></div>
+                  <div class="gridrow"><div class="klabel">Q</div><div class="klabel">E</div><div class="klabel">R</div><div class="klabel">1</div><div class="klabel">2</div><div class="klabel">3</div><div class="klabel">4</div><div class="klabel">5</div><div class="klabel">6</div><div class="klabel">7</div></div>
+                  <div class="grid10">
+                    <div class="gslot quick"><span class="n">1</span>⚔</div>
+                    <div class="gslot quick"><span class="n">2</span>🌪</div>
+                    <div class="gslot quick"><span class="n">3</span>🗡</div>
+                    <div class="gslot quick"><span class="n">4</span>✦</div>
+                    <div class="gslot quick"><span class="n">5</span>✧</div>
+                    <div class="gslot quick"><span class="n">6</span>✺</div>
+                    <div class="gslot quick"><span class="n">7</span>🐾</div>
+                    <div class="gslot quick"><span class="n">8</span>🏹</div>
+                    <div class="gslot quick"><span class="n">9</span><span class="sweep"></span><span class="cd">12 s</span></div>
+                    <div class="gslot quick empty"><span class="n">10</span>·</div>
+                    <div class="gslot quick"><span class="n">11</span>🔮</div>
+                    <div class="gslot quick"><span class="n">12</span>🌪</div>
+                    <div class="gslot quick empty"><span class="n">13</span>·</div>
+                    <div class="gslot quick empty"><span class="n">14</span>·</div>
+                    <div class="gslot quick empty"><span class="n">15</span>·</div>
+                    <div class="gslot quick empty"><span class="n">16</span>·</div>
+                    <div class="gslot quick empty"><span class="n">17</span>·</div>
+                    <div class="gslot quick empty"><span class="n">18</span>·</div>
+                    <div class="gslot quick empty"><span class="n">19</span>·</div>
+                    <div class="gslot quick empty"><span class="n">20</span>·</div>
+                  </div>
+                  <div class="gridrow"><div class="klabel">8</div><div class="klabel">9</div><div class="klabel">0</div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+                </div>
+                <div class="gfoot">
+                  <span class="pillr"><i style="display:inline-block;width:8px;height:8px;border-radius:2px;border:1px solid #d4a72c;margin-right:4px"></i>enfriamiento</span>
+                  <span class="pillr"><i style="display:inline-block;width:8px;height:8px;border-radius:2px;border:1px solid #3b82f6;margin-right:4px"></i>acceso rápido</span>
+                  <span style="margin-left:auto">La vista se dibuja sobre la ventana del juego; si el juego está minimizado, se muestra en negro.</span>
+                </div>
+              </div>
+
+              <!-- selector de habilidad anclado a la casilla 1 -->
+              <div class="picker">
+                <div class="arrow"></div>
+                <div class="search">⌕ <b>Buscar habilidad…</b></div>
+                <div class="prow sel">
+                  <span class="sico" style="background:linear-gradient(150deg,#8b5cf6,#6d28d9)">🐾</span>
+                  <span><span class="nm">Baile de la Bestia IV</span><br><span class="mt">18 s · cuerpo a cuerpo</span></span>
+                  <span class="rank">máx.</span>
+                </div>
+                <div class="prow">
+                  <span class="sico" style="background:linear-gradient(150deg,#0ea5e9,#0369a1)">🌪</span>
+                  <span><span class="nm">Onda de Tumbo III</span><br><span class="mt">9 s · área</span></span>
+                  <span class="rank">máx.</span>
+                </div>
+                <div class="prow">
+                  <span class="sico" style="background:linear-gradient(150deg,#f59e0b,#b45309)">✦</span>
+                  <span><span class="nm">Sacudida del Suelo</span><br><span class="mt">6 s · golpe de relleno</span></span>
+                  <span class="rank">máx.</span>
+                </div>
+                <div class="prow">
+                  <span class="sico" style="background:linear-gradient(150deg,#10b981,#047857)">✺</span>
+                  <span><span class="nm">Aura de Bestia</span><br><span class="mt">40 s · mejora</span></span>
+                  <span class="rank">máx.</span>
+                </div>
+                <div class="pfoot"><kbd>↑</kbd><kbd>↓</kbd> para moverte · <kbd>Enter</kbd> para elegir · <kbd>Esc</kbd> para cerrar</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stack">
+            <section class="card">
+              <div class="card-h"><h2>Revisa los cambios</h2><span class="hint">2 cambios</span></div>
+              <div class="card-b review">
+                <div class="changeline"><span class="k">Casilla 1:</span><span><span class="old">Baile de la Bestia IV</span> → <b>Onda de Tumbo III</b></span></div>
+                <div class="changeline"><span class="k">Memo de Sacudida del Suelo:</span><span><b>Shift + Q</b></span></div>
+                <div class="reviewnote"><span class="ic">⛨</span><span>Antes de escribir se guarda una copia de seguridad verificada del archivo del personaje.</span></div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card-b stack">
+                <button class="btn primary">Escribir en el personaje</button>
+                <button class="btn">Cancelar</button>
+                <div class="row" style="justify-content:space-between;font-size:11.5px;color:var(--gray-500)">
+                  <span>Casilla seleccionada</span><b style="color:var(--gray-700);font-weight:600">1 · enfriamiento</b>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ PANTALLA 3 · CONFIGURACIÓN ============ -->
+      <div class="scr scr-config">
+        <div class="pagehead">
+          <div>
+            <h1><span class="clsicon">⚙</span>Configuración</h1>
+            <div class="crumb">Cuenta, personajes, carpeta del juego, idioma y actualizaciones.</div>
+          </div>
+          <div class="topactions">
+            <span class="chip ok"><span class="dot"></span>Guardado</span>
+          </div>
+        </div>
+
+        <div class="cfg">
+          <div class="grid12">
+            <section class="card" style="grid-column:span 5">
+              <div class="card-h"><h2>Cuenta</h2></div>
+              <div class="card-b">
+                <label class="label">Cuenta de Black Desert</label>
+                <div class="select"><div class="field"><span>Cuenta 330</span><span class="caret">▾</span></div></div>
+                <div style="margin-top:8px;font-size:11.5px;color:var(--gray-500)">Se usa para localizar la carpeta del personaje.</div>
+              </div>
+            </section>
+
+            <section class="card" style="grid-column:span 7">
+              <div class="card-h"><h2>Carpeta de Black Desert</h2><span class="hint">Solo lectura salvo al escribir</span></div>
+              <div class="card-b cfg" style="gap:10px">
+                <div class="field path">C:\Users\TitoS\OneDrive\Documentos\Black Desert</div>
+                <div class="formrow">
+                  <button class="btn">Buscar…</button>
+                  <button class="btn primary">Guardar</button>
+                  <button class="link">Volver a ejecutar la configuración inicial</button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <section class="card">
+            <div class="card-h">
+              <h2>Personajes (OCR)</h2>
+              <span class="chip gray" style="margin-left:auto;font-weight:500">Leyendo Nv. y nombres</span>
+            </div>
+            <div class="card-b">
+              <p class="explain">Abre Black Desert en la pantalla de selección de personaje y deja que la app lea los nombres con OCR.</p>
+              <div class="ocrhead">
+                <div class="formrow" style="margin-right:auto">
+                  <button class="btn primary">Empezar a leer</button>
+                  <button class="btn">Terminar</button>
+                  <button class="btn">Cancelar</button>
+                </div>
+                <div class="counter">
+                  <div class="v">25 <small>de 35 leídos</small></div>
+                  <div class="bar"><i></i></div>
+                </div>
+              </div>
+
+              <div class="cfgtable">
+                <div class="cfgtr head"><div class="idx">#</div><div>Nombre</div><div>Nivel</div><div>Clase</div><div></div></div>
+                <div class="cfgtr">
+                  <div class="idx">01</div>
+                  <div class="namebox">Clodetthe</div>
+                  <div class="lvl">Nv. 68</div>
+                  <div class="cls"><span>Domadora</span><span class="caret">▾</span></div>
+                  <button class="btn sm">Revisar</button>
+                </div>
+                <div class="cfgtr">
+                  <div class="idx">02</div>
+                  <div class="namebox edit">AhrinSong</div>
+                  <div class="lvl">Nv. 62</div>
+                  <div class="cls"><span>Domadora</span><span class="caret">▾</span></div>
+                  <button class="btn sm">Revisar</button>
+                </div>
+                <div class="cfgtr">
+                  <div class="idx">03</div>
+                  <div class="namebox">Zeodoum</div>
+                  <div class="lvl">Nv. 68</div>
+                  <div class="cls"><span>Sin clase</span><span class="caret">▾</span></div>
+                  <button class="btn sm">Revisar</button>
+                </div>
+              </div>
+
+              <div class="formrow" style="margin-top:12px">
+                <button class="btn primary">Guardar nombres</button>
+                <button class="btn">Descartar</button>
+                <span style="margin-left:auto;font-size:11.5px;color:var(--gray-500)">El nombre marcado se puede editar a mano.</span>
+              </div>
+            </div>
+          </section>
+
+          <div class="cfgr">
+            <section class="card">
+              <div class="card-h"><h2>Idioma</h2></div>
+              <div class="card-b">
+                <label class="label">Idioma de la interfaz</label>
+                <div class="select"><div class="field"><span>Español</span><span class="caret">▾</span></div></div>
+                <div style="margin-top:8px;font-size:11.5px;color:var(--gray-500)">Se aplica al reiniciar la app.</div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="card-h"><h2>Actualizaciones</h2><span class="hint">Estable</span></div>
+              <div class="card-b">
+                <div class="kvrow"><span class="k">Versión</span><span class="v">0.1.0</span></div>
+                <div class="kvrow"><span class="k">Última comprobación</span><span class="v">hoy 19:40</span></div>
+                <div class="formrow" style="margin-top:10px;justify-content:space-between">
+                  <button class="btn sm">Buscar actualizaciones</button>
+                  <span class="tog on"><span class="sw"></span>Buscar al iniciar</span>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <section class="card">
+            <div class="card-h"><h2>Avisos</h2></div>
+            <div class="card-b formrow" style="justify-content:space-between">
+              <span style="font-size:12.5px;color:var(--gray-600)">Confirma antes de escribir en el personaje.</span>
+              <span class="tog on"><span class="sw"></span>Mostrar el aviso antes de escribir</span>
+            </div>
+          </section>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -420,64 +807,49 @@
   .bdotempo-hidden { display: none !important; }
   .bdotempo-screenbar { display: flex; gap: 6px; align-items: center; padding: 8px 14px; border-top: 1px solid currentColor;
     border-color: color-mix(in srgb, currentColor 22%, transparent); font: 12px "Segoe UI", system-ui, sans-serif; }
-  .bdotempo-screenbar span { padding: 4px 10px; border-radius: 8px; opacity: .6; }
-  .bdotempo-screenbar span.on { opacity: 1; font-weight: 600; }
+  .bdotempo-screenbar span { padding: 4px 10px; border-radius: 8px; opacity: .6; cursor: pointer; }
+  .bdotempo-screenbar span.on { opacity: 1; font-weight: 600; background: var(--gray-100, rgba(127,127,127,.14)); }
+  .win nav .navitem{cursor:pointer}
 </style>
 <script>
 (function () {
+  var NAMES = ['Combos', 'Editor', 'Configuración'];
   function apply() {
     var wanted = Number(document.documentElement.dataset.screen || 1);
-    var stage = document.querySelector('.stage') || document.querySelector('.win');
-    if (!stage) { return; }
-    var blocks = Array.prototype.filter.call(stage.children, function (el) {
-      return el.nodeType === 1 && el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE' && !el.classList.contains('titlebar');
+    if (!(wanted >= 1 && wanted <= 3)) { wanted = 1; }
+    var screens = ['scr-combos', 'scr-editor', 'scr-config'];
+    // Solo cambia el área de contenido: barra de título, navegación y barra de estado siguen visibles.
+    screens.forEach(function (cls, index) {
+      document.querySelectorAll('main .' + cls).forEach(function (el) {
+        el.classList.toggle('bdotempo-hidden', index + 1 !== wanted);
+        el.setAttribute('data-bdotempo-screen', String(index + 1));
+      });
     });
-    if (!blocks.length) { return; }
-    // La pantalla diseñada es la de Combos; las otras dos quedan reservadas.
-    blocks.forEach(function (block, index) {
-      block.classList.add('bdotempo-hidden');
-      block.removeAttribute('data-bdotempo-screen');
+    // Navegación lateral: marca el elemento visible sin navegar a ninguna parte.
+    document.querySelectorAll('.win nav .navitem').forEach(function (item) {
+      var label = (item.textContent || '').trim().toLowerCase();
+      var index = NAMES.findIndex(function (name) { return label.indexOf(name.toLowerCase()) === 0; });
+      item.classList.toggle('active', index + 1 === wanted);
     });
     if (!document.querySelector('.bdotempo-screenbar')) {
       var bar = document.createElement('div');
       bar.className = 'bdotempo-screenbar';
-      ['Combos', 'Editor', 'Configuración'].forEach(function (name, index) {
+      NAMES.forEach(function (name, index) {
         var item = document.createElement('span');
         item.textContent = name;
         item.dataset.bdotempoScreen = index + 1;
-        if (index === 0) { item.classList.add('on'); }
+        item.addEventListener('click', function () {
+          document.documentElement.dataset.screen = String(index + 1);
+          apply();
+        });
         bar.appendChild(item);
       });
-      stage.appendChild(bar);
+      var host = document.querySelector('.win') || document.body;
+      host.appendChild(bar);
     }
-    var barItems = document.querySelectorAll('.bdotempo-screenbar span');
-    barItems.forEach(function (item, index) {
+    document.querySelectorAll('.bdotempo-screenbar span').forEach(function (item, index) {
       item.classList.toggle('on', (index + 1) === wanted);
     });
-    if (wanted === 1) {
-      blocks[0].classList.remove('bdotempo-hidden');
-      blocks[0].setAttribute('data-bdotempo-screen', '1');
-      return;
-    }
-    // Las pantallas extra todavía no existen: se muestra una nota dentro del mismo marco.
-    if (!document.querySelector('.bdotempo-placeholder')) {
-      var note = document.createElement('section');
-      note.className = 'bdotempo-placeholder';
-      note.style.cssText = 'padding:28px;font:14px/1.6 "Segoe UI",system-ui,sans-serif;opacity:.85;max-width:520px;';
-      stage.appendChild(note);
-    }
-    var placeholder = document.querySelector('.bdotempo-placeholder');
-    placeholder.textContent = '';
-    var title = document.createElement('b');
-    title.textContent = wanted === 2 ? 'Editor en este diseño' : 'Configuración en este diseño';
-    title.style.cssText = 'display:block;font-size:16px;margin-bottom:8px;';
-    var text = document.createElement('p');
-    text.textContent = wanted === 2
-      ? 'Aquí iría el editor de ranuras con esta misma piel: los 20 accesos de enfriamiento y los 20 accesos rápidos sobre el juego en vivo, y el botón de aplicar al personaje. Se mostrará en cuanto se rediseñe esa pantalla.'
-      : 'Aquí iría la configuración con esta misma piel: cuenta, personajes (con la lectura de nombres por OCR), carpeta del juego, idioma y actualizaciones. Se mostrará en cuanto se rediseñe esa pantalla.';
-    placeholder.appendChild(title);
-    placeholder.appendChild(text);
-    placeholder.classList.remove('bdotempo-hidden');
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', apply);
