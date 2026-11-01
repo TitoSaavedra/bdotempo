@@ -474,7 +474,7 @@ internal sealed partial class CharacterRowOverlay : IDisposable
         uint pitchAndFamily,
         string face);
 
-    [LibraryImport("gdi32.dll", EntryPoint = "DrawTextW", StringMarshalling = StringMarshalling.Utf16)]
+    [LibraryImport("user32.dll", EntryPoint = "DrawTextW", StringMarshalling = StringMarshalling.Utf16)]
     private static partial int DrawTextW(nint dc, string text, int length, ref RectInt rect, uint format);
 
     [LibraryImport("gdi32.dll")]
