@@ -15,6 +15,7 @@ output is byte-stable.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,10 @@ from .. import log
 
 MAX_CLASSES_PER_GROUP = 9
 RESOURCE_NAME = "skill_classes.json"
+CLASS_SKILLS_RESOURCE = "class-skills.json"
+
+# In-game markup such as <PAColor0xff2bbbff>...</PAOldColor> is not part of the name.
+_MARKUP = re.compile(r"<[^>]+>")
 
 
 class SkillClassesError(ValueError):
@@ -53,6 +58,47 @@ def build_skill_class_table(source: dict[str, Any], max_classes: int = MAX_CLASS
     skills = {str(skill_no): sorted(classes_by_skill[skill_no]) for skill_no in sorted(classes_by_skill)}
     log.info("skill classes built", groups_kept=kept_groups, skills=len(skills), max_classes=max_classes)
     return {"maxClassesPerGroup": max_classes, "skills": skills}
+
+
+def build_skill_catalog(source: dict[str, Any]) -> dict[str, Any]:
+    """Every skill of each class at its highest rank, for the app's skill picker.
+
+    One entry per base skill (the source table groups the ranks of a skill together): the last rank is the one worth
+    showing, because a character learns the ranks in order. A group shared by several classes is listed for each.
+    Output: ``{"classes": {"<classType>": [{"skillNo", "name", "kind"}, ...]}}``, names sorted.
+    """
+    groups = source.get("groups")
+    if not isinstance(groups, list):
+        raise SkillClassesError("the skill table has no 'groups' list")
+
+    by_class: dict[int, dict[int, dict[str, Any]]] = {}
+    for group in groups:
+        if not isinstance(group, dict):
+            raise SkillClassesError("a group is not an object")
+        classes = [c for c in (group.get("classes") or []) if isinstance(c, int) and not isinstance(c, bool)]
+        ranks = [
+            rank
+            for rank in (group.get("ranks") or [])
+            if isinstance(rank, dict) and isinstance(rank.get("skillNo"), int) and not isinstance(rank.get("skillNo"), bool)
+        ]
+        if not classes or not ranks:
+            continue
+
+        top = max(ranks, key=lambda rank: rank.get("rank") if isinstance(rank.get("rank"), int) else 0)
+        entry = {
+            "skillNo": top["skillNo"],
+            "name": _MARKUP.sub("", top.get("name") or group.get("name") or "").strip(),
+            "kind": top.get("kind"),
+        }
+        for class_type in classes:
+            by_class.setdefault(class_type, {})[top["skillNo"]] = entry
+
+    classes = {
+        str(class_type): sorted(by_class[class_type].values(), key=lambda skill: (skill["name"].lower(), skill["skillNo"]))
+        for class_type in sorted(by_class)
+    }
+    log.info("skill catalog built", classes=len(classes), skills=sum(len(skills) for skills in classes.values()))
+    return {"classes": classes}
 
 
 def load_skill_table(path: Path) -> dict[str, Any]:

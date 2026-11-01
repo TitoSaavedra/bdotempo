@@ -73,20 +73,26 @@ are already summarized here; nothing else from that session is needed.
 
 ### Rotation overlay ("Hekili Priority Helper")
 
-Goal: an overlay that shows which skill to press next, in the style of WeakAuras/Hekili.
+**Decision (user, 2026-11-01): only if it can work from real key presses.** If the presses cannot be detected, the
+feature is dropped; do not build a timer-guessing version.
 
-- Suggested design: a priority list per class/spec (the guide's chain order is a first draft, the user will edit it),
-  filtered by which skills are actually usable (cooldown finished, resource cost affordable, target in range).
+Goal: an overlay that shows which skill to press next, in the style of WeakAuras/Hekili, and that must look polished.
+The rotation comes from the user's own skill configuration (the skills they placed in their combo / cooldown bar), not
+from the raw guide: they configure the order, the overlay follows it.
+
+- Suggested design: a priority list per class/spec (the user's configured combo order, editable), filtered by which
+  skills are usable (cooldown finished, resource affordable).
 - Input: it must stay **display-only**. Never send input, never inject into the game. Garmoth App already ships an
   overlay, so the user considers display-only overlays acceptable (see the Garmoth study in
   `X:\Github\Personal\garmoth-app-study-2026-10`).
-- Cooldown data: `skills.json` tooltips already carry `tooltip.cooldownSec` (sample: Jolt Wave I = 8 s); coverage per
-  skill still has to be counted. Cooldown *state* is the open problem: read the on-screen cooldown number/sweep from the
-  live capture (OCR of the 20 cooldown slots at their saved positions, `Windows.Media.Ocr`, offline) or track key presses.
-- Key presses: the user wants the overlay to detect them. Without injecting into the game, the options are a global
-  keyboard hook (low-level, still read-only) or reading the cooldown that appears after the press. Decide with the user.
-- Needs a first-run "review configuration" mode like Garmoth's: calibrate the regions to the real resolution and UI
-  scale, preview what the OCR reads, checklist.
+- Key presses: **deferred, do not implement yet (user, 2026-11-01).** Ways to read them without touching the game, all
+  passive, best first: Raw Input (`RegisterRawInputDevices` with `RIDEV_INPUTSINK`, receives `WM_INPUT` without focus, no
+  hooking, no injection); a low-level keyboard hook (`WH_KEYBOARD_LL`, also passive but the kind of hook an anti-cheat
+  watches); polling (`GetAsyncKeyState`, cheap but drops fast presses). Decision: implement with Raw Input, test on a
+  throwaway character with an on/off switch; if the anti-cheat complains, drop it. It never synthesizes input.
+- Cooldown data: `skills.json` tooltips already carry `tooltip.cooldownSec`; coverage per skill still has to be counted.
+  Cooldown *state* would come from the key presses plus that duration (no OCR needed).
+- Needs a first-run "review configuration" mode like Garmoth's: checklist, and a preview of what the overlay shows.
 - Depends on: the full per-class skill catalog (max rank) in the asset pack, and the custom combos.
 
 ## Deferred TODO list (user: "note it, do it later")

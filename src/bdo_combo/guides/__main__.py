@@ -6,6 +6,7 @@ Precedence for paths: command-line flag, then environment variable, then the bui
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
@@ -15,7 +16,7 @@ from .. import log
 from .bundle import BundleError, build_bundle
 from .client import ClientExport, ClientExportError
 from .importer import import_guides, write_outputs
-from .skill_classes import SkillClassesError, load_skill_table
+from .skill_classes import CLASS_SKILLS_RESOURCE, SkillClassesError, build_skill_catalog, load_skill_table
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CLASSHUB_DIR = REPO_ROOT / "data" / "classhub"
@@ -108,6 +109,15 @@ def _bundle(args: argparse.Namespace) -> int:
     skill_table = load_skill_table(args.skill_table or DEFAULT_SKILL_TABLE)
     slot_art_dir = _path(args.slot_art_dir, "BDO_SLOT_ART_DIR", DEFAULT_SLOT_ART_DIR)
     stats = build_bundle(combos_dir, ClientExport(client_dir), out_dir, skill_table, slot_art_dir=slot_art_dir)
+
+    # The whole skill list of every class at its top rank, for the app's slot editor. Written after the bundle so it is
+    # staged with the rest and packed by the asset packer.
+    catalog_path = out_dir / CLASS_SKILLS_RESOURCE
+    catalog_path.write_text(
+        json.dumps(build_skill_catalog(skill_table), ensure_ascii=False, indent=1, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(f"class skill catalog {catalog_path}: {catalog_path.stat().st_size} bytes")
     print(f"bundle {out_dir}: {stats.files} files, {stats.total_bytes} bytes")
     print(f"skill icons {stats.skill_icons}, class icons {stats.class_icons}, guides {stats.guides}")
     print(f"skills described {stats.skills_described}, missing skill icons {len(stats.missing_skill_icons)}")
