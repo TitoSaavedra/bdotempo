@@ -68,8 +68,15 @@ public static partial class CharacterScreenRowParser
             return [];
         }
 
+        // The character list is the right panel of the selection screen. Left-side text (the selected character's name,
+        // the buttons at the bottom left) shares the heights of the rows, so looking at the whole screen merged both into
+        // one band and drew boxes from the left edge. Only the list side is read.
+        var listWords = words
+            .Where(word => word.X >= frameWidth * 0.5)
+            .ToList();
+
         var rows = new List<CharacterRowCandidate>();
-        var bands = Bands(words);
+        var bands = Bands(listWords);
         foreach (var band in bands)
         {
             if (ReadBand(band, frameWidth, frameHeight) is { } row)
