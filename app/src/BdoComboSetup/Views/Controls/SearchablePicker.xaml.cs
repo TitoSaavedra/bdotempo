@@ -36,6 +36,12 @@ public sealed partial class SearchablePicker : UserControl
         typeof(SearchablePicker),
         new PropertyMetadata(null, OnItemTemplateChanged));
 
+    public static readonly DependencyProperty FieldsOfProperty = DependencyProperty.Register(
+        nameof(FieldsOf),
+        typeof(object),
+        typeof(SearchablePicker),
+        new PropertyMetadata(null, OnFieldsOfChanged));
+
     public SearchablePicker()
     {
         InitializeComponent();
@@ -75,6 +81,13 @@ public sealed partial class SearchablePicker : UserControl
     /// <summary>The texts each item is searched by (see <see cref="SearchableList.FieldsOf"/>). Set once by the owner.</summary>
     public void SetFields(Func<object, IEnumerable<string?>> fieldsOf) => List.SetFields(fieldsOf);
 
+    /// <summary>The same as <see cref="SetFields"/>, as a property, so it can be written in a data template.</summary>
+    public object? FieldsOf
+    {
+        get => GetValue(FieldsOfProperty);
+        set => SetValue(FieldsOfProperty, value);
+    }
+
     /// <summary>Opens the flyout (the search box gets the focus).</summary>
     public void Open() => PickerFlyout.ShowAt(Trigger);
 
@@ -86,6 +99,14 @@ public sealed partial class SearchablePicker : UserControl
 
     private static void OnItemTemplateChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e) =>
         ((SearchablePicker)sender).List.ItemTemplate = e.NewValue as DataTemplate;
+
+    private static void OnFieldsOfChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.NewValue is Func<object, IEnumerable<string?>> fieldsOf)
+        {
+            ((SearchablePicker)sender).SetFields(fieldsOf);
+        }
+    }
 
     private void ShowSelection()
     {

@@ -627,4 +627,130 @@
   <data name="Update.Dialog.Close" xml:space="preserve">
     <value>Cerrar</value>
   </data>
+  <data name="Settings.ScanHeader.Text" xml:space="preserve">
+    <value>Nombres de personaje (OCR)</value>
+  </data>
+  <data name="Settings.ScanHint.Text" xml:space="preserve">
+    <value>Abre Black Desert en la pantalla de selección de personaje y deja la lista arriba del todo. Al empezar, la app lee las filas visibles y dibuja un recuadro verde sobre el juego; baja la lista poco a poco hasta el final y pulsa Terminar. Nunca se envía nada al juego.</value>
+  </data>
+  <data name="Settings.ScanStartButton.Content" xml:space="preserve">
+    <value>Empezar a leer</value>
+  </data>
+  <data name="Settings.ScanFinishButton.Content" xml:space="preserve">
+    <value>Terminar</value>
+  </data>
+  <data name="Settings.ScanCancelButton.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Settings.ScanReviewHeader.Text" xml:space="preserve">
+    <value>Revisa los nombres</value>
+  </data>
+  <data name="Settings.ScanReviewHint.Text" xml:space="preserve">
+    <value>Corrige los nombres o las clases que el OCR haya leído mal y guarda. Solo se escribe el archivo de personajes de la app, nunca los del juego.</value>
+  </data>
+  <data name="Settings.ScanSaveButton.Content" xml:space="preserve">
+    <value>Guardar nombres</value>
+  </data>
+  <data name="Settings.ScanDiscardButton.Content" xml:space="preserve">
+    <value>Descartar</value>
+  </data>
+  <data name="Characters.ScanLevel" xml:space="preserve">
+    <value>Nv. {0}</value>
+  </data>
+  <data name="Characters.ScanPrevious" xml:space="preserve">
+    <value>Ahora: {0}</value>
+  </data>
+  <data name="Characters.ScanNoClass" xml:space="preserve">
+    <value>Sin clase</value>
+  </data>
+  <data name="Characters.ScanNoAccount" xml:space="preserve">
+    <value>No se encontró la cuenta del juego. Revisa la carpeta en Ajustes.</value>
+  </data>
+  <data name="Characters.ScanLoadFailed" xml:space="preserve">
+    <value>No se pudieron leer los personajes de la cuenta.</value>
+  </data>
+  <data name="Characters.ScanNoCharacters" xml:space="preserve">
+    <value>La cuenta no tiene personajes en el archivo de orden del juego.</value>
+  </data>
+  <data name="Characters.ScanCount" xml:space="preserve">
+    <value>{0} de {1} leídos</value>
+  </data>
+  <data name="Characters.ScanCountOnly" xml:space="preserve">
+    <value>{0} leídos</value>
+  </data>
+  <data name="Characters.ScanCountMismatch" xml:space="preserve">
+    <value>Leí {0} filas y la cuenta tiene {1} personajes. No se emparejan para no guardar nombres en el personaje equivocado: vuelve a empezar desde la primera fila y baja la lista despacio.</value>
+  </data>
+  <data name="Characters.ScanReady" xml:space="preserve">
+    <value>{0} personajes leídos. Revisa los nombres y las clases antes de guardar.</value>
+  </data>
+  <data name="Characters.ScanSaved" xml:space="preserve">
+    <value>Se guardaron {0} personajes.</value>
+  </data>
+  <data name="Characters.ScanGameMissing" xml:space="preserve">
+    <value>No se encontró la ventana de Black Desert. Abre el juego y déjalo en la pantalla de selección de personaje.</value>
+  </data>
+  <data name="Characters.ScanOcrMissing" xml:space="preserve">
+    <value>Windows no tiene instalado ningún idioma de OCR. Instálalo en Configuración de Windows &gt; Hora e idioma &gt; Idioma y región (paquete de reconocimiento óptico).</value>
+  </data>
+  <data name="Characters.ScanOverlayFailed" xml:space="preserve">
+    <value>No se pudo crear el recuadro verde sobre el juego. La lectura no empieza.</value>
+  </data>
+  <data name="Characters.ScanCaptureFailed" xml:space="preserve">
+    <value>No se pudo capturar la ventana del juego. Prueba a restaurarla y empezar de nuevo.</value>
+  </data>
+  <data name="Characters.ScanFailed" xml:space="preserve">
+    <value>La lectura se detuvo por un error. Revisa el log para ver el detalle.</value>
+  </data>
+  <data name="Settings.SetupButton.Content" xml:space="preserve">
+    <value>Volver a ejecutar la configuración inicial</value>
+  </data>
+  <data name="Setup.Title.Text" xml:space="preserve">
+    <value>Configuración inicial</value>
+  </data>
+  <data name="Setup.Subtitle.Text" xml:space="preserve">
+    <value>Dos datos y la app queda lista. Puedes cambiarlos después en Ajustes.</value>
+  </data>
+  <data name="Setup.FolderHeader.Text" xml:space="preserve">
+    <value>Carpeta de datos de Black Desert</value>
+  </data>
+  <data name="Setup.FolderHint.Text" xml:space="preserve">
+    <value>La carpeta que contiene UserCache (normalmente Documentos\Black Desert, incluso si OneDrive mueve Documentos).</value>
+  </data>
+  <data name="Setup.FolderEmpty.Text" xml:space="preserve">
+    <value>No la encontré sola. Pulsa Buscar carpeta y elige la carpeta que contiene UserCache.</value>
+  </data>
+  <data name="Setup.BrowseButton.Content" xml:space="preserve">
+    <value>Buscar carpeta…</value>
+  </data>
+  <data name="Setup.AccountHeader.Text" xml:space="preserve">
+    <value>Cuenta del juego</value>
+  </data>
+  <data name="Setup.AccountHint.Text" xml:space="preserve">
+    <value>La cuenta con los personajes que quieres usar. Si solo hay una, se elige sola.</value>
+  </data>
+  <data name="Setup.Note.Text" xml:space="preserve">
+    <value>Nada de esto se escribe en el juego: solo se guarda en los ajustes de la app.</value>
+  </data>
+  <data name="Setup.StartButton.Content" xml:space="preserve">
+    <value>Empezar</value>
+  </data>
+  <data name="Setup.LaterButton.Content" xml:space="preserve">
+    <value>Más tarde</value>
+  </data>
+  <data name="Setup.CancelButton.Content" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Setup.FolderMissing" xml:space="preserve">
+    <value>No se encontró la carpeta de datos. Elígela con Buscar carpeta.</value>
+  </data>
+  <data name="Setup.FolderNotFound" xml:space="preserve">
+    <value>Esa carpeta no existe.</value>
+  </data>
+  <data name="Setup.FolderInvalid" xml:space="preserve">
+    <value>Esa carpeta no tiene UserCache: no es la carpeta de datos de Black Desert.</value>
+  </data>
+  <data name="Setup.FolderReady" xml:space="preserve">
+    <value>Carpeta lista: {0}</value>
+  </data>
 </root>

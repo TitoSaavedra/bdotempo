@@ -1,0 +1,376 @@
+using System.Collections.ObjectModel;
+using BdoComboSetup.Core.Characters;
+using BdoComboSetup.Core.Combo;
+using BdoComboSetup.Core.Localization;
+using BdoComboSetup.Core.Logging;
+using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace BdoComboSetup.Core.ViewModels;
+
+/// <summary>
+/// One character of the scan review: the name and the class the OCR read, ready to be corrected before saving. The pcid
+/// comes from the position of the row in the game's <c>CharacterOrderList</c>, never from the OCR.
+/// </summary>
+public sealed class CharacterScanRow : ObservableObject
+{
+    private readonly ILocalizer _localizer;
+    private string _name = string.Empty;
+    private ClassChoice _class;
+
+    public CharacterScanRow(
+        int order,
+        CharacterEntry entry,
+        CharacterRowCandidate reading,
+        int? detectedClass,
+        IReadOnlyList<ClassChoice> classes,
+        ILocalizer localizer)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        ArgumentNullException.ThrowIfNull(reading);
+        ArgumentNullException.ThrowIfNull(classes);
+        ArgumentNullException.ThrowIfNull(localizer);
+
+        _localizer = localizer;
+        Order = order;
+        Pcid = entry.Pcid;
+        Level = reading.Level;
+        LevelText = reading.Level is int level ? localizer.Format("Characters.ScanLevel", level) : string.Empty;
+        PreviousName = entry.Name;
+        Name = string.IsNullOrWhiteSpace(reading.Name) ? entry.Name : reading.Name.Trim();
+
+        Classes = classes;
+        var classType = detectedClass ?? (entry.ClassSource == ClassSource.Custom ? entry.ClassType : null);
+        _class = classes.FirstOrDefault(choice => choice.ClassType == classType) ?? classes[0];
+    }
+
+    /// <summary>The position in the list, counted from 1 (the order the game shows).</summary>
+    public int Order { get; }
+
+    /// <summary>The character this row belongs to, taken from the order of the game's character list.</summary>
+    public string Pcid { get; }
+
+    public int? Level { get; }
+
+    /// <summary>"Nv. 61", or empty when the level was not read.</summary>
+    public string LevelText { get; }
+
+    /// <summary>The name the roster showed before the scan, for comparison.</summary>
+    public string PreviousName { get; }
+
+    /// <summary>"Ahora: ..." with the previous name, shown under the name box.</summary>
+    public string PreviousText => _localizer.Format("Characters.ScanPrevious", PreviousName);
+
+    public bool HasPreviousName => !string.Equals(Name, PreviousName, StringComparison.Ordinal);
+
+    public IReadOnlyList<ClassChoice> Classes { get; }
+
+    /// <summary>The name to save. Empty means "no name": the roster falls back to the game label.</summary>
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            if (SetProperty(ref _name, value))
+            {
+                OnPropertyChanged(nameof(HasPreviousName));
+            }
+        }
+    }
+
+    /// <summary>The class to save. The "no class" choice keeps the automatic inference.</summary>
+    public ClassChoice Class
+    {
+        get => _class;
+        set
+        {
+            if (value is not null)
+            {
+                SetProperty(ref _class, value);
+            }
+        }
+    }
+}
+
+/// <summary>
+/// The OCR scan of the character selection screen: it prepares the roster (the pcid order), takes the pages that the
+/// capture reads while the player scrolls, and turns them into a review table. Saving writes only the app's own
+/// %LOCALAPPDATA%\BDOTempo\characters.json through <see cref="ICharacterSource"/>; the game files are never touched.
+/// <para>
+/// If the number of rows read does not equal the number of characters, no table is built: the page says so instead of
+/// pairing the names with the wrong pcids.
+/// </para>
+/// </summary>
+public sealed partial class CharacterScanViewModel : ObservableObject
+{
+    /// <summary>The class id of the "no class" choice; real classes start at 1.</summary>
+    public const int NoClassType = 0;
+
+    private readonly ICharacterSource _characters;
+    private readonly ILocalizer _localizer;
+    private readonly AppLogger _logger;
+    private readonly CharacterRowAccumulator _accumulator = new();
+    private IReadOnlyList<CharacterEntry> _entries = [];
+    private string? _account;
+
+    public CharacterScanViewModel(
+        ICharacterSource characters,
+        IReadOnlyList<ClassChoice> classes,
+        ILocalizer localizer,
+        AppLogger logger)
+    {
+        ArgumentNullException.ThrowIfNull(characters);
+        ArgumentNullException.ThrowIfNull(classes);
+        ArgumentNullException.ThrowIfNull(localizer);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        _characters = characters;
+        _localizer = localizer;
+        _logger = logger;
+
+        var noClass = new ClassChoice(
+            NoClassType,
+            localizer.Get("Characters.ScanNoClass"),
+            static () => null,
+            BilingualText.Same(localizer.Get("Characters.ScanNoClass")));
+        Classes = [noClass, .. classes];
+    }
+
+    /// <summary>The class choices of the review, "no class" first.</summary>
+    public IReadOnlyList<ClassChoice> Classes { get; }
+
+    /// <summary>The review rows, in the game's character order.</summary>
+    public ObservableCollection<CharacterScanRow> Rows { get; } = [];
+
+    /// <summary>True while the capture runs and rows are being read.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanStart), nameof(CanFinish), nameof(CanCancel))]
+    private bool _isScanning;
+
+    /// <summary>"12 de 35": the rows read and how many characters the account has.</summary>
+    [ObservableProperty]
+    private string _countText = string.Empty;
+
+    [ObservableProperty]
+    private string _message = string.Empty;
+
+    [ObservableProperty]
+    private StatusSeverity _severity = StatusSeverity.Information;
+
+    [ObservableProperty]
+    private bool _isMessageOpen;
+
+    /// <summary>True when the review table is shown (the scan ended with the right number of rows).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanStart), nameof(CanCancel))]
+    private bool _hasReview;
+
+    [ObservableProperty]
+    private bool _canSave;
+
+    /// <summary>A scan can start when nothing is running and no review is open.</summary>
+    public bool CanStart => !IsScanning && !HasReview;
+
+    /// <summary>The scan can be finished while it is running.</summary>
+    public bool CanFinish => IsScanning;
+
+    /// <summary>A running scan or an open review can be discarded.</summary>
+    public bool CanCancel => IsScanning || HasReview;
+
+    /// <summary>
+    /// Loads the roster and the account, and clears the previous scan. False (with the reason on the page) when there is no
+    /// account or no character.
+    /// </summary>
+    public bool Prepare()
+    {
+        _account = _characters.ActiveAccount();
+        if (_account is null)
+        {
+            ShowMessage(StatusSeverity.Error, _localizer.Get("Characters.ScanNoAccount"));
+            return false;
+        }
+
+        try
+        {
+            _entries = _characters.Load(_account).OrderBy(entry => entry.Order).ToList();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.Error("character_scan.roster_failed", "The characters could not be read for the scan", ex);
+            ShowMessage(StatusSeverity.Error, _localizer.Get("Characters.ScanLoadFailed"));
+            return false;
+        }
+
+        if (_entries.Count == 0)
+        {
+            ShowMessage(StatusSeverity.Warning, _localizer.Get("Characters.ScanNoCharacters"));
+            return false;
+        }
+
+        _accumulator.Reset();
+        Rows.Clear();
+        HasReview = false;
+        CanSave = false;
+        IsMessageOpen = false;
+        UpdateCount();
+
+        _logger.Info("character_scan.prepared", "Character scan prepared", new Dictionary<string, object?>
+        {
+            ["characters"] = _entries.Count,
+        });
+        return true;
+    }
+
+    /// <summary>Starts a new scan: the rows of the previous one are dropped.</summary>
+    public void BeginScan()
+    {
+        _accumulator.Reset();
+        Rows.Clear();
+        HasReview = false;
+        CanSave = false;
+        IsMessageOpen = false;
+        IsScanning = true;
+        UpdateCount();
+        _logger.Info("character_scan.started", "Character scan started");
+    }
+
+    /// <summary>Adds one page of visible rows (what the OCR just read). Ignored when the scan is not running.</summary>
+    public void AddPage(IReadOnlyList<CharacterRowReading> page)
+    {
+        ArgumentNullException.ThrowIfNull(page);
+        if (!IsScanning)
+        {
+            return;
+        }
+
+        var added = _accumulator.AddPage(page);
+        if (added > 0)
+        {
+            _logger.Debug("character_scan.page", "Rows added by the scan", new Dictionary<string, object?>
+            {
+                ["visible"] = page.Count,
+                ["added"] = added,
+                ["total"] = _accumulator.Count,
+                ["characters"] = _entries.Count,
+            });
+        }
+
+        UpdateCount();
+    }
+
+    /// <summary>
+    /// Ends the capture and builds the review. False (with the reason) when the account file and the captured rows do not
+    /// have the same number of characters: pairing them anyway would save the names on the wrong pcids.
+    /// </summary>
+    public bool Finish()
+    {
+        IsScanning = false;
+        var read = _accumulator.Rows;
+        if (read.Count != _entries.Count)
+        {
+            Rows.Clear();
+            HasReview = false;
+            CanSave = false;
+            ShowMessage(
+                StatusSeverity.Warning,
+                _localizer.Format("Characters.ScanCountMismatch", read.Count, _entries.Count));
+            _logger.Warn("character_scan.count_mismatch", "The scan did not read the same number of characters as the account file", new Dictionary<string, object?>
+            {
+                ["read"] = read.Count,
+                ["characters"] = _entries.Count,
+            });
+            return false;
+        }
+
+        Rows.Clear();
+        for (var index = 0; index < read.Count; index++)
+        {
+            Rows.Add(new CharacterScanRow(index + 1, _entries[index], read[index].Row, read[index].ClassType, Classes, _localizer));
+        }
+
+        HasReview = Rows.Count > 0;
+        CanSave = HasReview;
+        ShowMessage(StatusSeverity.Success, _localizer.Format("Characters.ScanReady", Rows.Count));
+        _logger.Info("character_scan.finished", "Character scan finished", new Dictionary<string, object?>
+        {
+            ["rows"] = Rows.Count,
+            ["with_level"] = Rows.Count(row => row.Level is not null),
+        });
+        return true;
+    }
+
+    /// <summary>Stops the scan without a review (the capture ended, or the user cancelled).</summary>
+    public void Stop()
+    {
+        if (IsScanning)
+        {
+            _logger.Info("character_scan.stopped", "Character scan stopped");
+        }
+
+        IsScanning = false;
+    }
+
+    /// <summary>Shows a failure of the capture or of the OCR on the page.</summary>
+    public void ReportFailure(string messageKey)
+    {
+        IsScanning = false;
+        ShowMessage(StatusSeverity.Error, _localizer.Get(messageKey));
+    }
+
+    /// <summary>Drops everything read: the user cancelled the scan.</summary>
+    public void Discard()
+    {
+        _accumulator.Reset();
+        Rows.Clear();
+        HasReview = false;
+        CanSave = false;
+        IsMessageOpen = false;
+        IsScanning = false;
+    }
+
+    /// <summary>
+    /// Saves the reviewed names and classes into the app's character file. Returns how many characters were saved. The
+    /// game files are not touched.
+    /// </summary>
+    public int Save()
+    {
+        if (!HasReview || _account is null)
+        {
+            return 0;
+        }
+
+        var saved = 0;
+        foreach (var row in Rows)
+        {
+            var name = CharacterOverrideStore.NormalizeName(row.Name);
+            var classType = row.Class.ClassType > NoClassType ? row.Class.ClassType : (int?)null;
+            if (name is null && classType is null)
+            {
+                continue;
+            }
+
+            _characters.SaveOverride(_account, row.Pcid, name, classType);
+            saved++;
+        }
+
+        HasReview = false;
+        CanSave = false;
+        ShowMessage(StatusSeverity.Success, _localizer.Format("Characters.ScanSaved", saved));
+        _logger.Info("character_scan.saved", "Names read by the scan saved", new Dictionary<string, object?>
+        {
+            ["characters"] = saved,
+        });
+        return saved;
+    }
+
+    private void UpdateCount() =>
+        CountText = _entries.Count > 0
+            ? _localizer.Format("Characters.ScanCount", _accumulator.Count, _entries.Count)
+            : _localizer.Format("Characters.ScanCountOnly", _accumulator.Count);
+
+    private void ShowMessage(StatusSeverity severity, string text)
+    {
+        Message = text;
+        Severity = severity;
+        IsMessageOpen = true;
+    }
+}

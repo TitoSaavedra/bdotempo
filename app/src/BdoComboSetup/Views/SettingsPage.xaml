@@ -48,6 +48,47 @@
                 <TextBlock Text="{x:Bind Name, Mode=OneTime}" VerticalAlignment="Center" />
             </StackPanel>
         </DataTemplate>
+
+        <!-- One row of the OCR review: the name (editable), the level read, and the class (editable). -->
+        <DataTemplate x:Key="ScanRowTemplate" x:DataType="vm:CharacterScanRow">
+            <Grid ColumnSpacing="10" Padding="4,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Text="{x:Bind Order, Mode=OneTime}"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Spacing="2">
+                    <TextBox Text="{x:Bind Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" MaxLength="40" />
+                    <TextBlock
+                        Text="{x:Bind PreviousText, Mode=OneTime}"
+                        FontSize="11"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Visibility="{x:Bind HasPreviousName, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
+                <TextBlock
+                    Grid.Column="2"
+                    Text="{x:Bind LevelText, Mode=OneTime}"
+                    FontSize="12"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <controls:SearchablePicker
+                    Grid.Column="3"
+                    MinWidth="190"
+                    Tag="{x:Bind}"
+                    ItemsSource="{x:Bind Classes, Mode=OneTime}"
+                    ItemTemplate="{StaticResource ClassChoiceTemplate}"
+                    SelectedItem="{x:Bind Class, Mode=OneWay}"
+                    SelectedTemplate="{StaticResource ClassChoiceTemplate}"
+                    FieldsOf="{x:Bind local:SettingsPage.ClassChoiceFields, Mode=OneTime}"
+                    Chosen="ScanClassPicker_Chosen" />
+            </Grid>
+        </DataTemplate>
     </Page.Resources>
 
     <ScrollViewer Padding="24,16,24,16" VerticalScrollBarVisibility="Auto">
@@ -100,6 +141,63 @@
                 <controls:SearchableList x:Name="CharacterList" />
             </StackPanel>
 
+            <!-- OCR scan of the character selection screen: reads names and classes, shows them over the game, and saves them. -->
+            <StackPanel Spacing="8">
+                <TextBlock x:Uid="Settings/ScanHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <TextBlock
+                    x:Uid="Settings/ScanHint"
+                    TextWrapping="Wrap"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button
+                        x:Uid="Settings/ScanStartButton"
+                        Click="ScanStart_Click"
+                        IsEnabled="{x:Bind Scan.CanStart, Mode=OneWay}"
+                        Style="{StaticResource AccentButtonStyle}" />
+                    <Button
+                        x:Uid="Settings/ScanFinishButton"
+                        Click="ScanFinish_Click"
+                        IsEnabled="{x:Bind Scan.CanFinish, Mode=OneWay}" />
+                    <Button
+                        x:Uid="Settings/ScanCancelButton"
+                        Click="ScanCancel_Click"
+                        IsEnabled="{x:Bind Scan.CanCancel, Mode=OneWay}" />
+                </StackPanel>
+                <TextBlock
+                    Text="{x:Bind Scan.CountText, Mode=OneWay}"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <InfoBar
+                    IsOpen="{x:Bind Scan.IsMessageOpen, Mode=TwoWay}"
+                    Severity="{x:Bind ToInfoBarSeverity(Scan.Severity), Mode=OneWay}"
+                    Message="{x:Bind Scan.Message, Mode=OneWay}"
+                    IsClosable="True" />
+                <StackPanel
+                    Spacing="8"
+                    Visibility="{x:Bind Scan.HasReview, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock x:Uid="Settings/ScanReviewHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                    <TextBlock
+                        x:Uid="Settings/ScanReviewHint"
+                        TextWrapping="Wrap"
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <ScrollViewer MaxHeight="420" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl
+                            ItemsSource="{x:Bind Scan.Rows, Mode=OneWay}"
+                            ItemTemplate="{StaticResource ScanRowTemplate}" />
+                    </ScrollViewer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button
+                            x:Uid="Settings/ScanSaveButton"
+                            Click="ScanSave_Click"
+                            IsEnabled="{x:Bind Scan.CanSave, Mode=OneWay}"
+                            Style="{StaticResource AccentButtonStyle}" />
+                        <Button x:Uid="Settings/ScanDiscardButton" Click="ScanCancel_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+
             <!-- Black Desert folder: browse, or type a path and save it. A folder without UserCache is refused. -->
             <StackPanel Spacing="6">
                 <TextBlock x:Uid="Settings/FolderHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
@@ -124,6 +222,7 @@
                         Click="SaveFolder_Click"
                         Style="{StaticResource AccentButtonStyle}" />
                 </Grid>
+                <Button x:Uid="Settings/SetupButton" Click="Setup_Click" />
             </StackPanel>
 
             <!-- Language: es or en-US. Takes effect after a restart. -->

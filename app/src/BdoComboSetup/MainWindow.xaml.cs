@@ -36,6 +36,11 @@ public sealed partial class MainWindow : Window
                 ["code"] = services.AssetPackLoad.ErrorCode,
             });
         }
+        else if (services.NeedsSetup)
+        {
+            services.Logger.Info("window.setup", "Main window shows the initial setup");
+            ShowSetup(firstRun: true);
+        }
         else
         {
             Nav.SelectedItem = services.Startup.Page switch
@@ -76,6 +81,40 @@ public sealed partial class MainWindow : Window
 
     /// <summary>Closing the banner (its X) is the same as "Later": hidden for this session.</summary>
     private void UpdateBar_Closed(InfoBar sender, InfoBarClosedEventArgs args) => Updates.DismissCommand.Execute(null);
+
+    /// <summary>
+    /// Shows the initial setup page: first run (the navigation is hidden) or from Settings (the navigation stays, and
+    /// finishing returns there).
+    /// </summary>
+    public void ShowSetup(bool firstRun)
+    {
+        Nav.Visibility = firstRun ? Visibility.Collapsed : Visibility.Visible;
+        if (firstRun)
+        {
+            Nav.SelectedItem = null;
+        }
+
+        ContentFrame.Navigate(typeof(SetupPage), firstRun);
+    }
+
+    /// <summary>
+    /// Leaves the initial setup: the navigation is shown again and the page of the app opens. The settings just saved become
+    /// the running ones, so the page does not ask for a restart.
+    /// </summary>
+    public void LeaveSetup(bool goToSettings)
+    {
+        App.Services.SettingsView.AdoptRunningConfiguration();
+        Nav.Visibility = Visibility.Visible;
+        var target = goToSettings ? SettingsItem : ApplyItem;
+        if (ReferenceEquals(Nav.SelectedItem, target))
+        {
+            ContentFrame.Navigate(goToSettings ? typeof(SettingsPage) : typeof(ApplyComboPage));
+        }
+        else
+        {
+            Nav.SelectedItem = target;
+        }
+    }
 
     /// <summary>Shows the full release notes of the release in a dialog. Reads only; nothing is installed here.</summary>
     private async void UpdateNotes_Click(object sender, RoutedEventArgs e)

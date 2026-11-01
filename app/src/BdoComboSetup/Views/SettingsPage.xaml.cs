@@ -33,6 +33,13 @@ public sealed partial class SettingsPage : Page
 
     public SettingsViewModel ViewModel { get; }
 
+    /// <summary>The OCR scan of the character selection screen (shared by every visit to the page).</summary>
+    public CharacterScanViewModel Scan => App.Services.CharacterScan.ViewModel;
+
+    /// <summary>The texts the class picker of a scan row searches by: both names of the class.</summary>
+    public static Func<object, IEnumerable<string?>> ClassChoiceFields { get; } =
+        item => SearchFields.ForNames(((ClassChoice)item).Names);
+
     /// <summary>The update controls of the page (a getter: the x:Bind bindings are evaluated inside InitializeComponent).</summary>
     public UpdateViewModel Updates => App.Services.Updates;
 
@@ -90,6 +97,43 @@ public sealed partial class SettingsPage : Page
         if (sender is Button { DataContext: CharacterOption option })
         {
             await App.Services.ApplyCombo.ResetCharacterEditAsync(option);
+        }
+    }
+
+    /// <summary>Starts the OCR scan of the selection screen (the game must be open on that screen).</summary>
+    private async void ScanStart_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await App.Services.CharacterScan.StartAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            App.Services.Logger.Error("settings.scan_start_failed", "The character scan could not start", ex);
+        }
+    }
+
+    /// <summary>The user is done scrolling: stop reading and build the review table.</summary>
+    private void ScanFinish_Click(object sender, RoutedEventArgs e) => App.Services.CharacterScan.Finish();
+
+    /// <summary>Stops the scan and drops what it read.</summary>
+    private void ScanCancel_Click(object sender, RoutedEventArgs e) => App.Services.CharacterScan.Cancel();
+
+    /// <summary>Saves the reviewed names and classes (characters.json only) and refreshes the list.</summary>
+    private async void ScanSave_Click(object sender, RoutedEventArgs e)
+    {
+        if (Scan.Save() > 0)
+        {
+            await RefreshCharactersAsync();
+        }
+    }
+
+    /// <summary>The class picked in one row of the scan review.</summary>
+    private void ScanClassPicker_Chosen(object? sender, object item)
+    {
+        if (sender is SearchablePicker { Tag: CharacterScanRow row } && item is ClassChoice choice)
+        {
+            row.Class = choice;
         }
     }
 
@@ -231,6 +275,15 @@ public sealed partial class SettingsPage : Page
     }
 
     private void SaveFolder_Click(object sender, RoutedEventArgs e) => ViewModel.ChooseDataRoot(ViewModel.DataRootText);
+
+    /// <summary>Reopens the initial setup (folder and account) without restarting the app.</summary>
+    private void Setup_Click(object sender, RoutedEventArgs e)
+    {
+        if (App.MainWindow is MainWindow window)
+        {
+            window.ShowSetup(firstRun: false);
+        }
+    }
 
     /// <summary>Starts a new copy of the app and closes this one, so a language or folder change applies to every page.</summary>
     private void Restart_Click(object sender, RoutedEventArgs e)

@@ -47,6 +47,8 @@ public sealed class AppServices : IDisposable
         CultureInfo culture,
         AssetPackLoadResult assetPackLoad,
         UpdateViewModel updates,
+        CharacterScanService characterScan,
+        SetupViewModel setup,
         HttpClient httpClient)
     {
         Logger = logger;
@@ -61,6 +63,8 @@ public sealed class AppServices : IDisposable
         Culture = culture;
         AssetPackLoad = assetPackLoad;
         Updates = updates;
+        CharacterScan = characterScan;
+        Setup = setup;
         _httpClient = httpClient;
     }
 
@@ -96,6 +100,19 @@ public sealed class AppServices : IDisposable
     /// <summary>The update state: the Settings controls and the banner of the main window.</summary>
     public UpdateViewModel Updates { get; }
 
+    /// <summary>The character name scan (OCR of the selection screen) and its green overlay.</summary>
+    public CharacterScanService CharacterScan { get; }
+
+    /// <summary>The initial setup (data folder and account), shown at startup until it is done.</summary>
+    public SetupViewModel Setup { get; }
+
+    /// <summary>
+    /// True when the initial setup must be shown: it was never finished, or the saved data folder is no longer usable. The
+    /// demo never asks (it has its own temporary folder).
+    /// </summary>
+    public bool NeedsSetup => !Startup.DemoData
+        && (!Settings.Settings.SetupCompleted || GameDataLocator.CheckDataRoot(Settings.Settings.GameDataRoot) != DataRootState.Ok);
+
     /// <summary>
     /// Creates the services. <paramref name="exitApplication"/> closes the app after an installer was started; it is the only
     /// way the updater leaves the process (the installer replaces the files of the running copy).
@@ -120,6 +137,9 @@ public sealed class AppServices : IDisposable
         var language = LanguageSetup.Apply(settings.Settings.Language, logger);
         var culture = new CultureInfo(language);
         var localizer = new ResourceLocalizer(logger);
+
+        // The initial setup: the data folder found on this PC (or the saved one) and the account. Needed once.
+        var setup = new SetupViewModel(settings, localizer, logger);
 
         // Every icon and JSON document comes from the complete pack next to the exe (assets.bdoa). There is no fallback.
         var assetPackLoad = AssetPackLoader.LoadFile(AssetPackLoader.DefaultPath, logger);
@@ -193,6 +213,9 @@ public sealed class AppServices : IDisposable
             culture,
             logger,
             classSkills);
+
+        // The character name scan: OCR of the selection screen with the green overlay. It reads the game, never writes it.
+        var characterScan = new CharacterScanService(logger, roster, applyCombo.ClassChoices, localizer);
 
         // The Preview page reads its layouts and the quick keys of the active account once, at startup (restart applies a change).
         var activeAccount = startup.DemoData ? DemoGameFiles.AccountMain : locator.TryResolveAccount();
@@ -270,11 +293,14 @@ public sealed class AppServices : IDisposable
             culture,
             assetPackLoad,
             updates,
+            characterScan,
+            setup,
             httpClient);
     }
 
     public void Dispose()
     {
+        CharacterScan.Dispose();
         Logger.Dispose();
         _httpClient.Dispose();
     }

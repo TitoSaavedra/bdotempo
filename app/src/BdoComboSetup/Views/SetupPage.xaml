@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="BdoComboSetup.Views.SetupPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:BdoComboSetup.Core.ViewModels"
+    xmlns:controls="using:BdoComboSetup.Views.Controls"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <!-- One data folder found on this PC. -->
+        <DataTemplate x:Key="FolderTemplate" x:DataType="vm:DataFolderChoice">
+            <TextBlock Text="{x:Bind Path, Mode=OneTime}" TextWrapping="Wrap" Padding="8,6" FontSize="13" />
+        </DataTemplate>
+
+        <!-- One account of the chosen folder. -->
+        <DataTemplate x:Key="AccountTemplate" x:DataType="vm:AccountChoice">
+            <TextBlock Text="{x:Bind Label, Mode=OneTime}" Padding="8,6" />
+        </DataTemplate>
+    </Page.Resources>
+
+    <ScrollViewer Padding="32,24,32,24" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="20" MaxWidth="720" HorizontalAlignment="Left">
+            <StackPanel Spacing="4">
+                <TextBlock x:Uid="Setup/Title" Style="{ThemeResource TitleTextBlockStyle}" />
+                <TextBlock
+                    x:Uid="Setup/Subtitle"
+                    TextWrapping="Wrap"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+
+            <!-- The Black Desert data folder: found on this PC, or chosen with the picker. -->
+            <StackPanel Spacing="6">
+                <TextBlock x:Uid="Setup/FolderHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <TextBlock
+                    x:Uid="Setup/FolderHint"
+                    TextWrapping="Wrap"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <ListView
+                    x:Name="FolderList"
+                    ItemsSource="{x:Bind ViewModel.Candidates, Mode=OneWay}"
+                    ItemTemplate="{StaticResource FolderTemplate}"
+                    SelectedItem="{x:Bind ViewModel.SelectedCandidate, Mode=TwoWay}"
+                    SelectionMode="Single"
+                    MaxHeight="170" />
+                <TextBlock
+                    x:Uid="Setup/FolderEmpty"
+                    TextWrapping="Wrap"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Visibility="{x:Bind ViewModel.HasCandidates, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button x:Uid="Setup/BrowseButton" Click="Browse_Click" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.FolderStatus, Mode=OneWay}"
+                        FontSize="12"
+                        VerticalAlignment="Center"
+                        TextWrapping="Wrap"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- The account whose characters and combos the app uses. -->
+            <StackPanel Spacing="6">
+                <TextBlock x:Uid="Setup/AccountHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <TextBlock
+                    x:Uid="Setup/AccountHint"
+                    TextWrapping="Wrap"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <controls:SearchablePicker
+                    x:Name="AccountPicker"
+                    MinWidth="320"
+                    HorizontalAlignment="Left"
+                    ItemsSource="{x:Bind ViewModel.Accounts, Mode=OneWay}"
+                    ItemTemplate="{StaticResource AccountTemplate}"
+                    SelectedItem="{x:Bind ViewModel.SelectedAccount, Mode=OneWay}"
+                    SelectedTemplate="{StaticResource AccountTemplate}"
+                    Chosen="AccountPicker_Chosen" />
+            </StackPanel>
+
+            <TextBlock
+                x:Uid="Setup/Note"
+                TextWrapping="Wrap"
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button
+                    x:Uid="Setup/StartButton"
+                    Click="Start_Click"
+                    IsEnabled="{x:Bind ViewModel.CanFinish, Mode=OneWay}"
+                    Style="{StaticResource AccentButtonStyle}" />
+                <Button x:Name="LaterButton" x:Uid="Setup/LaterButton" Click="Later_Click" />
+                <Button x:Name="CancelButton" x:Uid="Setup/CancelButton" Click="Cancel_Click" Visibility="Collapsed" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

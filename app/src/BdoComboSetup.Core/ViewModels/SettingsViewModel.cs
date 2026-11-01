@@ -26,8 +26,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly ILocalizer _localizer;
     private readonly AppLogger _logger;
     private readonly string _runningLanguage;
-    private readonly string _runningDataRoot;
-    private readonly string? _runningAccount;
+    private string _runningDataRoot;
+    private string? _runningAccount;
     private readonly System.Globalization.CultureInfo _systemCulture = System.Globalization.CultureInfo.CurrentUICulture;
 
     /// <param name="runningLanguage">The language the app started with (AppLanguages code).</param>
@@ -214,6 +214,17 @@ public sealed partial class SettingsViewModel : ObservableObject
         RestartRequired = language != _runningLanguage
             || current.GameDataRoot != _runningDataRoot
             || current.GameAccount != _runningAccount;
+    }
+
+    /// <summary>
+    /// Takes the current settings as the running ones: the initial setup just saved them, so asking for a restart would be
+    /// wrong. The accounts and the folder status are read again.
+    /// </summary>
+    public void AdoptRunningConfiguration()
+    {
+        _runningDataRoot = _settings.Settings.GameDataRoot;
+        _runningAccount = _settings.Settings.GameAccount;
+        Refresh();
     }
 
     private void ShowFolderStatus(DataRootState state)

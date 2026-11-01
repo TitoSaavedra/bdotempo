@@ -48,6 +48,12 @@ public sealed record AppSettings
     /// <summary>Look for a new version when the app starts (at most once every six hours). On by default.</summary>
     public bool CheckUpdatesOnStartup { get; init; } = true;
 
+    /// <summary>
+    /// True once the initial setup was finished (or skipped). Until then the app asks for the data folder and the account
+    /// at startup, even if the defaults happen to be right on this PC.
+    /// </summary>
+    public bool SetupCompleted { get; init; }
+
     /// <summary>When the last update check ran (UTC), or null when it never ran on this PC.</summary>
     public DateTimeOffset? LastUpdateCheckUtc { get; init; }
 
