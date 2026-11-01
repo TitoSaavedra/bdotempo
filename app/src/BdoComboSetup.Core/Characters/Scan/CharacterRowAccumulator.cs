@@ -6,13 +6,35 @@ namespace BdoComboSetup.Core.Characters;
 /// </summary>
 public sealed record CharacterRowReading(CharacterRowCandidate Row, int? ClassType);
 
+/// <summary>What merging one page did.</summary>
+public enum RowMergeOutcome
+{
+    /// <summary>The accumulator was empty: the page became the known list.</summary>
+    FirstPage,
+
+    /// <summary>The page was already known (the player scrolled up, or the list did not move).</summary>
+    Confirmed,
+
+    /// <summary>Rows were added after the known list.</summary>
+    Added,
+
+    /// <summary>The page could not be placed with the known rows: nothing was added.</summary>
+    Unplaced,
+
+    /// <summary>The account already has every character: nothing more is added.</summary>
+    Full,
+}
+
+/// <summary>The result of merging one page: what happened, how many rows it added and the total known.</summary>
+public readonly record struct RowMergeResult(RowMergeOutcome Outcome, int Added, int Total);
+
 /// <summary>
-/// Accumulates the rows of the selection screen while the player scrolls the list. The game sends no scroll events, so a
-/// page is merged with what was read before by finding where its first row repeats the end of the accumulated list: the
-/// rows after the overlap are the new ones. A page that is already known (the player scrolled up) adds nothing.
+/// Accumulates the rows of the selection screen while the player scrolls the list. A page is merged by finding where it
+/// overlaps the known rows (a contiguous run of same level and similar name), not by trusting its first row: a page read
+/// while scrolling up is recognized as already known, and a page that cannot be placed adds nothing. The list never grows
+/// past the number of characters of the account, so a repeated or misread page cannot invent characters.
 /// <para>
-/// Rows are compared by level and by name with a small tolerance, because the OCR of the same row can differ between two
-/// passes ("AhrinSong" / "AhrinS0ng").
+/// Only rows with a level and a name count; a row whose name is missing is left out (the level alone is not a character).
 /// </para>
 /// </summary>
 public sealed class CharacterRowAccumulator
@@ -26,56 +48,116 @@ public sealed class CharacterRowAccumulator
 
     public void Reset() => _rows.Clear();
 
-    /// <summary>Merges one visible page. Returns how many rows it added (zero when the page was already known).</summary>
-    public int AddPage(IReadOnlyList<CharacterRowReading> page)
+    /// <summary>Merges one visible page. <paramref name="expectedCount"/> is the number of characters of the account (0: no limit).</summary>
+    public RowMergeResult AddPage(IReadOnlyList<CharacterRowReading> page, int expectedCount)
     {
         ArgumentNullException.ThrowIfNull(page);
-        if (page.Count == 0)
+        var limit = expectedCount > 0 ? expectedCount : int.MaxValue;
+        var cleaned = Clean(page);
+        if (cleaned.Count == 0)
         {
-            return 0;
+            return new RowMergeResult(RowMergeOutcome.Confirmed, 0, _rows.Count);
         }
 
         if (_rows.Count == 0)
         {
-            _rows.AddRange(page);
-            return page.Count;
+            var take = Math.Min(cleaned.Count, limit);
+            _rows.AddRange(cleaned.Take(take));
+            return new RowMergeResult(
+                _rows.Count >= limit ? RowMergeOutcome.Full : RowMergeOutcome.FirstPage,
+                take,
+                _rows.Count);
         }
 
-        // The top of the page repeats the bottom of what was read: the new rows start after the overlap.
-        for (var start = _rows.Count - 1; start >= 0; start--)
+        if (_rows.Count >= limit)
         {
-            if (!SameRow(_rows[start].Row, page[0].Row))
-            {
-                continue;
-            }
-
-            var overlap = 0;
-            while (overlap < page.Count
-                && start + overlap < _rows.Count
-                && SameRow(_rows[start + overlap].Row, page[overlap].Row))
-            {
-                overlap++;
-            }
-
-            if (overlap == 0)
-            {
-                continue;
-            }
-
-            if (overlap >= page.Count)
-            {
-                return 0;
-            }
-
-            var added = page.Skip(overlap).ToList();
-            _rows.AddRange(added);
-            return added.Count;
+            return new RowMergeResult(RowMergeOutcome.Full, 0, _rows.Count);
         }
 
-        // No overlap: the player scrolled further than one page, so every row is new.
-        _rows.AddRange(page);
-        return page.Count;
+        var (overlap, pageOffset, rowIndex) = FindBestOverlap(cleaned);
+        if (overlap < MinimumOverlap(cleaned.Count, _rows.Count))
+        {
+            return new RowMergeResult(RowMergeOutcome.Unplaced, 0, _rows.Count);
+        }
+
+        // The accumulator always starts at the top of the list: a page above it cannot be placed without guessing.
+        var start = rowIndex - pageOffset;
+        if (start < 0 || start > _rows.Count)
+        {
+            return new RowMergeResult(RowMergeOutcome.Unplaced, 0, _rows.Count);
+        }
+
+        var added = 0;
+        for (var index = 0; index < cleaned.Count && _rows.Count < limit; index++)
+        {
+            var target = start + index;
+            if (target < _rows.Count)
+            {
+                // The row is already known: the first reading is kept, so OCR noise does not rewrite it.
+                continue;
+            }
+
+            _rows.Add(cleaned[index]);
+            added++;
+        }
+
+        var outcome = _rows.Count >= limit
+            ? RowMergeOutcome.Full
+            : added > 0 ? RowMergeOutcome.Added : RowMergeOutcome.Confirmed;
+        return new RowMergeResult(outcome, added, _rows.Count);
     }
+
+    /// <summary>Rows that can be matched: a name is required and consecutive duplicates inside the page are dropped.</summary>
+    private static List<CharacterRowReading> Clean(IReadOnlyList<CharacterRowReading> page)
+    {
+        var result = new List<CharacterRowReading>(page.Count);
+        foreach (var reading in page)
+        {
+            if (string.IsNullOrWhiteSpace(reading.Row.Name))
+            {
+                continue;
+            }
+
+            if (result.Count > 0 && SameRow(result[^1].Row, reading.Row))
+            {
+                continue;
+            }
+
+            result.Add(reading);
+        }
+
+        return result;
+    }
+
+    /// <summary>The longest contiguous run of the page that matches the known rows, and where it is.</summary>
+    private (int Overlap, int PageOffset, int RowIndex) FindBestOverlap(List<CharacterRowReading> page)
+    {
+        var best = (Overlap: 0, PageOffset: 0, RowIndex: 0);
+        for (var pageOffset = 0; pageOffset < page.Count; pageOffset++)
+        {
+            for (var rowIndex = 0; rowIndex < _rows.Count; rowIndex++)
+            {
+                var count = 0;
+                while (pageOffset + count < page.Count
+                    && rowIndex + count < _rows.Count
+                    && SameRow(page[pageOffset + count].Row, _rows[rowIndex + count].Row))
+                {
+                    count++;
+                }
+
+                if (count > best.Overlap)
+                {
+                    best = (count, pageOffset, rowIndex);
+                }
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>Two rows are enough to trust an anchor, unless the page or the known list is tiny.</summary>
+    private static int MinimumOverlap(int pageCount, int rowCount) =>
+        pageCount >= 3 && rowCount >= 3 ? 2 : 1;
 
     /// <summary>True when the two readings are the same row: same level and a similar name.</summary>
     public static bool SameRow(CharacterRowCandidate left, CharacterRowCandidate right)
@@ -91,7 +173,6 @@ public sealed class CharacterRowAccumulator
         var rightName = NormalizeName(right.Name);
         if (leftName.Length == 0 || rightName.Length == 0)
         {
-            // Without a name the level alone is too weak: two characters can share it.
             return false;
         }
 

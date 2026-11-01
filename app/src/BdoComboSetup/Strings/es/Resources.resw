@@ -658,7 +658,7 @@
     <value>Nombres de personaje (OCR)</value>
   </data>
   <data name="Settings.ScanHint.Text" xml:space="preserve">
-    <value>Primero abre Black Desert y déjalo en la pantalla de selección de personaje con la lista arriba del todo. Al empezar, la app lee las filas visibles y dibuja un recuadro verde sobre el juego; baja la lista poco a poco hasta el final y pulsa Terminar. Nunca se envía nada al juego.</value>
+    <value>Primero abre Black Desert y déjalo en la pantalla de selección de personaje con la lista arriba del todo. Al empezar, la app lee las filas visibles y dibuja un recuadro verde sobre el juego; baja la lista poco a poco hasta el final y pulsa Terminar. Puedes subir y bajar: las filas ya leídas no se cuentan dos veces. Nunca se envía nada al juego.</value>
   </data>
   <data name="Settings.ScanDialogTitle" xml:space="preserve">
     <value>Abre Black Desert</value>
@@ -710,6 +710,12 @@
   </data>
   <data name="Characters.ScanCountOnly" xml:space="preserve">
     <value>{0} leídos</value>
+  </data>
+  <data name="Characters.ScanPageUnplaced" xml:space="preserve">
+    <value>No pude emparejar esa página con lo ya leído. Sube un poco la lista y baja despacio.</value>
+  </data>
+  <data name="Characters.ScanPageFull" xml:space="preserve">
+    <value>Ya están los {0} personajes. Pulsa Terminar.</value>
   </data>
   <data name="Characters.ScanCountMismatch" xml:space="preserve">
     <value>Leí {0} filas y la cuenta tiene {1} personajes. No se emparejan para no guardar nombres en el personaje equivocado: vuelve a empezar desde la primera fila y baja la lista despacio.</value>

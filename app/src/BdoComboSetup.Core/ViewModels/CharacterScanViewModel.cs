@@ -150,6 +150,14 @@ public sealed partial class CharacterScanViewModel : ObservableObject
     [ObservableProperty]
     private string _countText = string.Empty;
 
+    /// <summary>A line under the count when a page could not be placed, or when every character was read.</summary>
+    [ObservableProperty]
+    private string _pageHint = string.Empty;
+
+    public bool HasPageHint => PageHint.Length > 0;
+
+    partial void OnPageHintChanged(string value) => OnPropertyChanged(nameof(HasPageHint));
+
     [ObservableProperty]
     private string _message = string.Empty;
 
@@ -211,6 +219,7 @@ public sealed partial class CharacterScanViewModel : ObservableObject
         HasReview = false;
         CanSave = false;
         IsMessageOpen = false;
+        PageHint = string.Empty;
         UpdateCount();
 
         _logger.Info("character_scan.prepared", "Character scan prepared", new Dictionary<string, object?>
@@ -228,12 +237,16 @@ public sealed partial class CharacterScanViewModel : ObservableObject
         HasReview = false;
         CanSave = false;
         IsMessageOpen = false;
+        PageHint = string.Empty;
         IsScanning = true;
         UpdateCount();
         _logger.Info("character_scan.started", "Character scan started");
     }
 
-    /// <summary>Adds one page of visible rows (what the OCR just read). Ignored when the scan is not running.</summary>
+    /// <summary>
+    /// Adds one page of visible rows (what the OCR just read). The page must overlap the rows already known; a page that
+    /// cannot be placed adds nothing, so a repeated or misread page never invents characters.
+    /// </summary>
     public void AddPage(IReadOnlyList<CharacterRowReading> page)
     {
         ArgumentNullException.ThrowIfNull(page);
@@ -242,17 +255,24 @@ public sealed partial class CharacterScanViewModel : ObservableObject
             return;
         }
 
-        var added = _accumulator.AddPage(page);
-        if (added > 0)
+        var result = _accumulator.AddPage(page, _entries.Count);
+        PageHint = result.Outcome switch
         {
-            _logger.Debug("character_scan.page", "Rows added by the scan", new Dictionary<string, object?>
-            {
-                ["visible"] = page.Count,
-                ["added"] = added,
-                ["total"] = _accumulator.Count,
-                ["characters"] = _entries.Count,
-            });
-        }
+            RowMergeOutcome.Unplaced => _localizer.Get("Characters.ScanPageUnplaced"),
+            RowMergeOutcome.Full => _localizer.Format("Characters.ScanPageFull", _entries.Count),
+            _ => string.Empty,
+        };
+
+        _logger.Debug("character_scan.page", "Rows merged by the scan", new Dictionary<string, object?>
+        {
+            ["outcome"] = result.Outcome.ToString(),
+            ["visible"] = page.Count,
+            ["added"] = result.Added,
+            ["total"] = result.Total,
+            ["characters"] = _entries.Count,
+            ["top"] = page.FirstOrDefault()?.Row.Name,
+            ["bottom"] = page.LastOrDefault()?.Row.Name,
+        });
 
         UpdateCount();
     }
@@ -324,6 +344,7 @@ public sealed partial class CharacterScanViewModel : ObservableObject
         HasReview = false;
         CanSave = false;
         IsMessageOpen = false;
+        PageHint = string.Empty;
         IsScanning = false;
     }
 
@@ -364,7 +385,7 @@ public sealed partial class CharacterScanViewModel : ObservableObject
 
     private void UpdateCount() =>
         CountText = _entries.Count > 0
-            ? _localizer.Format("Characters.ScanCount", _accumulator.Count, _entries.Count)
+            ? _localizer.Format("Characters.ScanCount", Math.Min(_accumulator.Count, _entries.Count), _entries.Count)
             : _localizer.Format("Characters.ScanCountOnly", _accumulator.Count);
 
     private void ShowMessage(StatusSeverity severity, string text)

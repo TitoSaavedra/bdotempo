@@ -658,7 +658,7 @@
     <value>Character names (OCR)</value>
   </data>
   <data name="Settings.ScanHint.Text" xml:space="preserve">
-    <value>First open Black Desert and leave it at the character selection screen with the list scrolled to the top. When you start, the app reads the visible rows and draws a green box over the game; scroll the list down slowly to the end and press Finish. Nothing is ever sent to the game.</value>
+    <value>First open Black Desert and leave it at the character selection screen with the list scrolled to the top. When you start, the app reads the visible rows and draws a green box over the game; scroll the list down slowly to the end and press Finish. You can scroll up and down: rows already read are not counted twice. Nothing is ever sent to the game.</value>
   </data>
   <data name="Settings.ScanDialogTitle" xml:space="preserve">
     <value>Open Black Desert</value>
@@ -710,6 +710,12 @@
   </data>
   <data name="Characters.ScanCountOnly" xml:space="preserve">
     <value>{0} read</value>
+  </data>
+  <data name="Characters.ScanPageUnplaced" xml:space="preserve">
+    <value>I could not match that page with what was already read. Scroll up a little and down slowly.</value>
+  </data>
+  <data name="Characters.ScanPageFull" xml:space="preserve">
+    <value>All {0} characters are read. Press Finish.</value>
   </data>
   <data name="Characters.ScanCountMismatch" xml:space="preserve">
     <value>I read {0} rows and the account has {1} characters. They are not paired, so no name is saved on the wrong character: start again from the first row and scroll the list slowly.</value>

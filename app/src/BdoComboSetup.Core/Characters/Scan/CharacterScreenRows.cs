@@ -65,7 +65,30 @@ public static partial class CharacterScreenRowParser
         }
 
         rows.Sort((left, right) => left.Top.CompareTo(right.Top));
-        return MergeOverlapping(rows);
+        return MergeOverlapping(FilterHeights(rows));
+    }
+
+    /// <summary>
+    /// Drops rows whose height is far from the median: the list rows are all the same height, so a line of another size
+    /// (a title, a button) is not a character, even when it happens to carry a level-looking word.
+    /// </summary>
+    private static List<CharacterRowCandidate> FilterHeights(List<CharacterRowCandidate> rows)
+    {
+        if (rows.Count < 3)
+        {
+            return rows;
+        }
+
+        var heights = rows.Select(row => row.Bottom - row.Top).OrderBy(height => height).ToList();
+        var median = heights[heights.Count / 2];
+        if (median <= 0)
+        {
+            return rows;
+        }
+
+        return rows
+            .Where(row => row.Bottom - row.Top is var height && height >= median * 0.6 && height <= median * 1.6)
+            .ToList();
     }
 
     /// <summary>Groups the words that share a vertical band (one line of the list).</summary>
@@ -134,9 +157,10 @@ public static partial class CharacterScreenRowParser
         }
 
         var name = string.Join(" ", words.Skip(levelIndex + 1).Select(word => word.Text.Trim())).Trim();
-        if (name.Length > 0 && !HasLetterOrDigit().IsMatch(name))
+        if (name.Length == 0 || !HasLetterOrDigit().IsMatch(name))
         {
-            name = string.Empty;
+            // A level without a name is not a character: it is the list header or a partially read row.
+            return null;
         }
 
         var levelLeft = words[levelIndex].X;
@@ -144,7 +168,7 @@ public static partial class CharacterScreenRowParser
         var iconWidth = Math.Max(1, bottom - top);
         var left = Math.Max(0, levelLeft - (iconWidth * 1.15));
         return new CharacterRowCandidate(
-            name.Length == 0 ? null : name,
+            name,
             level,
             left,
             Math.Max(0, top - 2),

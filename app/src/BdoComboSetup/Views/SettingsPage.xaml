@@ -241,6 +241,12 @@
                             VerticalAlignment="Center"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
+                    <TextBlock
+                        Text="{x:Bind Scan.PageHint, Mode=OneWay}"
+                        FontSize="12"
+                        TextWrapping="Wrap"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Visibility="{x:Bind Scan.HasPageHint, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                     <InfoBar
                         IsOpen="{x:Bind Scan.IsMessageOpen, Mode=TwoWay}"
                         Severity="{x:Bind ToInfoBarSeverity(Scan.Severity), Mode=OneWay}"
