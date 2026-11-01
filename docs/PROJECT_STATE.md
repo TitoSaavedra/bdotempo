@@ -120,6 +120,10 @@ Order agreed with the user. Do not launch the app; the user tests at the end and
    of the last row, until the user says done; then the accumulated list is matched to the pcid order and shown in a
    review table (name, level, class) where OCR mistakes are fixed before saving to
    `%LOCALAPPDATA%\BDOTempo\characters.json`. Class comes from the row icon against the 32 class icons in the pack.
+   **Names vs memos (user, 2026-11-01):** the `CharacterMemo` text of `gameVariable_lobby.xml` (FARM, KUTUM, GOLDEN PIG…)
+   is the player's own memo, NOT the character name. In every list show the real name (OCR or user-assigned) as the
+   title and the memo underneath as a smaller subtitle; never use the memo as the name (the app does that today only
+   because it had nothing better).
    If the number of read rows does not match the pcids, the table must say so instead of guessing.
    **Live feedback (user, 2026-11-01):** as each row is read, draw a green box over it **on top of the game** (a separate
    overlay window: borderless, topmost, click-through and never focused — `WS_EX_TRANSPARENT | WS_EX_NOACTIVATE`, placed on
