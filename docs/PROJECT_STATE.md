@@ -121,6 +121,11 @@ Order agreed with the user. Do not launch the app; the user tests at the end and
    review table (name, level, class) where OCR mistakes are fixed before saving to
    `%LOCALAPPDATA%\BDOTempo\characters.json`. Class comes from the row icon against the 32 class icons in the pack.
    If the number of read rows does not match the pcids, the table must say so instead of guessing.
+   **Live feedback (user, 2026-11-01):** as each row is read, draw a green box over it **on top of the game** (a separate
+   overlay window: borderless, topmost, click-through and never focused — `WS_EX_TRANSPARENT | WS_EX_NOACTIVATE`, placed on
+   the game window rectangle from `GetWindowRect`, one rounded green rectangle per detected row in game pixels), so the user
+   sees what was captured while scrolling. The overlay must also show the running count ("12 de 35") and must never send
+   input to the game. Same overlay host can later draw the rotation helper, but that feature stays out for now.
 6. **Not now:** the rotation overlay (see the decision above: only with real key-press detection).
 
 ## Deferred TODO list (user: "note it, do it later")
