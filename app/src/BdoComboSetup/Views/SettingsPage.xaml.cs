@@ -105,12 +105,34 @@ public sealed partial class SettingsPage : Page
     {
         try
         {
-            await App.Services.CharacterScan.StartAsync();
+            var started = await App.Services.CharacterScan.StartAsync();
+            if (!started && Scan.IsMessageOpen)
+            {
+                await ShowScanDialogAsync(Scan.Message);
+            }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             App.Services.Logger.Error("settings.scan_start_failed", "The character scan could not start", ex);
         }
+    }
+
+    /// <summary>
+    /// The scan could not start (no game window, minimized, no account, no OCR language): says it in a dialog, because the
+    /// small line under the buttons is easy to miss while the game is in front.
+    /// </summary>
+    private async Task ShowScanDialogAsync(string message)
+    {
+        var localizer = App.Services.Localizer;
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = localizer.Get("Settings.ScanDialogTitle"),
+            Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },
+            CloseButtonText = localizer.Get("Settings.ScanDialogClose"),
+            DefaultButton = ContentDialogButton.Close,
+        };
+        await dialog.ShowAsync();
     }
 
     /// <summary>The user is done scrolling: stop reading and build the review table.</summary>

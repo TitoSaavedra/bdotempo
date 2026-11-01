@@ -23,6 +23,7 @@ public sealed partial class ApplyComboPage : Page
     {
         ViewModel = App.Services.ApplyCombo;
         InitializeComponent();
+        ClassPicker.SetFields(item => SearchFields.ForClass(((ClassOptionViewModel)item).Info));
         CharacterPicker.SetFields(item => ViewModel.CharacterSearchTexts((CharacterOption)item));
         ComboSlotPicker.SetFields(item => [((ComboSlotOption)item).Label]);
     }
@@ -53,6 +54,7 @@ public sealed partial class ApplyComboPage : Page
     /// <summary>A class tile: gold when it is the selected class.</summary>
     public static Style ClassTileStyle(bool selected) =>
         (Style)App.Current.Resources[selected ? "ClassTileSelectedStyle" : "ClassTileStyle"];
+
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
@@ -106,6 +108,15 @@ public sealed partial class ApplyComboPage : Page
     {
         Loaded -= DemoCharacterPicker_Loaded;
         CharacterPicker.Open();
+    }
+
+    /// <summary>Chooses the class picked in the searchable class picker (the page then lists its guides).</summary>
+    private void ClassPicker_Chosen(object? sender, object item)
+    {
+        if (item is ClassOptionViewModel option)
+        {
+            option.SelectCommand.Execute(null);
+        }
     }
 
     /// <summary>Chooses the character picked in the searchable picker (the view model selects its class too).</summary>

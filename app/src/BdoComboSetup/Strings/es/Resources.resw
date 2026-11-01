@@ -102,6 +102,9 @@
   <data name="Apply.DetailEmpty.Text" xml:space="preserve">
     <value>Selecciona un paso para ver su detalle y cambiar su nombre, memo o casillas.</value>
   </data>
+  <data name="Apply.StepDetailHeader.Text" xml:space="preserve">
+    <value>Paso seleccionado</value>
+  </data>
   <data name="Apply.DescriptionHeader.Text" xml:space="preserve">
     <value>Descripción del juego</value>
   </data>
@@ -419,6 +422,12 @@
   </data>
   <data name="NavSettingsItem.Content" xml:space="preserve"><value>Configuración</value></data>
   <data name="Settings.Title.Text" xml:space="preserve"><value>Configuración</value></data>
+  <data name="Settings.Subtitle.Text" xml:space="preserve"><value>Cuenta, personajes, carpeta del juego, idioma y actualizaciones. Cada cambio se guarda al momento.</value></data>
+  <data name="Settings.LanguageHint.Text" xml:space="preserve"><value>El idioma de la interfaz. Se aplica al reiniciar la app.</value></data>
+  <data name="Settings.UpdatesHint.Text" xml:space="preserve"><value>La versión instalada y si hay una nueva. Nada se instala sin pulsar el botón.</value></data>
+  <data name="Settings.WarningsHeader.Text" xml:space="preserve"><value>Avisos</value></data>
+  <data name="Settings.WarningsHint.Text" xml:space="preserve"><value>Qué recordatorios quieres ver mientras usas la app.</value></data>
+  <data name="Settings.SetupHint.Text" xml:space="preserve"><value>Vuelve a elegir la carpeta y la cuenta con el asistente.</value></data>
   <data name="Settings.RestartBar.Title" xml:space="preserve"><value>Reinicia para aplicar los cambios</value></data>
   <data name="Settings.RestartBar.Message" xml:space="preserve"><value>El idioma, la carpeta de datos y la cuenta de la vista previa se aplican al reiniciar la app.</value></data>
   <data name="Settings.RestartButton.Content" xml:space="preserve"><value>Reiniciar ahora</value></data>
@@ -631,7 +640,13 @@
     <value>Nombres de personaje (OCR)</value>
   </data>
   <data name="Settings.ScanHint.Text" xml:space="preserve">
-    <value>Abre Black Desert en la pantalla de selección de personaje y deja la lista arriba del todo. Al empezar, la app lee las filas visibles y dibuja un recuadro verde sobre el juego; baja la lista poco a poco hasta el final y pulsa Terminar. Nunca se envía nada al juego.</value>
+    <value>Primero abre Black Desert y déjalo en la pantalla de selección de personaje con la lista arriba del todo. Al empezar, la app lee las filas visibles y dibuja un recuadro verde sobre el juego; baja la lista poco a poco hasta el final y pulsa Terminar. Nunca se envía nada al juego.</value>
+  </data>
+  <data name="Settings.ScanDialogTitle" xml:space="preserve">
+    <value>Abre Black Desert</value>
+  </data>
+  <data name="Settings.ScanDialogClose" xml:space="preserve">
+    <value>Entendido</value>
   </data>
   <data name="Settings.ScanStartButton.Content" xml:space="preserve">
     <value>Empezar a leer</value>
@@ -689,6 +704,9 @@
   </data>
   <data name="Characters.ScanGameMissing" xml:space="preserve">
     <value>No se encontró la ventana de Black Desert. Abre el juego y déjalo en la pantalla de selección de personaje.</value>
+  </data>
+  <data name="Characters.ScanGameMinimized" xml:space="preserve">
+    <value>La ventana de Black Desert está minimizada. Restáurala y déjala en la pantalla de selección de personaje.</value>
   </data>
   <data name="Characters.ScanOcrMissing" xml:space="preserve">
     <value>Windows no tiene instalado ningún idioma de OCR. Instálalo en Configuración de Windows &gt; Hora e idioma &gt; Idioma y región (paquete de reconocimiento óptico).</value>

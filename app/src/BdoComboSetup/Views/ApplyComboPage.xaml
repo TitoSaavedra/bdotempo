@@ -10,6 +10,15 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
+        <!-- One section of the page: a card with the app's surface colors (same as the Settings page). -->
+        <Style x:Key="ApplyCard" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="14" />
+        </Style>
+
         <!-- One character of the account in the picker: class icon and name only. Name and class are edited in Settings. -->
         <DataTemplate x:Key="CharacterTemplate" x:DataType="combo:CharacterOption">
             <Grid ColumnSpacing="8" Padding="4,2">
@@ -43,14 +52,21 @@
             </StackPanel>
         </DataTemplate>
 
+        <!-- One class of the class picker: its icon and its name. -->
+        <DataTemplate x:Key="ClassPickerTemplate" x:DataType="vm:ClassOptionViewModel">
+            <StackPanel Orientation="Horizontal" Spacing="10" Padding="4,2">
+                <controls:AssetIcon Width="24" Height="24" IconSource="{x:Bind OpenIcon, Mode=OneTime}" Glyph="{x:Bind Glyph, Mode=OneTime}" />
+                <TextBlock Text="{x:Bind Name, Mode=OneTime}" VerticalAlignment="Center" />
+            </StackPanel>
+        </DataTemplate>
+
         <!-- One class of the character editor's picker: its icon and its name. -->
         <DataTemplate x:Key="ClassChoiceTemplate" x:DataType="vm:ClassChoice">
             <StackPanel Orientation="Horizontal" Spacing="10" Padding="2">
                 <controls:AssetIcon
                     Width="24"
                     Height="24"
-                    IconSource="{x:Bind OpenIcon, Mode=OneTime}"
-                    />
+                    IconSource="{x:Bind OpenIcon, Mode=OneTime}" />
                 <TextBlock Text="{x:Bind Name, Mode=OneTime}" VerticalAlignment="Center" />
             </StackPanel>
         </DataTemplate>
@@ -226,32 +242,6 @@
             </StackPanel>
         </DataTemplate>
 
-        <!-- A class of the grid: its icon and name. The selected class has the gold tile. -->
-        <DataTemplate x:Key="ClassTemplate" x:DataType="vm:ClassOptionViewModel">
-            <Button
-                Command="{x:Bind SelectCommand}"
-                Style="{x:Bind local:ApplyComboPage.ClassTileStyle(IsSelected), Mode=OneWay}"
-                Padding="6,8"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Center"
-                AutomationProperties.Name="{x:Bind Name, Mode=OneWay}">
-                <StackPanel HorizontalAlignment="Center" Spacing="4">
-                    <controls:AssetIcon
-                        Width="36"
-                        Height="36"
-                        HorizontalAlignment="Center"
-                        IconSource="{x:Bind OpenIcon, Mode=OneWay}"
-                        Glyph="{x:Bind Glyph, Mode=OneWay}" />
-                    <TextBlock
-                        Text="{x:Bind Name, Mode=OneWay}"
-                        FontSize="11"
-                        HorizontalAlignment="Center"
-                        TextTrimming="CharacterEllipsis"
-                        MaxLines="1" />
-                </StackPanel>
-            </Button>
-        </DataTemplate>
-
         <!-- A guide spec (Awakening, Succession, ...). The selected one is gold. -->
         <DataTemplate x:Key="SpecTemplate" x:DataType="vm:SpecOptionViewModel">
             <Button
@@ -328,19 +318,16 @@
         </DataTemplate>
     </Page.Resources>
 
-    <Grid Padding="24,16,24,16" RowSpacing="12">
+    <Grid Padding="24,16,24,16" RowSpacing="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Row 0: the guide heading and the character. -->
+        <!-- Row 0: the guide heading and the account. -->
         <Grid ColumnSpacing="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -348,14 +335,17 @@
             </Grid.ColumnDefinitions>
             <StackPanel Spacing="2">
                 <TextBlock x:Uid="Apply/Title" Style="{ThemeResource TitleTextBlockStyle}" />
-                <TextBlock
-                    Text="{x:Bind ViewModel.ClassName, Mode=OneWay}"
-                    Style="{ThemeResource SubtitleTextBlockStyle}"
-                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
-                <TextBlock
-                    Text="{x:Bind ViewModel.Editor.Title, Mode=OneWay}"
-                    FontSize="13"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock
+                        Text="{x:Bind ViewModel.ClassName, Mode=OneWay}"
+                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                    <TextBlock
+                        Text="{x:Bind ViewModel.Editor.Title, Mode=OneWay}"
+                        FontSize="13"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
             </StackPanel>
 
             <!-- The account the characters come from. Changed in the Settings page. -->
@@ -367,121 +357,89 @@
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </Grid>
 
-        <!-- Row 1: the live characters of the active account, as a searchable selector (name and class icon; the pencil edits them). -->
-        <StackPanel Grid.Row="1" Spacing="4">
-            <controls:SearchablePicker
-                x:Name="CharacterPicker"
-                MinWidth="320"
-                HorizontalAlignment="Left"
-                ItemsSource="{x:Bind ViewModel.Characters, Mode=OneWay}"
-                ItemTemplate="{StaticResource CharacterTemplate}"
-                SelectedItem="{x:Bind ViewModel.SelectedCharacter, Mode=OneWay}"
-                SelectedTemplate="{StaticResource SelectedCharacterTemplate}"
-                Chosen="CharacterPicker_Chosen" />
+        <!-- Row 1: class, character, guide and the apply actions; then the write options. -->
+        <StackPanel Grid.Row="1" Spacing="8">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <controls:SearchablePicker
+                    x:Name="ClassPicker"
+                    MinWidth="220"
+                    MaxWidth="280"
+                    HorizontalAlignment="Left"
+                    ItemsSource="{x:Bind ViewModel.Classes, Mode=OneWay}"
+                    ItemTemplate="{StaticResource ClassPickerTemplate}"
+                    SelectedItem="{x:Bind ViewModel.SelectedClass, Mode=OneWay}"
+                    SelectedTemplate="{StaticResource ClassPickerTemplate}"
+                    Chosen="ClassPicker_Chosen" />
+                <controls:SearchablePicker
+                    Grid.Column="1"
+                    x:Name="CharacterPicker"
+                    MinWidth="280"
+                    MaxWidth="340"
+                    HorizontalAlignment="Left"
+                    ItemsSource="{x:Bind ViewModel.Characters, Mode=OneWay}"
+                    ItemTemplate="{StaticResource CharacterTemplate}"
+                    SelectedItem="{x:Bind ViewModel.SelectedCharacter, Mode=OneWay}"
+                    SelectedTemplate="{StaticResource SelectedCharacterTemplate}"
+                    Chosen="CharacterPicker_Chosen" />
+                <ScrollViewer
+                    Grid.Column="2"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Disabled"
+                    VerticalAlignment="Center">
+                    <ItemsControl
+                        ItemsSource="{x:Bind ViewModel.Specs, Mode=OneWay}"
+                        ItemTemplate="{StaticResource SpecTemplate}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </ScrollViewer>
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button x:Uid="Apply/DryRunButton" Command="{x:Bind ViewModel.DryRunCommand}" />
+                    <Button
+                        x:Uid="Apply/ApplyButton"
+                        Command="{x:Bind ViewModel.ApplyCommand}"
+                        Style="{StaticResource AccentButtonStyle}" />
+                </StackPanel>
+            </Grid>
+
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                    <CheckBox x:Uid="Apply/IncludeCooldownBarCheck" IsChecked="{x:Bind ViewModel.IncludeCooldownBar, Mode=TwoWay}" />
+                    <CheckBox x:Uid="Apply/IncludeMemosCheck" IsChecked="{x:Bind ViewModel.IncludeMemos, Mode=TwoWay}" />
+                    <CheckBox x:Uid="Apply/IncludeQuickSlotsCheck" IsChecked="{x:Bind ViewModel.IncludeQuickSlots, Mode=TwoWay}" />
+                </StackPanel>
+                <TextBlock
+                    Grid.Column="1"
+                    Text="{x:Bind ViewModel.ProfileStateText, Mode=OneWay}"
+                    VerticalAlignment="Center"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Grid>
+
             <TextBlock
                 Text="{x:Bind ViewModel.CharactersMessage, Mode=OneWay}"
                 FontSize="12"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </StackPanel>
 
-        <!-- Row 2: the specs of the class, as pills, and which copy of the guide is on screen. -->
-        <Grid Grid.Row="2" ColumnSpacing="16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <ItemsControl ItemsSource="{x:Bind ViewModel.Specs, Mode=OneWay}" ItemTemplate="{StaticResource SpecTemplate}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
-            <TextBlock
-                Grid.Column="1"
-                Text="{x:Bind ViewModel.ProfileStateText, Mode=OneWay}"
-                VerticalAlignment="Center"
-                FontSize="12"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-        </Grid>
-
-        <!-- Row 3: the write options and the actions. Only "Write to character" in the review writes to the file. -->
-        <Grid Grid.Row="3" ColumnSpacing="12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
-                <CheckBox x:Uid="Apply/IncludeCooldownBarCheck" IsChecked="{x:Bind ViewModel.IncludeCooldownBar, Mode=TwoWay}" />
-                <CheckBox x:Uid="Apply/IncludeMemosCheck" IsChecked="{x:Bind ViewModel.IncludeMemos, Mode=TwoWay}" />
-                <CheckBox x:Uid="Apply/IncludeQuickSlotsCheck" IsChecked="{x:Bind ViewModel.IncludeQuickSlots, Mode=TwoWay}" />
-            </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                <Button x:Uid="Apply/DryRunButton" Command="{x:Bind ViewModel.DryRunCommand}" />
-                <Button
-                    x:Uid="Apply/ApplyButton"
-                    Command="{x:Bind ViewModel.ApplyCommand}"
-                    Style="{StaticResource AccentButtonStyle}" />
-            </StackPanel>
-        </Grid>
-
-        <!-- Row 4: the ten custom combos of the selected guide. The guide is never written: a slot is a copy. -->
+        <!-- Row 2: the review of the character file. Shown after "Apply to character" or "Preview changes". -->
         <Border
-            Grid.Row="4"
-            Padding="16"
-            CornerRadius="8"
-            BorderThickness="1"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            Visibility="{x:Bind ViewModel.HasEditor, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <StackPanel Spacing="8">
-                <TextBlock x:Uid="Apply/ComboSlotsHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                <Grid ColumnSpacing="10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <controls:SearchablePicker
-                        x:Name="ComboSlotPicker"
-                        MinWidth="240"
-                        MaxWidth="320"
-                        HorizontalAlignment="Left"
-                        ItemsSource="{x:Bind ViewModel.ComboSlots, Mode=OneWay}"
-                        ItemTemplate="{StaticResource ComboSlotTemplate}"
-                        SelectedItem="{x:Bind ViewModel.SelectedComboSlot, Mode=OneWay}"
-                        SelectedTemplate="{StaticResource ComboSlotTemplate}"
-                        Chosen="ComboSlotPicker_Chosen" />
-                    <TextBox
-                        Grid.Column="1"
-                        x:Uid="Apply/ComboNameBox"
-                        Text="{x:Bind ViewModel.ComboName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        MaxLength="60" />
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                        <Button
-                            x:Uid="Apply/SaveSlotButton"
-                            Command="{x:Bind ViewModel.SaveProfileCommand}"
-                            Style="{StaticResource AccentButtonStyle}" />
-                        <Button x:Uid="Apply/LoadSlotButton" Command="{x:Bind ViewModel.LoadProfileCommand}" />
-                        <Button x:Uid="Apply/DeleteSlotButton" Command="{x:Bind ViewModel.DeleteProfileCommand}" />
-                        <Button x:Uid="Apply/RestoreButton" Command="{x:Bind ViewModel.RestoreBaseCommand}" />
-                    </StackPanel>
-                </Grid>
-                <TextBlock
-                    x:Uid="Apply/ComboSlotsHint"
-                    FontSize="12"
-                    TextWrapping="Wrap"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-            </StackPanel>
-        </Border>
-
-        <!-- Row 5: the review of the character file. Shown after "Apply to character" or "Preview changes". -->
-        <Border Grid.Row="5"
-            Padding="16"
-            CornerRadius="8"
-            BorderThickness="1"
+            Grid.Row="2"
+            Style="{StaticResource ApplyCard}"
             BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             Visibility="{x:Bind ViewModel.IsReviewOpen, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <StackPanel Spacing="8">
                 <TextBlock x:Uid="Apply/ReviewTitle" Style="{ThemeResource BodyStrongTextBlockStyle}" />
@@ -489,7 +447,7 @@
                 <ListView
                     ItemsSource="{x:Bind ViewModel.ReviewLines, Mode=OneWay}"
                     SelectionMode="None"
-                    MaxHeight="200" />
+                    MaxHeight="160" />
                 <TextBlock
                     x:Uid="Apply/ReviewBackupNote"
                     FontSize="12"
@@ -505,50 +463,15 @@
             </StackPanel>
         </Border>
 
-        <!-- Row 6: the outcome of the last action. -->
-        <InfoBar Grid.Row="6"
-            IsOpen="{x:Bind ViewModel.IsStatusOpen, Mode=TwoWay}"
-            Severity="{x:Bind ToInfoBarSeverity(ViewModel.StatusSeverity), Mode=OneWay}"
-            Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
-            IsClosable="True" />
-
-        <!-- Row 7: the class grid, the combo, and the detail of the selected step. -->
-        <Grid Grid.Row="7" ColumnSpacing="16">
+        <!-- Row 3: the combo (full width) and the side panel (my combos and the selected step). -->
+        <Grid Grid.Row="3" ColumnSpacing="14">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="260" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="340" />
+                <ColumnDefinition Width="360" />
             </Grid.ColumnDefinitions>
 
-            <!-- Class grid, with a quick filter above it (the class name in Spanish or English). -->
-            <Border
-                CornerRadius="8"
-                BorderThickness="1"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                Padding="10">
-                <StackPanel Spacing="8">
-                    <TextBox
-                        x:Uid="Apply/ClassSearch"
-                        Text="{x:Bind ViewModel.ClassSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <TextBlock
-                        x:Uid="Apply/ClassSearchEmpty"
-                        TextWrapping="Wrap"
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Visibility="{x:Bind ViewModel.NoClassMatches, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.FilteredClasses, Mode=OneWay}" ItemTemplate="{StaticResource ClassTemplate}">
-                            <ItemsRepeater.Layout>
-                                <UniformGridLayout MinItemWidth="74" MinItemHeight="78" MinRowSpacing="6" MinColumnSpacing="6" />
-                            </ItemsRepeater.Layout>
-                        </ItemsRepeater>
-                    </ScrollViewer>
-                </StackPanel>
-            </Border>
-
-            <!-- Combo: buff and combo chains, then the mobility pool -->
-            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <!-- The combo: buff and combo chains, the class add-ons and the mobility pool -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Spacing="0" Padding="0,0,12,0">
                     <StackPanel
                         Spacing="8"
@@ -564,9 +487,25 @@
                         ItemsSource="{x:Bind ViewModel.Editor.Chains, Mode=OneWay}"
                         ItemTemplate="{StaticResource ChainTemplate}" />
 
+                    <!-- Class add-ons: read-only information of the guide. -->
+                    <StackPanel
+                        Spacing="6"
+                        Margin="0,10,0,0"
+                        Visibility="{x:Bind ViewModel.Editor.HasAddons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock x:Uid="Apply/SectionAddons" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        <TextBlock
+                            x:Uid="Apply/AddonsHint"
+                            FontSize="12"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <ItemsControl
+                            ItemsSource="{x:Bind ViewModel.Editor.Addons, Mode=OneWay}"
+                            ItemTemplate="{StaticResource AddonTemplate}" />
+                    </StackPanel>
+
                     <StackPanel
                         Spacing="4"
-                        Margin="0,6,0,0"
+                        Margin="0,10,0,0"
                         Visibility="{x:Bind ViewModel.Editor.HasManualSteps, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock x:Uid="Apply/SectionMobility" Style="{ThemeResource SubtitleTextBlockStyle}" />
                         <TextBlock
@@ -586,22 +525,6 @@
                         </ItemsControl>
                     </StackPanel>
 
-                    <!-- Class add-ons: read-only information of the guide. -->
-                    <StackPanel
-                        Spacing="6"
-                        Margin="0,10,0,0"
-                        Visibility="{x:Bind ViewModel.Editor.HasAddons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock x:Uid="Apply/SectionAddons" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                        <TextBlock
-                            x:Uid="Apply/AddonsHint"
-                            FontSize="12"
-                            TextWrapping="Wrap"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        <ItemsControl
-                            ItemsSource="{x:Bind ViewModel.Editor.Addons, Mode=OneWay}"
-                            ItemTemplate="{StaticResource AddonTemplate}" />
-                    </StackPanel>
-
                     <TextBlock
                         x:Uid="Apply/GuideMissing"
                         Visibility="{x:Bind ViewModel.IsGuideMissing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -610,102 +533,177 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- Detail of the selected step -->
-            <Border
-                Grid.Column="2"
-                CornerRadius="8"
-                BorderThickness="1"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                Padding="16">
-                <Grid>
-                    <TextBlock
-                        x:Uid="Apply/DetailEmpty"
-                        TextWrapping="Wrap"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Visibility="{x:Bind ViewModel.Editor.HasSelection, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+            <!-- Side panel: my combos on top, the selected step below -->
+            <Grid Grid.Column="1" RowSpacing="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                    <ScrollViewer
-                        VerticalScrollBarVisibility="Auto"
-                        Visibility="{x:Bind ViewModel.Editor.HasSelection, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel Spacing="10">
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <controls:AssetIcon
-                                    Width="56"
-                                    Height="56"
-                                    IconSource="{x:Bind ViewModel.Editor.SelectedStep.PrimarySkill.OpenIcon, Mode=OneWay}"
-                                    Glyph="{x:Bind ViewModel.Editor.SelectedStep.Glyph, Mode=OneWay}" />
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock
-                                        Text="{x:Bind ViewModel.Editor.SelectedStep.SkillName, Mode=OneWay}"
-                                        Style="{ThemeResource BodyStrongTextBlockStyle}"
-                                        TextWrapping="Wrap" />
-                                    <TextBlock
-                                        Text="{x:Bind ViewModel.Editor.SelectedStep.KeyLegend, Mode=OneWay}"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <!-- The ten custom combos of the selected guide. The guide is never written: a slot is a copy. -->
+                <Border
+                    Style="{StaticResource ApplyCard}"
+                    Visibility="{x:Bind ViewModel.HasEditor, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Spacing="8">
+                        <TextBlock x:Uid="Apply/ComboSlotsHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                        <controls:SearchablePicker
+                            x:Name="ComboSlotPicker"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{x:Bind ViewModel.ComboSlots, Mode=OneWay}"
+                            ItemTemplate="{StaticResource ComboSlotTemplate}"
+                            SelectedItem="{x:Bind ViewModel.SelectedComboSlot, Mode=OneWay}"
+                            SelectedTemplate="{StaticResource ComboSlotTemplate}"
+                            Chosen="ComboSlotPicker_Chosen" />
+                        <TextBox
+                            x:Uid="Apply/ComboNameBox"
+                            Text="{x:Bind ViewModel.ComboName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            MaxLength="60" />
+                        <Grid ColumnSpacing="8" RowSpacing="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button
+                                x:Uid="Apply/SaveSlotButton"
+                                Command="{x:Bind ViewModel.SaveProfileCommand}"
+                                HorizontalAlignment="Stretch"
+                                Style="{StaticResource AccentButtonStyle}" />
+                            <Button
+                                Grid.Column="1"
+                                x:Uid="Apply/LoadSlotButton"
+                                Command="{x:Bind ViewModel.LoadProfileCommand}"
+                                HorizontalAlignment="Stretch" />
+                            <Button
+                                Grid.Row="1"
+                                x:Uid="Apply/DeleteSlotButton"
+                                Command="{x:Bind ViewModel.DeleteProfileCommand}"
+                                HorizontalAlignment="Stretch" />
+                            <Button
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                x:Uid="Apply/RestoreButton"
+                                Command="{x:Bind ViewModel.RestoreBaseCommand}"
+                                HorizontalAlignment="Stretch" />
+                        </Grid>
+                        <TextBlock
+                            x:Uid="Apply/ComboSlotsHint"
+                            FontSize="12"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Detail of the selected step -->
+                <Border Grid.Row="1" Style="{StaticResource ApplyCard}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Uid="Apply/StepDetailHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                        <Grid Grid.Row="1">
+                            <TextBlock
+                                x:Uid="Apply/DetailEmpty"
+                                TextWrapping="Wrap"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Visibility="{x:Bind ViewModel.Editor.HasSelection, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+
+                            <ScrollViewer
+                                VerticalScrollBarVisibility="Auto"
+                                Visibility="{x:Bind ViewModel.Editor.HasSelection, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <controls:AssetIcon
+                                            Width="56"
+                                            Height="56"
+                                            IconSource="{x:Bind ViewModel.Editor.SelectedStep.PrimarySkill.OpenIcon, Mode=OneWay}"
+                                            Glyph="{x:Bind ViewModel.Editor.SelectedStep.Glyph, Mode=OneWay}" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock
+                                                Text="{x:Bind ViewModel.Editor.SelectedStep.SkillName, Mode=OneWay}"
+                                                Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                                TextWrapping="Wrap" />
+                                            <TextBlock
+                                                Text="{x:Bind ViewModel.Editor.SelectedStep.KeyLegend, Mode=OneWay}"
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <StackPanel
+                                        Spacing="4"
+                                        Visibility="{x:Bind ViewModel.Editor.SelectedStep.HasDescription, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock x:Uid="Apply/DescriptionHeader" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        <TextBlock
+                                            Text="{x:Bind ViewModel.Editor.SelectedStep.SkillDescription, Mode=OneWay}"
+                                            TextWrapping="Wrap"
+                                            FontSize="13" />
+                                    </StackPanel>
+
+                                    <StackPanel
+                                        Spacing="4"
+                                        Visibility="{x:Bind ViewModel.Editor.SelectedStep.HasGuideNotes, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock x:Uid="Apply/GuideNotesHeader" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        <TextBlock
+                                            Text="{x:Bind ViewModel.Editor.SelectedStep.GuideNotes, Mode=OneWay}"
+                                            TextWrapping="Wrap"
+                                            FontSize="13" />
+                                    </StackPanel>
+
+                                    <TextBlock x:Uid="Apply/CustomizationHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" Margin="0,6,0,0" />
+                                    <TextBox
+                                        x:Uid="Apply/CustomNameBox"
+                                        Text="{x:Bind ViewModel.Editor.SelectedStep.CustomName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox
+                                        x:Uid="Apply/MemoBox"
+                                        Text="{x:Bind ViewModel.Editor.SelectedStep.Memo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <ComboBox
+                                        x:Uid="Apply/CooldownBox"
+                                        HorizontalAlignment="Stretch"
+                                        ItemsSource="{x:Bind ViewModel.Editor.CooldownOptions, Mode=OneWay}"
+                                        SelectedItem="{x:Bind ViewModel.Editor.SelectedCooldownOption, Mode=TwoWay}"
+                                        DisplayMemberPath="Label" />
+                                    <ComboBox
+                                        x:Uid="Apply/QuickBox"
+                                        HorizontalAlignment="Stretch"
+                                        ItemsSource="{x:Bind ViewModel.Editor.QuickOptions, Mode=OneWay}"
+                                        SelectedItem="{x:Bind ViewModel.Editor.SelectedQuickOption, Mode=TwoWay}"
+                                        DisplayMemberPath="Label" />
+
+                                    <Grid ColumnSpacing="6" Margin="0,4,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button x:Uid="Apply/MoveEarlierButton" Command="{x:Bind ViewModel.Editor.MoveEarlierCommand}" HorizontalAlignment="Stretch" />
+                                        <Button Grid.Column="1" x:Uid="Apply/MoveLaterButton" Command="{x:Bind ViewModel.Editor.MoveLaterCommand}" HorizontalAlignment="Stretch" />
+                                        <Button Grid.Column="2" x:Uid="Apply/RemoveButton" Command="{x:Bind ViewModel.Editor.RemoveSelectedCommand}" HorizontalAlignment="Stretch" />
+                                    </Grid>
+                                    <Button x:Uid="Apply/ResetStepButton" Command="{x:Bind ViewModel.Editor.ResetStepCommand}" HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                            </Grid>
-
-                            <StackPanel
-                                Spacing="4"
-                                Visibility="{x:Bind ViewModel.Editor.SelectedStep.HasDescription, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                                <TextBlock x:Uid="Apply/DescriptionHeader" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                <TextBlock
-                                    Text="{x:Bind ViewModel.Editor.SelectedStep.SkillDescription, Mode=OneWay}"
-                                    TextWrapping="Wrap"
-                                    FontSize="13" />
-                            </StackPanel>
-
-                            <StackPanel
-                                Spacing="4"
-                                Visibility="{x:Bind ViewModel.Editor.SelectedStep.HasGuideNotes, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                                <TextBlock x:Uid="Apply/GuideNotesHeader" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                <TextBlock
-                                    Text="{x:Bind ViewModel.Editor.SelectedStep.GuideNotes, Mode=OneWay}"
-                                    TextWrapping="Wrap"
-                                    FontSize="13" />
-                            </StackPanel>
-
-                            <TextBlock x:Uid="Apply/CustomizationHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" Margin="0,6,0,0" />
-                            <TextBox
-                                x:Uid="Apply/CustomNameBox"
-                                Text="{x:Bind ViewModel.Editor.SelectedStep.CustomName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            <TextBox
-                                x:Uid="Apply/MemoBox"
-                                Text="{x:Bind ViewModel.Editor.SelectedStep.Memo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            <ComboBox
-                                x:Uid="Apply/CooldownBox"
-                                HorizontalAlignment="Stretch"
-                                ItemsSource="{x:Bind ViewModel.Editor.CooldownOptions, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.Editor.SelectedCooldownOption, Mode=TwoWay}"
-                                DisplayMemberPath="Label" />
-                            <ComboBox
-                                x:Uid="Apply/QuickBox"
-                                HorizontalAlignment="Stretch"
-                                ItemsSource="{x:Bind ViewModel.Editor.QuickOptions, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.Editor.SelectedQuickOption, Mode=TwoWay}"
-                                DisplayMemberPath="Label" />
-
-                            <Grid ColumnSpacing="6" Margin="0,4,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Button x:Uid="Apply/MoveEarlierButton" Command="{x:Bind ViewModel.Editor.MoveEarlierCommand}" HorizontalAlignment="Stretch" />
-                                <Button Grid.Column="1" x:Uid="Apply/MoveLaterButton" Command="{x:Bind ViewModel.Editor.MoveLaterCommand}" HorizontalAlignment="Stretch" />
-                                <Button Grid.Column="2" x:Uid="Apply/RemoveButton" Command="{x:Bind ViewModel.Editor.RemoveSelectedCommand}" HorizontalAlignment="Stretch" />
-                            </Grid>
-                            <Button x:Uid="Apply/ResetStepButton" Command="{x:Bind ViewModel.Editor.ResetStepCommand}" HorizontalAlignment="Stretch" />
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-            </Border>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
         </Grid>
+
+        <!-- Row 4: the outcome of the last action. -->
+        <InfoBar
+            Grid.Row="4"
+            IsOpen="{x:Bind ViewModel.IsStatusOpen, Mode=TwoWay}"
+            Severity="{x:Bind ToInfoBarSeverity(ViewModel.StatusSeverity), Mode=OneWay}"
+            Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+            IsClosable="True" />
     </Grid>
 </Page>

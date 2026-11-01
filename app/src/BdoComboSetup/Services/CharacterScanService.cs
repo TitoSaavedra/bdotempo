@@ -89,10 +89,17 @@ public sealed class CharacterScanService : IDisposable
         }
 
         var window = _locator.Find();
-        if (window is null || window.IsMinimized)
+        if (window is null)
         {
-            _logger.Info("character_scan.no_window", "The scan found no visible game window");
+            _logger.Info("character_scan.no_window", "The scan found no game window");
             ViewModel.ReportFailure("Characters.ScanGameMissing");
+            return false;
+        }
+
+        if (window.IsMinimized)
+        {
+            _logger.Info("character_scan.minimized", "The scan found the game window minimized");
+            ViewModel.ReportFailure("Characters.ScanGameMinimized");
             return false;
         }
 

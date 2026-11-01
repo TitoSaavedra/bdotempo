@@ -10,7 +10,16 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
-        <!-- One account of the data folder: its label ("Account 100000001"). -->
+        <!-- One section of the page: a card with the app's surface colors. -->
+        <Style x:Key="SettingsCard" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="18" />
+        </Style>
+
+        <!-- One account of the data folder: its label ("Cuenta 100000001"). -->
         <DataTemplate x:Key="AccountChoiceTemplate" x:DataType="vm:AccountChoice">
             <TextBlock Text="{x:Bind Label, Mode=OneTime}" VerticalAlignment="Center" />
         </DataTemplate>
@@ -91,9 +100,27 @@
         </DataTemplate>
     </Page.Resources>
 
-    <ScrollViewer Padding="24,16,24,16" VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="22" MaxWidth="720" HorizontalAlignment="Left">
-            <TextBlock x:Uid="Settings/Title" Style="{ThemeResource TitleTextBlockStyle}" />
+    <ScrollViewer Padding="32,24,32,32" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="14" MaxWidth="860" HorizontalAlignment="Left">
+
+            <!-- Heading -->
+            <Grid ColumnSpacing="12" Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE713;"
+                    FontSize="26"
+                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                    VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Spacing="2">
+                    <TextBlock x:Uid="Settings/Title" Style="{ThemeResource TitleTextBlockStyle}" />
+                    <TextBlock
+                        x:Uid="Settings/Subtitle"
+                        TextWrapping="Wrap"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </Grid>
 
             <!-- Changes that only take effect after a restart (language, data folder, Preview account). -->
             <InfoBar
@@ -107,199 +134,332 @@
             </InfoBar>
 
             <!-- Account: the numeric folders under UserCache that have an 11 folder. The one chosen here is remembered. -->
-            <StackPanel Spacing="6">
-                <TextBlock x:Uid="Settings/AccountHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                <TextBlock
-                    x:Uid="Settings/AccountHint"
-                    TextWrapping="Wrap"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <controls:SearchablePicker
-                    x:Name="AccountPicker"
-                    MinWidth="320"
-                    HorizontalAlignment="Left"
-                    ItemsSource="{x:Bind ViewModel.Accounts, Mode=OneWay}"
-                    ItemTemplate="{StaticResource AccountChoiceTemplate}"
-                    SelectedItem="{x:Bind ViewModel.SelectedAccount, Mode=OneWay}"
-                    SelectedTemplate="{StaticResource AccountChoiceTemplate}"
-                    Chosen="AccountPicker_Chosen" />
-            </StackPanel>
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="12">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE77B;"
+                            FontSize="20"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            VerticalAlignment="Top"
+                            Margin="0,2,0,0" />
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock x:Uid="Settings/AccountHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Uid="Settings/AccountHint"
+                                TextWrapping="Wrap"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                    <controls:SearchablePicker
+                        x:Name="AccountPicker"
+                        MinWidth="320"
+                        MaxWidth="420"
+                        HorizontalAlignment="Left"
+                        ItemsSource="{x:Bind ViewModel.Accounts, Mode=OneWay}"
+                        ItemTemplate="{StaticResource AccountChoiceTemplate}"
+                        SelectedItem="{x:Bind ViewModel.SelectedAccount, Mode=OneWay}"
+                        SelectedTemplate="{StaticResource AccountChoiceTemplate}"
+                        Chosen="AccountPicker_Chosen" />
+                </StackPanel>
+            </Border>
 
             <!-- Characters of the active account: the name and class the app shows for each one. Edit and reset are per row. -->
-            <StackPanel Spacing="6">
-                <TextBlock x:Uid="Settings/CharactersHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                <TextBlock
-                    x:Uid="Settings/CharactersHint"
-                    TextWrapping="Wrap"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock
-                    x:Name="CharactersMessageText"
-                    TextWrapping="Wrap"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <controls:SearchableList x:Name="CharacterList" />
-            </StackPanel>
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="12">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE716;"
+                            FontSize="20"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            VerticalAlignment="Top"
+                            Margin="0,2,0,0" />
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock x:Uid="Settings/CharactersHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Uid="Settings/CharactersHint"
+                                TextWrapping="Wrap"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock
+                                x:Name="CharactersMessageText"
+                                TextWrapping="Wrap"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                    <controls:SearchableList x:Name="CharacterList" />
+                </StackPanel>
+            </Border>
 
             <!-- OCR scan of the character selection screen: reads names and classes, shows them over the game, and saves them. -->
-            <StackPanel Spacing="8">
-                <TextBlock x:Uid="Settings/ScanHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                <TextBlock
-                    x:Uid="Settings/ScanHint"
-                    TextWrapping="Wrap"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button
-                        x:Uid="Settings/ScanStartButton"
-                        Click="ScanStart_Click"
-                        IsEnabled="{x:Bind Scan.CanStart, Mode=OneWay}"
-                        Style="{StaticResource AccentButtonStyle}" />
-                    <Button
-                        x:Uid="Settings/ScanFinishButton"
-                        Click="ScanFinish_Click"
-                        IsEnabled="{x:Bind Scan.CanFinish, Mode=OneWay}" />
-                    <Button
-                        x:Uid="Settings/ScanCancelButton"
-                        Click="ScanCancel_Click"
-                        IsEnabled="{x:Bind Scan.CanCancel, Mode=OneWay}" />
-                </StackPanel>
-                <TextBlock
-                    Text="{x:Bind Scan.CountText, Mode=OneWay}"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <InfoBar
-                    IsOpen="{x:Bind Scan.IsMessageOpen, Mode=TwoWay}"
-                    Severity="{x:Bind ToInfoBarSeverity(Scan.Severity), Mode=OneWay}"
-                    Message="{x:Bind Scan.Message, Mode=OneWay}"
-                    IsClosable="True" />
-                <StackPanel
-                    Spacing="8"
-                    Visibility="{x:Bind Scan.HasReview, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock x:Uid="Settings/ScanReviewHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                    <TextBlock
-                        x:Uid="Settings/ScanReviewHint"
-                        TextWrapping="Wrap"
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                    <ScrollViewer MaxHeight="420" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl
-                            ItemsSource="{x:Bind Scan.Rows, Mode=OneWay}"
-                            ItemTemplate="{StaticResource ScanRowTemplate}" />
-                    </ScrollViewer>
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="12">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE890;"
+                            FontSize="20"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            VerticalAlignment="Top"
+                            Margin="0,2,0,0" />
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock x:Uid="Settings/ScanHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Uid="Settings/ScanHint"
+                                TextWrapping="Wrap"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button
-                            x:Uid="Settings/ScanSaveButton"
-                            Click="ScanSave_Click"
-                            IsEnabled="{x:Bind Scan.CanSave, Mode=OneWay}"
+                            x:Uid="Settings/ScanStartButton"
+                            Click="ScanStart_Click"
+                            IsEnabled="{x:Bind Scan.CanStart, Mode=OneWay}"
                             Style="{StaticResource AccentButtonStyle}" />
-                        <Button x:Uid="Settings/ScanDiscardButton" Click="ScanCancel_Click" />
+                        <Button
+                            x:Uid="Settings/ScanFinishButton"
+                            Click="ScanFinish_Click"
+                            IsEnabled="{x:Bind Scan.CanFinish, Mode=OneWay}" />
+                        <Button
+                            x:Uid="Settings/ScanCancelButton"
+                            Click="ScanCancel_Click"
+                            IsEnabled="{x:Bind Scan.CanCancel, Mode=OneWay}" />
+                        <TextBlock
+                            Text="{x:Bind Scan.CountText, Mode=OneWay}"
+                            FontSize="12"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <InfoBar
+                        IsOpen="{x:Bind Scan.IsMessageOpen, Mode=TwoWay}"
+                        Severity="{x:Bind ToInfoBarSeverity(Scan.Severity), Mode=OneWay}"
+                        Message="{x:Bind Scan.Message, Mode=OneWay}"
+                        IsClosable="True" />
+                    <StackPanel
+                        Spacing="8"
+                        Visibility="{x:Bind Scan.HasReview, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock x:Uid="Settings/ScanReviewHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                        <TextBlock
+                            x:Uid="Settings/ScanReviewHint"
+                            TextWrapping="Wrap"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <ScrollViewer MaxHeight="420" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl
+                                ItemsSource="{x:Bind Scan.Rows, Mode=OneWay}"
+                                ItemTemplate="{StaticResource ScanRowTemplate}" />
+                        </ScrollViewer>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button
+                                x:Uid="Settings/ScanSaveButton"
+                                Click="ScanSave_Click"
+                                IsEnabled="{x:Bind Scan.CanSave, Mode=OneWay}"
+                                Style="{StaticResource AccentButtonStyle}" />
+                            <Button x:Uid="Settings/ScanDiscardButton" Click="ScanCancel_Click" />
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
-            </StackPanel>
+            </Border>
 
             <!-- Black Desert folder: browse, or type a path and save it. A folder without UserCache is refused. -->
-            <StackPanel Spacing="6">
-                <TextBlock x:Uid="Settings/FolderHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                <TextBlock
-                    x:Uid="Settings/FolderHint"
-                    TextWrapping="Wrap"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <Grid ColumnSpacing="8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBox
-                        x:Uid="Settings/FolderBox"
-                        Text="{x:Bind ViewModel.DataRootText, Mode=TwoWay}" />
-                    <Button Grid.Column="1" x:Uid="Settings/FolderBrowseButton" Click="Browse_Click" />
-                    <Button
-                        Grid.Column="2"
-                        x:Uid="Settings/FolderSaveButton"
-                        Click="SaveFolder_Click"
-                        Style="{StaticResource AccentButtonStyle}" />
-                </Grid>
-                <Button x:Uid="Settings/SetupButton" Click="Setup_Click" />
-            </StackPanel>
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="12">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE8B7;"
+                            FontSize="20"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            VerticalAlignment="Top"
+                            Margin="0,2,0,0" />
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock x:Uid="Settings/FolderHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Uid="Settings/FolderHint"
+                                TextWrapping="Wrap"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox
+                            x:Uid="Settings/FolderBox"
+                            Text="{x:Bind ViewModel.DataRootText, Mode=TwoWay}" />
+                        <Button Grid.Column="1" x:Uid="Settings/FolderBrowseButton" Click="Browse_Click" />
+                        <Button
+                            Grid.Column="2"
+                            x:Uid="Settings/FolderSaveButton"
+                            Click="SaveFolder_Click"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button x:Uid="Settings/SetupButton" Click="Setup_Click" />
+                        <TextBlock
+                            x:Uid="Settings/SetupHint"
+                            FontSize="12"
+                            VerticalAlignment="Center"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
 
             <!-- Language: es or en-US. Takes effect after a restart. -->
-            <StackPanel Spacing="6">
-                <TextBlock x:Uid="Settings/LanguageHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                <ComboBox
-                    x:Name="LanguageBox"
-                    x:Uid="Settings/LanguageBox"
-                    MinWidth="320"
-                    ItemsSource="{x:Bind ViewModel.Languages, Mode=OneWay}"
-                    SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=OneWay}"
-                    SelectionChanged="LanguageBox_SelectionChanged">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="vm:LanguageChoice">
-                            <TextBlock Text="{x:Bind Name, Mode=OneTime}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-            </StackPanel>
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="12">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE774;"
+                            FontSize="20"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            VerticalAlignment="Top"
+                            Margin="0,2,0,0" />
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock x:Uid="Settings/LanguageHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Uid="Settings/LanguageHint"
+                                TextWrapping="Wrap"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                    <ComboBox
+                        x:Name="LanguageBox"
+                        x:Uid="Settings/LanguageBox"
+                        MinWidth="320"
+                        MaxWidth="420"
+                        HorizontalAlignment="Left"
+                        ItemsSource="{x:Bind ViewModel.Languages, Mode=OneWay}"
+                        SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=OneWay}"
+                        SelectionChanged="LanguageBox_SelectionChanged">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:LanguageChoice">
+                                <TextBlock Text="{x:Bind Name, Mode=OneTime}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+            </Border>
 
             <!-- Updates: the version, the last check, a manual check, the install button (only when a newer release exists),
                  the progress of a download, and the switch for the check at startup. Nothing is installed without the button. -->
-            <StackPanel Spacing="8">
-                <TextBlock x:Uid="Settings/UpdatesHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                <TextBlock Text="{x:Bind Updates.CurrentVersionLine, Mode=OneWay}" />
-                <TextBlock
-                    Text="{x:Bind Updates.LastCheckLine, Mode=OneWay}"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button x:Uid="Settings/UpdatesCheckButton" Command="{x:Bind Updates.CheckNowCommand}" />
-                    <ProgressRing
-                        Width="20"
-                        Height="20"
-                        IsActive="{x:Bind Updates.IsChecking, Mode=OneWay}"
-                        Visibility="{x:Bind Updates.IsChecking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                    <Button
-                        Command="{x:Bind Updates.InstallCommand}"
-                        Content="{x:Bind Updates.InstallActionText, Mode=OneWay}"
-                        Style="{StaticResource AccentButtonStyle}"
-                        Visibility="{x:Bind Updates.HasRelease, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                    <Button
-                        x:Uid="Settings/UpdatesCancelButton"
-                        Command="{x:Bind Updates.CancelDownloadCommand}"
-                        Visibility="{x:Bind Updates.CanCancelDownload, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="12">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE895;"
+                            FontSize="20"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            VerticalAlignment="Top"
+                            Margin="0,2,0,0" />
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock x:Uid="Settings/UpdatesHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Uid="Settings/UpdatesHint"
+                                TextWrapping="Wrap"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{x:Bind Updates.CurrentVersionLine, Mode=OneWay}" />
+                        <TextBlock
+                            Text="{x:Bind Updates.LastCheckLine, Mode=OneWay}"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Uid="Settings/UpdatesCheckButton" Command="{x:Bind Updates.CheckNowCommand}" />
+                        <ProgressRing
+                            Width="20"
+                            Height="20"
+                            IsActive="{x:Bind Updates.IsChecking, Mode=OneWay}"
+                            Visibility="{x:Bind Updates.IsChecking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <Button
+                            Command="{x:Bind Updates.InstallCommand}"
+                            Content="{x:Bind Updates.InstallActionText, Mode=OneWay}"
+                            Style="{StaticResource AccentButtonStyle}"
+                            Visibility="{x:Bind Updates.HasRelease, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <Button
+                            x:Uid="Settings/UpdatesCancelButton"
+                            Command="{x:Bind Updates.CancelDownloadCommand}"
+                            Visibility="{x:Bind Updates.CanCancelDownload, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                    <ProgressBar
+                        Maximum="100"
+                        Value="{x:Bind Updates.DownloadPercent, Mode=OneWay}"
+                        Visibility="{x:Bind Updates.IsDownloading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock Text="{x:Bind Updates.StatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
+                    <TextBlock
+                        x:Uid="Settings/UpdatesPortableHint"
+                        TextWrapping="Wrap"
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Visibility="{x:Bind Updates.IsPortable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    <ToggleSwitch
+                        x:Uid="Settings/UpdatesStartupToggle"
+                        IsOn="{x:Bind Updates.CheckOnStartup, Mode=OneWay}"
+                        Toggled="UpdatesStartup_Toggled" />
                 </StackPanel>
-                <ProgressBar
-                    Maximum="100"
-                    Value="{x:Bind Updates.DownloadPercent, Mode=OneWay}"
-                    Visibility="{x:Bind Updates.IsDownloading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                <TextBlock
-                    Text="{x:Bind Updates.StatusMessage, Mode=OneWay}"
-                    TextWrapping="Wrap" />
-                <TextBlock
-                    x:Uid="Settings/UpdatesPortableHint"
-                    TextWrapping="Wrap"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Visibility="{x:Bind Updates.IsPortable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                <ToggleSwitch
-                    x:Uid="Settings/UpdatesStartupToggle"
-                    IsOn="{x:Bind Updates.CheckOnStartup, Mode=OneWay}"
-                    Toggled="UpdatesStartup_Toggled" />
-            </StackPanel>
+            </Border>
 
             <!-- The reminder before a write to a character. Turn it on again after "Don't show again". -->
-            <StackPanel Spacing="6">
-                <ToggleSwitch
-                    x:Uid="Settings/ShowWriteHintToggle"
-                    IsOn="{x:Bind ViewModel.ShowWriteHint, Mode=OneWay}"
-                    Toggled="ShowWriteHint_Toggled" />
-                <TextBlock
-                    x:Uid="Settings/ShowWriteHintHint"
-                    TextWrapping="Wrap"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-            </StackPanel>
+            <Border Style="{StaticResource SettingsCard}">
+                <StackPanel Spacing="12">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xEA8F;"
+                            FontSize="20"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            VerticalAlignment="Top"
+                            Margin="0,2,0,0" />
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock x:Uid="Settings/WarningsHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Uid="Settings/WarningsHint"
+                                TextWrapping="Wrap"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                    <ToggleSwitch
+                        x:Uid="Settings/ShowWriteHintToggle"
+                        IsOn="{x:Bind ViewModel.ShowWriteHint, Mode=OneWay}"
+                        Toggled="ShowWriteHint_Toggled" />
+                    <TextBlock
+                        x:Uid="Settings/ShowWriteHintHint"
+                        TextWrapping="Wrap"
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </Border>
 
             <InfoBar
                 x:Name="StatusBar"
