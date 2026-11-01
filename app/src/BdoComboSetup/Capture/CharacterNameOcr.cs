@@ -78,12 +78,17 @@ internal sealed class CharacterNameOcr
         {
             foreach (var word in line.Words)
             {
+                var rect = word.BoundingRect;
+                var (red, green, blue) = AverageColor(frame, rect);
                 words.Add(new ScreenTextWord(
                     word.Text,
-                    word.BoundingRect.X,
-                    word.BoundingRect.Y,
-                    word.BoundingRect.Width,
-                    word.BoundingRect.Height));
+                    rect.X,
+                    rect.Y,
+                    rect.Width,
+                    rect.Height,
+                    red,
+                    green,
+                    blue));
             }
         }
 
@@ -100,8 +105,41 @@ internal sealed class CharacterNameOcr
             CharacterScreenVisuals.IsSelectionScreen(frame));
     }
 
-    private static OcrEngine? ChooseEngine()
+    /// <summary>The average color of a word box, ignoring the dark background, so the memo color can be told apart.</summary>
+    private static (double Red, double Green, double Blue) AverageColor(GameScreenFrame frame, Windows.Foundation.Rect rect)
     {
+        var left = Math.Clamp((int)rect.X, 0, frame.Width - 1);
+        var top = Math.Clamp((int)rect.Y, 0, frame.Height - 1);
+        var right = Math.Clamp((int)(rect.X + rect.Width), left + 1, frame.Width);
+        var bottom = Math.Clamp((int)(rect.Y + rect.Height), top + 1, frame.Height);
+        double red = 0;
+        double green = 0;
+        double blue = 0;
+        var count = 0;
+        for (var y = top; y < bottom; y += 2)
+        {
+            for (var x = left; x < right; x += 2)
+            {
+                var offset = ((y * frame.Width) + x) * 4;
+                var b = frame.Bgra[offset];
+                var g = frame.Bgra[offset + 1];
+                var r = frame.Bgra[offset + 2];
+                if ((0.299 * r) + (0.587 * g) + (0.114 * b) < 25)
+                {
+                    continue;
+                }
+
+                red += r;
+                green += g;
+                blue += b;
+                count++;
+            }
+        }
+
+        return count == 0 ? (0, 0, 0) : (red / count, green / count, blue / count);
+    }
+
+    private static OcrEngine? ChooseEngine()    {
         var available = OcrEngine.AvailableRecognizerLanguages;
         foreach (var tag in PreferredLanguages)
         {

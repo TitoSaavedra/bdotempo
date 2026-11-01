@@ -35,11 +35,12 @@ public sealed class CharacterScanRow : ObservableObject
         Pcid = entry.Pcid;
         Level = reading.Level;
         LevelText = reading.Level is int level ? localizer.Format("Characters.ScanLevel", level) : string.Empty;
+        Memo = string.IsNullOrWhiteSpace(reading.Memo) ? null : reading.Memo.Trim();
         PreviousName = entry.Name;
         Name = string.IsNullOrWhiteSpace(reading.Name) ? entry.Name : reading.Name.Trim();
 
         Classes = classes;
-        var classType = detectedClass ?? (entry.ClassSource == ClassSource.Custom ? entry.ClassType : null);
+        var classType = detectedClass ?? entry.ClassType;
         _class = classes.FirstOrDefault(choice => choice.ClassType == classType) ?? classes[0];
     }
 
@@ -53,6 +54,13 @@ public sealed class CharacterScanRow : ObservableObject
 
     /// <summary>"Nv. 61", or empty when the level was not read.</summary>
     public string LevelText { get; }
+
+    /// <summary>The orange memo the game shows above the level ("FARM", "KUTUM"...), or null when the row has none.</summary>
+    public string? Memo { get; }
+
+    public string MemoText => Memo ?? string.Empty;
+
+    public bool HasMemo => Memo is not null;
 
     /// <summary>The name the roster showed before the scan, for comparison.</summary>
     public string PreviousName { get; }

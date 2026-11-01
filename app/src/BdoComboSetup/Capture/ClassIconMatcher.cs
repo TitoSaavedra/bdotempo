@@ -8,20 +8,24 @@ using Windows.Storage.Streams;
 namespace BdoComboSetup.Capture;
 
 /// <summary>
-/// Guesses the class of a character row from the icon the selection screen draws next to the level. The icons of the
-/// catalog are decoded once at 16x16 as luminance signatures; the icon of the row is sampled at the same size and compared
-/// by normalized correlation. A weak or ambiguous match is reported as "no class": the review table lets the user set it.
+/// Guesses the class of a character row from the icon the selection screen draws left of the level. The icon is found as
+/// the bright shape in the row cell (whatever the row background is), fitted to a square without distorting it, and
+/// compared with the class icons of the pack decoded the same way. A weak or ambiguous match is reported as "no class":
+/// the review table lets the user set it.
 /// </summary>
 internal sealed class ClassIconMatcher
 {
     /// <summary>Sampling size of the signatures.</summary>
     private const int SampleSize = 16;
 
+    /// <summary>The class icons are decoded at this size before their content is fitted to the signature.</summary>
+    private const int DecodeSize = 32;
+
     /// <summary>A match below this correlation is not trusted.</summary>
-    private const float MinimumScore = 0.55f;
+    private const float MinimumScore = 0.45f;
 
     /// <summary>The best class must beat the second one by this margin, or the guess is ambiguous.</summary>
-    private const float MinimumMargin = 0.04f;
+    private const float MinimumMargin = 0.05f;
 
     private readonly IReadOnlyList<(int ClassType, float[] Signature)> _icons;
     private readonly AppLogger _logger;
@@ -108,9 +112,16 @@ internal sealed class ClassIconMatcher
             return null;
         }
 
+        _logger.Debug("character_scan.class_matched", "The class icon was recognized", new Dictionary<string, object?>
+        {
+            ["class_type"] = bestClass,
+            ["score"] = Math.Round(best, 3),
+            ["margin"] = Math.Round(best - second, 3),
+        });
         return bestClass;
     }
 
+    /// <summary>Decodes a class icon and fits its opaque content into the signature square.</summary>
     private static async Task<float[]?> SignatureOfAsync(Stream png)
     {
         using var memory = new MemoryStream();
@@ -133,58 +144,140 @@ internal sealed class ClassIconMatcher
             BitmapAlphaMode.Premultiplied,
             new BitmapTransform
             {
-                ScaledWidth = SampleSize,
-                ScaledHeight = SampleSize,
+                ScaledWidth = DecodeSize,
+                ScaledHeight = DecodeSize,
                 InterpolationMode = BitmapInterpolationMode.Fant,
             },
             ExifOrientationMode.IgnoreExifOrientation,
             ColorManagementMode.DoNotColorManage);
-        return ToSignature(bitmap);
-    }
 
-    /// <summary>The luminance of the icon, with the transparency applied, normalized for the correlation.</summary>
-    private static float[]? ToSignature(SoftwareBitmap bitmap)
-    {
-        var bytes = new byte[SampleSize * SampleSize * 4];
-        var buffer = new Windows.Storage.Streams.Buffer((uint)bytes.Length);
+        var pixels = new byte[DecodeSize * DecodeSize * 4];
+        var buffer = new Windows.Storage.Streams.Buffer((uint)pixels.Length);
         bitmap.CopyToBuffer(buffer);
-        using var reader = DataReader.FromBuffer(buffer);
-        reader.ReadBytes(bytes);
-
-        var values = new float[SampleSize * SampleSize];
-        for (var index = 0; index < values.Length; index++)
+        using (var reader = DataReader.FromBuffer(buffer))
         {
-            var offset = index * 4;
-            values[index] = Luminance(bytes[offset + 2], bytes[offset + 1], bytes[offset]) * (bytes[offset + 3] / 255f);
+            reader.ReadBytes(pixels);
         }
 
-        return Normalize(values);
+        var values = new float[DecodeSize * DecodeSize];
+        var left = DecodeSize;
+        var top = DecodeSize;
+        var right = -1;
+        var bottom = -1;
+        for (var y = 0; y < DecodeSize; y++)
+        {
+            for (var x = 0; x < DecodeSize; x++)
+            {
+                var offset = ((y * DecodeSize) + x) * 4;
+                var alpha = pixels[offset + 3];
+                values[(y * DecodeSize) + x] = Luminance(pixels[offset + 2], pixels[offset + 1], pixels[offset]) * (alpha / 255f);
+                if (alpha > 40)
+                {
+                    left = Math.Min(left, x);
+                    top = Math.Min(top, y);
+                    right = Math.Max(right, x);
+                    bottom = Math.Max(bottom, y);
+                }
+            }
+        }
+
+        return right < left || bottom < top
+            ? null
+            : Fit(values, DecodeSize, left, top, right, bottom);
     }
 
-    /// <summary>The icon of the row, sampled to 16x16. It sits just left of the level text.</summary>
+    /// <summary>
+    /// The icon of the row: the bright shape in the cell left of the level text. The cell is found from the level position
+    /// and the row height, so it works with the selected (gold) row and with the dark rows.
+    /// </summary>
     private static float[]? CropSignature(GameScreenFrame frame, CharacterRowCandidate row)
     {
         var height = (int)Math.Max(1, row.Bottom - row.Top);
-        var left = (int)Math.Max(0, row.LevelLeft - (height * 1.25));
-        var right = (int)Math.Max(left + 4, row.LevelLeft - 3);
-        var top = (int)Math.Max(0, row.Top);
-        var bottom = (int)Math.Min(frame.Height, row.Bottom);
-        if (right - left < 6 || bottom - top < 6)
+        var left = (int)Math.Max(0, row.LevelLeft - (height * 2.2));
+        var right = (int)Math.Min(frame.Width - 1, row.LevelLeft - 4);
+        var top = (int)Math.Max(0, row.Top - (height * 0.9));
+        var bottom = (int)Math.Min(frame.Height - 1, row.Bottom + (height * 0.9));
+        var width = right - left + 1;
+        var cropHeight = bottom - top + 1;
+        if (width < 8 || cropHeight < 8)
         {
             return null;
         }
 
-        var values = new float[SampleSize * SampleSize];
-        for (var y = 0; y < SampleSize; y++)
+        var values = new float[width * cropHeight];
+        for (var y = 0; y < cropHeight; y++)
         {
-            var sourceY = top + (int)((bottom - top) * (y + 0.5) / SampleSize);
-            sourceY = Math.Clamp(sourceY, 0, frame.Height - 1);
-            for (var x = 0; x < SampleSize; x++)
+            for (var x = 0; x < width; x++)
             {
-                var sourceX = left + (int)((right - left) * (x + 0.5) / SampleSize);
-                sourceX = Math.Clamp(sourceX, 0, frame.Width - 1);
-                var offset = ((sourceY * frame.Width) + sourceX) * 4;
-                values[(y * SampleSize) + x] = Luminance(frame.Bgra[offset + 2], frame.Bgra[offset + 1], frame.Bgra[offset]);
+                var offset = (((top + y) * frame.Width) + (left + x)) * 4;
+                values[(y * width) + x] = Luminance(frame.Bgra[offset + 2], frame.Bgra[offset + 1], frame.Bgra[offset]);
+            }
+        }
+
+        var sorted = values.ToArray();
+        Array.Sort(sorted);
+        var background = sorted[sorted.Length / 2];
+        var threshold = Math.Max(background + 35, 70);
+        var iconLeft = width;
+        var iconTop = cropHeight;
+        var iconRight = -1;
+        var iconBottom = -1;
+        for (var y = 0; y < cropHeight; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                if (values[(y * width) + x] <= threshold)
+                {
+                    continue;
+                }
+
+                iconLeft = Math.Min(iconLeft, x);
+                iconTop = Math.Min(iconTop, y);
+                iconRight = Math.Max(iconRight, x);
+                iconBottom = Math.Max(iconBottom, y);
+            }
+        }
+
+        if (iconRight < iconLeft || iconBottom < iconTop)
+        {
+            return null;
+        }
+
+        var iconWidth = iconRight - iconLeft + 1;
+        var iconHeight = iconBottom - iconTop + 1;
+        var ratio = iconWidth / (float)iconHeight;
+        if (iconWidth < 6 || iconHeight < 6 || ratio is < 0.3f or > 3.4f)
+        {
+            // Too small, or a text line slipped into the cell.
+            return null;
+        }
+
+        return Fit(values, width, iconLeft, iconTop, iconRight, iconBottom);
+    }
+
+    /// <summary>Fits the content box into the square signature, keeping the aspect ratio and centring it.</summary>
+    private static float[]? Fit(float[] source, int sourceWidth, int left, int top, int right, int bottom)
+    {
+        var width = right - left + 1;
+        var height = bottom - top + 1;
+        if (width < 3 || height < 3)
+        {
+            return null;
+        }
+
+        var scale = SampleSize / (float)Math.Max(width, height);
+        var fittedWidth = Math.Max(1, (int)Math.Round(width * scale));
+        var fittedHeight = Math.Max(1, (int)Math.Round(height * scale));
+        var offsetX = (SampleSize - fittedWidth) / 2;
+        var offsetY = (SampleSize - fittedHeight) / 2;
+        var values = new float[SampleSize * SampleSize];
+        for (var y = 0; y < fittedHeight; y++)
+        {
+            for (var x = 0; x < fittedWidth; x++)
+            {
+                var sourceX = left + (int)(x / scale);
+                var sourceY = top + (int)(y / scale);
+                values[((offsetY + y) * SampleSize) + offsetX + x] = source[(sourceY * sourceWidth) + sourceX];
             }
         }
 

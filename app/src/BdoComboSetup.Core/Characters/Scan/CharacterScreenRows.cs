@@ -3,8 +3,16 @@ using System.Text.RegularExpressions;
 
 namespace BdoComboSetup.Core.Characters;
 
-/// <summary>One word the screen reader recognized, with its box in the pixels of the captured frame.</summary>
-public sealed record ScreenTextWord(string Text, double X, double Y, double Width, double Height);
+/// <summary>One word the screen reader recognized, with its box and its average color in the captured frame.</summary>
+public sealed record ScreenTextWord(
+    string Text,
+    double X,
+    double Y,
+    double Width,
+    double Height,
+    double Red = 0,
+    double Green = 0,
+    double Blue = 0);
 
 /// <summary>
 /// One row of the character selection screen: the level and the name, with the box to draw over the game. The box starts
@@ -20,7 +28,8 @@ public sealed record CharacterRowCandidate(
     double Top,
     double Right,
     double Bottom,
-    double LevelLeft);
+    double LevelLeft,
+    string? Memo = null);
 
 /// <summary>
 /// Reads the rows of the character selection screen out of the words of an OCR pass. The screen shows, one row per
@@ -32,13 +41,13 @@ public static partial class CharacterScreenRowParser
     /// <summary>The highest level the game lets a character reach; anything above is a misread number.</summary>
     private const int MaxLevel = 100;
 
-    [GeneratedRegex(@"^(?:n[vy]|lv)\.?\s*(\d{1,3})$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^(?:n[vyw]|lv)[\.,:;]?\s*([0-9lIO|]{1,3})$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex LevelWithNumber();
 
-    [GeneratedRegex(@"^(?:n[vy]|lv)\.?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^(?:n[vyw]|lv)[\.,:;]?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex LevelWord();
 
-    [GeneratedRegex(@"^\d{1,3}$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^[0-9lIO|]{1,3}$", RegexOptions.CultureInvariant)]
     private static partial Regex NumberWord();
 
     [GeneratedRegex(@"[\p{L}\p{N}]", RegexOptions.CultureInvariant)]
@@ -56,17 +65,50 @@ public static partial class CharacterScreenRowParser
         }
 
         var rows = new List<CharacterRowCandidate>();
-        foreach (var band in Bands(words))
+        var bands = Bands(words);
+        foreach (var band in bands)
         {
             if (ReadBand(band, frameWidth, frameHeight) is { } row)
             {
-                rows.Add(row);
+                rows.Add(row with { Memo = FindMemo(band, bands, row) });
             }
         }
 
         rows.Sort((left, right) => left.Top.CompareTo(right.Top));
         return MergeOverlapping(FilterHeights(rows));
     }
+
+    /// <summary>
+    /// The memo of a row is the warm (orange) line just above its level, such as "FARM" or "KUTUM". Not every character has
+    /// one; the gray location line below the name is not a memo. Only color tells them apart, so no text is guessed.
+    /// </summary>
+    private static string? FindMemo(Band band, List<Band> bands, CharacterRowCandidate row)
+    {
+        var height = Math.Max(1, row.Bottom - row.Top);
+        Band? best = null;
+        var bestGap = double.MaxValue;
+        foreach (var other in bands)
+        {
+            if (ReferenceEquals(other, band) || other.Bottom > band.Top - 1 || !other.IsWarm)
+            {
+                continue;
+            }
+
+            var gap = band.Top - other.Bottom;
+            if (gap > height * 1.4 || gap >= bestGap || other.Text.Length == 0 || HasLevel(other))
+            {
+                continue;
+            }
+
+            best = other;
+            bestGap = gap;
+        }
+
+        return best?.Text;
+    }
+
+    /// <summary>True when the band holds a level word (it is a character row, not a memo).</summary>
+    private static bool HasLevel(Band band) => FindLevel(band.Words.OrderBy(word => word.X).ToList()).Level is not null;
 
     /// <summary>
     /// Drops rows whose height is far from the median: the list rows are all the same height, so a line of another size
@@ -118,31 +160,7 @@ public static partial class CharacterScreenRowParser
     private static CharacterRowCandidate? ReadBand(Band band, double frameWidth, double frameHeight)
     {
         var words = band.Words.OrderBy(word => word.X).ToList();
-        int? level = null;
-        var levelIndex = -1;
-        for (var index = 0; index < words.Count; index++)
-        {
-            var text = words[index].Text.Trim();
-            var combined = LevelWithNumber().Match(text);
-            if (combined.Success && ParseLevel(combined.Groups[1].Value) is { } parsed)
-            {
-                level = parsed;
-                levelIndex = index;
-                break;
-            }
-
-            if (LevelWord().IsMatch(text) && index + 1 < words.Count)
-            {
-                var next = words[index + 1].Text.Trim();
-                if (NumberWord().IsMatch(next) && ParseLevel(next) is { } following)
-                {
-                    level = following;
-                    levelIndex = index;
-                    break;
-                }
-            }
-        }
-
+        var (level, levelIndex) = FindLevel(words);
         if (level is null || levelIndex < 0)
         {
             return null;
@@ -177,10 +195,42 @@ public static partial class CharacterScreenRowParser
             levelLeft);
     }
 
-    private static int? ParseLevel(string text) =>
-        int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var level) && level is > 0 and <= MaxLevel
+    /// <summary>The level word and its index in the band, or (null, -1) when the band has no level.</summary>
+    private static (int? Level, int Index) FindLevel(List<ScreenTextWord> words)
+    {
+        for (var index = 0; index < words.Count; index++)
+        {
+            var text = words[index].Text.Trim();
+            var combined = LevelWithNumber().Match(text);
+            if (combined.Success && ParseLevel(combined.Groups[1].Value) is { } parsed)
+            {
+                return (parsed, index);
+            }
+
+            if (LevelWord().IsMatch(text) && index + 1 < words.Count)
+            {
+                var next = words[index + 1].Text.Trim();
+                if (NumberWord().IsMatch(next) && ParseLevel(next) is { } following)
+                {
+                    return (following, index);
+                }
+            }
+        }
+
+        return (null, -1);
+    }
+
+    private static int? ParseLevel(string text)    {
+        // OCR often reads the 1 of a level as l, I or |, and the 0 as O.
+        var normalized = text
+            .Replace('l', '1')
+            .Replace('I', '1')
+            .Replace('|', '1')
+            .Replace('O', '0');
+        return int.TryParse(normalized, NumberStyles.None, CultureInfo.InvariantCulture, out var level) && level is > 0 and <= MaxLevel
             ? level
             : null;
+    }
 
     /// <summary>
     /// One row can arrive split in two bands (the level and the name at slightly different heights). When their boxes
@@ -228,6 +278,31 @@ public static partial class CharacterScreenRowParser
         public double Center => _center;
 
         public double Height { get; private set; }
+
+        public double Top => Words.Min(word => word.Y);
+
+        public double Bottom => Words.Max(word => word.Y + word.Height);
+
+        /// <summary>The band's words joined in reading order (left to right).</summary>
+        public string Text => string.Join(" ", Words.OrderBy(word => word.X).Select(word => word.Text.Trim()));
+
+        /// <summary>True when the words are warm (orange/gold): the memos are, the location lines are gray.</summary>
+        public bool IsWarm
+        {
+            get
+            {
+                var colored = Words.Where(word => word.Red + word.Green + word.Blue > 0).ToList();
+                if (colored.Count == 0)
+                {
+                    return false;
+                }
+
+                var red = colored.Average(word => word.Red);
+                var green = colored.Average(word => word.Green);
+                var blue = colored.Average(word => word.Blue);
+                return red >= 100 && red - blue >= 25 && red >= green;
+            }
+        }
 
         public void Add(ScreenTextWord word)
         {

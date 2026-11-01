@@ -75,6 +75,11 @@
                 <StackPanel Grid.Column="1" Spacing="2">
                     <TextBox Text="{x:Bind Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" MaxLength="40" />
                     <TextBlock
+                        Text="{x:Bind MemoText, Mode=OneTime}"
+                        FontSize="11"
+                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                        Visibility="{x:Bind HasMemo, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock
                         Text="{x:Bind PreviousText, Mode=OneTime}"
                         FontSize="11"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
