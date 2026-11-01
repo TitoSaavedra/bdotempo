@@ -101,6 +101,22 @@ public sealed partial class MainWindow : Window
         ContentFrame.Navigate(typeof(SetupPage), firstRun);
     }
 
+    /// <summary>Opens the Editor page (the nav item, or the button of the Combos page).</summary>
+    public void OpenEditor()
+    {
+        if (ReferenceEquals(Nav.SelectedItem, PreviewItem))
+        {
+            if (ContentFrame.CurrentSourcePageType != typeof(PreviewPage))
+            {
+                ContentFrame.Navigate(typeof(PreviewPage));
+            }
+
+            return;
+        }
+
+        Nav.SelectedItem = PreviewItem;
+    }
+
     /// <summary>
     /// Leaves the initial setup: the navigation is shown again and the page of the app opens. The settings just saved become
     /// the running ones, so the page does not ask for a restart.

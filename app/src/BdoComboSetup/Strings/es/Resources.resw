@@ -45,7 +45,7 @@
     <data name="AppTitle" xml:space="preserve"><value>BDOTempo</value></data>
   <data name="AppTitleBar.Title" xml:space="preserve"><value>BDOTempo</value></data>
   <data name="NavApplyItem.Content" xml:space="preserve"><value>Combos</value></data>
-  <data name="NavPreviewItem.Content" xml:space="preserve"><value>Editor de slots</value></data>
+  <data name="NavPreviewItem.Content" xml:space="preserve"><value>Editor</value></data>
   <data name="Preview.CaptureToggle.Header" xml:space="preserve"><value>Capturar el juego</value></data>
   <data name="Preview.CaptureToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Muestra el juego en vivo detrás de los slots. Desactívalo para no capturar la ventana del juego.</value></data>
   <data name="Apply.Title.Text" xml:space="preserve">
@@ -348,6 +348,15 @@
   <data name="Apply.AddonsHint.Text" xml:space="preserve">
     <value>Los adicionales de habilidad que recomienda la guía. Solo se muestran: no se escriben en el personaje.</value>
   </data>
+  <data name="Preview.Title.Text" xml:space="preserve">
+    <value>Editor</value>
+  </data>
+  <data name="Preview.ApplyButton.Content" xml:space="preserve">
+    <value>Aplicar al personaje</value>
+  </data>
+  <data name="Apply.OpenEditorButton.Content" xml:space="preserve">
+    <value>Abrir el editor</value>
+  </data>
   <data name="Preview.LayoutBox.Header" xml:space="preserve">
     <value>Disposición</value>
   </data>
@@ -421,7 +430,7 @@
     <value>No se pudo capturar la ventana del juego: fondo negro.</value>
   </data>
   <data name="Preview.SlotEditHint.Text" xml:space="preserve">
-    <value>Haz clic en un slot de enfriamiento para cambiar su habilidad. La guía no cambia: el cambio queda en tu combo.</value>
+    <value>Estas son las ranuras del combo seleccionado. Haz clic en una casilla de enfriamiento para cambiar su habilidad; cuando esté listo, pulsa Aplicar al personaje. La guía no cambia.</value>
   </data>
   <data name="Preview.SlotEdit.NoCombo" xml:space="preserve">
     <value>Elige una clase y una guía en Combos para cambiar habilidades.</value>

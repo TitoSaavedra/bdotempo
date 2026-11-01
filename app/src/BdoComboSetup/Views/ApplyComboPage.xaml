@@ -410,8 +410,8 @@
                 <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                     <Button x:Uid="Apply/DryRunButton" Command="{x:Bind ViewModel.DryRunCommand}" />
                     <Button
-                        x:Uid="Apply/ApplyButton"
-                        Click="Apply_Click"
+                        x:Uid="Apply/OpenEditorButton"
+                        Click="OpenEditor_Click"
                         IsEnabled="{x:Bind ViewModel.CanRun, Mode=OneWay}"
                         Style="{StaticResource AccentButtonStyle}" />
                 </StackPanel>

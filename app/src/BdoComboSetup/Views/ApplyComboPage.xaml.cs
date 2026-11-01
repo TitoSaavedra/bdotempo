@@ -146,78 +146,15 @@ public sealed partial class ApplyComboPage : Page
     }
 
     /// <summary>
-    /// "Apply to character": first asks which parts are written (the bar, the memos, the quick slots), then opens the review
-    /// with that choice. Nothing is written from here; the review has the write button.
+    /// "Open the editor": the combo is not applied from here. The Editor shows the slots of this combo, lets the skills be
+    /// changed there, and applies from its own button.
     /// </summary>
-    private async void Apply_Click(object sender, RoutedEventArgs e)
+    private void OpenEditor_Click(object sender, RoutedEventArgs e)
     {
-        if (await ConfirmWriteOptionsAsync())
+        if (App.MainWindow is MainWindow window)
         {
-            await ViewModel.ApplyCommand.ExecuteAsync(null);
+            window.OpenEditor();
         }
-    }
-
-    /// <summary>Saves the parts to write in the view model. False when the user cancels or checks nothing.</summary>
-    private async Task<bool> ConfirmWriteOptionsAsync()
-    {
-        var localizer = App.Services.Localizer;
-        var bar = new CheckBox
-        {
-            Content = localizer.Get("Apply.IncludeCooldownBarCheck.Content"),
-            IsChecked = ViewModel.IncludeCooldownBar,
-        };
-        var memos = new CheckBox
-        {
-            Content = localizer.Get("Apply.IncludeMemosCheck.Content"),
-            IsChecked = ViewModel.IncludeMemos,
-        };
-        var quick = new CheckBox
-        {
-            Content = localizer.Get("Apply.IncludeQuickSlotsCheck.Content"),
-            IsChecked = ViewModel.IncludeQuickSlots,
-        };
-
-        var panel = new StackPanel { Spacing = 10 };
-        panel.Children.Add(new TextBlock
-        {
-            Text = localizer.Get("Apply.WriteDialogHint"),
-            TextWrapping = TextWrapping.Wrap,
-            FontSize = 12,
-        });
-        panel.Children.Add(bar);
-        panel.Children.Add(memos);
-        panel.Children.Add(quick);
-
-        var dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = localizer.Get("Apply.WriteDialogTitle"),
-            Content = panel,
-            PrimaryButtonText = localizer.Get("Apply.WriteDialogContinue"),
-            CloseButtonText = localizer.Get("Apply.CancelReviewButton.Content"),
-            DefaultButton = ContentDialogButton.Primary,
-        };
-
-        void SyncPrimary() =>
-            dialog.IsPrimaryButtonEnabled = bar.IsChecked == true || memos.IsChecked == true || quick.IsChecked == true;
-
-        bar.Checked += (_, _) => SyncPrimary();
-        bar.Unchecked += (_, _) => SyncPrimary();
-        memos.Checked += (_, _) => SyncPrimary();
-        memos.Unchecked += (_, _) => SyncPrimary();
-        quick.Checked += (_, _) => SyncPrimary();
-        quick.Unchecked += (_, _) => SyncPrimary();
-        SyncPrimary();
-
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
-        {
-            return false;
-        }
-
-        ViewModel.IncludeCooldownBar = bar.IsChecked == true;
-        ViewModel.IncludeMemos = memos.IsChecked == true;
-        ViewModel.IncludeQuickSlots = quick.IsChecked == true;
-        return true;
     }
 
     private void AddToSlot_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)

@@ -4,17 +4,105 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:BdoComboSetup.Views"
+    xmlns:controls="using:BdoComboSetup.Views.Controls"
+    xmlns:combo="using:BdoComboSetup.Core.Combo"
+    xmlns:vm="using:BdoComboSetup.Core.ViewModels"
     >
+
+    <Page.Resources>
+        <!-- One section of the page: a card with the app's surface colors. -->
+        <Style x:Key="EditorCard" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="14" />
+        </Style>
+
+        <!-- One character of the account in the header picker: class icon and name only. -->
+        <DataTemplate x:Key="EditorCharacterTemplate" x:DataType="combo:CharacterOption">
+            <Grid ColumnSpacing="8" Padding="4,2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <controls:AssetIcon
+                    Width="28"
+                    Height="28"
+                    IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
+                    Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
+                <TextBlock
+                    Grid.Column="1"
+                    Text="{x:Bind Name, Mode=OneTime}"
+                    FontWeight="SemiBold"
+                    VerticalAlignment="Center"
+                    TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- The character shown on the picker button: class icon and name only. -->
+        <DataTemplate x:Key="EditorSelectedCharacterTemplate" x:DataType="combo:CharacterOption">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <controls:AssetIcon
+                    Width="28"
+                    Height="28"
+                    IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
+                    Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
+                <TextBlock Text="{x:Bind Name, Mode=OneTime}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </DataTemplate>
+    </Page.Resources>
 
     <Grid Padding="32,24" RowSpacing="12">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Header: the combo in the editor, the character and the apply action. -->
+        <Grid Grid.Row="0" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Spacing="2">
+                <TextBlock x:Uid="Preview/Title" Style="{ThemeResource TitleTextBlockStyle}" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock
+                        Text="{x:Bind Apply.ClassName, Mode=OneWay}"
+                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                    <TextBlock
+                        Text="{x:Bind Apply.Editor.Title, Mode=OneWay}"
+                        FontSize="13"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <controls:SearchablePicker
+                    x:Name="EditorCharacterPicker"
+                    MinWidth="280"
+                    MaxWidth="340"
+                    HorizontalAlignment="Left"
+                    ItemsSource="{x:Bind Apply.Characters, Mode=OneWay}"
+                    ItemTemplate="{StaticResource EditorCharacterTemplate}"
+                    SelectedItem="{x:Bind Apply.SelectedCharacter, Mode=OneWay}"
+                    SelectedTemplate="{StaticResource EditorSelectedCharacterTemplate}"
+                    Chosen="EditorCharacterPicker_Chosen" />
+                <Button
+                    x:Uid="Preview/ApplyButton"
+                    Click="EditorApply_Click"
+                    IsEnabled="{x:Bind Apply.CanRun, Mode=OneWay}"
+                    Style="{StaticResource AccentButtonStyle}" />
+            </StackPanel>
+        </Grid>
+
         <!-- Toolbar: layout, hidden slots, fit and zoom. Nothing else: the page shows the slots over the game. -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="16">
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="16">
             <ComboBox
                 x:Name="LayoutBox"
                 x:Uid="Preview/LayoutBox"
@@ -41,14 +129,42 @@
                 Opacity="0.8" />
         </StackPanel>
 
+        <!-- The review of the character file: opened by "Apply to character" with the chosen parts. -->
+        <Border
+            Grid.Row="2"
+            Style="{StaticResource EditorCard}"
+            BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+            Visibility="{x:Bind Apply.IsReviewOpen, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Spacing="8">
+                <TextBlock x:Uid="Apply/ReviewTitle" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <TextBlock Text="{x:Bind Apply.ReviewSummary, Mode=OneWay}" />
+                <ListView
+                    ItemsSource="{x:Bind Apply.ReviewLines, Mode=OneWay}"
+                    SelectionMode="None"
+                    MaxHeight="140" />
+                <TextBlock
+                    x:Uid="Apply/ReviewBackupNote"
+                    FontSize="12"
+                    TextWrapping="Wrap"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button
+                        x:Uid="Apply/WriteButton"
+                        Command="{x:Bind Apply.ConfirmWriteCommand}"
+                        Style="{StaticResource AccentButtonStyle}" />
+                    <Button x:Uid="Apply/CancelReviewButton" Command="{x:Bind Apply.CancelReviewCommand}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
         <!-- The slots over the live game capture (black when the game is not visible). -->
         <local:GameScreenCanvas
-            Grid.Row="1"
+            Grid.Row="3"
             DataContext="{x:Bind ViewModel}" />
 
-        <!-- Status: only what the user needs to know (a missing layout, why the background is black, how the slot editor works
+        <!-- Status: only what the user needs to know (a missing layout, why the background is black, how the editor works
              and why the last pick did nothing). -->
-        <StackPanel Grid.Row="2" Spacing="2">
+        <StackPanel Grid.Row="4" Spacing="2">
             <TextBlock
                 Text="{x:Bind ViewModel.SlotEditMessage, Mode=OneWay}"
                 Style="{StaticResource CaptionTextBlockStyle}"

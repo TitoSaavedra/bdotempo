@@ -45,7 +45,7 @@
     <data name="AppTitle" xml:space="preserve"><value>BDOTempo</value></data>
   <data name="AppTitleBar.Title" xml:space="preserve"><value>BDOTempo</value></data>
   <data name="NavApplyItem.Content" xml:space="preserve"><value>Combos</value></data>
-  <data name="NavPreviewItem.Content" xml:space="preserve"><value>Slot editor</value></data>
+  <data name="NavPreviewItem.Content" xml:space="preserve"><value>Editor</value></data>
   <data name="Preview.CaptureToggle.Header" xml:space="preserve"><value>Capture the game</value></data>
   <data name="Preview.CaptureToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Shows the live game behind the slots. Turn it off to stop capturing the game window.</value></data>
   <data name="Apply.Title.Text" xml:space="preserve">
@@ -348,6 +348,15 @@
   <data name="Apply.AddonsHint.Text" xml:space="preserve">
     <value>The skill add-ons the guide recommends. They are shown only: nothing is written to the character.</value>
   </data>
+  <data name="Preview.Title.Text" xml:space="preserve">
+    <value>Editor</value>
+  </data>
+  <data name="Preview.ApplyButton.Content" xml:space="preserve">
+    <value>Apply to character</value>
+  </data>
+  <data name="Apply.OpenEditorButton.Content" xml:space="preserve">
+    <value>Open the editor</value>
+  </data>
   <data name="Preview.LayoutBox.Header" xml:space="preserve">
     <value>Layout</value>
   </data>
@@ -421,7 +430,7 @@
     <value>The game window could not be captured: black background.</value>
   </data>
   <data name="Preview.SlotEditHint.Text" xml:space="preserve">
-    <value>Click a cooldown slot to change its skill. The guide is not touched: the change stays in your combo.</value>
+    <value>These are the slots of the selected combo. Click a cooldown slot to change its skill; when it is ready, press Apply to character. The guide is not touched.</value>
   </data>
   <data name="Preview.SlotEdit.NoCombo" xml:space="preserve">
     <value>Choose a class and a guide in Combos to change skills.</value>
