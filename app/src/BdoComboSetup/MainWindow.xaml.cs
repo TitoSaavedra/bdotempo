@@ -29,7 +29,9 @@ public sealed partial class MainWindow : Window
         // Without a readable assets.bdoa the modules cannot show icons or combos: the window shows the explanation only.
         if (services.AssetPackLoad.ErrorCode is not null)
         {
-            Nav.Visibility = Visibility.Collapsed;
+            // Only the pane is hidden: collapsing the whole NavigationView would hide the Frame inside it.
+            Nav.IsPaneVisible = false;
+            Nav.IsPaneToggleButtonVisible = false;
             ContentFrame.Navigate(typeof(AssetPackErrorPage), services.AssetPackLoad);
             services.Logger.Warn("window.asset_pack_error", "Main window shows the asset pack error page", new Dictionary<string, object?>
             {
@@ -88,7 +90,9 @@ public sealed partial class MainWindow : Window
     /// </summary>
     public void ShowSetup(bool firstRun)
     {
-        Nav.Visibility = firstRun ? Visibility.Collapsed : Visibility.Visible;
+        // The pane is hidden, never the whole NavigationView: the Frame that holds the page lives inside it.
+        Nav.IsPaneVisible = !firstRun;
+        Nav.IsPaneToggleButtonVisible = !firstRun;
         if (firstRun)
         {
             Nav.SelectedItem = null;
@@ -104,7 +108,8 @@ public sealed partial class MainWindow : Window
     public void LeaveSetup(bool goToSettings)
     {
         App.Services.SettingsView.AdoptRunningConfiguration();
-        Nav.Visibility = Visibility.Visible;
+        Nav.IsPaneVisible = true;
+        Nav.IsPaneToggleButtonVisible = true;
         var target = goToSettings ? SettingsItem : ApplyItem;
         if (ReferenceEquals(Nav.SelectedItem, target))
         {

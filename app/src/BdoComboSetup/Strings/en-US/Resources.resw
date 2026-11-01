@@ -47,7 +47,7 @@
   <data name="NavApplyItem.Content" xml:space="preserve"><value>Apply combo</value></data>
   <data name="NavPreviewItem.Content" xml:space="preserve"><value>Slot editor</value></data>
   <data name="Preview.CaptureToggle.Header" xml:space="preserve"><value>Capture the game</value></data>
-  <data name="Preview.CaptureToggle.Tooltip" xml:space="preserve"><value>Shows the live game behind the slots. Turn it off to stop capturing the game window.</value></data>
+  <data name="Preview.CaptureToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Shows the live game behind the slots. Turn it off to stop capturing the game window.</value></data>
   <data name="Apply.Title.Text" xml:space="preserve">
     <value>Apply combo</value>
   </data>
