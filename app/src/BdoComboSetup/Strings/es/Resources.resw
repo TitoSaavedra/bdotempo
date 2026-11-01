@@ -291,6 +291,51 @@
   <data name="Apply.Review.NoChanges" xml:space="preserve">
     <value>El personaje ya tiene este combo. No hay nada que escribir.</value>
   </data>
+  <data name="Apply.ComboSlotsHeader.Text" xml:space="preserve">
+    <value>Mis combos</value>
+  </data>
+  <data name="Apply.ComboSlotsHint.Text" xml:space="preserve">
+    <value>Hasta diez combos por clase y especialización. La guía de bdoclasshub nunca se modifica: cada ranura guarda una copia de lo que ves.</value>
+  </data>
+  <data name="Apply.ComboNameBox.Header" xml:space="preserve">
+    <value>Nombre del combo</value>
+  </data>
+  <data name="Apply.ComboNameBox.PlaceholderText" xml:space="preserve">
+    <value>Opcional</value>
+  </data>
+  <data name="Apply.SaveSlotButton.Content" xml:space="preserve">
+    <value>Guardar en la ranura</value>
+  </data>
+  <data name="Apply.LoadSlotButton.Content" xml:space="preserve">
+    <value>Cargar</value>
+  </data>
+  <data name="Apply.DeleteSlotButton.Content" xml:space="preserve">
+    <value>Borrar</value>
+  </data>
+  <data name="Apply.ComboSlotLabel" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Apply.ComboSlotEmpty" xml:space="preserve">
+    <value>Vacía</value>
+  </data>
+  <data name="Apply.ComboSlotUnnamed" xml:space="preserve">
+    <value>Sin nombre</value>
+  </data>
+  <data name="Apply.StatusSlotEmpty" xml:space="preserve">
+    <value>Esa ranura está vacía.</value>
+  </data>
+  <data name="Apply.StatusLoaded" xml:space="preserve">
+    <value>Combo cargado en el editor.</value>
+  </data>
+  <data name="Apply.StatusSlotDeleted" xml:space="preserve">
+    <value>El combo guardado se borró. Lo que ves sigue en el editor, sin guardar.</value>
+  </data>
+  <data name="Apply.SectionAddons.Text" xml:space="preserve">
+    <value>Adicionales de la clase</value>
+  </data>
+  <data name="Apply.AddonsHint.Text" xml:space="preserve">
+    <value>Los adicionales de habilidad que recomienda la guía. Solo se muestran: no se escriben en el personaje.</value>
+  </data>
   <data name="Preview.LayoutBox.Header" xml:space="preserve">
     <value>Disposición</value>
   </data>

@@ -16,6 +16,57 @@ public sealed record SkillOption(ComboSkill Skill, string Name)
     public int SkillNo => Skill.SkillNo;
 }
 
+/// <summary>
+/// One of the ten custom combo slots of the selected class and spec, as the slot selector shows it: its number, the name
+/// the user gave it and when it was saved. An empty slot has no name and no time.
+/// </summary>
+public sealed partial class ComboSlotOption : ObservableObject
+{
+    private readonly ILocalizer _localizer;
+
+    public ComboSlotOption(int slot, ILocalizer localizer)
+    {
+        ArgumentNullException.ThrowIfNull(localizer);
+        Slot = slot;
+        _localizer = localizer;
+        Label = BuildLabel();
+    }
+
+    /// <summary>1..10, the fixed place of the combo.</summary>
+    public int Slot { get; }
+
+    /// <summary>The user's name for the combo, or null when the slot has no name.</summary>
+    public string? Name { get; private set; }
+
+    /// <summary>When the slot was last saved (UTC), or null when it is empty.</summary>
+    public DateTimeOffset? SavedAt { get; private set; }
+
+    public bool IsFilled => SavedAt is not null;
+
+    /// <summary>"3 · Mi combo", "3 · Sin nombre" or "3 · Vacía". Refreshed when the slot is saved, loaded or deleted.</summary>
+    public string Label { get; private set; }
+
+    /// <summary>Takes the slot as the store returned it, or null for an empty slot.</summary>
+    public void Refresh(ComboProfileSlot? saved)
+    {
+        Name = saved?.Name;
+        SavedAt = saved?.SavedAt;
+        Label = BuildLabel();
+        OnPropertyChanged(nameof(Name));
+        OnPropertyChanged(nameof(SavedAt));
+        OnPropertyChanged(nameof(IsFilled));
+        OnPropertyChanged(nameof(Label));
+    }
+
+    private string BuildLabel()
+    {
+        var text = SavedAt is null
+            ? _localizer.Get("Apply.ComboSlotEmpty")
+            : Name ?? _localizer.Get("Apply.ComboSlotUnnamed");
+        return _localizer.Format("Apply.ComboSlotLabel", Slot, text);
+    }
+}
+
 /// <summary>A class of the catalog, shown as a button in the class grid.</summary>
 public sealed partial class ClassOptionViewModel : ObservableObject
 {

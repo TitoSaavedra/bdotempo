@@ -24,6 +24,7 @@ public sealed partial class ApplyComboPage : Page
         ViewModel = App.Services.ApplyCombo;
         InitializeComponent();
         CharacterPicker.SetFields(item => ViewModel.CharacterSearchTexts((CharacterOption)item));
+        ComboSlotPicker.SetFields(item => [((ComboSlotOption)item).Label]);
     }
 
     /// <summary>The texts a skill is searched by in the "Add skill" list: both names and the number.</summary>
@@ -113,6 +114,15 @@ public sealed partial class ApplyComboPage : Page
         if (item is CharacterOption option)
         {
             ViewModel.SelectCharacterCommand.Execute(option);
+        }
+    }
+
+    /// <summary>Chooses the custom combo slot the buttons work with.</summary>
+    private void ComboSlotPicker_Chosen(object? sender, object item)
+    {
+        if (item is ComboSlotOption option)
+        {
+            ViewModel.SelectComboSlot(option);
         }
     }
 

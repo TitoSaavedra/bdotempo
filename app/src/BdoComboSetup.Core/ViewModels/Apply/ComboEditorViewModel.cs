@@ -54,6 +54,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
 
         AvailableSkills = BuildAvailableSkills(guide, culture);
         _skillsByNo = AvailableSkills.ToDictionary(option => option.SkillNo, option => option.Skill);
+        Addons = guide.Addons.Select(addon => new ComboAddonViewModel(addon, culture)).ToList();
         CooldownOptions = BuildCooldownOptions(localizer);
         QuickOptions = BuildQuickOptions(localizer);
         Chains = new ObservableCollection<ComboChainViewModel>();
@@ -88,6 +89,13 @@ public sealed partial class ComboEditorViewModel : ObservableObject
 
     /// <summary>True when the guide has mobility skills for the manual pool.</summary>
     public bool HasManualSteps => ManualChains.Any(chain => chain.HasSteps);
+
+    /// <summary>
+    /// The class add-ons of the guide, read-only. They are information for the player: they never reach the character file.
+    /// </summary>
+    public IReadOnlyList<ComboAddonViewModel> Addons { get; }
+
+    public bool HasAddons => Addons.Count > 0;
 
     /// <summary>Every skill of the guide, for "Add skill".</summary>
     public IReadOnlyList<SkillOption> AvailableSkills { get; }
@@ -213,6 +221,34 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     {
         HasSavedProfile = true;
         HasUnsavedChanges = false;
+    }
+
+    /// <summary>
+    /// Call when the saved slot this working copy came from was deleted: what is on screen is no longer saved anywhere.
+    /// The working copy itself is kept, so the user can save it again or keep editing it.
+    /// </summary>
+    public void MarkNotSaved()
+    {
+        HasSavedProfile = false;
+        HasUnsavedChanges = true;
+    }
+
+    /// <summary>
+    /// Replaces the working copy with another saved combo of the same guide, as when the user loads a slot. The guide is
+    /// untouched; anything the profile does not fit is skipped and logged, exactly as when the guide is opened.
+    /// </summary>
+    public void ApplyProfile(ComboProfile profile)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        LoadChains(profile);
+        ContentChanged?.Invoke(this, EventArgs.Empty);
+        _logger.Info("apply.profile.applied", "Working copy replaced by a saved slot", new Dictionary<string, object?>
+        {
+            ["class_type"] = ClassType,
+            ["spec"] = SpecId,
+            ["chains"] = profile.Chains.Count,
+            ["steps"] = profile.Chains.Sum(chain => chain.Steps.Count),
+        });
     }
 
     /// <summary>Throws away every change and goes back to the guide. The saved profile, if any, is not touched here.</summary>

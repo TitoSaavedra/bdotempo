@@ -291,6 +291,51 @@
   <data name="Apply.Review.NoChanges" xml:space="preserve">
     <value>The character already has this combo. There is nothing to write.</value>
   </data>
+  <data name="Apply.ComboSlotsHeader.Text" xml:space="preserve">
+    <value>My combos</value>
+  </data>
+  <data name="Apply.ComboSlotsHint.Text" xml:space="preserve">
+    <value>Up to ten combos per class and spec. The bdoclasshub guide is never modified: each slot keeps a copy of what you see.</value>
+  </data>
+  <data name="Apply.ComboNameBox.Header" xml:space="preserve">
+    <value>Combo name</value>
+  </data>
+  <data name="Apply.ComboNameBox.PlaceholderText" xml:space="preserve">
+    <value>Optional</value>
+  </data>
+  <data name="Apply.SaveSlotButton.Content" xml:space="preserve">
+    <value>Save to slot</value>
+  </data>
+  <data name="Apply.LoadSlotButton.Content" xml:space="preserve">
+    <value>Load</value>
+  </data>
+  <data name="Apply.DeleteSlotButton.Content" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Apply.ComboSlotLabel" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Apply.ComboSlotEmpty" xml:space="preserve">
+    <value>Empty</value>
+  </data>
+  <data name="Apply.ComboSlotUnnamed" xml:space="preserve">
+    <value>Unnamed</value>
+  </data>
+  <data name="Apply.StatusSlotEmpty" xml:space="preserve">
+    <value>That slot is empty.</value>
+  </data>
+  <data name="Apply.StatusLoaded" xml:space="preserve">
+    <value>Combo loaded into the editor.</value>
+  </data>
+  <data name="Apply.StatusSlotDeleted" xml:space="preserve">
+    <value>The saved combo was deleted. What you see stays in the editor, unsaved.</value>
+  </data>
+  <data name="Apply.SectionAddons.Text" xml:space="preserve">
+    <value>Class add-ons</value>
+  </data>
+  <data name="Apply.AddonsHint.Text" xml:space="preserve">
+    <value>The skill add-ons the guide recommends. They are shown only: nothing is written to the character.</value>
+  </data>
   <data name="Preview.LayoutBox.Header" xml:space="preserve">
     <value>Layout</value>
   </data>

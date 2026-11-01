@@ -260,10 +260,77 @@
                 Margin="0,0,8,0"
                 Content="{x:Bind Label, Mode=OneWay}" />
         </DataTemplate>
+
+        <!-- One of the ten custom combo slots: its number and its name, or "empty". -->
+        <DataTemplate x:Key="ComboSlotTemplate" x:DataType="vm:ComboSlotOption">
+            <TextBlock
+                Text="{x:Bind Label, Mode=OneWay}"
+                Padding="8,6"
+                TextTrimming="CharacterEllipsis" />
+        </DataTemplate>
+
+        <!-- One class add-on of the guide: icon, name, the guide's description and its effects as label and value. -->
+        <DataTemplate x:Key="AddonTemplate" x:DataType="vm:ComboAddonViewModel">
+            <Border
+                Margin="0,3"
+                Padding="10,8"
+                CornerRadius="8"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderThickness="1"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                <StackPanel Spacing="6">
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <controls:AssetIcon
+                            Width="36"
+                            Height="36"
+                            IconSource="{x:Bind OpenIcon, Mode=OneTime}"
+                            Glyph="{x:Bind Glyph, Mode=OneTime}" />
+                        <TextBlock
+                            Grid.Column="1"
+                            Text="{x:Bind Name, Mode=OneTime}"
+                            FontWeight="SemiBold"
+                            VerticalAlignment="Center"
+                            TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                    <TextBlock
+                        Text="{x:Bind Description, Mode=OneTime}"
+                        TextWrapping="Wrap"
+                        FontSize="13"
+                        Visibility="{x:Bind HasDescription, Mode=OneTime, Converter={StaticResource BoolToVisibility}}" />
+                    <ItemsControl ItemsSource="{x:Bind Effects, Mode=OneTime}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ComboAddonEffectViewModel">
+                                <Grid ColumnSpacing="10" Margin="0,1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="170" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        Text="{x:Bind Label, Mode=OneTime}"
+                                        FontSize="12"
+                                        TextWrapping="Wrap"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Text="{x:Bind Value, Mode=OneTime}"
+                                        FontSize="12"
+                                        TextWrapping="Wrap" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
     </Page.Resources>
 
     <Grid Padding="24,16,24,16" RowSpacing="12">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -350,8 +417,6 @@
                 <CheckBox x:Uid="Apply/IncludeQuickSlotsCheck" IsChecked="{x:Bind ViewModel.IncludeQuickSlots, Mode=TwoWay}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                <Button x:Uid="Apply/RestoreButton" Command="{x:Bind ViewModel.RestoreBaseCommand}" />
-                <Button x:Uid="Apply/SaveButton" Command="{x:Bind ViewModel.SaveProfileCommand}" />
                 <Button x:Uid="Apply/DryRunButton" Command="{x:Bind ViewModel.DryRunCommand}" />
                 <Button
                     x:Uid="Apply/ApplyButton"
@@ -360,8 +425,58 @@
             </StackPanel>
         </Grid>
 
-        <!-- Row 4: the review of the character file. Shown after "Apply to character" or "Preview changes". -->
-        <Border Grid.Row="4"
+        <!-- Row 4: the ten custom combos of the selected guide. The guide is never written: a slot is a copy. -->
+        <Border
+            Grid.Row="4"
+            Padding="16"
+            CornerRadius="8"
+            BorderThickness="1"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            Visibility="{x:Bind ViewModel.HasEditor, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Spacing="8">
+                <TextBlock x:Uid="Apply/ComboSlotsHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <controls:SearchablePicker
+                        x:Name="ComboSlotPicker"
+                        MinWidth="240"
+                        MaxWidth="320"
+                        HorizontalAlignment="Left"
+                        ItemsSource="{x:Bind ViewModel.ComboSlots, Mode=OneWay}"
+                        ItemTemplate="{StaticResource ComboSlotTemplate}"
+                        SelectedItem="{x:Bind ViewModel.SelectedComboSlot, Mode=OneWay}"
+                        SelectedTemplate="{StaticResource ComboSlotTemplate}"
+                        Chosen="ComboSlotPicker_Chosen" />
+                    <TextBox
+                        Grid.Column="1"
+                        x:Uid="Apply/ComboNameBox"
+                        Text="{x:Bind ViewModel.ComboName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        MaxLength="60" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                        <Button
+                            x:Uid="Apply/SaveSlotButton"
+                            Command="{x:Bind ViewModel.SaveProfileCommand}"
+                            Style="{StaticResource AccentButtonStyle}" />
+                        <Button x:Uid="Apply/LoadSlotButton" Command="{x:Bind ViewModel.LoadProfileCommand}" />
+                        <Button x:Uid="Apply/DeleteSlotButton" Command="{x:Bind ViewModel.DeleteProfileCommand}" />
+                        <Button x:Uid="Apply/RestoreButton" Command="{x:Bind ViewModel.RestoreBaseCommand}" />
+                    </StackPanel>
+                </Grid>
+                <TextBlock
+                    x:Uid="Apply/ComboSlotsHint"
+                    FontSize="12"
+                    TextWrapping="Wrap"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+        </Border>
+
+        <!-- Row 5: the review of the character file. Shown after "Apply to character" or "Preview changes". -->
+        <Border Grid.Row="5"
             Padding="16"
             CornerRadius="8"
             BorderThickness="1"
@@ -390,15 +505,15 @@
             </StackPanel>
         </Border>
 
-        <!-- Row 5: the outcome of the last action. -->
-        <InfoBar Grid.Row="5"
+        <!-- Row 6: the outcome of the last action. -->
+        <InfoBar Grid.Row="6"
             IsOpen="{x:Bind ViewModel.IsStatusOpen, Mode=TwoWay}"
             Severity="{x:Bind ToInfoBarSeverity(ViewModel.StatusSeverity), Mode=OneWay}"
             Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
             IsClosable="True" />
 
-        <!-- Row 6: the class grid, the combo, and the detail of the selected step. -->
-        <Grid Grid.Row="6" ColumnSpacing="16">
+        <!-- Row 7: the class grid, the combo, and the detail of the selected step. -->
+        <Grid Grid.Row="7" ColumnSpacing="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="260" />
                 <ColumnDefinition Width="*" />
@@ -469,6 +584,22 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                    </StackPanel>
+
+                    <!-- Class add-ons: read-only information of the guide. -->
+                    <StackPanel
+                        Spacing="6"
+                        Margin="0,10,0,0"
+                        Visibility="{x:Bind ViewModel.Editor.HasAddons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock x:Uid="Apply/SectionAddons" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        <TextBlock
+                            x:Uid="Apply/AddonsHint"
+                            FontSize="12"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <ItemsControl
+                            ItemsSource="{x:Bind ViewModel.Editor.Addons, Mode=OneWay}"
+                            ItemTemplate="{StaticResource AddonTemplate}" />
                     </StackPanel>
 
                     <TextBlock

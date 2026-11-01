@@ -43,6 +43,9 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     private readonly AppLogger _logger;
     private readonly ClassSkillSource? _classSkills;
     private readonly Dictionary<(int ClassType, string SpecId), ComboEditorViewModel> _editors = new();
+
+    /// <summary>The slot shown for each guide, so switching back to a class shows the same custom combo.</summary>
+    private readonly Dictionary<(int ClassType, string SpecId), int> _selectedSlots = new();
     private ComboEditorViewModel? _observedEditor;
     private int _loadVersion;
     private bool _initialized;
@@ -94,6 +97,10 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         RefreshClassFilter();
         Specs = new ObservableCollection<SpecOptionViewModel>();
         ReviewLines = new ObservableCollection<string>();
+        ComboSlots = new ObservableCollection<ComboSlotOption>(
+            Enumerable.Range(ComboProfileSlot.FirstSlot, ComboProfileSlot.SlotCount)
+                .Select(slot => new ComboSlotOption(slot, localizer)));
+        SelectedComboSlot = ComboSlots[0];
     }
 
     /// <summary>The live characters of the active account, in the game's order. Filled by RefreshCharactersAsync.</summary>
@@ -158,6 +165,35 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     /// <summary>The specs of the selected class. Each one has its own guide.</summary>
     public ObservableCollection<SpecOptionViewModel> Specs { get; }
 
+    /// <summary>The ten custom combo slots of the selected guide, empty or filled.</summary>
+    public ObservableCollection<ComboSlotOption> ComboSlots { get; }
+
+    /// <summary>The slot the buttons save into, load from and delete.</summary>
+    [ObservableProperty]
+    private ComboSlotOption? _selectedComboSlot;
+
+    /// <summary>The name the combo is saved with. Empty means "no name" (the slot shows "unnamed").</summary>
+    [ObservableProperty]
+    private string _comboName = string.Empty;
+
+    /// <summary>Choosing another slot shows its name in the box, so saving without typing keeps the name.</summary>
+    partial void OnSelectedComboSlotChanged(ComboSlotOption? value)
+    {
+        ComboName = value?.Name ?? string.Empty;
+        var editor = Editor;
+        if (editor is not null && value is not null)
+        {
+            _selectedSlots[(editor.ClassType, editor.SpecId)] = value.Slot;
+        }
+    }
+
+    /// <summary>Chooses a slot from the page's slot picker.</summary>
+    public void SelectComboSlot(ComboSlotOption option)
+    {
+        ArgumentNullException.ThrowIfNull(option);
+        SelectedComboSlot = option;
+    }
+
     /// <summary>The lines of the open review: one per changed slot, memo and quick slot.</summary>
     public ObservableCollection<string> ReviewLines { get; }
 
@@ -179,7 +215,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     /// <summary>The working copy of the selected guide. Null while loading or when the catalog has no guide for it.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasEditor), nameof(IsGuideMissing), nameof(ProfileStateText), nameof(CanRun))]
-    [NotifyCanExecuteChangedFor(nameof(ApplyCommand), nameof(DryRunCommand), nameof(SaveProfileCommand), nameof(RestoreBaseCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ApplyCommand), nameof(DryRunCommand), nameof(SaveProfileCommand), nameof(LoadProfileCommand), nameof(DeleteProfileCommand), nameof(RestoreBaseCommand))]
     private ComboEditorViewModel? _editor;
 
     [ObservableProperty]
@@ -411,20 +447,32 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Saves the working copy into the selected slot, with the name of the name box. Slots are always a copy: the
+    /// bdoclasshub guide is never written. Saving into a filled slot replaces it.
+    /// </summary>
     [RelayCommand(CanExecute = nameof(HasEditor))]
     private async Task SaveProfile()
     {
         var editor = Editor;
-        if (editor is null)
+        var slot = SelectedComboSlot;
+        if (editor is null || slot is null)
         {
             return;
         }
 
-        var profile = editor.ToProfile();
         try
         {
-            await _profiles.SaveAsync(profile);
+            var saved = await _profiles.SaveSlotAsync(
+                editor.ClassType,
+                editor.SpecId,
+                slot.Slot,
+                ComboName,
+                editor.ToProfile().Chains);
             editor.MarkSaved();
+            _selectedSlots[(editor.ClassType, editor.SpecId)] = slot.Slot;
+            slot.Refresh(saved);
+            ComboName = saved.Name ?? string.Empty;
             ShowStatus(StatusSeverity.Success, "Apply.StatusSaved");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -433,12 +481,97 @@ public sealed partial class ApplyComboViewModel : ObservableObject
             {
                 ["class_type"] = editor.ClassType,
                 ["spec"] = editor.SpecId,
+                ["slot"] = slot.Slot,
             });
             ShowStatus(StatusSeverity.Error, "Apply.StatusSaveFailed");
         }
     }
 
-    /// <summary>Deletes the saved combo of this guide and shows the bdoclasshub guide again.</summary>
+    /// <summary>Replaces the working copy with the combo kept in the selected slot.</summary>
+    [RelayCommand(CanExecute = nameof(HasEditor))]
+    private async Task LoadProfile()
+    {
+        var editor = Editor;
+        var slot = SelectedComboSlot;
+        if (editor is null || slot is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var saved = await _profiles.GetSlotAsync(editor.ClassType, editor.SpecId, slot.Slot);
+            if (saved is null)
+            {
+                _logger.Info("apply.slot.load_empty", "The user tried to load an empty slot", new Dictionary<string, object?>
+                {
+                    ["slot"] = slot.Slot,
+                });
+                ShowStatus(StatusSeverity.Warning, "Apply.StatusSlotEmpty");
+                return;
+            }
+
+            editor.ApplyProfile(saved.ToProfile());
+            editor.MarkSaved();
+            _selectedSlots[(editor.ClassType, editor.SpecId)] = slot.Slot;
+            slot.Refresh(saved);
+            ComboName = saved.Name ?? string.Empty;
+            CloseReview();
+            ShowStatus(StatusSeverity.Success, "Apply.StatusLoaded");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.Error("apply.profile.load_failed", "The saved combo could not be read", ex, new Dictionary<string, object?>
+            {
+                ["class_type"] = editor.ClassType,
+                ["spec"] = editor.SpecId,
+                ["slot"] = slot.Slot,
+            });
+            ShowStatus(StatusSeverity.Error, "Apply.StatusFailed");
+        }
+    }
+
+    /// <summary>
+    /// Empties the selected slot. What is on screen stays, but it is no longer saved anywhere, so the page marks it as
+    /// changed. The other slots of the guide are not touched.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(HasEditor))]
+    private void DeleteProfile()
+    {
+        var editor = Editor;
+        var slot = SelectedComboSlot;
+        if (editor is null || slot is null)
+        {
+            return;
+        }
+
+        try
+        {
+            if (!_profiles.DeleteSlot(editor.ClassType, editor.SpecId, slot.Slot))
+            {
+                ShowStatus(StatusSeverity.Warning, "Apply.StatusSlotEmpty");
+                return;
+            }
+
+            slot.Refresh(null);
+            ComboName = string.Empty;
+            editor.MarkNotSaved();
+            CloseReview();
+            ShowStatus(StatusSeverity.Success, "Apply.StatusSlotDeleted");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.Error("apply.profile.delete_failed", "The saved combo could not be deleted", ex, new Dictionary<string, object?>
+            {
+                ["class_type"] = editor.ClassType,
+                ["spec"] = editor.SpecId,
+                ["slot"] = slot.Slot,
+            });
+            ShowStatus(StatusSeverity.Error, "Apply.StatusFailed");
+        }
+    }
+
+    /// <summary>Throws away the working copy changes and shows the bdoclasshub guide again. The saved slots are kept.</summary>
     [RelayCommand(CanExecute = nameof(HasEditor))]
     private void RestoreBase()
     {
@@ -448,22 +581,41 @@ public sealed partial class ApplyComboViewModel : ObservableObject
             return;
         }
 
+        editor.ResetToBase();
+        CloseReview();
+        ShowStatus(StatusSeverity.Success, "Apply.StatusRestored");
+    }
+
+    /// <summary>Updates the ten slot rows of a guide with what the store holds, and selects the remembered slot.</summary>
+    private async Task RefreshComboSlotsAsync(ComboEditorViewModel editor)
+    {
+        IReadOnlyList<ComboProfileSlot> saved;
         try
         {
-            _profiles.Delete(editor.ClassType, editor.SpecId);
-            editor.ResetToBase();
-            CloseReview();
-            ShowStatus(StatusSeverity.Success, "Apply.StatusRestored");
+            saved = await _profiles.ListSlotsAsync(editor.ClassType, editor.SpecId);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _logger.Error("apply.profile.restore_failed", "The saved combo could not be deleted", ex, new Dictionary<string, object?>
+            _logger.Error("apply.profile.list_failed", "The saved combos could not be listed", ex, new Dictionary<string, object?>
             {
                 ["class_type"] = editor.ClassType,
                 ["spec"] = editor.SpecId,
             });
-            ShowStatus(StatusSeverity.Error, "Apply.StatusFailed");
+            return;
         }
+
+        var bySlot = saved.ToDictionary(item => item.Slot);
+        foreach (var option in ComboSlots)
+        {
+            option.Refresh(bySlot.GetValueOrDefault(option.Slot));
+        }
+
+        var wanted = _selectedSlots.GetValueOrDefault(
+            (editor.ClassType, editor.SpecId),
+            ComboProfileSlot.FirstSlot);
+        var selected = ComboSlots.FirstOrDefault(option => option.Slot == wanted) ?? ComboSlots[0];
+        SelectedComboSlot = selected;
+        ComboName = selected.Name ?? string.Empty;
     }
 
     /// <summary>Computes the changes the write would make and shows them. Writes nothing.</summary>
@@ -635,12 +787,14 @@ public sealed partial class ApplyComboViewModel : ObservableObject
                     return;
                 }
 
-                var profile = await _profiles.LoadAsync(classOption.ClassType, spec.Id);
+                var slotNumber = _selectedSlots.GetValueOrDefault(key, ComboProfileSlot.FirstSlot);
+                var savedSlot = await _profiles.GetSlotAsync(classOption.ClassType, spec.Id, slotNumber);
                 if (version != _loadVersion)
                 {
                     return;
                 }
 
+                var profile = savedSlot?.ToProfile();
                 editor = ComboEditorViewModel.Create(
                     classOption.ClassType,
                     spec.Id,
@@ -656,6 +810,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
             if (version == _loadVersion)
             {
                 Editor = editor;
+                await RefreshComboSlotsAsync(editor);
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
