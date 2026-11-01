@@ -151,6 +151,7 @@ public sealed partial class WindowsGraphicsCapture(AppLogger logger) : IGameFram
             }
 
             _captureSession.IsCursorCaptureEnabled = false;
+            TryHideCaptureBorder();
             _captureSession.StartCapture();
         }
 
@@ -179,8 +180,46 @@ public sealed partial class WindowsGraphicsCapture(AppLogger logger) : IGameFram
             _device.Dispose();
         }
 
-        private void OnItemClosed(GraphicsCaptureItem sender, object args) => EndWith("window_closed");
+        /// <summary>
+        /// Hides the yellow border Windows draws around the captured window. It needs Windows 11 22H2 and the
+        /// borderless-capture permission; without them the border stays, the capture keeps working and the reason is
+        /// logged once.
+        /// </summary>
+        private void TryHideCaptureBorder()
+        {
+            if (_captureSession is null || !OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621))
+            {
+                return;
+            }
 
+            try
+            {
+                var status = GraphicsCaptureAccess
+                    .RequestAccessAsync(GraphicsCaptureAccessKind.Borderless)
+                    .AsTask()
+                    .GetAwaiter()
+                    .GetResult();
+                if (!string.Equals(status.ToString(), "Allowed", StringComparison.Ordinal))
+                {
+                    _logger.Warn("capture.border_kept", "The yellow capture border cannot be hidden on this machine", new Dictionary<string, object?>
+                    {
+                        ["status"] = status.ToString(),
+                    });
+                    return;
+                }
+
+                _captureSession.IsBorderRequired = false;
+            }
+            catch (Exception ex) when (ex is COMException or InvalidOperationException or UnauthorizedAccessException or NotSupportedException)
+            {
+                _logger.Warn("capture.border_kept", "The yellow capture border cannot be hidden on this machine", new Dictionary<string, object?>
+                {
+                    ["error"] = ex.GetType().Name,
+                });
+            }
+        }
+
+        private void OnItemClosed(GraphicsCaptureItem sender, object args) => EndWith("window_closed");
         private void OnFrameArrived(Direct3D11CaptureFramePool sender, object args)
         {
             lock (_frameGate)

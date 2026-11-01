@@ -299,22 +299,22 @@
     <value>Fit to slots</value>
   </data>
   <data name="Preview.Layout.Tooltip" xml:space="preserve">
-    <value>The game's interface layout: General or one of the presets (1 to 3).</value>
+    <value>The game interface the preview draws: the current one or one of the three saved ones (UI 1 to UI 3).</value>
   </data>
   <data name="Preview.Hidden.Tooltip" xml:space="preserve">
     <value>Draws the slots the game hides, dimmed with a dashed outline.</value>
   </data>
   <data name="Preview.Layout.General" xml:space="preserve">
-    <value>General</value>
+    <value>Current interface</value>
   </data>
   <data name="Preview.Layout.Preset1" xml:space="preserve">
-    <value>Preset 1</value>
+    <value>UI 1</value>
   </data>
   <data name="Preview.Layout.Preset2" xml:space="preserve">
-    <value>Preset 2</value>
+    <value>UI 2</value>
   </data>
   <data name="Preview.Layout.Preset3" xml:space="preserve">
-    <value>Preset 3</value>
+    <value>UI 3</value>
   </data>
   <data name="Preview.Layout.FileMissing" xml:space="preserve">
     <value>gamevariable.xml was not found: the slots are not drawn.</value>

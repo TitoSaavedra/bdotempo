@@ -299,22 +299,22 @@
     <value>Ajustar a los slots</value>
   </data>
   <data name="Preview.Layout.Tooltip" xml:space="preserve">
-    <value>Disposición de la interfaz del juego: General o un preajuste (1 a 3).</value>
+    <value>Interfaz del juego que dibuja la vista previa: la actual o una de las tres guardadas (UI 1 a UI 3).</value>
   </data>
   <data name="Preview.Hidden.Tooltip" xml:space="preserve">
     <value>Dibuja los slots que el juego oculta, atenuados y con borde punteado.</value>
   </data>
   <data name="Preview.Layout.General" xml:space="preserve">
-    <value>General</value>
+    <value>Interfaz actual</value>
   </data>
   <data name="Preview.Layout.Preset1" xml:space="preserve">
-    <value>Preajuste 1</value>
+    <value>UI 1</value>
   </data>
   <data name="Preview.Layout.Preset2" xml:space="preserve">
-    <value>Preajuste 2</value>
+    <value>UI 2</value>
   </data>
   <data name="Preview.Layout.Preset3" xml:space="preserve">
-    <value>Preajuste 3</value>
+    <value>UI 3</value>
   </data>
   <data name="Preview.Layout.FileMissing" xml:space="preserve">
     <value>No se encontró gamevariable.xml: los slots no se dibujan.</value>

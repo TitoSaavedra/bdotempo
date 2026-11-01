@@ -32,6 +32,22 @@
                 <Grid.RenderTransform>
                     <ScaleTransform ScaleX="{x:Bind Scale, Mode=OneWay}" ScaleY="{x:Bind Scale, Mode=OneWay}" />
                 </Grid.RenderTransform>
+                <!-- An empty slot draws nothing in the game (the bar has no background art); the preview marks where it is,
+                     with its slot number, so all 20 slots can be seen. -->
+                <Rectangle
+                    Width="50"
+                    Height="50"
+                    Stroke="#26FFFFFF"
+                    StrokeThickness="1"
+                    Visibility="{x:Bind HasSkill, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontFamily="Segoe UI Semibold"
+                    FontSize="13"
+                    Foreground="#59FFFFFF"
+                    Text="{x:Bind Glyph, Mode=OneWay}"
+                    Visibility="{x:Bind HasSkill, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
                 <controls:AssetIcon
                     Width="42"
                     Height="42"
