@@ -22,7 +22,32 @@ Name decided by the user: **BDOTempo** (accepted the Pearl Abyss trademark risk 
 ## Repo / git state
 - Main repo `X:\Github\Personal\bdo-combo-setup`, branch `main`, many commits ahead of `origin/main`, NOT pushed. GitHub repo renamed to `TitoSaavedra/bdotempo` (PRIVATE) and local `origin` points to it. Remote history contains 6 old UI screenshots; the user said NOT to touch the remote (no force-push). Plan: before publishing, rewrite only the unpushed local commits so none adds game-art PNGs (verify with a history search); repo goes public only when the user says so (free CI with jdx/mise-action, and the in-app updater needs a public repo).
 - All feature branches are merged into main (tooltips, port, apply, preview, settings-accounts, asset-pack, slot-visuals, app-icon, installer-updater). Worktrees under `X:\Github\Personal\worktrees\` (bdo-apply, bdo-preview, bdo-tooltips, bdo-settings, bdo-assetpack, bdo-slotvisuals, bdo-icon, bdo-installer) can be removed (`git worktree remove`).
-- Last commits on main (newest first, approx.): choose-guide-after-class + first guide preselected (an agent was finishing this when the session ended — check `git status`/`git log` for uncommitted work), `c815073` Inno registry lookup, `04bf3e1` class->guide flow, `dcc9063` fix ComboBox write-back loop (the 0xc00000fd stack overflow), `a49eb8f` rename to BDOTempo, merges `a0ce60d` `fce6d30` `e3a23b8`, `bd4183c` asset-pack merge.
+- Last commits on main (newest first, approx.): `8b0e94f` choose-guide-after-class + first guide preselected (committed), `c815073` Inno registry lookup, `04bf3e1` class->guide flow, `dcc9063` fix ComboBox write-back loop (the 0xc00000fd stack overflow), `a49eb8f` rename to BDOTempo, merges `a0ce60d` `fce6d30` `e3a23b8`, `bd4183c` asset-pack merge.
+
+## Uncommitted work at handoff (2026-10-31 20:28, not committed, not verified in game)
+
+The Preview went black because every captured frame failed with
+`System.InvalidCastException: Invalid cast from 'WinRT.IInspectable' to '...IDirect3DDxgiInterfaceAccess'`
+(see `%LOCALAPPDATA%\BDOTempo\logs\app-20261031.log`, ~23:21 UTC, `capture.frame_failed` retried every second).
+Working-tree changes touch only two files:
+
+- `app/src/BdoComboSetup/Capture/WindowsGraphicsCapture.cs`: the surface's DXGI access is now obtained with the
+  CsWinRT COM query (`frame.Surface.As<IDirect3DDxgiInterfaceAccess>()`, `GetInterface(ref iid, out nint)`, interface
+  declared as IUnknown) instead of a managed cast; the first successfully read frame is logged with its size and mean
+  luminance (`capture.first_frame`, useful to tell "black frame captured" from "capture broken").
+- `app/src/BdoComboSetup.Core/Game/GameScreenSource.cs`: after a frame failure the capture is black and retried after
+  5 s, at most 3 times in a row; the old `StateChanged` event moved up with the fields, failure memory is cleared on
+  minimize/restore, window change and `Stop()`.
+
+`mise run build` (Debug, x64) succeeds with 0 warnings. NOT committed and NOT run against the game. Decide with the
+user whether to commit it before other work.
+
+## OpenCode setup (2026-11-01)
+
+`AGENTS.md` (repo root) holds the working rules for any agent; `opencode.json` denies edits of the game folders and
+`git push`, asks before killing processes, and adds the `/estado` and `/build` commands. OpenCode sessions started in
+this repository read both automatically. The Claude memories in `C:\Users\TitoS\.claude\projects\C--Users-TitoS\memory\`
+are already summarized here; nothing else from that session is needed.
 
 ## Architecture
 - Python (`src\bdo_combo`): guide importer + bundle (`mise run import-guides`, `build-assets`), chain kinds (buff/combo/mobility/cancels/other) and manual pool, full skill tooltips (`tooltip.cooldownSec`, cost, damage, PvP...) in skills.json, `skill_classes.json` (skillNo -> classType for class inference), asset packer (`mise run pack-assets`, `verify-assets`), the reference apply/backup CLI (`python -m bdo_combo apply --combo combos/tamer.awakening.json --pcid <pcid> [--write]`, needs `PYTHONPATH=src`, `--skills-json D:/extracted_bdo/class_skills.json`).
