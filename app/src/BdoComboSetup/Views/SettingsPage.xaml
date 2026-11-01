@@ -280,6 +280,7 @@
                             <Button x:Uid="Settings/ScanDiscardButton" Click="ScanCancel_Click" />
                         </StackPanel>
                     </StackPanel>
+                    <Button x:Uid="Settings/ResetCharactersButton" Click="ResetCharacters_Click" />
                 </StackPanel>
             </Border>
 

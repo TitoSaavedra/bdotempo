@@ -388,6 +388,36 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     public CharacterEntry? EntryOf(CharacterOption option) => _entries.GetValueOrDefault(option.Pcid);
 
     /// <summary>
+    /// Forgets the names and classes the user set for the active account (for example the result of an old scan), so the
+    /// characters go back to the game data. Only the app's characters.json is written.
+    /// </summary>
+    /// <returns>How many characters were reset, or -1 when there is no account.</returns>
+    public int ResetCharacterOverrides()
+    {
+        var account = ActiveAccount ?? _characters.ActiveAccount();
+        if (account is null)
+        {
+            ShowStatus(StatusSeverity.Warning, "Apply.StatusCharacterNoAccount");
+            return -1;
+        }
+
+        try
+        {
+            var cleared = _characters.ResetOverrides(account);
+            _logger.Info("apply.characters.reset", "The user reset the names and classes of the account", new Dictionary<string, object?>
+            {
+                ["characters"] = cleared,
+            });
+            return cleared;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.Error("apply.characters.reset_failed", "The names and classes could not be reset", ex);
+            return -1;
+        }
+    }
+
+    /// <summary>
     /// Saves the name and class the user set for a character. A null name or class clears that part, so the roster falls
     /// back to the in-game label and the inferred class. The class must be one of ClassChoices.
     /// </summary>

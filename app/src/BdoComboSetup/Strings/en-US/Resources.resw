@@ -699,6 +699,18 @@
   <data name="Settings.ScanDiscardButton.Content" xml:space="preserve">
     <value>Discard</value>
   </data>
+  <data name="Settings.ResetCharactersButton.Content" xml:space="preserve">
+    <value>Reset the character names and classes</value>
+  </data>
+  <data name="Settings.ResetCharactersTitle" xml:space="preserve">
+    <value>Reset the characters</value>
+  </data>
+  <data name="Settings.ResetCharactersBody" xml:space="preserve">
+    <value>Every name and class the app saved for this account is removed (including those of an earlier scan), and the list goes back to what the game says. No game file is touched.</value>
+  </data>
+  <data name="Settings.ResetCharactersConfirm" xml:space="preserve">
+    <value>Reset</value>
+  </data>
   <data name="Characters.ScanLevel" xml:space="preserve">
     <value>Lv. {0}</value>
   </data>

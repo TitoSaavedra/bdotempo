@@ -42,6 +42,47 @@ public sealed class CharacterScanRow : ObservableObject
         Classes = classes;
         var classType = detectedClass ?? entry.ClassType;
         _class = classes.FirstOrDefault(choice => choice.ClassType == classType) ?? classes[0];
+        if (detectedClass is null)
+        {
+            // "Sin clase": the row can still take one while the scan runs, so a better guess can replace it.
+            _class = classes[0];
+        }
+        _autoClass = _class;
+    }
+
+    /// <summary>The class the row started with (what the scan or the roster knew); never null.</summary>
+    private readonly ClassChoice _autoClass;
+
+    /// <summary>True while the class is still the automatic one (nothing picked by hand).</summary>
+    public bool IsAutomaticClass => ReferenceEquals(_class, _autoClass);
+
+    public string ClassName => _class.Name;
+
+    /// <summary>The class icon of the row, used when the scan reads it again.</summary>
+    public Func<Stream?> OpenClassIcon => _class.OpenIcon;
+
+    /// <summary>One reading of the row when the list scrolls: the level and the memo always; the class only while it is still the
+    /// automatic one and the new reading is not "Sin clase", so a later, clearer pass fills a gap without overriding a
+    /// choice made by hand.</summary>
+    public void ApplyReading(CharacterRowCandidate reading, int? detectedClass)
+    {
+        ArgumentNullException.ThrowIfNull(reading);
+        Level = reading.Level;
+        LevelText = reading.Level is int level ? _localizer.Format("Characters.ScanLevel", level) : string.Empty;
+        Memo = string.IsNullOrWhiteSpace(reading.Memo) ? null : reading.Memo.Trim();
+
+        if (IsAutomaticClass && detectedClass is int classType)
+        {
+            var choice = Classes.FirstOrDefault(item => item.ClassType == classType);
+            if (choice is not null)
+            {
+                _class = choice;
+                OnPropertyChanged(nameof(Class));
+                OnPropertyChanged(nameof(ClassName));
+                OnPropertyChanged(nameof(OpenClassIcon));
+                OnPropertyChanged(nameof(IsAutomaticClass));
+            }
+        }
     }
 
     /// <summary>The position in the list, counted from 1 (the order the game shows).</summary>
@@ -50,13 +91,13 @@ public sealed class CharacterScanRow : ObservableObject
     /// <summary>The character this row belongs to, taken from the order of the game's character list.</summary>
     public string Pcid { get; }
 
-    public int? Level { get; }
+    public int? Level { get; private set; }
 
     /// <summary>"Nv. 61", or empty when the level was not read.</summary>
-    public string LevelText { get; }
+    public string LevelText { get; private set; }
 
     /// <summary>The orange memo the game shows above the level ("FARM", "KUTUM"...), or null when the row has none.</summary>
-    public string? Memo { get; }
+    public string? Memo { get; private set; }
 
     public string MemoText => Memo ?? string.Empty;
 
@@ -390,6 +431,21 @@ public sealed partial class CharacterScanViewModel : ObservableObject
             ["characters"] = saved,
         });
         return saved;
+    }
+
+    /// <summary>
+    /// Gets a character. The class picked by hand is kept; a row whose class is still the automatic one takes the new
+    /// reading when there is one.
+    /// </summary>
+    public void RefreshRow(CharacterScanRow row, int? detectedClass)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        if (detectedClass is null || !IsScanning)
+        {
+            return;
+        }
+
+        row.ApplyReading(new CharacterRowCandidate(row.Name, row.Level, 0, 0, 0, 0, 0, row.Memo), detectedClass);
     }
 
     private void UpdateCount() =>

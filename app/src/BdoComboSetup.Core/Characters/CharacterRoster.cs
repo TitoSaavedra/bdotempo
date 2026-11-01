@@ -43,6 +43,10 @@ public interface ICharacterSource
 
     /// <summary>Saves the user's name and class for a character. Null values clear that part.</summary>
     void SaveOverride(string account, string pcid, string? name, int? classType);
+
+    /// <summary>Forgets every name and class the user set for an account, so the roster goes back to the game data.</summary>
+    /// <returns>How many characters were reset.</returns>
+    int ResetOverrides(string account);
 }
 
 /// <summary>
@@ -104,6 +108,12 @@ public sealed partial class CharacterRoster(
             ["custom_name"] = CharacterOverrideStore.NormalizeName(name) is not null,
             ["custom_class"] = classType is not null,
         });
+    }
+
+    public int ResetOverrides(string account)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+        return overrides.Clear(account);
     }
 
     public IReadOnlyList<CharacterEntry> Load(string account)

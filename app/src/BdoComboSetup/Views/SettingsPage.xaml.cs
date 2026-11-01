@@ -150,6 +150,37 @@ public sealed partial class SettingsPage : Page
         }
     }
 
+    /// <summary>
+    /// Asks first, then forgets every name and class the user (or an old scan) set for the active account, so the list goes
+    /// back to what the game data says. Only the app's characters.json is written.
+    /// </summary>
+    private async void ResetCharacters_Click(object sender, RoutedEventArgs e)
+    {
+        var localizer = App.Services.Localizer;
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = localizer.Get("Settings.ResetCharactersTitle"),
+            Content = new TextBlock
+            {
+                Text = localizer.Get("Settings.ResetCharactersBody"),
+                TextWrapping = TextWrapping.Wrap,
+            },
+            PrimaryButtonText = localizer.Get("Settings.ResetCharactersConfirm"),
+            CloseButtonText = localizer.Get("Apply.CancelReviewButton.Content"),
+            DefaultButton = ContentDialogButton.Close,
+        };
+
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+        {
+            return;
+        }
+
+        App.Services.ApplyCombo.ResetCharacterOverrides();
+        Scan.Discard();
+        await RefreshCharactersAsync();
+    }
+
     /// <summary>The class picked in one row of the scan review.</summary>
     private void ScanClassPicker_Chosen(object? sender, object item)
     {

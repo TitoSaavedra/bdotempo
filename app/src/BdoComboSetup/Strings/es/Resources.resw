@@ -699,6 +699,18 @@
   <data name="Settings.ScanDiscardButton.Content" xml:space="preserve">
     <value>Descartar</value>
   </data>
+  <data name="Settings.ResetCharactersButton.Content" xml:space="preserve">
+    <value>Restablecer nombres y clases de los personajes</value>
+  </data>
+  <data name="Settings.ResetCharactersTitle" xml:space="preserve">
+    <value>Restablecer los personajes</value>
+  </data>
+  <data name="Settings.ResetCharactersBody" xml:space="preserve">
+    <value>Se borran todos los nombres y las clases que la app guardó para esta cuenta (también los de una lectura anterior), y la lista vuelve a lo que dice el juego. No se toca ningún archivo del juego.</value>
+  </data>
+  <data name="Settings.ResetCharactersConfirm" xml:space="preserve">
+    <value>Restablecer</value>
+  </data>
   <data name="Characters.ScanLevel" xml:space="preserve">
     <value>Nv. {0}</value>
   </data>

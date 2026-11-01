@@ -54,6 +54,38 @@ public sealed class CharacterOverrideStore
         }
     }
 
+    /// <summary>How many characters of the account the user set something for.</summary>
+    public int CountOf(string account)
+    {
+        ValidateKeys(account, account);
+        lock (_gate)
+        {
+            return _accounts.TryGetValue(account, out var characters) ? characters.Count : 0;
+        }
+    }
+
+    /// <summary>Forgets every name and class the user set for an account and saves. The game files are not touched.</summary>
+    /// <returns>How many characters were reset.</returns>
+    public int Clear(string account)
+    {
+        ValidateKeys(account, account);
+        lock (_gate)
+        {
+            if (!_accounts.Remove(account, out var characters))
+            {
+                _logger.Info("characters.store.clear.none", "There was nothing set for this account");
+                return 0;
+            }
+
+            Save();
+            _logger.Info("characters.store.cleared", "Character names and classes of the account reset", new Dictionary<string, object?>
+            {
+                ["characters"] = characters.Count,
+            });
+            return characters.Count;
+        }
+    }
+
     /// <summary>Sets the override of a character and saves. Both null removes it. The name is trimmed and cut to 40 characters.</summary>
     public void Set(string account, string pcid, CharacterOverride? value)
     {
