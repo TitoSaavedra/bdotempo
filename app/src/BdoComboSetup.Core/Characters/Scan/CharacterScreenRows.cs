@@ -98,6 +98,63 @@ public static partial class CharacterScreenRowParser
     }
 
     /// <summary>
+    /// Joins the rows of two OCR passes over the same frame: the enlarged pass reads names far better, the plain pass reads
+    /// the small memo lines (the enlargement drops or garbles them). The enlarged row wins (name, level, box); the memo is
+    /// the plain one whenever it has it, and a row only the plain pass saw is kept so no character disappears.
+    /// </summary>
+    public static IReadOnlyList<CharacterRowCandidate> Combine(
+        IReadOnlyList<CharacterRowCandidate> enlarged,
+        IReadOnlyList<CharacterRowCandidate> plain)
+    {
+        ArgumentNullException.ThrowIfNull(enlarged);
+        ArgumentNullException.ThrowIfNull(plain);
+        var combined = new List<CharacterRowCandidate>(enlarged.Count);
+        var matched = new HashSet<int>();
+        foreach (var row in enlarged)
+        {
+            var index = -1;
+            for (var candidate = 0; candidate < plain.Count; candidate++)
+            {
+                if (!matched.Contains(candidate) && Overlaps(row, plain[candidate]))
+                {
+                    index = candidate;
+                    break;
+                }
+            }
+
+            if (index < 0)
+            {
+                combined.Add(row);
+                continue;
+            }
+
+            matched.Add(index);
+            var other = plain[index];
+            combined.Add(!string.IsNullOrWhiteSpace(other.Memo)
+                ? row with
+                {
+                    Memo = other.Memo,
+                    MemoLeft = other.MemoLeft,
+                    MemoTop = other.MemoTop,
+                    MemoRight = other.MemoRight,
+                    MemoBottom = other.MemoBottom,
+                }
+                : row);
+        }
+
+        for (var index = 0; index < plain.Count; index++)
+        {
+            if (!matched.Contains(index))
+            {
+                combined.Add(plain[index]);
+            }
+        }
+
+        combined.Sort((left, right) => left.Top.CompareTo(right.Top));
+        return combined;
+    }
+
+    /// <summary>
     /// The memo of a row is the warm (orange) line just above its level, such as "FARM" or "KUTUM". Not every character has
     /// one; the gray location line below the name is not a memo. Only color tells them apart, so no text is guessed.
     /// </summary>
@@ -114,7 +171,8 @@ public static partial class CharacterScreenRowParser
             }
 
             var gap = band.Top - other.Bottom;
-            if (gap > height * 1.4 || gap >= bestGap || other.Text.Length == 0 || HasLevel(other))
+            if (gap > height * 1.4 || gap >= bestGap || other.Text.Length == 0 || HasLevel(other)
+                || IsLocationOf(other, bands, height))
             {
                 continue;
             }
@@ -124,6 +182,26 @@ public static partial class CharacterScreenRowParser
         }
 
         return best;
+    }
+
+    /// <summary>
+    /// True when the band sits right under a line with a level: it is that row's location line, which is warm-colored too,
+    /// not a memo. A memo is preceded by the previous row's location line, never directly by a level line.
+    /// </summary>
+    private static bool IsLocationOf(Band candidate, List<Band> bands, double height)
+    {
+        foreach (var above in bands)
+        {
+            if (!ReferenceEquals(above, candidate)
+                && above.Bottom <= candidate.Top + 1
+                && candidate.Top - above.Bottom <= height * 1.4
+                && HasLevel(above))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>True when the band holds a level word (it is a character row, not a memo).</summary>
@@ -179,7 +257,7 @@ public static partial class CharacterScreenRowParser
     private static CharacterRowCandidate? ReadBand(Band band, double frameWidth, double frameHeight)
     {
         var words = band.Words.OrderBy(word => word.X).ToList();
-        var (level, levelIndex) = FindLevel(words);
+        var (level, levelIndex, levelEnd) = FindLevel(words);
         if (level is null || levelIndex < 0)
         {
             return null;
@@ -193,7 +271,7 @@ public static partial class CharacterScreenRowParser
             return null;
         }
 
-        var name = string.Join(" ", words.Skip(levelIndex + 1).Select(word => word.Text.Trim())).Trim();
+        var name = string.Join(" ", words.Skip(levelEnd + 1).Select(word => word.Text.Trim())).Trim();
         if (name.Length == 0 || !HasLetterOrDigit().IsMatch(name))
         {
             // A level without a name is not a character: it is the list header or a partially read row.
@@ -214,8 +292,11 @@ public static partial class CharacterScreenRowParser
             levelLeft);
     }
 
-    /// <summary>The level word and its index in the band, or (null, -1) when the band has no level.</summary>
-    private static (int? Level, int Index) FindLevel(List<ScreenTextWord> words)
+    /// <summary>
+    /// The level and the index of its first and last word ("Nv.69" is one word, "Nv." "69" are two: the number must not
+    /// leak into the name), or (null, -1, -1) when the band has no level.
+    /// </summary>
+    private static (int? Level, int Index, int EndIndex) FindLevel(List<ScreenTextWord> words)
     {
         for (var index = 0; index < words.Count; index++)
         {
@@ -223,7 +304,7 @@ public static partial class CharacterScreenRowParser
             var combined = LevelWithNumber().Match(text);
             if (combined.Success && ParseLevel(combined.Groups[1].Value) is { } parsed)
             {
-                return (parsed, index);
+                return (parsed, index, index);
             }
 
             if (LevelWord().IsMatch(text) && index + 1 < words.Count)
@@ -231,12 +312,12 @@ public static partial class CharacterScreenRowParser
                 var next = words[index + 1].Text.Trim();
                 if (NumberWord().IsMatch(next) && ParseLevel(next) is { } following)
                 {
-                    return (following, index);
+                    return (following, index, index + 1);
                 }
             }
         }
 
-        return (null, -1);
+        return (null, -1, -1);
     }
 
     private static int? ParseLevel(string text)    {

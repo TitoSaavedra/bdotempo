@@ -30,14 +30,15 @@ public readonly record struct RowMergeResult(RowMergeOutcome Outcome, int Added,
 /// A page is placed by finding where it overlaps the known rows (a contiguous run of same level and similar name); when
 /// there is no overlap it can be placed by the scroll bar fraction, which gives the first visible row. Rows already known
 /// are never replaced, so scrolling up and down cannot duplicate a character, and a page that cannot be placed adds
-/// nothing. The list never grows past the number of characters of the account.
+/// nothing. Every later reading of a known row is a vote: the reading seen most often wins (the earliest on a tie), so one
+/// OCR slip on a frame taken mid-scroll cannot stick. The list never grows past the number of characters of the account.
 /// </summary>
 public sealed class CharacterRowAccumulator
 {
-    private readonly SortedDictionary<int, CharacterRowReading> _known = [];
+    private readonly SortedDictionary<int, RowVotes> _known = [];
 
     /// <summary>The rows read so far, in list order (positions with no reading are simply absent).</summary>
-    public IReadOnlyList<CharacterRowReading> Rows => _known.Values.ToList();
+    public IReadOnlyList<CharacterRowReading> Rows => _known.Values.Select(votes => votes.Best).ToList();
 
     /// <summary>How many characters have a reading. When it equals the account's count, the list is complete.</summary>
     public int Count => _known.Count;
@@ -72,23 +73,34 @@ public sealed class CharacterRowAccumulator
             return new RowMergeResult(RowMergeOutcome.Unplaced, 0, Count);
         }
 
+        if (!fromOverlap)
+        {
+            // A scroll bar placement is only accepted when it does not contradict what is known.
+            for (var index = 0; index < cleaned.Count; index++)
+            {
+                if (_known.TryGetValue(start + index, out var known) && !SameRow(known.Best.Row, cleaned[index].Row))
+                {
+                    return new RowMergeResult(RowMergeOutcome.Unplaced, 0, Count);
+                }
+            }
+        }
+
         var added = 0;
         for (var index = 0; index < cleaned.Count; index++)
         {
             var position = start + index;
-            if (_known.ContainsKey(position))
+            if (_known.TryGetValue(position, out var votes))
             {
-                // The first reading is kept: OCR noise never rewrites a row once it is placed.
-                if (!fromOverlap && !SameRow(_known[position].Row, cleaned[index].Row))
+                // A known row only gets a vote when it is the same row: a fuzzy overlap never rewrites it.
+                if (SameRow(votes.Best.Row, cleaned[index].Row))
                 {
-                    // A scroll bar placement is only accepted when it does not contradict what is known.
-                    return new RowMergeResult(RowMergeOutcome.Unplaced, 0, Count);
+                    votes.Add(cleaned[index]);
                 }
 
                 continue;
             }
 
-            _known[position] = cleaned[index];
+            _known[position] = RowVotes.Start(cleaned[index]);
             added++;
         }
 
@@ -142,7 +154,7 @@ public sealed class CharacterRowAccumulator
                         continue;
                     }
 
-                    if (SameRow(known.Row, page[index].Row))
+                    if (SameRow(known.Best.Row, page[index].Row))
                     {
                         matches++;
                     }
@@ -213,7 +225,7 @@ public sealed class CharacterRowAccumulator
                 var count = 0;
                 while (pageOffset + count < page.Count
                     && _known.TryGetValue(rowIndex + count, out var known)
-                    && SameRow(page[pageOffset + count].Row, known.Row))
+                    && SameRow(page[pageOffset + count].Row, known.Best.Row))
                 {
                     count++;
                 }
@@ -226,6 +238,110 @@ public sealed class CharacterRowAccumulator
         }
 
         return best;
+    }
+
+    /// <summary>
+    /// The readings of one list position and how many times each was seen. The name and level are voted as one reading; the
+    /// memo is voted on its own, because the small memo text is the line the OCR garbles most.
+    /// </summary>
+    private sealed class RowVotes(CharacterRowReading first)
+    {
+        private readonly List<(CharacterRowReading Reading, int Count)> _groups = [(first, 1)];
+        private readonly List<(CharacterRowCandidate Row, int Count)> _memos = [];
+
+        /// <summary>Starts a position with its first reading, which already counts as a memo vote.</summary>
+        public static RowVotes Start(CharacterRowReading first)
+        {
+            var votes = new RowVotes(first);
+            votes.AddMemo(first.Row);
+            return votes;
+        }
+
+        /// <summary>The most voted reading (the earliest on a tie), carrying the most voted memo.</summary>
+        public CharacterRowReading Best
+        {
+            get
+            {
+                var best = _groups[0];
+                foreach (var group in _groups)
+                {
+                    if (group.Count > best.Count)
+                    {
+                        best = group;
+                    }
+                }
+
+                if (BestMemo() is not { } memo || string.Equals(memo.Memo, best.Reading.Row.Memo, StringComparison.Ordinal))
+                {
+                    return best.Reading;
+                }
+
+                return best.Reading with
+                {
+                    Row = best.Reading.Row with
+                    {
+                        Memo = memo.Memo,
+                        MemoLeft = memo.MemoLeft,
+                        MemoTop = memo.MemoTop,
+                        MemoRight = memo.MemoRight,
+                        MemoBottom = memo.MemoBottom,
+                    },
+                };
+            }
+        }
+
+        public void Add(CharacterRowReading reading)
+        {
+            AddMemo(reading.Row);
+            for (var index = 0; index < _groups.Count; index++)
+            {
+                if (SameText(_groups[index].Reading.Row, reading.Row))
+                {
+                    _groups[index] = (_groups[index].Reading, _groups[index].Count + 1);
+                    return;
+                }
+            }
+
+            _groups.Add((reading, 1));
+        }
+
+        private void AddMemo(CharacterRowCandidate row)
+        {
+            if (string.IsNullOrWhiteSpace(row.Memo))
+            {
+                return;
+            }
+
+            for (var index = 0; index < _memos.Count; index++)
+            {
+                if (string.Equals(_memos[index].Row.Memo, row.Memo, StringComparison.Ordinal))
+                {
+                    _memos[index] = (_memos[index].Row, _memos[index].Count + 1);
+                    return;
+                }
+            }
+
+            _memos.Add((row, 1));
+        }
+
+        /// <summary>The most seen memo; the earliest on a tie. The text is never judged: players write whatever they want.</summary>
+        private CharacterRowCandidate? BestMemo()
+        {
+            (CharacterRowCandidate Row, int Count)? best = null;
+            foreach (var memo in _memos)
+            {
+                if (best is not { } current || memo.Count > current.Count)
+                {
+                    best = memo;
+                }
+            }
+
+            return best?.Row;
+        }
+
+        private static bool SameText(CharacterRowCandidate left, CharacterRowCandidate right) =>
+            left.Level == right.Level
+            && string.Equals(left.Name?.Trim(), right.Name?.Trim(), StringComparison.Ordinal);
     }
 
     /// <summary>Two rows are enough to trust an anchor, unless the page or the known list is tiny.</summary>
@@ -250,6 +366,15 @@ public sealed class CharacterRowAccumulator
         }
 
         return Similar(leftName, rightName);
+    }
+
+    /// <summary>True when two texts are the same up to OCR noise (case, punctuation and a slip or two). Used to compare a memo
+    /// read on screen with the one in the game's file; it never decides what the text should be.</summary>
+    public static bool SimilarText(string? left, string? right)
+    {
+        var leftText = NormalizeName(left);
+        var rightText = NormalizeName(right);
+        return leftText.Length > 0 && rightText.Length > 0 && Similar(leftText, rightText);
     }
 
     private static string NormalizeName(string? name) =>
