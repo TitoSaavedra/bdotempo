@@ -5,19 +5,54 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     >
 
+    <!-- Translucent system backdrop; the glass gradient below covers it, the tint on top keeps the glass look. -->
     <Window.SystemBackdrop>
-        <MicaBackdrop />
+        <DesktopAcrylicBackdrop />
     </Window.SystemBackdrop>
 
-    <Grid>
+    <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Custom title bar: the window content extends into it (AppWindow.TitleBar). -->
-        <TitleBar x:Name="AppTitleBar" x:Uid="AppTitleBar" IsBackButtonVisible="False" IsPaneToggleButtonVisible="False" />
+        <!-- Decorative backdrop behind everything: the gradient base with the accent, mint and rose glows, then the window tint. -->
+        <Grid Grid.RowSpan="4">
+            <Border Background="{ThemeResource GlassBackdropBrush}" />
+            <Border Background="{ThemeResource GlassGlowAccentBrush}" />
+            <Border Background="{ThemeResource GlassGlowMintBrush}" />
+            <Border Background="{ThemeResource GlassGlowRoseBrush}" />
+        </Grid>
+        <Border Grid.RowSpan="4" Background="{ThemeResource GlassWindowTintBrush}" />
+
+        <!-- Custom title bar: the window content extends into it (AppWindow.TitleBar). The logo chip and the title sit in its content. -->
+        <TitleBar x:Name="AppTitleBar" IsBackButtonVisible="False" IsPaneToggleButtonVisible="False">
+            <TitleBar.Content>
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="4,0,0,0">
+                    <Border
+                        Width="26"
+                        Height="26"
+                        CornerRadius="9"
+                        Background="{ThemeResource AccentGradientBrush}">
+                        <TextBlock
+                            Text="B"
+                            FontSize="11"
+                            FontWeight="Bold"
+                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock
+                        x:Name="TitleText"
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                        VerticalAlignment="Center" />
+                </StackPanel>
+            </TitleBar.Content>
+        </TitleBar>
 
         <!-- Update banner: shown when a newer release exists (never installs by itself; the buttons do). -->
         <InfoBar
@@ -47,21 +82,26 @@
             </StackPanel>
         </InfoBar>
 
+        <!-- The menu folds (compact strip) and expands with its toggle button; the state is saved in the settings. -->
         <NavigationView
             x:Name="Nav"
             Grid.Row="2"
             PaneDisplayMode="Left"
+            IsPaneOpen="True"
+            IsPaneToggleButtonVisible="True"
             IsBackButtonVisible="Collapsed"
             IsSettingsVisible="False"
-            OpenPaneLength="220"
+            OpenPaneLength="236"
+            PaneOpened="Nav_PaneOpened"
+            PaneClosed="Nav_PaneClosed"
             SelectionChanged="Nav_SelectionChanged">
             <NavigationView.MenuItems>
-                <NavigationViewItem x:Name="ApplyItem" x:Uid="NavApplyItem" Tag="apply">
+                <NavigationViewItem x:Name="ApplyItem" x:Uid="NavApplyItem" Tag="apply" MinHeight="46">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Accept" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem x:Name="PreviewItem" x:Uid="NavPreviewItem" Tag="preview">
+                <NavigationViewItem x:Name="PreviewItem" x:Uid="NavPreviewItem" Tag="preview" MinHeight="46">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="View" />
                     </NavigationViewItem.Icon>
@@ -69,7 +109,7 @@
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
-                <NavigationViewItem x:Name="SettingsItem" x:Uid="NavSettingsItem" Tag="settings">
+                <NavigationViewItem x:Name="SettingsItem" x:Uid="NavSettingsItem" Tag="settings" MinHeight="46">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Setting" />
                     </NavigationViewItem.Icon>
@@ -80,5 +120,19 @@
                 <Frame x:Name="ContentFrame" />
             </NavigationView.Content>
         </NavigationView>
+
+        <!-- Thin status bar: the app version (the game detection state is not exposed to the window yet). -->
+        <Border
+            Grid.Row="3"
+            Padding="22,6"
+            Background="{ThemeResource GlassStatusBarBrush}"
+            BorderBrush="{ThemeResource GlassLineBrush}"
+            BorderThickness="0,1,0,0">
+            <TextBlock
+                x:Name="VersionText"
+                HorizontalAlignment="Right"
+                FontSize="12"
+                Foreground="{ThemeResource GlassMutedTextBrush}" />
+        </Border>
     </Grid>
 </Window>

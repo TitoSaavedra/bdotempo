@@ -12,12 +12,17 @@ public sealed partial class MainWindow : Window
     /// <summary>The update state for the banner. A getter, because the x:Bind bindings are evaluated inside InitializeComponent.</summary>
     public UpdateViewModel Updates => App.Services.Updates;
 
+    /// <summary>False until the constructor has restored the menu state: the pane events before that do not save anything.</summary>
+    private bool _navPaneReady;
+
     public MainWindow()
     {
         InitializeComponent();
 
         var services = App.Services;
         Title = services.Localizer.Get("AppTitle");
+        TitleText.Text = Title;
+        VersionText.Text = services.Localizer.Format("StatusBar.Version", AppVersion.Current.ToString());
 
         // The window and its title bar are drawn by the app; the TitleBar control hosts the drag region.
         ExtendsContentIntoTitleBar = true;
@@ -25,6 +30,15 @@ public sealed partial class MainWindow : Window
         SetTitleBar(AppTitleBar);
         AppWindow.Resize(new SizeInt32(1440, 900));
         WindowIcon.Apply(AppWindow, AppTitleBar, services.Logger);
+
+        // The logo chip of the title bar replaces the icon image: the taskbar keeps the icon (AppWindow.SetIcon).
+        AppTitleBar.IconSource = null;
+
+        // The color theme and the accent are applied before the first page is shown.
+        services.Theme.Attach(RootGrid);
+
+        // The menu is folded or expanded as the user left it. Nothing is saved until the constructor has finished.
+        Nav.IsPaneOpen = services.Settings.Settings.NavPaneOpen;
 
         // Without a readable assets.bdoa the modules cannot show icons or combos: the window shows the explanation only.
         if (services.AssetPackLoad.ErrorCode is not null)
@@ -53,10 +67,27 @@ public sealed partial class MainWindow : Window
             };
         }
 
+        _navPaneReady = true;
         services.Logger.Info("window.opened", "Main window shown", new Dictionary<string, object?>
         {
             ["page"] = services.Startup.Page,
         });
+    }
+
+    /// <summary>The user expanded the menu: the state is saved (not while the pane is hidden by setup or the error page).</summary>
+    private void Nav_PaneOpened(NavigationView sender, object args) => SaveNavPaneState(open: true);
+
+    /// <summary>The user folded the menu: the state is saved (not while the pane is hidden by setup or the error page).</summary>
+    private void Nav_PaneClosed(NavigationView sender, object args) => SaveNavPaneState(open: false);
+
+    private void SaveNavPaneState(bool open)
+    {
+        if (!_navPaneReady || !Nav.IsPaneVisible)
+        {
+            return;
+        }
+
+        App.Services.SettingsView.ChooseNavPaneOpen(open);
     }
 
     private void Nav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)

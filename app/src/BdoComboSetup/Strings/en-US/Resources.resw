@@ -826,4 +826,7 @@
   <data name="Setup.FolderReady" xml:space="preserve">
     <value>Folder ready: {0}</value>
   </data>
+  <data name="StatusBar.Version" xml:space="preserve">
+    <value>v{0}</value>
+  </data>
 </root>

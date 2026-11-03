@@ -49,6 +49,7 @@ public sealed class AppServices : IDisposable
         UpdateViewModel updates,
         CharacterScanService characterScan,
         SetupViewModel setup,
+        ThemeService theme,
         HttpClient httpClient)
     {
         Logger = logger;
@@ -65,6 +66,7 @@ public sealed class AppServices : IDisposable
         Updates = updates;
         CharacterScan = characterScan;
         Setup = setup;
+        Theme = theme;
         _httpClient = httpClient;
     }
 
@@ -105,6 +107,9 @@ public sealed class AppServices : IDisposable
 
     /// <summary>The initial setup (data folder and account), shown at startup until it is done.</summary>
     public SetupViewModel Setup { get; }
+
+    /// <summary>Applies the saved color theme and accent color to the main window (and follows their changes).</summary>
+    public ThemeService Theme { get; }
 
     /// <summary>
     /// True when the initial setup must be shown: it was never finished, or the saved data folder is no longer usable. The
@@ -280,6 +285,8 @@ public sealed class AppServices : IDisposable
             AppVersion.Current,
             exitApplication);
 
+        var theme = new ThemeService(settings, settingsView, logger);
+
         return new AppServices(
             logger,
             localizer,
@@ -295,6 +302,7 @@ public sealed class AppServices : IDisposable
             updates,
             characterScan,
             setup,
+            theme,
             httpClient);
     }
 
