@@ -53,6 +53,15 @@ public sealed partial class MainWindow : Window
         // The menu is folded or expanded as the user left it. Nothing is saved until the constructor has finished.
         Nav.IsPaneOpen = services.Settings.Settings.NavPaneOpen;
 
+        // The Appearance card of Settings folds or expands the menu live.
+        services.SettingsView.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(SettingsViewModel.NavPaneOpen) && Nav.IsPaneOpen != services.SettingsView.NavPaneOpen)
+            {
+                Nav.IsPaneOpen = services.SettingsView.NavPaneOpen;
+            }
+        };
+
         // Without a readable assets.bdoa the modules cannot show icons or combos: the window shows the explanation only.
         if (services.AssetPackLoad.ErrorCode is not null)
         {

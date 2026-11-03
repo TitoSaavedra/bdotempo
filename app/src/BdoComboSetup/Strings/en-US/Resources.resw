@@ -835,42 +835,33 @@
   <data name="StatusBar.GameNotDetected" xml:space="preserve">
     <value>Game not detected</value>
   </data>
-  <data name="Apply.CharacterHeader.Text" xml:space="preserve">
-    <value>Character</value>
-  </data>
-  <data name="Apply.ClassHeader.Text" xml:space="preserve">
-    <value>Class</value>
-  </data>
-  <data name="Apply.GuideHeader.Text" xml:space="preserve">
-    <value>Guide</value>
-  </data>
-  <data name="Apply.CooldownBoardHeader.Text" xml:space="preserve">
-    <value>Cooldown slots</value>
-  </data>
-  <data name="Apply.QuickBoardHeader.Text" xml:space="preserve">
-    <value>Quick slots</value>
-  </data>
-  <data name="Apply.BackupNote.Text" xml:space="preserve">
-    <value>A verified backup of the character is saved before writing.</value>
-  </data>
-  <data name="Apply.SlotHint.Pick" xml:space="preserve">
-    <value>Tap a slot to see what it holds.</value>
-  </data>
-  <data name="Apply.SlotHint.NoSlot" xml:space="preserve">
-    <value>This step has no cooldown slot. Pick one below, in the selected step.</value>
-  </data>
-  <data name="Apply.CooldownCell" xml:space="preserve">
-    <value>Slot {0}</value>
-  </data>
-  <data name="Apply.BoardCell.Filled" xml:space="preserve">
-    <value>{0}: {1}</value>
-  </data>
-  <data name="Apply.BoardCell.Empty" xml:space="preserve">
-    <value>{0}, empty</value>
-  </data>
-  <data name="Apply.ApplyToCharacter" xml:space="preserve">
-    <value>Apply to {0}</value>
-  </data>
+  <data name="Settings.Appearance.Header.Text" xml:space="preserve"><value>Appearance</value></data>
+  <data name="Settings.Appearance.Hint.Text" xml:space="preserve"><value>Theme, accent color and side menu. Every change applies at once.</value></data>
+  <data name="Settings.Appearance.ThemeHeader.Text" xml:space="preserve"><value>Theme</value></data>
+  <data name="Settings.Appearance.ThemeHint.Text" xml:space="preserve"><value>Follow Windows or pick one.</value></data>
+  <data name="Settings.Appearance.ThemeSystem.Content" xml:space="preserve"><value>System</value></data>
+  <data name="Settings.Appearance.ThemeLight.Content" xml:space="preserve"><value>Light</value></data>
+  <data name="Settings.Appearance.ThemeDark.Content" xml:space="preserve"><value>Dark</value></data>
+  <data name="Settings.Appearance.AccentHeader.Text" xml:space="preserve"><value>Accent color</value></data>
+  <data name="Settings.Appearance.Accent.violet" xml:space="preserve"><value>Violet</value></data>
+  <data name="Settings.Appearance.Accent.amber" xml:space="preserve"><value>Amber</value></data>
+  <data name="Settings.Appearance.Accent.mint" xml:space="preserve"><value>Mint</value></data>
+  <data name="Settings.Appearance.Accent.rose" xml:space="preserve"><value>Rose</value></data>
+  <data name="Settings.Appearance.Accent.blue" xml:space="preserve"><value>Blue</value></data>
+  <data name="Settings.Appearance.SwatchViolet.AutomationProperties.Name" xml:space="preserve"><value>Violet accent</value></data>
+  <data name="Settings.Appearance.SwatchViolet.ToolTipService.ToolTip" xml:space="preserve"><value>Violet</value></data>
+  <data name="Settings.Appearance.SwatchAmber.AutomationProperties.Name" xml:space="preserve"><value>Amber accent</value></data>
+  <data name="Settings.Appearance.SwatchAmber.ToolTipService.ToolTip" xml:space="preserve"><value>Amber</value></data>
+  <data name="Settings.Appearance.SwatchMint.AutomationProperties.Name" xml:space="preserve"><value>Mint accent</value></data>
+  <data name="Settings.Appearance.SwatchMint.ToolTipService.ToolTip" xml:space="preserve"><value>Mint</value></data>
+  <data name="Settings.Appearance.SwatchRose.AutomationProperties.Name" xml:space="preserve"><value>Rose accent</value></data>
+  <data name="Settings.Appearance.SwatchRose.ToolTipService.ToolTip" xml:space="preserve"><value>Rose</value></data>
+  <data name="Settings.Appearance.SwatchBlue.AutomationProperties.Name" xml:space="preserve"><value>Blue accent</value></data>
+  <data name="Settings.Appearance.SwatchBlue.ToolTipService.ToolTip" xml:space="preserve"><value>Blue</value></data>
+  <data name="Settings.Appearance.NavPane.Header" xml:space="preserve"><value>Side menu</value></data>
+  <data name="Settings.Appearance.NavPane.OnContent" xml:space="preserve"><value>Expanded</value></data>
+  <data name="Settings.Appearance.NavPane.OffContent" xml:space="preserve"><value>Folded (icons only)</value></data>
+  <data name="Settings.Appearance.NavPaneHint.Text" xml:space="preserve"><value>Folded shows only the icons. You can also fold the menu with the ☰ button.</value></data>
   <data name="Preview.StateHeading.Text" xml:space="preserve">
     <value>State</value>
   </data>
@@ -910,31 +901,40 @@
   <data name="Preview.Game.Resolution" xml:space="preserve">
     <value>Game at {0}×{1}</value>
   </data>
-  <data name="Settings.Appearance.Header.Text" xml:space="preserve"><value>Appearance</value></data>
-  <data name="Settings.Appearance.Hint.Text" xml:space="preserve"><value>Theme, accent color and side menu. Every change applies at once.</value></data>
-  <data name="Settings.Appearance.ThemeHeader.Text" xml:space="preserve"><value>Theme</value></data>
-  <data name="Settings.Appearance.ThemeHint.Text" xml:space="preserve"><value>Follow Windows or pick one.</value></data>
-  <data name="Settings.Appearance.ThemeSystem.Content" xml:space="preserve"><value>System</value></data>
-  <data name="Settings.Appearance.ThemeLight.Content" xml:space="preserve"><value>Light</value></data>
-  <data name="Settings.Appearance.ThemeDark.Content" xml:space="preserve"><value>Dark</value></data>
-  <data name="Settings.Appearance.AccentHeader.Text" xml:space="preserve"><value>Accent color</value></data>
-  <data name="Settings.Appearance.Accent.violet" xml:space="preserve"><value>Violet</value></data>
-  <data name="Settings.Appearance.Accent.amber" xml:space="preserve"><value>Amber</value></data>
-  <data name="Settings.Appearance.Accent.mint" xml:space="preserve"><value>Mint</value></data>
-  <data name="Settings.Appearance.Accent.rose" xml:space="preserve"><value>Rose</value></data>
-  <data name="Settings.Appearance.Accent.blue" xml:space="preserve"><value>Blue</value></data>
-  <data name="Settings.Appearance.SwatchViolet.AutomationProperties.Name" xml:space="preserve"><value>Violet accent</value></data>
-  <data name="Settings.Appearance.SwatchViolet.ToolTipService.ToolTip" xml:space="preserve"><value>Violet</value></data>
-  <data name="Settings.Appearance.SwatchAmber.AutomationProperties.Name" xml:space="preserve"><value>Amber accent</value></data>
-  <data name="Settings.Appearance.SwatchAmber.ToolTipService.ToolTip" xml:space="preserve"><value>Amber</value></data>
-  <data name="Settings.Appearance.SwatchMint.AutomationProperties.Name" xml:space="preserve"><value>Mint accent</value></data>
-  <data name="Settings.Appearance.SwatchMint.ToolTipService.ToolTip" xml:space="preserve"><value>Mint</value></data>
-  <data name="Settings.Appearance.SwatchRose.AutomationProperties.Name" xml:space="preserve"><value>Rose accent</value></data>
-  <data name="Settings.Appearance.SwatchRose.ToolTipService.ToolTip" xml:space="preserve"><value>Rose</value></data>
-  <data name="Settings.Appearance.SwatchBlue.AutomationProperties.Name" xml:space="preserve"><value>Blue accent</value></data>
-  <data name="Settings.Appearance.SwatchBlue.ToolTipService.ToolTip" xml:space="preserve"><value>Blue</value></data>
-  <data name="Settings.Appearance.NavPane.Header" xml:space="preserve"><value>Side menu</value></data>
-  <data name="Settings.Appearance.NavPane.OnContent" xml:space="preserve"><value>Expanded</value></data>
-  <data name="Settings.Appearance.NavPane.OffContent" xml:space="preserve"><value>Folded (icons only)</value></data>
-  <data name="Settings.Appearance.NavPaneHint.Text" xml:space="preserve"><value>Folded shows only the icons. You can also fold the menu with the ☰ button.</value></data>
+  <data name="Apply.CharacterHeader.Text" xml:space="preserve">
+    <value>Character</value>
+  </data>
+  <data name="Apply.ClassHeader.Text" xml:space="preserve">
+    <value>Class</value>
+  </data>
+  <data name="Apply.GuideHeader.Text" xml:space="preserve">
+    <value>Guide</value>
+  </data>
+  <data name="Apply.CooldownBoardHeader.Text" xml:space="preserve">
+    <value>Cooldown slots</value>
+  </data>
+  <data name="Apply.QuickBoardHeader.Text" xml:space="preserve">
+    <value>Quick slots</value>
+  </data>
+  <data name="Apply.BackupNote.Text" xml:space="preserve">
+    <value>A verified backup of the character is saved before writing.</value>
+  </data>
+  <data name="Apply.SlotHint.Pick" xml:space="preserve">
+    <value>Tap a slot to see what it holds.</value>
+  </data>
+  <data name="Apply.SlotHint.NoSlot" xml:space="preserve">
+    <value>This step has no cooldown slot. Pick one below, in the selected step.</value>
+  </data>
+  <data name="Apply.CooldownCell" xml:space="preserve">
+    <value>Slot {0}</value>
+  </data>
+  <data name="Apply.BoardCell.Filled" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="Apply.BoardCell.Empty" xml:space="preserve">
+    <value>{0}, empty</value>
+  </data>
+  <data name="Apply.ApplyToCharacter" xml:space="preserve">
+    <value>Apply to {0}</value>
+  </data>
 </root>
