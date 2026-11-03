@@ -1,13 +1,16 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using BdoComboSetup.Core.Characters;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Search;
+using BdoComboSetup.Core.Settings;
 using BdoComboSetup.Core.Updates;
 using BdoComboSetup.Core.ViewModels;
 using BdoComboSetup.Views.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.UI.Xaml.Shapes;
 using Microsoft.Windows.Storage.Pickers;
 
 namespace BdoComboSetup.Views;
@@ -18,6 +21,29 @@ namespace BdoComboSetup.Views;
 /// </summary>
 public sealed partial class SettingsPage : Page
 {
+    /// <summary>The accent swatch rings, by accent id: the ring of the chosen accent is shown.</summary>
+    private readonly IReadOnlyDictionary<string, UIElement> _accentRings;
+
+    /// <summary>The theme pills, by theme id: the chosen theme is filled with the accent.</summary>
+    private readonly IReadOnlyDictionary<string, Button> _themeButtons;
+
+    /// <summary>The filled circle of each accent swatch, by accent id.</summary>
+    private readonly IReadOnlyDictionary<string, Ellipse> _swatchFills;
+
+    /// <summary>
+    /// The accent of each swatch as ARGB: the light-theme color and the dark-theme color (the page's palette, the only colors here
+    /// that are not theme resources). A swatch takes the color of the theme the page is in.
+    /// </summary>
+    private static readonly IReadOnlyDictionary<string, (uint Light, uint Dark)> SwatchPalette =
+        new Dictionary<string, (uint Light, uint Dark)>(StringComparer.Ordinal)
+        {
+            [AccentColors.Violet] = (0xFF6F5CFF, 0xFF9A8CFF),
+            [AccentColors.Amber] = (0xFFB8720F, 0xFFE8A33D),
+            [AccentColors.Mint] = (0xFF0F8F73, 0xFF3ECFAE),
+            [AccentColors.Rose] = (0xFFE5427A, 0xFFFF7AA6),
+            [AccentColors.Blue] = (0xFF2B6FE0, 0xFF5AA0FF),
+        };
+
     public SettingsPage()
     {
         ViewModel = App.Services.SettingsView;
@@ -29,9 +55,139 @@ public sealed partial class SettingsPage : Page
         CharacterList.ItemsSource = apply.Characters;
         CharacterList.ItemTemplate = (DataTemplate)Resources["CharacterRowTemplate"];
         CharacterList.SetFields(item => apply.CharacterSearchTexts((CharacterOption)item));
+
+        _accentRings = new Dictionary<string, UIElement>(StringComparer.Ordinal)
+        {
+            [AccentColors.Violet] = AccentRingViolet,
+            [AccentColors.Amber] = AccentRingAmber,
+            [AccentColors.Mint] = AccentRingMint,
+            [AccentColors.Rose] = AccentRingRose,
+            [AccentColors.Blue] = AccentRingBlue,
+        };
+        _themeButtons = new Dictionary<string, Button>(StringComparer.Ordinal)
+        {
+            [AppThemes.FollowSystem] = ThemeSystemButton,
+            [AppThemes.Light] = ThemeLightButton,
+            [AppThemes.Dark] = ThemeDarkButton,
+        };
+        _swatchFills = new Dictionary<string, Ellipse>(StringComparer.Ordinal)
+        {
+            [AccentColors.Violet] = SwatchFillViolet,
+            [AccentColors.Amber] = SwatchFillAmber,
+            [AccentColors.Mint] = SwatchFillMint,
+            [AccentColors.Rose] = SwatchFillRose,
+            [AccentColors.Blue] = SwatchFillBlue,
+        };
+
+        // The appearance controls follow the view model while the page is shown. The view model is shared, so the handler
+        // is attached only while the page is in the tree.
+        Loaded += Page_Loaded;
+        Unloaded += Page_Unloaded;
+        ActualThemeChanged += Page_ActualThemeChanged;
+        RefreshAppearance();
+        RefreshSwatches();
     }
 
     public SettingsViewModel ViewModel { get; }
+
+    /// <summary>The name of an accent color in the current language (the accent id is the one the settings store).</summary>
+    public static string AccentNameOf(string accent)
+    {
+        var localizer = App.Services.Localizer;
+        return AccentColors.Normalize(accent) switch
+        {
+            AccentColors.Amber => localizer.Get("Settings.Appearance.Accent.amber"),
+            AccentColors.Mint => localizer.Get("Settings.Appearance.Accent.mint"),
+            AccentColors.Rose => localizer.Get("Settings.Appearance.Accent.rose"),
+            AccentColors.Blue => localizer.Get("Settings.Appearance.Accent.blue"),
+            _ => localizer.Get("Settings.Appearance.Accent.violet"),
+        };
+    }
+
+    private void Page_Loaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        RefreshAppearance();
+        RefreshSwatches();
+    }
+
+    /// <summary>The window's theme changed (Windows switched, or the theme was set): the swatches take the other palette color.</summary>
+    private void Page_ActualThemeChanged(FrameworkElement sender, object args) => RefreshSwatches();
+
+    /// <summary>Paints each swatch with its accent for the theme the page is in.</summary>
+    private void RefreshSwatches()
+    {
+        var dark = ActualTheme == ElementTheme.Dark;
+        foreach (var (accent, fill) in _swatchFills)
+        {
+            var (light, darkArgb) = SwatchPalette[accent];
+            fill.Fill = new Microsoft.UI.Xaml.Media.SolidColorBrush(FromArgb(dark ? darkArgb : light));
+        }
+    }
+
+    private static Windows.UI.Color FromArgb(uint argb) => Windows.UI.Color.FromArgb(
+        (byte)(argb >> 24),
+        (byte)(argb >> 16),
+        (byte)(argb >> 8),
+        (byte)argb);
+
+    private void Page_Unloaded(object sender, RoutedEventArgs e) => ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(SettingsViewModel.Theme) or nameof(SettingsViewModel.AccentColor))
+        {
+            RefreshAppearance();
+        }
+    }
+
+    /// <summary>
+    /// Shows the saved theme and accent: the ring of the chosen swatch and the filled theme pill. The colors themselves are theme
+    /// resources, and the window applies a change of theme (ThemeService), so only these two states are set here.
+    /// </summary>
+    private void RefreshAppearance()
+    {
+        foreach (var (accent, ring) in _accentRings)
+        {
+            ring.Visibility = accent == ViewModel.AccentColor ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        var selectedStyle = (Style)App.Current.Resources["PillSelectedStyle"];
+        var pillStyle = (Style)App.Current.Resources["PillStyle"];
+        foreach (var (theme, button) in _themeButtons)
+        {
+            button.Style = theme == ViewModel.Theme ? selectedStyle : pillStyle;
+        }
+    }
+
+    /// <summary>Saves the theme of the pill clicked (the tag is the theme id). The window applies it at once.</summary>
+    private void Theme_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string theme })
+        {
+            ViewModel.ChooseTheme(theme);
+            RefreshAppearance();
+        }
+    }
+
+    /// <summary>Saves the accent of the swatch clicked (the tag is the accent id). The window applies it at once.</summary>
+    private void Accent_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string accent })
+        {
+            ViewModel.ChooseAccentColor(accent);
+            RefreshAppearance();
+        }
+    }
+
+    /// <summary>Folds or expands the side menu. The switch only forwards the change; the view model saves it.</summary>
+    private void NavPane_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (sender is ToggleSwitch toggle && toggle.IsOn != ViewModel.NavPaneOpen)
+        {
+            ViewModel.ChooseNavPaneOpen(toggle.IsOn);
+        }
+    }
 
     /// <summary>The OCR scan of the character selection screen (shared by every visit to the page).</summary>
     public CharacterScanViewModel Scan => App.Services.CharacterScan.ViewModel;
@@ -286,8 +442,6 @@ public sealed partial class SettingsPage : Page
         flyout.ShowAt(button);
     }
 
-    /// <summary>Opens the folder picker. A cancelled picker changes nothing; the chosen folder is validated by the view model.</summary>
-
     /// <summary>Saves the account picked in the searchable picker (the numbers of the accounts are what the search matches).</summary>
     private void AccountPicker_Chosen(object? sender, object item)
     {
@@ -313,6 +467,7 @@ public sealed partial class SettingsPage : Page
         }
     }
 
+    /// <summary>Opens the folder picker. A cancelled picker changes nothing; the chosen folder is validated by the view model.</summary>
     private async void Browse_Click(object sender, RoutedEventArgs e)
     {
         var window = App.MainWindow;

@@ -910,4 +910,31 @@
   <data name="Preview.Game.Resolution" xml:space="preserve">
     <value>Juego a {0}×{1}</value>
   </data>
+  <data name="Settings.Appearance.Header.Text" xml:space="preserve"><value>Apariencia</value></data>
+  <data name="Settings.Appearance.Hint.Text" xml:space="preserve"><value>Tema, color de acento y menú lateral. Cada cambio se aplica al momento.</value></data>
+  <data name="Settings.Appearance.ThemeHeader.Text" xml:space="preserve"><value>Tema</value></data>
+  <data name="Settings.Appearance.ThemeHint.Text" xml:space="preserve"><value>Sigue a Windows o elige uno.</value></data>
+  <data name="Settings.Appearance.ThemeSystem.Content" xml:space="preserve"><value>Sistema</value></data>
+  <data name="Settings.Appearance.ThemeLight.Content" xml:space="preserve"><value>Claro</value></data>
+  <data name="Settings.Appearance.ThemeDark.Content" xml:space="preserve"><value>Oscuro</value></data>
+  <data name="Settings.Appearance.AccentHeader.Text" xml:space="preserve"><value>Color de acento</value></data>
+  <data name="Settings.Appearance.Accent.violet" xml:space="preserve"><value>Violeta</value></data>
+  <data name="Settings.Appearance.Accent.amber" xml:space="preserve"><value>Ámbar</value></data>
+  <data name="Settings.Appearance.Accent.mint" xml:space="preserve"><value>Menta</value></data>
+  <data name="Settings.Appearance.Accent.rose" xml:space="preserve"><value>Rosa</value></data>
+  <data name="Settings.Appearance.Accent.blue" xml:space="preserve"><value>Azul</value></data>
+  <data name="Settings.Appearance.SwatchViolet.AutomationProperties.Name" xml:space="preserve"><value>Acento violeta</value></data>
+  <data name="Settings.Appearance.SwatchViolet.ToolTipService.ToolTip" xml:space="preserve"><value>Violeta</value></data>
+  <data name="Settings.Appearance.SwatchAmber.AutomationProperties.Name" xml:space="preserve"><value>Acento ámbar</value></data>
+  <data name="Settings.Appearance.SwatchAmber.ToolTipService.ToolTip" xml:space="preserve"><value>Ámbar</value></data>
+  <data name="Settings.Appearance.SwatchMint.AutomationProperties.Name" xml:space="preserve"><value>Acento menta</value></data>
+  <data name="Settings.Appearance.SwatchMint.ToolTipService.ToolTip" xml:space="preserve"><value>Menta</value></data>
+  <data name="Settings.Appearance.SwatchRose.AutomationProperties.Name" xml:space="preserve"><value>Acento rosa</value></data>
+  <data name="Settings.Appearance.SwatchRose.ToolTipService.ToolTip" xml:space="preserve"><value>Rosa</value></data>
+  <data name="Settings.Appearance.SwatchBlue.AutomationProperties.Name" xml:space="preserve"><value>Acento azul</value></data>
+  <data name="Settings.Appearance.SwatchBlue.ToolTipService.ToolTip" xml:space="preserve"><value>Azul</value></data>
+  <data name="Settings.Appearance.NavPane.Header" xml:space="preserve"><value>Menú lateral</value></data>
+  <data name="Settings.Appearance.NavPane.OnContent" xml:space="preserve"><value>Expandido</value></data>
+  <data name="Settings.Appearance.NavPane.OffContent" xml:space="preserve"><value>Plegado (solo iconos)</value></data>
+  <data name="Settings.Appearance.NavPaneHint.Text" xml:space="preserve"><value>Plegado muestra solo los iconos. También puedes plegar el menú con el botón ☰.</value></data>
 </root>
