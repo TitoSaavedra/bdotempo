@@ -95,12 +95,12 @@
             OpenPaneLength="220"
             SelectionChanged="Nav_SelectionChanged">
             <NavigationView.MenuItems>
-                <NavigationViewItem x:Name="ApplyItem" x:Uid="NavApplyItem" Tag="apply" MinHeight="46" CornerRadius="14" LostFocus="MenuItem_LostFocus">
+                <NavigationViewItem x:Name="ApplyItem" x:Uid="NavApplyItem" Tag="apply" MinHeight="46" CornerRadius="8" LostFocus="MenuItem_LostFocus">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Accept" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem x:Name="PreviewItem" x:Uid="NavPreviewItem" Tag="preview" MinHeight="46" CornerRadius="14" LostFocus="MenuItem_LostFocus">
+                <NavigationViewItem x:Name="PreviewItem" x:Uid="NavPreviewItem" Tag="preview" MinHeight="46" CornerRadius="8" LostFocus="MenuItem_LostFocus">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="View" />
                     </NavigationViewItem.Icon>
@@ -108,7 +108,7 @@
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
-                <NavigationViewItem x:Name="SettingsItem" x:Uid="NavSettingsItem" Tag="settings" MinHeight="46" CornerRadius="14" LostFocus="MenuItem_LostFocus">
+                <NavigationViewItem x:Name="SettingsItem" x:Uid="NavSettingsItem" Tag="settings" MinHeight="46" CornerRadius="8" LostFocus="MenuItem_LostFocus">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Setting" />
                     </NavigationViewItem.Icon>

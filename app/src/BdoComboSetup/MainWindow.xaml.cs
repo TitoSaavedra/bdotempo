@@ -69,7 +69,7 @@ public sealed partial class MainWindow : Window
         AppTitleBar.IconSource = null;
 
         // The color theme and the accent are applied before the first page is shown.
-        services.Theme.Attach(RootGrid);
+        services.Theme.Attach(RootGrid, AppWindow);
 
         // The pointer and the keyboard focus open and close the menu (see the handlers below). Their events are taken even when a
         // child already handled them, so the menu also sees the pointer over the page content.

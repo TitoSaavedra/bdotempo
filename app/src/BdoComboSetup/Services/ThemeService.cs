@@ -1,6 +1,7 @@
 using BdoComboSetup.Core.Logging;
 using BdoComboSetup.Core.Settings;
 using BdoComboSetup.Core.ViewModels;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
@@ -66,9 +67,19 @@ public sealed class ThemeService
         "TextOnAccentFillColorPrimaryBrush", "ToggleSwitchKnobFillOn",
     ];
 
+    /// <summary>
+    /// The caption buttons of the title bar for one actual theme: the glyph colors (ARGB, the palette's text colors), the muted
+    /// glyph of an inactive window, and the subtle tints of the hover and pressed backgrounds.
+    /// </summary>
+    private sealed record CaptionColors(string Foreground, string Inactive, string Hover, string Pressed);
+
+    private static readonly CaptionColors LightCaption = new("#FF141325", "#FF6F6D86", "#1A141325", "#2E141325");
+    private static readonly CaptionColors DarkCaption = new("#FFF1F0FB", "#FF9A98B4", "#1AFFFFFF", "#2EFFFFFF");
+
     private readonly AppSettingsStore _settings;
     private readonly SettingsViewModel _settingsView;
     private readonly AppLogger _logger;
+    private AppWindow? _appWindow;
     private FrameworkElement? _root;
 
     public ThemeService(AppSettingsStore settings, SettingsViewModel settingsView, AppLogger logger)
@@ -86,18 +97,21 @@ public sealed class ThemeService
     }
 
     /// <summary>
-    /// Attaches to the root element of the window (once). It applies the saved settings at once, then again when the
-    /// theme or the accent changes in Settings and when the actual theme changes (Windows switched between light and dark).
+    /// Attaches to the root element of the window (once) and to its <see cref="AppWindow"/>, whose title bar holds the caption
+    /// buttons. It applies the saved settings at once, then again when the theme or the accent changes in Settings and when the
+    /// actual theme changes (Windows switched between light and dark).
     /// </summary>
-    public void Attach(FrameworkElement root)
+    public void Attach(FrameworkElement root, AppWindow appWindow)
     {
         ArgumentNullException.ThrowIfNull(root);
+        ArgumentNullException.ThrowIfNull(appWindow);
         if (_root is not null)
         {
             return;
         }
 
         _root = root;
+        _appWindow = appWindow;
         _settingsView.AppearanceChanged += (_, _) => Apply("settings_changed");
         root.ActualThemeChanged += (_, _) => Apply("actual_theme_changed");
         Apply("startup");
@@ -124,6 +138,10 @@ public sealed class ThemeService
             _root.RequestedTheme = requested;
         }
 
+        // The actual theme decides the caption colors: the explicit choice, or what Windows shows when the theme follows the system.
+        var dark = requested == ElementTheme.Dark || (requested == ElementTheme.Default && _root.ActualTheme == ElementTheme.Dark);
+        ApplyCaptionButtons(dark);
+
         var (lightDictionary, darkDictionary) = FindPalette(Application.Current.Resources);
         if (lightDictionary is null || darkDictionary is null)
         {
@@ -143,7 +161,35 @@ public sealed class ThemeService
             ["theme"] = theme,
             ["accent"] = accent,
             ["actual_theme"] = _root.ActualTheme.ToString(),
+            ["caption_dark"] = dark,
         });
+    }
+
+    /// <summary>
+    /// Colors the caption buttons (minimize, maximize, close) for the actual theme. The buttons have no background at rest, a
+    /// subtle tint on hover and press, and the palette's text color. AppWindowTitleBar has one hover color for all three buttons,
+    /// so the close button does not get its own red hover here.
+    /// </summary>
+    private void ApplyCaptionButtons(bool dark)
+    {
+        if (_appWindow is null)
+        {
+            return;
+        }
+
+        var colors = dark ? DarkCaption : LightCaption;
+        var foreground = FromHex(colors.Foreground);
+        var titleBar = _appWindow.TitleBar;
+        var transparent = Color.FromArgb(0, 0, 0, 0);
+
+        titleBar.ButtonBackgroundColor = transparent;
+        titleBar.ButtonInactiveBackgroundColor = transparent;
+        titleBar.ButtonForegroundColor = foreground;
+        titleBar.ButtonHoverForegroundColor = foreground;
+        titleBar.ButtonPressedForegroundColor = foreground;
+        titleBar.ButtonInactiveForegroundColor = FromHex(colors.Inactive);
+        titleBar.ButtonHoverBackgroundColor = FromHex(colors.Hover);
+        titleBar.ButtonPressedBackgroundColor = FromHex(colors.Pressed);
     }
 
     /// <summary>
@@ -277,11 +323,16 @@ public sealed class ThemeService
     private static Color WithRgbOf(Color alphaSource, Color rgbSource) =>
         Color.FromArgb(alphaSource.A, rgbSource.R, rgbSource.G, rgbSource.B);
 
-    private static Color FromHex(string hex) => Color.FromArgb(
-        255,
-        Convert.ToByte(hex.Substring(1, 2), 16),
-        Convert.ToByte(hex.Substring(3, 2), 16),
-        Convert.ToByte(hex.Substring(5, 2), 16));
+    /// <summary>Parses <c>#RRGGBB</c> (opaque) or <c>#AARRGGBB</c> into a color.</summary>
+    private static Color FromHex(string hex)
+    {
+        var argb = hex.Length == 9 ? hex : "#FF" + hex.Substring(1);
+        return Color.FromArgb(
+            Convert.ToByte(argb.Substring(1, 2), 16),
+            Convert.ToByte(argb.Substring(3, 2), 16),
+            Convert.ToByte(argb.Substring(5, 2), 16),
+            Convert.ToByte(argb.Substring(7, 2), 16));
+    }
 
     /// <summary>Moves a color toward the target by the amount (0 keeps the color, 1 gives the target). Opaque.</summary>
     private static Color Mix(Color color, Color target, double amount) => Color.FromArgb(
