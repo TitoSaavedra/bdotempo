@@ -48,7 +48,7 @@
         <DataTemplate x:Key="ClassRowTemplate" x:DataType="vm:ClassOptionViewModel">
             <Grid Margin="0,1">
                 <Border
-                    CornerRadius="12"
+                    CornerRadius="8"
                     BorderThickness="1"
                     Background="{ThemeResource GlassSelectedFillBrush}"
                     BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
@@ -87,12 +87,12 @@
                 ToolTipService.ToolTip="{x:Bind Caption, Mode=OneTime}">
                 <Grid>
                     <Border
-                        CornerRadius="10"
+                        CornerRadius="8"
                         BorderThickness="1"
                         Background="{ThemeResource ControlFillColorSecondaryBrush}"
                         BorderBrush="{ThemeResource GlassLineBrush}" />
                     <Border
-                        CornerRadius="10"
+                        CornerRadius="8"
                         BorderThickness="2"
                         BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
                         Visibility="{x:Bind IsSelected, Mode=OneTime, Converter={StaticResource BoolToVisibility}}" />

@@ -167,8 +167,9 @@
                         <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="#FF141325" />
                         <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="#FF141325" />
                         <SolidColorBrush x:Key="NavigationViewItemHeaderForeground" Color="#FF6F6D86" />
-                        <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#00000000" />
-                        <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#00000000" />
+                        <!-- The menu pane: an opaque glass (96% of the white surface), so the page behind it does not show through the items. -->
+                        <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#F5FFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#F5FFFFFF" />
                         <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="#00000000" />
                         <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#00000000" />
                         <SolidColorBrush x:Key="NavigationViewButtonBackground" Color="#00000000" />
@@ -336,8 +337,9 @@
                         <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="#FFF1F0FB" />
                         <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="#FFF1F0FB" />
                         <SolidColorBrush x:Key="NavigationViewItemHeaderForeground" Color="#FF9A98B4" />
-                        <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#00000000" />
-                        <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#00000000" />
+                        <!-- The menu pane: an opaque glass (95% of the dark surface tint), so the page behind it does not show through the items. -->
+                        <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#F218162C" />
+                        <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#F218162C" />
                         <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="#00000000" />
                         <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#00000000" />
                         <SolidColorBrush x:Key="NavigationViewButtonBackground" Color="#00000000" />
@@ -364,7 +366,7 @@
             <conv:OffsetToMarginConverter x:Key="OffsetToMargin" />
 
             <!-- Rounder controls for the glass look (fields, combo boxes, buttons). -->
-            <CornerRadius x:Key="ControlCornerRadius">14</CornerRadius>
+            <CornerRadius x:Key="ControlCornerRadius">8</CornerRadius>
 
             <!-- Glass card: the summary, the detail panel and the preview bars. -->
             <Style x:Key="GlassCardStyle" TargetType="Border">
@@ -404,14 +406,14 @@
                 <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
                 <Setter Property="BorderBrush" Value="{ThemeResource GlassLineBrush}" />
                 <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
-                <Setter Property="CornerRadius" Value="99" />
+                <Setter Property="CornerRadius" Value="8" />
                 <Setter Property="Padding" Value="14,6" />
             </Style>
             <Style x:Key="PillSelectedStyle" TargetType="Button">
                 <Setter Property="Background" Value="{ThemeResource AccentGradientBrush}" />
                 <Setter Property="BorderBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
                 <Setter Property="Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
-                <Setter Property="CornerRadius" Value="99" />
+                <Setter Property="CornerRadius" Value="8" />
                 <Setter Property="Padding" Value="14,6" />
             </Style>
 
@@ -420,13 +422,13 @@
                 <Setter Property="Background" Value="{ThemeResource ControlFillColorSecondaryBrush}" />
                 <Setter Property="BorderBrush" Value="{ThemeResource GlassLineBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="CornerRadius" Value="8" />
             </Style>
             <Style x:Key="ClassTileSelectedStyle" TargetType="Button">
                 <Setter Property="Background" Value="{ThemeResource ControlFillColorSecondaryBrush}" />
                 <Setter Property="BorderBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
                 <Setter Property="BorderThickness" Value="2" />
-                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="CornerRadius" Value="8" />
             </Style>
 
             <!-- Navigation items (glass shell): the pill height of a left-pane item. -->
