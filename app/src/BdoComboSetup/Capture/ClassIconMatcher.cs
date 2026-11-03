@@ -204,10 +204,13 @@ internal sealed class ClassIconMatcher
     private static float[]? CropSignature(GameScreenFrame frame, CharacterRowCandidate row)
     {
         var height = (int)Math.Max(1, row.Bottom - row.Top);
-        var left = (int)Math.Max(0, row.LevelLeft - (height * 3.0));
+        // The row box is the name line. The icon is centered in the whole card, so it sits lower than the name line on a row
+        // without a memo (the card has the location line under the name): the window reaches further down than up, or the
+        // tip of a tall icon is cut and its shape no longer matches.
+        var left = (int)Math.Max(0, row.LevelLeft - (height * 3.4));
         var right = (int)Math.Min(frame.Width - 1, row.LevelLeft - 4);
         var top = (int)Math.Max(0, row.Top - (height * 1.1));
-        var bottom = (int)Math.Min(frame.Height - 1, row.Bottom + (height * 1.1));
+        var bottom = (int)Math.Min(frame.Height - 1, row.Bottom + (height * 2.0));
         var width = right - left + 1;
         var cropHeight = bottom - top + 1;
         if (width < 8 || cropHeight < 8)
