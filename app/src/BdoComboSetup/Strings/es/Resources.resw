@@ -491,6 +491,7 @@
   <data name="Characters.EditTitle" xml:space="preserve"><value>Editar personaje</value></data>
   <data name="Characters.EditNameHeader" xml:space="preserve"><value>Nombre</value></data>
   <data name="Characters.EditNamePlaceholder" xml:space="preserve"><value>Nombre en la app</value></data>
+  <data name="Characters.EditClassUnknown" xml:space="preserve"><value>Los archivos del juego no permiten saber la clase de este personaje. Elígela en la lista.</value></data>
   <data name="Characters.EditAutomaticClass" xml:space="preserve"><value>Clase decidida por los archivos del juego</value></data>
   <data name="Characters.EditSave" xml:space="preserve"><value>Guardar</value></data>
   <data name="Characters.EditReset" xml:space="preserve"><value>Restablecer</value></data>

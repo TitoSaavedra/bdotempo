@@ -214,7 +214,9 @@ public sealed partial class SettingsPage : Page
         var automatic = new CheckBox
         {
             Content = localizer.Get("Characters.EditAutomaticClass"),
-            IsChecked = entry?.ClassSource != ClassSource.Custom,
+            // Checked only when the game files really decide the class; when they cannot, the box starts unchecked and the
+            // list is ready, so the editor never says "decided by the game files" over a class that is unknown.
+            IsChecked = entry?.ClassSource == ClassSource.Inferred,
         };
         var classList = new Controls.SearchableList
         {
@@ -266,6 +268,17 @@ public sealed partial class SettingsPage : Page
         });
         panel.Children.Add(nameBox);
         panel.Children.Add(automatic);
+        if (entry?.ClassSource == ClassSource.Unknown)
+        {
+            panel.Children.Add(new TextBlock
+            {
+                Text = localizer.Get("Characters.EditClassUnknown"),
+                FontSize = 12,
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+            });
+        }
+
         panel.Children.Add(chosenText);
         panel.Children.Add(classList);
         panel.Children.Add(buttons);

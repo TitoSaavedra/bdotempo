@@ -491,6 +491,7 @@
   <data name="Characters.EditTitle" xml:space="preserve"><value>Edit character</value></data>
   <data name="Characters.EditNameHeader" xml:space="preserve"><value>Name</value></data>
   <data name="Characters.EditNamePlaceholder" xml:space="preserve"><value>Name in the app</value></data>
+  <data name="Characters.EditClassUnknown" xml:space="preserve"><value>The game files cannot tell this character's class. Pick it from the list.</value></data>
   <data name="Characters.EditAutomaticClass" xml:space="preserve"><value>Class decided by the game files</value></data>
   <data name="Characters.EditSave" xml:space="preserve"><value>Save</value></data>
   <data name="Characters.EditReset" xml:space="preserve"><value>Reset</value></data>
