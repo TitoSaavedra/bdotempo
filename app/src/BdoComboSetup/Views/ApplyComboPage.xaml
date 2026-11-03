@@ -479,7 +479,6 @@
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <Button x:Uid="Apply/DryRunButton" Command="{x:Bind ViewModel.DryRunCommand}" />
                         <Button
                             x:Uid="Apply/OpenEditorButton"
                             Click="OpenEditor_Click"
@@ -502,36 +501,6 @@
                         </ItemsControl>
                     </ScrollViewer>
                 </StackPanel>
-
-                <!-- The review of the character file. Shown after "Apply" or "Show changes". -->
-                <Border
-                    Grid.Row="2"
-                    Style="{StaticResource GlassCardStyle}"
-                    Margin="18,0,18,12"
-                    Padding="14"
-                    BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
-                    Visibility="{x:Bind ViewModel.IsReviewOpen, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <StackPanel Spacing="8">
-                        <TextBlock x:Uid="Apply/ReviewTitle" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                        <TextBlock Text="{x:Bind ViewModel.ReviewSummary, Mode=OneWay}" />
-                        <ListView
-                            ItemsSource="{x:Bind ViewModel.ReviewLines, Mode=OneWay}"
-                            SelectionMode="None"
-                            MaxHeight="120" />
-                        <TextBlock
-                            x:Uid="Apply/ReviewBackupNote"
-                            FontSize="12"
-                            TextWrapping="Wrap"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button
-                                x:Uid="Apply/WriteButton"
-                                Command="{x:Bind ViewModel.ConfirmWriteCommand}"
-                                Style="{StaticResource AccentButtonStyle}" />
-                            <Button x:Uid="Apply/CancelReviewButton" Command="{x:Bind ViewModel.CancelReviewCommand}" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
 
                 <!-- The chains: buffs and combos in the guide's order, then the class add-ons and the mobility pool. -->
                 <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" Padding="18,4,18,16">
@@ -779,30 +748,20 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- The footer, always visible: the write reminder, the backup note and the apply button. -->
+                <!-- The footer, always visible: combos are not written from this page, Preview does it. -->
                 <Border Grid.Row="1" Padding="18,12,18,16" BorderThickness="0,1,0,0" BorderBrush="{ThemeResource GlassLineBrush}">
                     <StackPanel Spacing="10">
-                        <ToggleSwitch
-                            x:Uid="Settings/ShowWriteHintToggle"
-                            IsOn="{x:Bind SettingsView.ShowWriteHint, Mode=OneWay}"
-                            Toggled="WriteHint_Toggled" />
                         <TextBlock
-                            x:Uid="Apply/BackupNote"
+                            x:Uid="Apply/ApplyInPreviewHint"
                             FontSize="12"
                             TextWrapping="Wrap"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        <TextBlock
-                            Text="{x:Bind ViewModel.ClassMismatchText, Mode=OneWay}"
-                            Visibility="{x:Bind ViewModel.IsClassMismatch, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                            FontSize="12"
-                            TextWrapping="Wrap"
-                            Foreground="{ThemeResource SystemFillColorCautionBrush}" />
                         <Button
+                            x:Uid="Apply/GoToPreviewButton"
                             Style="{StaticResource AccentButtonStyle}"
                             HorizontalAlignment="Stretch"
                             MinHeight="44"
-                            Command="{x:Bind ViewModel.ApplyCommand}"
-                            Content="{x:Bind local:ApplyComboPage.ApplyButtonText(ViewModel.SelectedCharacter.Name), Mode=OneWay}" />
+                            Click="GoToPreview_Click" />
                     </StackPanel>
                 </Border>
             </Grid>

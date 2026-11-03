@@ -943,4 +943,6 @@
   <data name="Settings.TabCharacters.Text" xml:space="preserve"><value>Characters</value></data>
   <data name="Settings.TabUpdates.Text" xml:space="preserve"><value>Updates</value></data>
   <data name="Apply.ClassMismatch" xml:space="preserve"><value>The combo is for {1}, but {0} is another class. Choose a character of that class to apply it.</value></data>
+  <data name="Apply.ApplyInPreviewHint.Text" xml:space="preserve"><value>Combos are not applied here. Review the changes and apply them in Preview.</value></data>
+  <data name="Apply.GoToPreviewButton.Content" xml:space="preserve"><value>Go to Preview to apply</value></data>
 </root>

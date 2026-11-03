@@ -943,4 +943,6 @@
   <data name="Settings.TabCharacters.Text" xml:space="preserve"><value>Personajes</value></data>
   <data name="Settings.TabUpdates.Text" xml:space="preserve"><value>Actualizaciones</value></data>
   <data name="Apply.ClassMismatch" xml:space="preserve"><value>El combo es de {1}, pero {0} es de otra clase. Elige un personaje de esa clase para aplicarlo.</value></data>
+  <data name="Apply.ApplyInPreviewHint.Text" xml:space="preserve"><value>Los combos no se aplican aquí. Revisa los cambios y aplícalos en Vista previa.</value></data>
+  <data name="Apply.GoToPreviewButton.Content" xml:space="preserve"><value>Ir a Vista previa para aplicar</value></data>
 </root>

@@ -72,11 +72,6 @@ public sealed partial class ApplyComboPage : Page
     public static Style ClassTileStyle(bool selected) =>
         (Style)App.Current.Resources[selected ? "ClassTileSelectedStyle" : "ClassTileStyle"];
 
-    /// <summary>The label of the primary button: "Apply to <character>", or the plain label when no character is picked.</summary>
-    public static string ApplyButtonText(string? characterName) => string.IsNullOrWhiteSpace(characterName)
-        ? App.Services.Localizer.Get("Apply.ApplyButton.Content")
-        : App.Services.Localizer.Format("Apply.ApplyToCharacter", characterName);
-
     /// <summary>
     /// The line under the cooldown board: what the selected step holds ("#3 · name · key"), a hint to select a step, or a
     /// note that the selected step has no cooldown slot.
@@ -257,14 +252,8 @@ public sealed partial class ApplyComboPage : Page
         }
     }
 
-    /// <summary>The reminder switch: the same setting as the Settings page (the switch changes it at once).</summary>
-    private void WriteHint_Toggled(object sender, RoutedEventArgs e)
-    {
-        if (sender is ToggleSwitch toggle && toggle.IsOn != SettingsView.ShowWriteHint)
-        {
-            SettingsView.ChooseShowWriteHint(toggle.IsOn);
-        }
-    }
+    /// <summary>Combos are written from Preview: this opens it, with the same character and combo.</summary>
+    private void GoToPreview_Click(object sender, RoutedEventArgs e) => (App.MainWindow as MainWindow)?.ShowPreview();
 
     /// <summary>Chooses the class picked in the searchable class list (the page then lists its guides).</summary>
     private void ClassList_ItemChosen(object? sender, object item)

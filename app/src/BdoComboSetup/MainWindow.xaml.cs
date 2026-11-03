@@ -265,6 +265,9 @@ public sealed partial class MainWindow : Window
     /// <summary>The view model that holds the character of the whole app.</summary>
     public ApplyComboViewModel Apply { get; }
 
+    /// <summary>Shows the Preview page (the combos are written from there).</summary>
+    public void ShowPreview() => Nav.SelectedItem = PreviewItem;
+
     /// <summary>Opens the character picker of the status bar (used by the demo mode).</summary>
     public void OpenCharacterPicker() => CharacterPicker.Open();
 
