@@ -45,6 +45,9 @@ public static partial class CharacterScreenRowParser
     /// <summary>The highest level the game lets a character reach; anything above is a misread number.</summary>
     private const int MaxLevel = 100;
 
+    /// <summary>A gap wider than this many text heights ends the name: the next word belongs to something else.</summary>
+    private const double NameGapFactor = 3;
+
     [GeneratedRegex(@"^(?:n[vyw]|lv)[\.,:;]?\s*([0-9lIO|]{1,3})$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex LevelWithNumber();
 
@@ -271,7 +274,21 @@ public static partial class CharacterScreenRowParser
             return null;
         }
 
-        var name = string.Join(" ", words.Skip(levelEnd + 1).Select(word => word.Text.Trim())).Trim();
+        // The name is the words right after the level. A word far to the right of them is another control of the row (the
+        // "Entrar" button of the selected row), not part of the name.
+        var nameWords = new List<ScreenTextWord>();
+        foreach (var word in words.Skip(levelEnd + 1))
+        {
+            var previousRight = nameWords.Count > 0 ? nameWords[^1].X + nameWords[^1].Width : words[levelEnd].X + words[levelEnd].Width;
+            if (word.X - previousRight > Math.Max(word.Height, 1) * NameGapFactor)
+            {
+                break;
+            }
+
+            nameWords.Add(word);
+        }
+
+        var name = string.Join(" ", nameWords.Select(word => word.Text.Trim())).Trim();
         if (name.Length == 0 || !HasLetterOrDigit().IsMatch(name))
         {
             // A level without a name is not a character: it is the list header or a partially read row.
@@ -279,7 +296,7 @@ public static partial class CharacterScreenRowParser
         }
 
         var levelLeft = words[levelIndex].X;
-        var right = band.Words.Max(word => word.X + word.Width);
+        var right = Math.Max(words[levelEnd].X + words[levelEnd].Width, nameWords.Count > 0 ? nameWords.Max(word => word.X + word.Width) : 0);
         var iconWidth = Math.Max(1, bottom - top);
         var left = Math.Max(0, levelLeft - (iconWidth * 1.15));
         return new CharacterRowCandidate(

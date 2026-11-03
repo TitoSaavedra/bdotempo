@@ -27,6 +27,14 @@ internal sealed class ClassIconMatcher
     /// <summary>The best class must beat the second one by this margin, or the guess is ambiguous.</summary>
     private const float MinimumMargin = 0.05f;
 
+    /// <summary>
+    /// Icons made of thin lines correlate low even when they are unmistakable. A lower score is trusted when the best class
+    /// beats the second one by a wide margin (on real frames those were 0.34 to 0.45 with 0.17 or more).
+    /// </summary>
+    private const float LowScoreFloor = 0.33f;
+
+    private const float LowScoreMargin = 0.15f;
+
     private readonly IReadOnlyList<(int ClassType, float[] Signature)> _icons;
     private readonly AppLogger _logger;
 
@@ -102,10 +110,13 @@ internal sealed class ClassIconMatcher
             }
         }
 
-        if (best < MinimumScore || best - second < MinimumMargin)
+        var margin = best - second;
+        var trusted = (best >= MinimumScore && margin >= MinimumMargin) || (best >= LowScoreFloor && margin >= LowScoreMargin);
+        if (!trusted)
         {
             _logger.Debug("character_scan.class_weak", "The class icon was not recognized", new Dictionary<string, object?>
             {
+                ["best_class"] = bestClass,
                 ["score"] = Math.Round(best, 3),
                 ["margin"] = Math.Round(best - second, 3),
             });
