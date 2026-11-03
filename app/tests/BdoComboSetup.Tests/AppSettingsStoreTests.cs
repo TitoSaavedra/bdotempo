@@ -47,13 +47,13 @@ public sealed class AppSettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public void Appearance_and_menu_settings_default_to_system_violet_and_an_open_menu()
+    public void Appearance_and_menu_settings_default_to_system_violet_and_an_auto_hiding_menu()
     {
         var store = new AppSettingsStore(SettingsPath, _log.Logger);
 
         Assert.Equal("system", store.Settings.Theme);
         Assert.Equal("violet", store.Settings.AccentColor);
-        Assert.True(store.Settings.NavPaneOpen);
+        Assert.True(store.Settings.NavAutoHide);
     }
 
     [Fact]
@@ -65,19 +65,19 @@ public sealed class AppSettingsStoreTests : IDisposable
         {
             Theme = "dark",
             AccentColor = "mint",
-            NavPaneOpen = false,
+            NavAutoHide = false,
         });
 
         var reloaded = new AppSettingsStore(SettingsPath, _log.Logger).Settings;
         Assert.Equal("dark", reloaded.Theme);
         Assert.Equal("mint", reloaded.AccentColor);
-        Assert.False(reloaded.NavPaneOpen);
+        Assert.False(reloaded.NavAutoHide);
     }
 
     [Fact]
     public void An_old_settings_file_without_the_new_fields_loads_with_their_defaults()
     {
-        File.WriteAllText(SettingsPath, "{ \"GameDataRoot\": \"D:\\\\Old\", \"Language\": \"en-US\", \"SkipWriteHint\": true }");
+        File.WriteAllText(SettingsPath, "{ \"GameDataRoot\": \"D:\\\\Old\", \"Language\": \"en-US\", \"SkipWriteHint\": true, \"NavPaneOpen\": false }");
 
         var store = new AppSettingsStore(SettingsPath, _log.Logger);
 
@@ -85,7 +85,7 @@ public sealed class AppSettingsStoreTests : IDisposable
         Assert.Equal("en-US", store.Settings.Language);
         Assert.Equal("system", store.Settings.Theme);
         Assert.Equal("violet", store.Settings.AccentColor);
-        Assert.True(store.Settings.NavPaneOpen);
+        Assert.True(store.Settings.NavAutoHide);
     }
 
     [Fact]

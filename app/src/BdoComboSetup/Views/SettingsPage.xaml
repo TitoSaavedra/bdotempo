@@ -292,17 +292,28 @@
                             </StackPanel>
                         </StackPanel>
 
-                        <!-- Side menu: folded (icons only) or expanded. The menu can also be folded with the hamburger button. -->
-                        <StackPanel Spacing="6">
-                            <ToggleSwitch
-                                x:Uid="Settings/Appearance/NavPane"
-                                IsOn="{x:Bind ViewModel.NavPaneOpen, Mode=OneWay}"
-                                Toggled="NavPane_Toggled" />
+                        <!-- Side menu: two pills. "Auto-hide" (the default) shows the menu at the left edge; "Always visible" keeps it open. Applies at once. -->
+                        <StackPanel Spacing="8">
+                            <TextBlock x:Uid="Settings/Appearance/NavPaneHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
                             <TextBlock
                                 x:Uid="Settings/Appearance/NavPaneHint"
                                 TextWrapping="Wrap"
                                 FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button
+                                    x:Name="NavAutoHideButton"
+                                    x:Uid="Settings/Appearance/NavAutoHide"
+                                    Tag="auto"
+                                    Click="NavPane_Click"
+                                    Style="{StaticResource PillStyle}" />
+                                <Button
+                                    x:Name="NavAlwaysButton"
+                                    x:Uid="Settings/Appearance/NavAlways"
+                                    Tag="always"
+                                    Click="NavPane_Click"
+                                    Style="{StaticResource PillStyle}" />
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </Border>

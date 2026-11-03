@@ -135,15 +135,15 @@ public sealed partial class SettingsPage : Page
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(SettingsViewModel.Theme) or nameof(SettingsViewModel.AccentColor))
+        if (e.PropertyName is nameof(SettingsViewModel.Theme) or nameof(SettingsViewModel.AccentColor) or nameof(SettingsViewModel.NavAutoHide))
         {
             RefreshAppearance();
         }
     }
 
     /// <summary>
-    /// Shows the saved theme and accent: the ring of the chosen swatch and the filled theme pill. The colors themselves are theme
-    /// resources, and the window applies a change of theme (ThemeService), so only these two states are set here.
+    /// Shows the saved theme, accent and side menu mode: the ring of the chosen swatch and the filled pills. The colors themselves are
+    /// theme resources, and the window applies a change of theme (ThemeService), so only these states are set here.
     /// </summary>
     private void RefreshAppearance()
     {
@@ -158,6 +158,9 @@ public sealed partial class SettingsPage : Page
         {
             button.Style = theme == ViewModel.Theme ? selectedStyle : pillStyle;
         }
+
+        NavAutoHideButton.Style = ViewModel.NavAutoHide ? selectedStyle : pillStyle;
+        NavAlwaysButton.Style = ViewModel.NavAutoHide ? pillStyle : selectedStyle;
     }
 
     /// <summary>Saves the theme of the pill clicked (the tag is the theme id). The window applies it at once.</summary>
@@ -180,12 +183,13 @@ public sealed partial class SettingsPage : Page
         }
     }
 
-    /// <summary>Folds or expands the side menu. The switch only forwards the change; the view model saves it.</summary>
-    private void NavPane_Toggled(object sender, RoutedEventArgs e)
+    /// <summary>Saves the side menu mode of the pill clicked (the tag is "auto" or "always"). The window applies it at once.</summary>
+    private void NavPane_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is ToggleSwitch toggle && toggle.IsOn != ViewModel.NavPaneOpen)
+        if (sender is Button { Tag: string mode })
         {
-            ViewModel.ChooseNavPaneOpen(toggle.IsOn);
+            ViewModel.ChooseNavAutoHide(mode == "auto");
+            RefreshAppearance();
         }
     }
 

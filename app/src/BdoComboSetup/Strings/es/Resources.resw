@@ -858,10 +858,11 @@
   <data name="Settings.Appearance.SwatchRose.ToolTipService.ToolTip" xml:space="preserve"><value>Rosa</value></data>
   <data name="Settings.Appearance.SwatchBlue.AutomationProperties.Name" xml:space="preserve"><value>Acento azul</value></data>
   <data name="Settings.Appearance.SwatchBlue.ToolTipService.ToolTip" xml:space="preserve"><value>Azul</value></data>
-  <data name="Settings.Appearance.NavPane.Header" xml:space="preserve"><value>Menú lateral</value></data>
-  <data name="Settings.Appearance.NavPane.OnContent" xml:space="preserve"><value>Expandido</value></data>
-  <data name="Settings.Appearance.NavPane.OffContent" xml:space="preserve"><value>Plegado (solo iconos)</value></data>
-  <data name="Settings.Appearance.NavPaneHint.Text" xml:space="preserve"><value>Plegado muestra solo los iconos. También puedes plegar el menú con el botón ☰.</value></data>
+  <data name="Settings.Appearance.NavPaneHeader.Text" xml:space="preserve"><value>Menú lateral</value></data>
+  <data name="Settings.Appearance.NavAutoHide.Content" xml:space="preserve"><value>Ocultar solo</value></data>
+  <data name="Settings.Appearance.NavAlways.Content" xml:space="preserve"><value>Siempre visible</value></data>
+  <data name="Settings.Appearance.NavPaneHint.Text" xml:space="preserve"><value>Con ocultar solo, el menú aparece al acercar el mouse al borde izquierdo.</value></data>
+  <data name="NavEdgeHandle.AutomationProperties.Name" xml:space="preserve"><value>Mostrar menú</value></data>
   <data name="Preview.StateHeading.Text" xml:space="preserve">
     <value>Estado</value>
   </data>

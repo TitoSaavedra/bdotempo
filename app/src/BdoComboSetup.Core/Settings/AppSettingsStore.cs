@@ -66,8 +66,11 @@ public sealed record AppSettings
     /// <summary>Accent color id (violet, amber, mint, rose or blue). See <see cref="AccentColors"/>.</summary>
     public string AccentColor { get; init; } = AccentColors.Default;
 
-    /// <summary>True when the left navigation menu is expanded, false when it is folded.</summary>
-    public bool NavPaneOpen { get; init; } = true;
+    /// <summary>
+    /// True (the default) when the left navigation menu hides itself and slides in when the mouse reaches the left edge.
+    /// False keeps the menu always visible. Settings written before this field existed are read with the default.
+    /// </summary>
+    public bool NavAutoHide { get; init; } = true;
 }
 
 /// <summary>The color themes the app supports and how the setting maps to one of them.</summary>

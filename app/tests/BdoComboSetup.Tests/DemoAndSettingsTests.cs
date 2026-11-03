@@ -216,28 +216,28 @@ public sealed class SettingsViewModelTests : IDisposable
         Assert.Equal("violet", vm.AccentColor);
         Assert.Equal(3, raised);
 
-        vm.ChooseNavPaneOpen(false);
-        Assert.False(store.Settings.NavPaneOpen);
-        Assert.False(vm.NavPaneOpen);
+        vm.ChooseNavAutoHide(false);
+        Assert.False(store.Settings.NavAutoHide);
+        Assert.False(vm.NavAutoHide);
         Assert.Equal(3, raised);
 
         var reloaded = new AppSettingsStore(Path.Combine(_log.Directory, "settings.json"), _log.Logger).Settings;
         Assert.Equal("dark", reloaded.Theme);
         Assert.Equal("violet", reloaded.AccentColor);
-        Assert.False(reloaded.NavPaneOpen);
+        Assert.False(reloaded.NavAutoHide);
     }
 
     [Fact]
     public void The_view_model_starts_with_the_saved_appearance_and_normalizes_unknown_values()
     {
         var store = Store();
-        store.Update(current => current with { Theme = "neon", AccentColor = "amber", NavPaneOpen = false });
+        store.Update(current => current with { Theme = "neon", AccentColor = "amber", NavAutoHide = false });
 
         var vm = Create(store, _log.Logger);
 
         Assert.Equal("system", vm.Theme);
         Assert.Equal("amber", vm.AccentColor);
-        Assert.False(vm.NavPaneOpen);
+        Assert.False(vm.NavAutoHide);
     }
 
     [Fact]

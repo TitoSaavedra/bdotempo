@@ -82,26 +82,25 @@
             </StackPanel>
         </InfoBar>
 
-        <!-- The menu folds (compact strip) and expands with its toggle button; the state is saved in the settings. -->
+        <!-- No toggle button: the menu is an overlay (LeftMinimal) that the edge handle below opens. The Settings page can switch to a
+             permanently open menu (Left); the code-behind sets the mode from the saved setting. -->
         <NavigationView
             x:Name="Nav"
             Grid.Row="2"
-            PaneDisplayMode="Left"
-            IsPaneOpen="True"
-            IsPaneToggleButtonVisible="True"
+            PaneDisplayMode="LeftMinimal"
+            IsPaneOpen="False"
+            IsPaneToggleButtonVisible="False"
             IsBackButtonVisible="Collapsed"
             IsSettingsVisible="False"
-            OpenPaneLength="236"
-            PaneOpened="Nav_PaneOpened"
-            PaneClosed="Nav_PaneClosed"
+            OpenPaneLength="220"
             SelectionChanged="Nav_SelectionChanged">
             <NavigationView.MenuItems>
-                <NavigationViewItem x:Name="ApplyItem" x:Uid="NavApplyItem" Tag="apply" MinHeight="46" CornerRadius="14">
+                <NavigationViewItem x:Name="ApplyItem" x:Uid="NavApplyItem" Tag="apply" MinHeight="46" CornerRadius="14" LostFocus="MenuItem_LostFocus">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Accept" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem x:Name="PreviewItem" x:Uid="NavPreviewItem" Tag="preview" MinHeight="46" CornerRadius="14">
+                <NavigationViewItem x:Name="PreviewItem" x:Uid="NavPreviewItem" Tag="preview" MinHeight="46" CornerRadius="14" LostFocus="MenuItem_LostFocus">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="View" />
                     </NavigationViewItem.Icon>
@@ -109,7 +108,7 @@
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
-                <NavigationViewItem x:Name="SettingsItem" x:Uid="NavSettingsItem" Tag="settings" MinHeight="46" CornerRadius="14">
+                <NavigationViewItem x:Name="SettingsItem" x:Uid="NavSettingsItem" Tag="settings" MinHeight="46" CornerRadius="14" LostFocus="MenuItem_LostFocus">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Setting" />
                     </NavigationViewItem.Icon>
@@ -120,6 +119,51 @@
                 <Frame x:Name="ContentFrame" />
             </NavigationView.Content>
         </NavigationView>
+
+        <!-- Edge handle: a thin transparent strip over the left edge of the content, with a short accent bar. Pointer or keyboard focus
+             on it opens the menu; it is collapsed when the menu stays visible, on the setup and on the asset error page. -->
+        <Button
+            x:Name="EdgeHandle"
+            x:Uid="NavEdgeHandle"
+            Grid.Row="2"
+            Width="12"
+            MinWidth="0"
+            MinHeight="0"
+            Padding="0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Stretch"
+            HorizontalContentAlignment="Stretch"
+            VerticalContentAlignment="Stretch"
+            Background="Transparent"
+            BorderThickness="0"
+            Visibility="Collapsed"
+            PointerEntered="EdgeHandle_PointerEntered"
+            PointerExited="EdgeHandle_PointerExited"
+            GotFocus="EdgeHandle_GotFocus"
+            LostFocus="EdgeHandle_LostFocus"
+            Click="EdgeHandle_Click">
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <!-- No visual states: the strip stays invisible apart from the handle, with no hover highlight. -->
+                    <Border Background="{TemplateBinding Background}">
+                        <ContentPresenter
+                            Content="{TemplateBinding Content}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                </ControlTemplate>
+            </Button.Template>
+            <Border
+                Width="4"
+                Height="64"
+                Margin="4,0,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                CornerRadius="2"
+                Opacity="0.6"
+                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                IsHitTestVisible="False" />
+        </Button>
 
         <!-- Thin status bar: the game state on the left (polled by the code-behind, never a capture), the app version on the right. -->
         <Border

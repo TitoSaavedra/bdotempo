@@ -62,7 +62,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         ShowWriteHint = !settings.Settings.SkipWriteHint;
         Theme = AppThemes.Normalize(settings.Settings.Theme);
         AccentColor = AccentColors.Normalize(settings.Settings.AccentColor);
-        NavPaneOpen = settings.Settings.NavPaneOpen;
+        NavAutoHide = settings.Settings.NavAutoHide;
         Refresh();
     }
 
@@ -106,9 +106,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string _accentColor = AccentColors.Default;
 
-    /// <summary>True when the left navigation menu is expanded, false when it is folded. Changed with <see cref="ChooseNavPaneOpen"/>.</summary>
+    /// <summary>True when the side menu hides itself (the default), false when it stays visible. Changed with <see cref="ChooseNavAutoHide"/>.</summary>
     [ObservableProperty]
-    private bool _navPaneOpen = true;
+    private bool _navAutoHide = true;
 
     /// <summary>Raised when the saved theme or accent color actually changes, so the window can apply it.</summary>
     public event EventHandler? AppearanceChanged;
@@ -215,12 +215,12 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
     }
 
-    /// <summary>Saves whether the navigation menu is expanded (true) or folded (false) at once.</summary>
-    public void ChooseNavPaneOpen(bool open)
+    /// <summary>Saves the side menu mode at once: hides itself (true, the default) or stays always visible (false).</summary>
+    public void ChooseNavAutoHide(bool autoHide)
     {
-        _settings.Update(current => current with { NavPaneOpen = open });
-        NavPaneOpen = open;
-        _logger.Info("settings.nav_pane_saved", "Navigation menu state saved", new Dictionary<string, object?> { ["open"] = open });
+        _settings.Update(current => current with { NavAutoHide = autoHide });
+        NavAutoHide = autoHide;
+        _logger.Info("settings.nav_auto_hide_saved", "Side menu mode saved", new Dictionary<string, object?> { ["auto_hide"] = autoHide });
     }
 
     /// <summary>Shows that the folder picker of the view failed (the reason is logged by the view).</summary>
