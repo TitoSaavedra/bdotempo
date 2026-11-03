@@ -96,12 +96,12 @@
             PaneClosed="Nav_PaneClosed"
             SelectionChanged="Nav_SelectionChanged">
             <NavigationView.MenuItems>
-                <NavigationViewItem x:Name="ApplyItem" x:Uid="NavApplyItem" Tag="apply" MinHeight="46">
+                <NavigationViewItem x:Name="ApplyItem" x:Uid="NavApplyItem" Tag="apply" MinHeight="46" CornerRadius="14">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Accept" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem x:Name="PreviewItem" x:Uid="NavPreviewItem" Tag="preview" MinHeight="46">
+                <NavigationViewItem x:Name="PreviewItem" x:Uid="NavPreviewItem" Tag="preview" MinHeight="46" CornerRadius="14">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="View" />
                     </NavigationViewItem.Icon>
@@ -109,7 +109,7 @@
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
-                <NavigationViewItem x:Name="SettingsItem" x:Uid="NavSettingsItem" Tag="settings" MinHeight="46">
+                <NavigationViewItem x:Name="SettingsItem" x:Uid="NavSettingsItem" Tag="settings" MinHeight="46" CornerRadius="14">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Setting" />
                     </NavigationViewItem.Icon>
@@ -121,18 +121,61 @@
             </NavigationView.Content>
         </NavigationView>
 
-        <!-- Thin status bar: the app version (the game detection state is not exposed to the window yet). -->
+        <!-- Thin status bar: the game state on the left (polled by the code-behind, never a capture), the app version on the right. -->
         <Border
             Grid.Row="3"
             Padding="22,6"
             Background="{ThemeResource GlassStatusBarBrush}"
             BorderBrush="{ThemeResource GlassLineBrush}"
             BorderThickness="0,1,0,0">
-            <TextBlock
-                x:Name="VersionText"
-                HorizontalAlignment="Right"
-                FontSize="12"
-                Foreground="{ThemeResource GlassMutedTextBrush}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel
+                    x:Name="GameDetectedGroup"
+                    Orientation="Horizontal"
+                    Spacing="8"
+                    VerticalAlignment="Center"
+                    Visibility="Collapsed">
+                    <Ellipse
+                        Width="8"
+                        Height="8"
+                        VerticalAlignment="Center"
+                        Fill="{ThemeResource GlassSuccessBrush}" />
+                    <TextBlock
+                        x:Name="GameDetectedText"
+                        FontSize="12"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource GlassSuccessBrush}" />
+                </StackPanel>
+
+                <StackPanel
+                    x:Name="GameNotDetectedGroup"
+                    Orientation="Horizontal"
+                    Spacing="8"
+                    VerticalAlignment="Center">
+                    <Ellipse
+                        Width="8"
+                        Height="8"
+                        VerticalAlignment="Center"
+                        Fill="{ThemeResource GlassMutedTextBrush}" />
+                    <TextBlock
+                        x:Name="GameNotDetectedText"
+                        FontSize="12"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource GlassMutedTextBrush}" />
+                </StackPanel>
+
+                <TextBlock
+                    x:Name="VersionText"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    FontSize="12"
+                    Foreground="{ThemeResource GlassMutedTextBrush}" />
+            </Grid>
         </Border>
     </Grid>
 </Window>

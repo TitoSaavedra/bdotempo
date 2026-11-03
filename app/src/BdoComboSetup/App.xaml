@@ -293,6 +293,10 @@
                 <Setter Property="BorderThickness" Value="2" />
                 <Setter Property="CornerRadius" Value="12" />
             </Style>
+
+            <!-- Navigation items (glass shell): the pill height of a left-pane item. -->
+            <x:Double x:Key="NavigationViewItemOnLeftMinHeight">46</x:Double>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

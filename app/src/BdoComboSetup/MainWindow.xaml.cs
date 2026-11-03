@@ -1,6 +1,7 @@
 using BdoComboSetup.Core.ViewModels;
 using BdoComboSetup.Services;
 using BdoComboSetup.Views;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Graphics;
@@ -23,6 +24,18 @@ public sealed partial class MainWindow : Window
         Title = services.Localizer.Get("AppTitle");
         TitleText.Text = Title;
         VersionText.Text = services.Localizer.Format("StatusBar.Version", AppVersion.Current.ToString());
+
+        // The game state of the status bar: a process lookup every few seconds on the UI thread, never a capture.
+        GameDetectedText.Text = services.Localizer.Get("StatusBar.GameDetected");
+        GameNotDetectedText.Text = services.Localizer.Get("StatusBar.GameNotDetected");
+        services.GameDetection.DetectionChanged += (_, _) => ShowGameState();
+        services.GameDetection.Poll();
+        ShowGameState();
+        var gameTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        gameTimer.Interval = TimeSpan.FromSeconds(3);
+        gameTimer.Tick += (_, _) => services.GameDetection.Poll();
+        gameTimer.Start();
+        Closed += (_, _) => gameTimer.Stop();
 
         // The window and its title bar are drawn by the app; the TitleBar control hosts the drag region.
         ExtendsContentIntoTitleBar = true;
@@ -72,6 +85,14 @@ public sealed partial class MainWindow : Window
         {
             ["page"] = services.Startup.Page,
         });
+    }
+
+    /// <summary>Shows the game state of the status bar: the green dot when the game process exists, the muted one otherwise.</summary>
+    private void ShowGameState()
+    {
+        var detected = App.Services.GameDetection.IsDetected == true;
+        GameDetectedGroup.Visibility = detected ? Visibility.Visible : Visibility.Collapsed;
+        GameNotDetectedGroup.Visibility = detected ? Visibility.Collapsed : Visibility.Visible;
     }
 
     /// <summary>The user expanded the menu: the state is saved (not while the pane is hidden by setup or the error page).</summary>

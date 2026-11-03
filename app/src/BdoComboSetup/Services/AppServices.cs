@@ -50,6 +50,7 @@ public sealed class AppServices : IDisposable
         CharacterScanService characterScan,
         SetupViewModel setup,
         ThemeService theme,
+        GameDetectionMonitor gameDetection,
         HttpClient httpClient)
     {
         Logger = logger;
@@ -67,6 +68,7 @@ public sealed class AppServices : IDisposable
         CharacterScan = characterScan;
         Setup = setup;
         Theme = theme;
+        GameDetection = gameDetection;
         _httpClient = httpClient;
     }
 
@@ -110,6 +112,12 @@ public sealed class AppServices : IDisposable
 
     /// <summary>Applies the saved color theme and accent color to the main window (and follows their changes).</summary>
     public ThemeService Theme { get; }
+
+    /// <summary>
+    /// Whether the game process exists, for the status bar. It is a process lookup, polled by the window; it never starts a
+    /// capture. The demo reports no game.
+    /// </summary>
+    public GameDetectionMonitor GameDetection { get; }
 
     /// <summary>
     /// True when the initial setup must be shown: it was never finished, or the saved data folder is no longer usable. The
@@ -287,6 +295,10 @@ public sealed class AppServices : IDisposable
 
         var theme = new ThemeService(settings, settingsView, logger);
 
+        // The status bar's game state: a process lookup only (no capture, no game access). The demo has no game.
+        Func<bool?> gameProbe = () => startup.DemoData ? false : GameProcessProbe.IsGameRunning(logger);
+        var gameDetection = new GameDetectionMonitor(gameProbe, logger);
+
         return new AppServices(
             logger,
             localizer,
@@ -303,6 +315,7 @@ public sealed class AppServices : IDisposable
             characterScan,
             setup,
             theme,
+            gameDetection,
             httpClient);
     }
 

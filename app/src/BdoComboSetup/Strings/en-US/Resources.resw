@@ -829,4 +829,10 @@
   <data name="StatusBar.Version" xml:space="preserve">
     <value>v{0}</value>
   </data>
+  <data name="StatusBar.GameDetected" xml:space="preserve">
+    <value>Game detected</value>
+  </data>
+  <data name="StatusBar.GameNotDetected" xml:space="preserve">
+    <value>Game not detected</value>
+  </data>
 </root>
