@@ -31,7 +31,6 @@ public sealed partial class ApplyComboPage : Page
         ViewModel = App.Services.ApplyCombo;
         InitializeComponent();
         ClassList.SetFields(item => SearchFields.ForClass(((ClassOptionViewModel)item).Info));
-        CharacterPicker.SetFields(item => ViewModel.CharacterSearchTexts((CharacterOption)item));
         ComboSlotPicker.SetFields(item => [((ComboSlotOption)item).Label]);
         Loaded += Page_Loaded;
         Unloaded += Page_Unloaded;
@@ -156,7 +155,7 @@ public sealed partial class ApplyComboPage : Page
     private void DemoCharacterPicker_Loaded(object sender, RoutedEventArgs e)
     {
         Loaded -= DemoCharacterPicker_Loaded;
-        CharacterPicker.Open();
+        (App.MainWindow as MainWindow)?.OpenCharacterPicker();
     }
 
     /// <summary>Follows the working copy while the page is shown: the boards are drawn again when it changes.</summary>
@@ -273,15 +272,6 @@ public sealed partial class ApplyComboPage : Page
         if (item is ClassOptionViewModel option)
         {
             option.SelectCommand.Execute(null);
-        }
-    }
-
-    /// <summary>Chooses the character picked in the searchable picker (the view model selects its class too).</summary>
-    private void CharacterPicker_Chosen(object? sender, object item)
-    {
-        if (item is CharacterOption option)
-        {
-            ViewModel.SelectCharacterCommand.Execute(option);
         }
     }
 

@@ -27,6 +27,7 @@ public sealed class XamlUidPropertyTests
         ["InfoBar"] = ["Title", "Message"],
         ["TitleBar"] = ["Title", "Subtitle"],
         ["Border"] = [],
+        ["SelectorBarItem"] = ["Text"],
     };
 
     /// <summary>Attached and automation properties any element may take through x:Uid.</summary>

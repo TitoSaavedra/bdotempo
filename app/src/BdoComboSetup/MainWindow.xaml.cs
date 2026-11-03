@@ -1,3 +1,4 @@
+using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.ViewModels;
 using BdoComboSetup.Services;
 using BdoComboSetup.Views;
@@ -31,7 +32,9 @@ public sealed partial class MainWindow : Window
 
     public MainWindow()
     {
+        Apply = App.Services.ApplyCombo;
         InitializeComponent();
+        CharacterPicker.SetFields(item => Apply.CharacterSearchTexts((CharacterOption)item));
 
         var services = App.Services;
         _menuCloseTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
@@ -258,6 +261,21 @@ public sealed partial class MainWindow : Window
     private void EdgeHandle_LostFocus(object sender, RoutedEventArgs e) => ScheduleMenuClose();
 
     private void EdgeHandle_Click(object sender, RoutedEventArgs e) => OpenMenu();
+
+    /// <summary>The view model that holds the character of the whole app.</summary>
+    public ApplyComboViewModel Apply { get; }
+
+    /// <summary>Opens the character picker of the status bar (used by the demo mode).</summary>
+    public void OpenCharacterPicker() => CharacterPicker.Open();
+
+    /// <summary>Chooses the character picked in the status bar (the view model selects its class too).</summary>
+    private void CharacterPicker_Chosen(object? sender, object item)
+    {
+        if (item is CharacterOption option)
+        {
+            Apply.SelectCharacterCommand.Execute(option);
+        }
+    }
 
     private void Nav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {

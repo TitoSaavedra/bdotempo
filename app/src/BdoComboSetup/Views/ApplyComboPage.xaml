@@ -11,39 +11,6 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
-        <!-- One character of the account in the picker: class icon and name only. Name and class are edited in Settings. -->
-        <DataTemplate x:Key="CharacterTemplate" x:DataType="combo:CharacterOption">
-            <Grid ColumnSpacing="8" Padding="4,2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <controls:AssetIcon
-                    Width="28"
-                    Height="28"
-                    IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
-                    Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
-                <TextBlock
-                    Grid.Column="1"
-                    Text="{x:Bind Name, Mode=OneTime}"
-                    FontWeight="SemiBold"
-                    VerticalAlignment="Center"
-                    TextTrimming="CharacterEllipsis" />
-            </Grid>
-        </DataTemplate>
-
-        <!-- The character shown on the picker button: class icon and name only (no pencil, no pcid). -->
-        <DataTemplate x:Key="SelectedCharacterTemplate" x:DataType="combo:CharacterOption">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <controls:AssetIcon
-                    Width="28"
-                    Height="28"
-                    IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
-                    Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
-                <TextBlock Text="{x:Bind Name, Mode=OneTime}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-            </StackPanel>
-        </DataTemplate>
-
         <!-- One class of the class list: its icon and its name. The selected class gets the glass highlight. -->
         <DataTemplate x:Key="ClassRowTemplate" x:DataType="vm:ClassOptionViewModel">
             <Grid Margin="0,1">
@@ -54,7 +21,7 @@
                     BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
                     Visibility="{x:Bind IsSelected, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                 <StackPanel Orientation="Horizontal" Spacing="10" Padding="8,6">
-                    <controls:AssetIcon Width="24" Height="24" IconSource="{x:Bind OpenIcon, Mode=OneTime}" Glyph="{x:Bind Glyph, Mode=OneTime}" />
+                    <controls:AssetIcon Monochrome="True" Width="24" Height="24" IconSource="{x:Bind OpenIcon, Mode=OneTime}" Glyph="{x:Bind Glyph, Mode=OneTime}" />
                     <TextBlock Text="{x:Bind Name, Mode=OneTime}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
             </Grid>
@@ -63,7 +30,7 @@
         <!-- One class of the character editor's picker: its icon and its name. -->
         <DataTemplate x:Key="ClassChoiceTemplate" x:DataType="vm:ClassChoice">
             <StackPanel Orientation="Horizontal" Spacing="10" Padding="2">
-                <controls:AssetIcon
+                <controls:AssetIcon Monochrome="True"
                     Width="24"
                     Height="24"
                     IconSource="{x:Bind OpenIcon, Mode=OneTime}" />
@@ -462,17 +429,8 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
 
-                <!-- The character of the account. Its class is selected with it. -->
+                <!-- There is no character picker here: the character is chosen once, in the status bar of the window. -->
                 <StackPanel Grid.Row="1" Spacing="6" Padding="6,0">
-                    <TextBlock x:Uid="Apply/CharacterHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                    <controls:SearchablePicker
-                        x:Name="CharacterPicker"
-                        HorizontalAlignment="Stretch"
-                        ItemsSource="{x:Bind ViewModel.Characters, Mode=OneWay}"
-                        ItemTemplate="{StaticResource CharacterTemplate}"
-                        SelectedItem="{x:Bind ViewModel.SelectedCharacter, Mode=OneWay}"
-                        SelectedTemplate="{StaticResource SelectedCharacterTemplate}"
-                        Chosen="CharacterPicker_Chosen" />
                     <TextBlock
                         Text="{x:Bind ViewModel.CharactersMessage, Mode=OneWay}"
                         FontSize="12"
@@ -833,6 +791,12 @@
                             FontSize="12"
                             TextWrapping="Wrap"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.ClassMismatchText, Mode=OneWay}"
+                            Visibility="{x:Bind ViewModel.IsClassMismatch, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            FontSize="12"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource SystemFillColorCautionBrush}" />
                         <Button
                             Style="{StaticResource AccentButtonStyle}"
                             HorizontalAlignment="Stretch"

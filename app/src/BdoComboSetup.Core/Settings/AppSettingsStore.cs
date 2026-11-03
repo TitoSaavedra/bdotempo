@@ -71,6 +71,9 @@ public sealed record AppSettings
     /// False keeps the menu always visible. Settings written before this field existed are read with the default.
     /// </summary>
     public bool NavAutoHide { get; init; } = true;
+
+    /// <summary>The character chosen last (its pcid), selected again at the next start so it is picked only once. Null when none.</summary>
+    public string? LastCharacterPcid { get; init; }
 }
 
 /// <summary>The color themes the app supports and how the setting maps to one of them.</summary>

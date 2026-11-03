@@ -494,6 +494,16 @@ public sealed partial class SettingsPage : Page
     }
 
     /// <summary>Starts a new copy of the app and closes this one, so a language or folder change applies to every page.</summary>
+    /// <summary>Shows the cards of the chosen tab and hides the others.</summary>
+    private void SettingsTabs_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        var tag = sender.SelectedItem?.Tag as string ?? "general";
+        TabGeneral.Visibility = tag == "general" ? Visibility.Visible : Visibility.Collapsed;
+        TabGame.Visibility = tag == "game" ? Visibility.Visible : Visibility.Collapsed;
+        TabCharacters.Visibility = tag == "characters" ? Visibility.Visible : Visibility.Collapsed;
+        TabUpdates.Visibility = tag == "updates" ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private void Restart_Click(object sender, RoutedEventArgs e)
     {
         var path = Environment.ProcessPath;

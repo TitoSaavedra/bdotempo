@@ -3,6 +3,9 @@
     x:Class="BdoComboSetup.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:BdoComboSetup.Views"
+    xmlns:controls="using:BdoComboSetup.Views.Controls"
+    xmlns:combo="using:BdoComboSetup.Core.Combo"
     >
 
     <!-- Translucent system backdrop; the glass gradient below covers it, the tint on top keeps the glass look. -->
@@ -11,6 +14,41 @@
     </Window.SystemBackdrop>
 
     <Grid x:Name="RootGrid">
+        <Grid.Resources>
+            <!-- The character of the whole app is chosen here, once: class icon and name only (name and class are edited in Settings). -->
+            <DataTemplate x:Key="CharacterTemplate" x:DataType="combo:CharacterOption">
+                <Grid ColumnSpacing="8" Padding="4,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <controls:AssetIcon
+                        Monochrome="True"
+                        Width="24"
+                        Height="24"
+                        IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
+                        Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
+                    <TextBlock
+                        Grid.Column="1"
+                        Text="{x:Bind Name, Mode=OneTime}"
+                        VerticalAlignment="Center"
+                        TextTrimming="CharacterEllipsis" />
+                </Grid>
+            </DataTemplate>
+
+            <!-- The character shown on the picker button. -->
+            <DataTemplate x:Key="SelectedCharacterTemplate" x:DataType="combo:CharacterOption">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <controls:AssetIcon
+                        Monochrome="True"
+                        Width="20"
+                        Height="20"
+                        IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
+                        Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
+                    <TextBlock Text="{x:Bind Name, Mode=OneTime}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </DataTemplate>
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -176,6 +214,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <StackPanel
@@ -213,9 +252,23 @@
                         Foreground="{ThemeResource GlassMutedTextBrush}" />
                 </StackPanel>
 
+                <!-- The character the whole app works with (Apply combo and Preview). -->
+                <controls:SearchablePicker
+                    x:Name="CharacterPicker"
+                    Grid.Column="1"
+                    Margin="0,0,16,0"
+                    MinWidth="200"
+                    MaxWidth="280"
+                    VerticalAlignment="Center"
+                    ItemsSource="{x:Bind Apply.Characters, Mode=OneWay}"
+                    ItemTemplate="{StaticResource CharacterTemplate}"
+                    SelectedItem="{x:Bind Apply.SelectedCharacter, Mode=OneWay}"
+                    SelectedTemplate="{StaticResource SelectedCharacterTemplate}"
+                    Chosen="CharacterPicker_Chosen" />
+
                 <TextBlock
                     x:Name="VersionText"
-                    Grid.Column="1"
+                    Grid.Column="2"
                     VerticalAlignment="Center"
                     FontSize="12"
                     Foreground="{ThemeResource GlassMutedTextBrush}" />

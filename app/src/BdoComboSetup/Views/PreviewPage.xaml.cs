@@ -23,7 +23,6 @@ public sealed partial class PreviewPage : Page
         var localizer = App.Services.Localizer;
         ToolTipService.SetToolTip(LayoutBox, localizer.Get("Preview.Layout.Tooltip"));
         ToolTipService.SetToolTip(HiddenToggle, localizer.Get("Preview.Hidden.Tooltip"));
-        EditorCharacterPicker.SetFields(item => Apply.CharacterSearchTexts((CharacterOption)item));
     }
 
     public PreviewViewModel ViewModel { get; }
@@ -57,15 +56,6 @@ public sealed partial class PreviewPage : Page
     /// <summary>The look of a fit pill: the accent gradient while its fit is the active one, the glass pill otherwise.</summary>
     public Style PillStyleFor(bool selected) =>
         (Style)Application.Current.Resources[selected ? "PillSelectedStyle" : "PillStyle"];
-
-    /// <summary>Chooses the character whose slots are edited and written.</summary>
-    private void EditorCharacterPicker_Chosen(object? sender, object item)
-    {
-        if (item is CharacterOption option)
-        {
-            Apply.SelectCharacterCommand.Execute(option);
-        }
-    }
 
     /// <summary>
     /// "Apply to character": asks which parts are written (the bar, the memos, the quick slots) and opens the review with

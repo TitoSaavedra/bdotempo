@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using BdoComboSetup.Core.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace BdoComboSetup.Views.Controls;
@@ -27,11 +28,33 @@ public sealed partial class AssetIcon : UserControl
         typeof(AssetIcon),
         new PropertyMetadata(string.Empty, OnGlyphChanged));
 
+    public static readonly DependencyProperty MonochromeProperty = DependencyProperty.Register(
+        nameof(Monochrome),
+        typeof(bool),
+        typeof(AssetIcon),
+        new PropertyMetadata(false, OnIconSourceChanged));
+
     private int _loadVersion;
 
     public AssetIcon()
     {
         InitializeComponent();
+
+        // A monochrome icon is black on the light theme and white on the dark one, so it is drawn again when the theme changes.
+        ActualThemeChanged += (_, _) =>
+        {
+            if (Monochrome)
+            {
+                ReloadAsync();
+            }
+        };
+    }
+
+    /// <summary>Paints the icon in one flat color that follows the theme (black on light, white on dark). Used for the class icons.</summary>
+    public bool Monochrome
+    {
+        get => (bool)GetValue(MonochromeProperty);
+        set => SetValue(MonochromeProperty, value);
     }
 
     /// <summary>A <c>Func&lt;Stream?&gt;</c> that opens the icon. Null or a function that returns null shows the glyph.</summary>
@@ -75,7 +98,9 @@ public sealed partial class AssetIcon : UserControl
                 return;
             }
 
-            var bitmap = await IconBitmapCache.GetOrCreateAsync(bytes);
+            ImageSource bitmap = Monochrome
+                ? await IconBitmapCache.GetOrCreateMonochromeAsync(bytes, black: ActualTheme == ElementTheme.Light)
+                : await IconBitmapCache.GetOrCreateAsync(bytes);
             if (version != _loadVersion)
             {
                 return;

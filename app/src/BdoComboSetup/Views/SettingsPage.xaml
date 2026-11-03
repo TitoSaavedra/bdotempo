@@ -37,7 +37,7 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <controls:AssetIcon
+                <controls:AssetIcon Monochrome="True"
                     Width="28"
                     Height="28"
                     IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
@@ -57,7 +57,7 @@
         <!-- One class of the edit flyout's picker: its icon and its name. -->
         <DataTemplate x:Key="ClassChoiceTemplate" x:DataType="vm:ClassChoice">
             <StackPanel Orientation="Horizontal" Spacing="10" Padding="2">
-                <controls:AssetIcon Width="24" Height="24" IconSource="{x:Bind OpenIcon, Mode=OneTime}" />
+                <controls:AssetIcon Monochrome="True" Width="24" Height="24" IconSource="{x:Bind OpenIcon, Mode=OneTime}" />
                 <TextBlock Text="{x:Bind Name, Mode=OneTime}" VerticalAlignment="Center" />
             </StackPanel>
         </DataTemplate>
@@ -142,8 +142,16 @@
                 </InfoBar.ActionButton>
             </InfoBar>
 
-            <!-- The cards: two columns. The characters, the scan and the wide cards span both columns. -->
-            <Grid ColumnSpacing="14" RowSpacing="14">
+            <!-- The tabs: each one shows a group of cards. General is shown first. -->
+            <SelectorBar x:Name="SettingsTabs" SelectionChanged="SettingsTabs_SelectionChanged">
+                <SelectorBarItem x:Name="TabGeneralItem" x:Uid="Settings/TabGeneral" Tag="general" IsSelected="True" />
+                <SelectorBarItem x:Name="TabGameItem" x:Uid="Settings/TabGame" Tag="game" />
+                <SelectorBarItem x:Name="TabCharactersItem" x:Uid="Settings/TabCharacters" Tag="characters" />
+                <SelectorBarItem x:Name="TabUpdatesItem" x:Uid="Settings/TabUpdates" Tag="updates" />
+            </SelectorBar>
+
+            <!-- General: appearance, language and the write reminder. -->
+            <Grid x:Name="TabGeneral" ColumnSpacing="14" RowSpacing="14">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -151,13 +159,10 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <!-- Appearance: the theme (follows Windows or fixed), the accent color for the theme, and the side menu. Applies at once. -->
-                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Style="{StaticResource CardBorderStyle}">
                     <StackPanel Spacing="16">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
@@ -318,8 +323,94 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Account: the numeric folders under UserCache that have an 11 folder. The one chosen here is remembered. -->
+                <!-- Language: es or en-US. Takes effect after a restart. -->
                 <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <FontIcon Glyph="&#xE774;"
+                                FontSize="20"
+                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                VerticalAlignment="Top"
+                                Margin="0,2,0,0" />
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock x:Uid="Settings/LanguageHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    x:Uid="Settings/LanguageHint"
+                                    TextWrapping="Wrap"
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </Grid>
+                        <ComboBox
+                            x:Name="LanguageBox"
+                            x:Uid="Settings/LanguageBox"
+                            MinWidth="320"
+                            MaxWidth="420"
+                            HorizontalAlignment="Left"
+                            ItemsSource="{x:Bind ViewModel.Languages, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=OneWay}"
+                            SelectionChanged="LanguageBox_SelectionChanged">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:LanguageChoice">
+                                    <TextBlock Text="{x:Bind Name, Mode=OneTime}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </Border>
+
+                <!-- The reminder before a write to a character. Turn it on again after "Don't show again". -->
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <FontIcon Glyph="&#xEA8F;"
+                                FontSize="20"
+                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                VerticalAlignment="Top"
+                                Margin="0,2,0,0" />
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock x:Uid="Settings/WarningsHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    x:Uid="Settings/WarningsHint"
+                                    TextWrapping="Wrap"
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </Grid>
+                        <ToggleSwitch
+                            x:Uid="Settings/ShowWriteHintToggle"
+                            IsOn="{x:Bind ViewModel.ShowWriteHint, Mode=OneWay}"
+                            Toggled="ShowWriteHint_Toggled" />
+                        <TextBlock
+                            x:Uid="Settings/ShowWriteHintHint"
+                            TextWrapping="Wrap"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </Border>
+
+            </Grid>
+
+            <!-- Game: the account and the Black Desert folder. -->
+            <Grid x:Name="TabGame" ColumnSpacing="14" RowSpacing="14" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Account: the numeric folders under UserCache that have an 11 folder. The one chosen here is remembered. -->
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorderStyle}">
                     <StackPanel Spacing="12">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
@@ -354,7 +445,7 @@
                 </Border>
 
                 <!-- Black Desert folder: browse, or type a path and save it. A folder without UserCache is refused. -->
-                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorderStyle}">
                     <StackPanel Spacing="12">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
@@ -403,147 +494,21 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Language: es or en-US. Takes effect after a restart. -->
-                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="12">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="&#xE774;"
-                                FontSize="20"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                VerticalAlignment="Top"
-                                Margin="0,2,0,0" />
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock x:Uid="Settings/LanguageHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <TextBlock
-                                    x:Uid="Settings/LanguageHint"
-                                    TextWrapping="Wrap"
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                        <ComboBox
-                            x:Name="LanguageBox"
-                            x:Uid="Settings/LanguageBox"
-                            MinWidth="320"
-                            MaxWidth="420"
-                            HorizontalAlignment="Left"
-                            ItemsSource="{x:Bind ViewModel.Languages, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=OneWay}"
-                            SelectionChanged="LanguageBox_SelectionChanged">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="vm:LanguageChoice">
-                                    <TextBlock Text="{x:Bind Name, Mode=OneTime}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </StackPanel>
-                </Border>
+            </Grid>
 
-                <!-- Updates: the version, the last check, a manual check, the install button (only when a newer release exists),
-                     the progress of a download, and the switch for the check at startup. Nothing is installed without the button. -->
-                <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="12">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="&#xE895;"
-                                FontSize="20"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                VerticalAlignment="Top"
-                                Margin="0,2,0,0" />
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock x:Uid="Settings/UpdatesHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <TextBlock
-                                    x:Uid="Settings/UpdatesHint"
-                                    TextWrapping="Wrap"
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="{x:Bind Updates.CurrentVersionLine, Mode=OneWay}" />
-                            <TextBlock
-                                Text="{x:Bind Updates.LastCheckLine, Mode=OneWay}"
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button x:Uid="Settings/UpdatesCheckButton" Command="{x:Bind Updates.CheckNowCommand}" />
-                            <ProgressRing
-                                Width="20"
-                                Height="20"
-                                IsActive="{x:Bind Updates.IsChecking, Mode=OneWay}"
-                                Visibility="{x:Bind Updates.IsChecking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                            <Button
-                                Command="{x:Bind Updates.InstallCommand}"
-                                Content="{x:Bind Updates.InstallActionText, Mode=OneWay}"
-                                Style="{StaticResource AccentButtonStyle}"
-                                Visibility="{x:Bind Updates.HasRelease, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                            <Button
-                                x:Uid="Settings/UpdatesCancelButton"
-                                Command="{x:Bind Updates.CancelDownloadCommand}"
-                                Visibility="{x:Bind Updates.CanCancelDownload, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                        </StackPanel>
-                        <ProgressBar
-                            Maximum="100"
-                            Value="{x:Bind Updates.DownloadPercent, Mode=OneWay}"
-                            Visibility="{x:Bind Updates.IsDownloading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                        <TextBlock Text="{x:Bind Updates.StatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
-                        <TextBlock
-                            x:Uid="Settings/UpdatesPortableHint"
-                            TextWrapping="Wrap"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Visibility="{x:Bind Updates.IsPortable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                        <ToggleSwitch
-                            x:Uid="Settings/UpdatesStartupToggle"
-                            IsOn="{x:Bind Updates.CheckOnStartup, Mode=OneWay}"
-                            Toggled="UpdatesStartup_Toggled" />
-                    </StackPanel>
-                </Border>
-
-                <!-- The reminder before a write to a character. Turn it on again after "Don't show again". -->
-                <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="12">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="&#xEA8F;"
-                                FontSize="20"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                VerticalAlignment="Top"
-                                Margin="0,2,0,0" />
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock x:Uid="Settings/WarningsHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <TextBlock
-                                    x:Uid="Settings/WarningsHint"
-                                    TextWrapping="Wrap"
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                        <ToggleSwitch
-                            x:Uid="Settings/ShowWriteHintToggle"
-                            IsOn="{x:Bind ViewModel.ShowWriteHint, Mode=OneWay}"
-                            Toggled="ShowWriteHint_Toggled" />
-                        <TextBlock
-                            x:Uid="Settings/ShowWriteHintHint"
-                            TextWrapping="Wrap"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                    </StackPanel>
-                </Border>
+            <!-- Characters: the roster of the account and the OCR scan. -->
+            <Grid x:Name="TabCharacters" ColumnSpacing="14" RowSpacing="14" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
                 <!-- Characters of the active account: the name and class the app shows for each one. Edit and reset are per row. -->
-                <Border Grid.Row="3" Grid.ColumnSpan="2" Style="{StaticResource CardBorderStyle}">
+                <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource CardBorderStyle}">
                     <StackPanel Spacing="12">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
@@ -574,7 +539,7 @@
                 </Border>
 
                 <!-- OCR scan of the character selection screen: reads names and classes, shows them over the game, and saves them. -->
-                <Border Grid.Row="4" Grid.ColumnSpan="2" Style="{StaticResource CardBorderStyle}">
+                <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource CardBorderStyle}">
                     <StackPanel Spacing="12">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
@@ -652,6 +617,83 @@
                         <Button x:Uid="Settings/ResetCharactersButton" Click="ResetCharacters_Click" />
                     </StackPanel>
                 </Border>
+            </Grid>
+
+            <!-- Updates. -->
+            <Grid x:Name="TabUpdates" ColumnSpacing="14" RowSpacing="14" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Updates: the version, the last check, a manual check, the install button (only when a newer release exists),
+                     the progress of a download, and the switch for the check at startup. Nothing is installed without the button. -->
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <FontIcon Glyph="&#xE895;"
+                                FontSize="20"
+                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                VerticalAlignment="Top"
+                                Margin="0,2,0,0" />
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock x:Uid="Settings/UpdatesHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                <TextBlock
+                                    x:Uid="Settings/UpdatesHint"
+                                    TextWrapping="Wrap"
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </Grid>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{x:Bind Updates.CurrentVersionLine, Mode=OneWay}" />
+                            <TextBlock
+                                Text="{x:Bind Updates.LastCheckLine, Mode=OneWay}"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button x:Uid="Settings/UpdatesCheckButton" Command="{x:Bind Updates.CheckNowCommand}" />
+                            <ProgressRing
+                                Width="20"
+                                Height="20"
+                                IsActive="{x:Bind Updates.IsChecking, Mode=OneWay}"
+                                Visibility="{x:Bind Updates.IsChecking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            <Button
+                                Command="{x:Bind Updates.InstallCommand}"
+                                Content="{x:Bind Updates.InstallActionText, Mode=OneWay}"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Visibility="{x:Bind Updates.HasRelease, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            <Button
+                                x:Uid="Settings/UpdatesCancelButton"
+                                Command="{x:Bind Updates.CancelDownloadCommand}"
+                                Visibility="{x:Bind Updates.CanCancelDownload, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                        <ProgressBar
+                            Maximum="100"
+                            Value="{x:Bind Updates.DownloadPercent, Mode=OneWay}"
+                            Visibility="{x:Bind Updates.IsDownloading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <TextBlock Text="{x:Bind Updates.StatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
+                        <TextBlock
+                            x:Uid="Settings/UpdatesPortableHint"
+                            TextWrapping="Wrap"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Visibility="{x:Bind Updates.IsPortable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <ToggleSwitch
+                            x:Uid="Settings/UpdatesStartupToggle"
+                            IsOn="{x:Bind Updates.CheckOnStartup, Mode=OneWay}"
+                            Toggled="UpdatesStartup_Toggled" />
+                    </StackPanel>
+                </Border>
+
             </Grid>
 
             <InfoBar

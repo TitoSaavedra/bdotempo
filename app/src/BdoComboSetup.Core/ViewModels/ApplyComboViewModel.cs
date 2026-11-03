@@ -55,6 +55,11 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     private ComboApplyRequest? _reviewedRequest;
     private string? _reviewedSignature;
 
+    /// <summary>The pcid of the character chosen last. It is the preferred one when the characters are read, and it is saved when it changes.</summary>
+    private string? _lastCharacterPcid;
+
+    private readonly Action<string>? _rememberCharacter;
+
     public ApplyComboViewModel(
         ICombosCatalog catalog,
         IAssetProvider assets,
@@ -65,7 +70,9 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         ILocalizer localizer,
         CultureInfo culture,
         AppLogger logger,
-        ClassSkillSource? classSkills = null)
+        ClassSkillSource? classSkills = null,
+        string? lastCharacterPcid = null,
+        Action<string>? rememberCharacter = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(assets);
@@ -78,6 +85,8 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(logger);
 
         _catalog = catalog;
+        _lastCharacterPcid = lastCharacterPcid;
+        _rememberCharacter = rememberCharacter;
         _characters = characters;
         _confirmation = confirmation;
         _profiles = profiles;
@@ -198,12 +207,12 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     public ObservableCollection<string> ReviewLines { get; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanRun))]
+    [NotifyPropertyChangedFor(nameof(CanRun), nameof(IsClassMismatch), nameof(ClassMismatchText))]
     [NotifyCanExecuteChangedFor(nameof(ApplyCommand), nameof(DryRunCommand))]
     private CharacterOption? _selectedCharacter;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ClassName))]
+    [NotifyPropertyChangedFor(nameof(ClassName), nameof(CanRun), nameof(IsClassMismatch), nameof(ClassMismatchText))]
     [NotifyCanExecuteChangedFor(nameof(ApplyCommand), nameof(DryRunCommand))]
     private ClassOptionViewModel? _selectedClass;
 
@@ -267,7 +276,16 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     public bool IsGuideMissing => !IsLoading && Editor is null && SelectedSpec is not null;
 
     /// <summary>A character and a guide are selected, and nothing is running.</summary>
-    public bool CanRun => SelectedCharacter is not null && Editor is not null && !IsBusy;
+    public bool CanRun => SelectedCharacter is not null && Editor is not null && !IsBusy && !IsClassMismatch;
+
+    /// <summary>The selected character is of a known class that is not the class of the open rotation: nothing can be applied.</summary>
+    public bool IsClassMismatch =>
+        SelectedCharacter?.ClassType is int characterClass && SelectedClass is { } selectedClass && characterClass != selectedClass.ClassType;
+
+    /// <summary>Tells why the apply buttons are off: the rotation is of another class than the character. Empty when they match.</summary>
+    public string ClassMismatchText => IsClassMismatch
+        ? _localizer.Format("Apply.ClassMismatch", SelectedCharacter!.Name, SelectedClass!.Name)
+        : string.Empty;
 
     public string ClassName => SelectedClass?.Name ?? string.Empty;
 
@@ -321,10 +339,14 @@ public sealed partial class ApplyComboViewModel : ObservableObject
             return;
         }
 
-        var character = Characters.FirstOrDefault(item => item.ClassType == option.ClassType);
-        if (character is not null)
+        // The character chosen before stays when it is of the class; otherwise the first character of the class is chosen.
+        if (SelectedCharacter?.ClassType != option.ClassType)
         {
-            SelectedCharacter = character;
+            var character = Characters.FirstOrDefault(item => item.ClassType == option.ClassType);
+            if (character is not null)
+            {
+                SelectedCharacter = character;
+            }
         }
 
         await SelectClassAsync(option, specId);
@@ -353,7 +375,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
             ShowStatus(StatusSeverity.Error, "Apply.StatusCharactersFailed");
         }
 
-        var previous = SelectedCharacter?.Pcid;
+        var previous = SelectedCharacter?.Pcid ?? _lastCharacterPcid;
         ActiveAccount = account;
         _entries = entries.ToDictionary(entry => entry.Pcid, StringComparer.Ordinal);
         Characters.Clear();
@@ -878,7 +900,15 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         CloseReview();
     }
 
-    partial void OnSelectedCharacterChanged(CharacterOption? value) => CloseReview();
+    partial void OnSelectedCharacterChanged(CharacterOption? value)
+    {
+        CloseReview();
+        if (value is not null && value.Pcid != _lastCharacterPcid)
+        {
+            _lastCharacterPcid = value.Pcid;
+            _rememberCharacter?.Invoke(value.Pcid);
+        }
+    }
 
     partial void OnIncludeCooldownBarChanged(bool value) => CloseReview();
 

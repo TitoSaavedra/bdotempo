@@ -938,4 +938,9 @@
   <data name="Apply.ApplyToCharacter" xml:space="preserve">
     <value>Aplicar a {0}</value>
   </data>
+  <data name="Settings.TabGeneral.Text" xml:space="preserve"><value>General</value></data>
+  <data name="Settings.TabGame.Text" xml:space="preserve"><value>Juego</value></data>
+  <data name="Settings.TabCharacters.Text" xml:space="preserve"><value>Personajes</value></data>
+  <data name="Settings.TabUpdates.Text" xml:space="preserve"><value>Actualizaciones</value></data>
+  <data name="Apply.ClassMismatch" xml:space="preserve"><value>El combo es de {1}, pero {0} es de otra clase. Elige un personaje de esa clase para aplicarlo.</value></data>
 </root>

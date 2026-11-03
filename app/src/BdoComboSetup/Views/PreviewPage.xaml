@@ -24,38 +24,6 @@
             <Setter Property="Padding" Value="14" />
         </Style>
 
-        <!-- One character of the account in the character picker: class icon and name only. -->
-        <DataTemplate x:Key="EditorCharacterTemplate" x:DataType="combo:CharacterOption">
-            <Grid ColumnSpacing="8" Padding="4,2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <controls:AssetIcon
-                    Width="28"
-                    Height="28"
-                    IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
-                    Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
-                <TextBlock
-                    Grid.Column="1"
-                    Text="{x:Bind Name, Mode=OneTime}"
-                    FontWeight="SemiBold"
-                    VerticalAlignment="Center"
-                    TextTrimming="CharacterEllipsis" />
-            </Grid>
-        </DataTemplate>
-
-        <!-- The character shown on the picker button: class icon and name only. -->
-        <DataTemplate x:Key="EditorSelectedCharacterTemplate" x:DataType="combo:CharacterOption">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <controls:AssetIcon
-                    Width="28"
-                    Height="28"
-                    IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
-                    Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
-                <TextBlock Text="{x:Bind Name, Mode=OneTime}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-            </StackPanel>
-        </DataTemplate>
     </Page.Resources>
 
     <Grid Padding="24,16" ColumnSpacing="16">
@@ -311,14 +279,12 @@
                 <Border Style="{StaticResource SideCardStyle}">
                     <StackPanel Spacing="10">
                         <TextBlock x:Uid="Preview/CharacterHeading" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                        <controls:SearchablePicker
-                            x:Name="EditorCharacterPicker"
-                            HorizontalAlignment="Stretch"
-                            ItemsSource="{x:Bind Apply.Characters, Mode=OneWay}"
-                            ItemTemplate="{StaticResource EditorCharacterTemplate}"
-                            SelectedItem="{x:Bind Apply.SelectedCharacter, Mode=OneWay}"
-                            SelectedTemplate="{StaticResource EditorSelectedCharacterTemplate}"
-                            Chosen="EditorCharacterPicker_Chosen" />
+                        <TextBlock
+                            Text="{x:Bind Apply.ClassMismatchText, Mode=OneWay}"
+                            Visibility="{x:Bind Apply.IsClassMismatch, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            FontSize="12"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource SystemFillColorCautionBrush}" />
                         <Button
                             x:Uid="Preview/ApplyButton"
                             HorizontalAlignment="Stretch"

@@ -938,4 +938,9 @@
   <data name="Apply.ApplyToCharacter" xml:space="preserve">
     <value>Apply to {0}</value>
   </data>
+  <data name="Settings.TabGeneral.Text" xml:space="preserve"><value>General</value></data>
+  <data name="Settings.TabGame.Text" xml:space="preserve"><value>Game</value></data>
+  <data name="Settings.TabCharacters.Text" xml:space="preserve"><value>Characters</value></data>
+  <data name="Settings.TabUpdates.Text" xml:space="preserve"><value>Updates</value></data>
+  <data name="Apply.ClassMismatch" xml:space="preserve"><value>The combo is for {1}, but {0} is another class. Choose a character of that class to apply it.</value></data>
 </root>
