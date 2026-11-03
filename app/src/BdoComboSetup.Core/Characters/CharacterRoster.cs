@@ -24,13 +24,16 @@ public enum ClassSource
 }
 
 /// <summary>A live character of an account, with its name and class resolved.</summary>
+/// <param name="Label">The player's own memo of the character (CharacterMemo of gameVariable_lobby.xml), complete and exact,
+/// or null when the character has none. The character selection screen shows it above the level.</param>
 public sealed record CharacterEntry(
     string Pcid,
     int Order,
     string Name,
     NameSource NameSource,
     int? ClassType,
-    ClassSource ClassSource);
+    ClassSource ClassSource,
+    string? Label = null);
 
 /// <summary>The characters of the active account, and the user's own names and classes for them.</summary>
 public interface ICharacterSource
@@ -161,7 +164,7 @@ public sealed partial class CharacterRoster(
                 : draft.Label is not null
                     ? (draft.Label, NameSource.Label)
                     : (FallbackName(draft.ClassType, fallbackCount[countKey]), NameSource.Fallback);
-            entries.Add(new CharacterEntry(draft.Pcid, draft.Position, name, source, draft.ClassType, draft.ClassSource));
+            entries.Add(new CharacterEntry(draft.Pcid, draft.Position, name, source, draft.ClassType, draft.ClassSource, draft.Label));
         }
 
         _logger.Info("characters.loaded", "Characters of the account loaded", new Dictionary<string, object?>

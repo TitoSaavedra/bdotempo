@@ -744,6 +744,9 @@
   <data name="Characters.ScanCountMismatch" xml:space="preserve">
     <value>Faltan {0} de {1} personajes. Sube o baja la lista hasta leerlos todos y vuelve a pulsar Terminar.</value>
   </data>
+  <data name="Characters.ScanMemoMismatch" xml:space="preserve">
+    <value>Las notas de los personajes no coinciden con el orden del juego (solo {0} de {1} coinciden). Es probable que se leyera otra lista o que el orden cambiara; vuelve a empezar.</value>
+  </data>
   <data name="Characters.ScanNotSelectionScreen" xml:space="preserve">
     <value>No veo la pantalla de selección de personaje. Entra en la lista de personajes (con el botón de entrar al juego abajo) y vuelve a empezar.</value>
   </data>

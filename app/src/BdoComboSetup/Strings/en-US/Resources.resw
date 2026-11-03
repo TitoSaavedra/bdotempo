@@ -744,6 +744,9 @@
   <data name="Characters.ScanCountMismatch" xml:space="preserve">
     <value>{0} of {1} characters are missing. Scroll the list up or down until they are all read, then press Finish again.</value>
   </data>
+  <data name="Characters.ScanMemoMismatch" xml:space="preserve">
+    <value>The character memos do not match the game order (only {0} of {1} match). The scan probably read another list or the order changed; start again.</value>
+  </data>
   <data name="Characters.ScanNotSelectionScreen" xml:space="preserve">
     <value>I do not see the character selection screen. Open the character list (with the enter-the-game button at the bottom) and start again.</value>
   </data>

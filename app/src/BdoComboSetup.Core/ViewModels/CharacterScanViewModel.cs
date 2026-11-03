@@ -35,7 +35,8 @@ public sealed class CharacterScanRow : ObservableObject
         Pcid = entry.Pcid;
         Level = reading.Level;
         LevelText = reading.Level is int level ? localizer.Format("Characters.ScanLevel", level) : string.Empty;
-        Memo = string.IsNullOrWhiteSpace(reading.Memo) ? null : reading.Memo.Trim();
+        // The memo comes from the game's own file, which has it complete: the OCR only reads the name and the level.
+        Memo = string.IsNullOrWhiteSpace(entry.Label) ? null : entry.Label.Trim();
         PreviousName = entry.Name;
         Name = string.IsNullOrWhiteSpace(reading.Name) ? entry.Name : reading.Name.Trim();
 
@@ -61,7 +62,7 @@ public sealed class CharacterScanRow : ObservableObject
     /// <summary>The class icon of the row, used when the scan reads it again.</summary>
     public Func<Stream?> OpenClassIcon => _class.OpenIcon;
 
-    /// <summary>One reading of the row when the list scrolls: the level and the memo always; the class only while it is still the
+    /// <summary>One reading of the row when the list scrolls: the level always; the class only while it is still the
     /// automatic one and the new reading is not "Sin clase", so a later, clearer pass fills a gap without overriding a
     /// choice made by hand.</summary>
     public void ApplyReading(CharacterRowCandidate reading, int? detectedClass)
@@ -69,7 +70,6 @@ public sealed class CharacterScanRow : ObservableObject
         ArgumentNullException.ThrowIfNull(reading);
         Level = reading.Level;
         LevelText = reading.Level is int level ? _localizer.Format("Characters.ScanLevel", level) : string.Empty;
-        Memo = string.IsNullOrWhiteSpace(reading.Memo) ? null : reading.Memo.Trim();
 
         if (IsAutomaticClass && detectedClass is int classType)
         {
@@ -96,8 +96,8 @@ public sealed class CharacterScanRow : ObservableObject
     /// <summary>"Nv. 61", or empty when the level was not read.</summary>
     public string LevelText { get; private set; }
 
-    /// <summary>The orange memo the game shows above the level ("FARM", "KUTUM"...), or null when the row has none.</summary>
-    public string? Memo { get; private set; }
+    /// <summary>The player's memo the game shows above the level ("FARM", "KUTUM"...), read from the game's file; null when the character has none.</summary>
+    public string? Memo { get; }
 
     public string MemoText => Memo ?? string.Empty;
 
@@ -351,6 +351,39 @@ public sealed partial class CharacterScanViewModel : ObservableObject
             return false;
         }
 
+        // The rows are paired with the pcids by position. The memos are the only thing the game's file and the screen both
+        // show, so when most of the file's memos are not on their rows the pairing is wrong: stop instead of saving names on
+        // the wrong characters. Characters without a memo, or with the same memo, are simply not counted: position decides.
+        var labelled = 0;
+        var agreed = 0;
+        for (var index = 0; index < read.Count; index++)
+        {
+            if (string.IsNullOrWhiteSpace(_entries[index].Label))
+            {
+                continue;
+            }
+
+            labelled++;
+            if (CharacterRowAccumulator.SimilarText(_entries[index].Label, read[index].Row.Memo))
+            {
+                agreed++;
+            }
+        }
+
+        if (labelled >= 2 && agreed * 2 < labelled)
+        {
+            Rows.Clear();
+            HasReview = false;
+            CanSave = false;
+            ShowMessage(StatusSeverity.Warning, _localizer.Format("Characters.ScanMemoMismatch", agreed, labelled));
+            _logger.Warn("character_scan.memo_mismatch", "The memos on screen do not match the game file by position", new Dictionary<string, object?>
+            {
+                ["agreed"] = agreed,
+                ["labelled"] = labelled,
+            });
+            return false;
+        }
+
         Rows.Clear();
         for (var index = 0; index < read.Count; index++)
         {
@@ -364,6 +397,8 @@ public sealed partial class CharacterScanViewModel : ObservableObject
         {
             ["rows"] = Rows.Count,
             ["with_level"] = Rows.Count(row => row.Level is not null),
+            ["memos_in_file"] = labelled,
+            ["memos_agreeing"] = agreed,
         });
         return true;
     }
