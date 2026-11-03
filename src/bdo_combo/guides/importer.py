@@ -156,8 +156,14 @@ def import_guides(classhub_dir: Path, client: ClientExport) -> ImportResult:
         icon_missing = _check_icons(guides, client)
         tooltips = build_tooltips(classhub_dir, sources)
 
+        # The player's game is the Latin American client, so its class names win; the site's Spanish is only a fallback.
+        client_names_es = client.class_names_es()
         classes = [
-            (class_type, class_display_name(cls.name), spanish_class_name(classhub_dir, class_display_name(cls.name)))
+            (
+                class_type,
+                class_display_name(cls.name),
+                client_names_es.get(class_type) or spanish_class_name(classhub_dir, class_display_name(cls.name)),
+            )
             for class_type, cls in client_classes.items()
         ]
         catalog = build_catalog(site_url=SITE_URL, classes=classes, plans=_used_plans(plans, guides))

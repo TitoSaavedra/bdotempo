@@ -18,6 +18,9 @@ from pathlib import Path
 SKILL_NAMES_FILE = "skills_es.json"
 SKILL_ICONS_FILE = "skills_icons.json"
 CLASS_ICONS_FILE = "classes_icons.json"
+# The Latin American Spanish client text that holds the class names: {"<classType>": {"0": name, "16777216": description}}.
+# Some classes keep their English name there ("Ranger", "Sage"), which is what the LATAM game shows.
+CLASS_NAMES_LOC_FILE = "loc/locs/21.json"
 
 # Game markup: colour tags such as <PAColor0xffe9bd23> and <PAOldColor>, and key placeholders such as
 # {TextBind:CASTING_CLICK_RMB}. The text between the tags is kept. Other angle-bracket words, such as
@@ -69,6 +72,18 @@ class ClientExport:
                 for key, value in raw.items()
             }
         return self._skill_icons.get(skill_no)
+
+    def class_names_es(self) -> dict[int, str]:
+        """Class names as the Spanish (LATAM) client shows them, by classType. Empty when the export has no such text."""
+        path = self.root / CLASS_NAMES_LOC_FILE
+        if not path.is_file():
+            return {}
+        names: dict[int, str] = {}
+        for key, value in _load_object(path).items():
+            name = value.get("0") if isinstance(value, dict) else None
+            if key.isdigit() and isinstance(name, str) and name.strip():
+                names[int(key)] = name.strip()
+        return names
 
     def classes(self) -> dict[int, ClientClass]:
         if self._classes is None:
