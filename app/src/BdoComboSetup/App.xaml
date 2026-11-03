@@ -167,9 +167,10 @@
                         <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="#FF141325" />
                         <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="#FF141325" />
                         <SolidColorBrush x:Key="NavigationViewItemHeaderForeground" Color="#FF6F6D86" />
-                        <!-- The menu pane: an opaque glass (96% of the white surface), so the page behind it does not show through the items. -->
-                        <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#F5FFFFFF" />
-                        <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#F5FFFFFF" />
+                        <!-- The menu pane: fully opaque (slightly tinted white). The NavigationView template paints it with these two keys (SplitView PaneRoot);
+                             any alpha below 100% lets the page text show through. -->
+                        <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#FFF6F4FC" />
+                        <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#FFF6F4FC" />
                         <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="#00000000" />
                         <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#00000000" />
                         <SolidColorBrush x:Key="NavigationViewButtonBackground" Color="#00000000" />
@@ -337,9 +338,10 @@
                         <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="#FFF1F0FB" />
                         <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="#FFF1F0FB" />
                         <SolidColorBrush x:Key="NavigationViewItemHeaderForeground" Color="#FF9A98B4" />
-                        <!-- The menu pane: an opaque glass (95% of the dark surface tint), so the page behind it does not show through the items. -->
-                        <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#F218162C" />
-                        <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#F218162C" />
+                        <!-- The menu pane: fully opaque dark surface. The NavigationView template paints it with these two keys (SplitView PaneRoot);
+                             any alpha below 100% lets the page text show through. -->
+                        <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#FF1A1830" />
+                        <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#FF1A1830" />
                         <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="#00000000" />
                         <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#00000000" />
                         <SolidColorBrush x:Key="NavigationViewButtonBackground" Color="#00000000" />
