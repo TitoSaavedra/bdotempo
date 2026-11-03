@@ -200,7 +200,7 @@ public sealed class ApplyComboViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task Restore_base_deletes_the_profile_and_goes_back_to_the_guide()
+    public async Task Restore_base_keeps_the_saved_slot_and_goes_back_to_the_guide()
     {
         var vm = Create();
         await vm.InitializeAsync("tamer", "awakening");
@@ -209,7 +209,7 @@ public sealed class ApplyComboViewModelTests : IDisposable
 
         vm.RestoreBaseCommand.Execute(null);
 
-        Assert.False(File.Exists(_profiles.Store.PathFor(16, "awakening")));
+        Assert.True(File.Exists(_profiles.Store.PathFor(16, "awakening")));
         Assert.False(vm.Editor!.HasSavedProfile);
         Assert.False(vm.Editor.HasUnsavedChanges);
         Assert.Null(vm.Editor.AllSteps().First().Memo);
