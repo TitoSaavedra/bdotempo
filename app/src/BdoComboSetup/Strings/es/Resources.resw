@@ -835,4 +835,40 @@
   <data name="StatusBar.GameNotDetected" xml:space="preserve">
     <value>Juego no detectado</value>
   </data>
+  <data name="Apply.CharacterHeader.Text" xml:space="preserve">
+    <value>Personaje</value>
+  </data>
+  <data name="Apply.ClassHeader.Text" xml:space="preserve">
+    <value>Clase</value>
+  </data>
+  <data name="Apply.GuideHeader.Text" xml:space="preserve">
+    <value>Guía</value>
+  </data>
+  <data name="Apply.CooldownBoardHeader.Text" xml:space="preserve">
+    <value>Casillas de recarga</value>
+  </data>
+  <data name="Apply.QuickBoardHeader.Text" xml:space="preserve">
+    <value>Casillas rápidas</value>
+  </data>
+  <data name="Apply.BackupNote.Text" xml:space="preserve">
+    <value>Antes de escribir se guarda una copia de seguridad verificada del personaje.</value>
+  </data>
+  <data name="Apply.SlotHint.Pick" xml:space="preserve">
+    <value>Toca una casilla para ver qué lleva.</value>
+  </data>
+  <data name="Apply.SlotHint.NoSlot" xml:space="preserve">
+    <value>Este paso no tiene casilla de recarga. Elígela abajo, en el paso seleccionado.</value>
+  </data>
+  <data name="Apply.CooldownCell" xml:space="preserve">
+    <value>Casilla {0}</value>
+  </data>
+  <data name="Apply.BoardCell.Filled" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="Apply.BoardCell.Empty" xml:space="preserve">
+    <value>{0}, vacía</value>
+  </data>
+  <data name="Apply.ApplyToCharacter" xml:space="preserve">
+    <value>Aplicar a {0}</value>
+  </data>
 </root>

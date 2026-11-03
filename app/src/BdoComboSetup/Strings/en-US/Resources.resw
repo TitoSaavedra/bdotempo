@@ -835,4 +835,40 @@
   <data name="StatusBar.GameNotDetected" xml:space="preserve">
     <value>Game not detected</value>
   </data>
+  <data name="Apply.CharacterHeader.Text" xml:space="preserve">
+    <value>Character</value>
+  </data>
+  <data name="Apply.ClassHeader.Text" xml:space="preserve">
+    <value>Class</value>
+  </data>
+  <data name="Apply.GuideHeader.Text" xml:space="preserve">
+    <value>Guide</value>
+  </data>
+  <data name="Apply.CooldownBoardHeader.Text" xml:space="preserve">
+    <value>Cooldown slots</value>
+  </data>
+  <data name="Apply.QuickBoardHeader.Text" xml:space="preserve">
+    <value>Quick slots</value>
+  </data>
+  <data name="Apply.BackupNote.Text" xml:space="preserve">
+    <value>A verified backup of the character is saved before writing.</value>
+  </data>
+  <data name="Apply.SlotHint.Pick" xml:space="preserve">
+    <value>Tap a slot to see what it holds.</value>
+  </data>
+  <data name="Apply.SlotHint.NoSlot" xml:space="preserve">
+    <value>This step has no cooldown slot. Pick one below, in the selected step.</value>
+  </data>
+  <data name="Apply.CooldownCell" xml:space="preserve">
+    <value>Slot {0}</value>
+  </data>
+  <data name="Apply.BoardCell.Filled" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="Apply.BoardCell.Empty" xml:space="preserve">
+    <value>{0}, empty</value>
+  </data>
+  <data name="Apply.ApplyToCharacter" xml:space="preserve">
+    <value>Apply to {0}</value>
+  </data>
 </root>

@@ -1,3 +1,6 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Globalization;
 using BdoComboSetup.Core.Characters;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Search;
@@ -12,20 +15,26 @@ namespace BdoComboSetup.Views;
 
 /// <summary>
 /// The "Apply combo" page. The page only translates clicks and drags into view model calls; the rules (what a step
-/// is, which slot it takes, what is written) live in the view models.
+/// is, which slot it takes, what is written) live in the view models. The page also draws the two slot boards from the
+/// working copy: it reads the steps and never changes a slot itself.
 /// </summary>
 public sealed partial class ApplyComboPage : Page
 {
     /// <summary>The data-package property that tells a drop target which chain a dragged step came from.</summary>
     private const string SourceChainKey = "BdoComboSetup.SourceChain";
 
+    /// <summary>The working copy the boards are drawn from. Null while no guide is open.</summary>
+    private ComboEditorViewModel? _observedContent;
+
     public ApplyComboPage()
     {
         ViewModel = App.Services.ApplyCombo;
         InitializeComponent();
-        ClassPicker.SetFields(item => SearchFields.ForClass(((ClassOptionViewModel)item).Info));
+        ClassList.SetFields(item => SearchFields.ForClass(((ClassOptionViewModel)item).Info));
         CharacterPicker.SetFields(item => ViewModel.CharacterSearchTexts((CharacterOption)item));
         ComboSlotPicker.SetFields(item => [((ComboSlotOption)item).Label]);
+        Loaded += Page_Loaded;
+        Unloaded += Page_Unloaded;
     }
 
     /// <summary>The texts a skill is searched by in the "Add skill" list: both names and the number.</summary>
@@ -33,6 +42,15 @@ public sealed partial class ApplyComboPage : Page
         item => SearchFields.ForSkill((SkillOption)item);
 
     public ApplyComboViewModel ViewModel { get; }
+
+    /// <summary>The app's settings view model. The footer's reminder switch is the same setting as in the Settings page.</summary>
+    public SettingsViewModel SettingsView => App.Services.SettingsView;
+
+    /// <summary>The 20 cooldown slots of the working copy, in slot order.</summary>
+    public ObservableCollection<ApplyBoardCell> CooldownCells { get; } = [];
+
+    /// <summary>The nine quick positions of the working copy, in position order.</summary>
+    public ObservableCollection<ApplyBoardCell> QuickCells { get; } = [];
 
     /// <summary>Maps the view model's severity to the InfoBar's enum (the view models do not reference WinUI).</summary>
     public InfoBarSeverity ToInfoBarSeverity(StatusSeverity severity) => severity switch
@@ -55,6 +73,37 @@ public sealed partial class ApplyComboPage : Page
     public static Style ClassTileStyle(bool selected) =>
         (Style)App.Current.Resources[selected ? "ClassTileSelectedStyle" : "ClassTileStyle"];
 
+    /// <summary>The label of the primary button: "Apply to <character>", or the plain label when no character is picked.</summary>
+    public static string ApplyButtonText(string? characterName) => string.IsNullOrWhiteSpace(characterName)
+        ? App.Services.Localizer.Get("Apply.ApplyButton.Content")
+        : App.Services.Localizer.Format("Apply.ApplyToCharacter", characterName);
+
+    /// <summary>
+    /// The line under the cooldown board: what the selected step holds ("#3 · name · key"), a hint to select a step, or a
+    /// note that the selected step has no cooldown slot.
+    /// </summary>
+    public static string SlotHintText(string? cooldownLabel, string? stepName, string? keys)
+    {
+        if (string.IsNullOrEmpty(stepName))
+        {
+            return App.Services.Localizer.Get("Apply.SlotHint.Pick");
+        }
+
+        if (string.IsNullOrEmpty(cooldownLabel))
+        {
+            return App.Services.Localizer.Get("Apply.SlotHint.NoSlot");
+        }
+
+        return string.Join(" · ", new[] { cooldownLabel, stepName, keys }.Where(text => !string.IsNullOrWhiteSpace(text)));
+    }
+
+    /// <summary>The line under the guide title: class, source host and which copy is on screen, joined; empty parts are left out.</summary>
+    public static string GuideMetaText(string? className, string? source, string? state) =>
+        string.Join(" · ", new[] { className, source, state }.Where(text => !string.IsNullOrWhiteSpace(text)));
+
+    /// <summary>A step shows its memo on its own line, except a hotkey step, whose key legend is the memo already.</summary>
+    public static Visibility MemoLineVisibility(bool hasMemo, bool isHotkey) =>
+        hasMemo && !isHotkey ? Visibility.Visible : Visibility.Collapsed;
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
@@ -110,8 +159,116 @@ public sealed partial class ApplyComboPage : Page
         CharacterPicker.Open();
     }
 
-    /// <summary>Chooses the class picked in the searchable class picker (the page then lists its guides).</summary>
-    private void ClassPicker_Chosen(object? sender, object item)
+    /// <summary>Follows the working copy while the page is shown: the boards are drawn again when it changes.</summary>
+    private void Page_Loaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        AttachContent(ViewModel.Editor);
+    }
+
+    /// <summary>Stops following the working copy, so a page that is not shown is not kept alive by the view model.</summary>
+    private void Page_Unloaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        AttachContent(null);
+    }
+
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ApplyComboViewModel.Editor))
+        {
+            AttachContent(ViewModel.Editor);
+        }
+    }
+
+    /// <summary>Moves the subscriptions to the new working copy and draws its boards.</summary>
+    private void AttachContent(ComboEditorViewModel? editor)
+    {
+        if (_observedContent is not null)
+        {
+            _observedContent.ContentChanged -= Editor_ContentChanged;
+            _observedContent.PropertyChanged -= Editor_PropertyChanged;
+        }
+
+        _observedContent = editor;
+        if (editor is not null)
+        {
+            editor.ContentChanged += Editor_ContentChanged;
+            editor.PropertyChanged += Editor_PropertyChanged;
+        }
+
+        RebuildBoards();
+    }
+
+    /// <summary>Every edit of a step (name, memo, slots, order) redraws the boards.</summary>
+    private void Editor_ContentChanged(object? sender, EventArgs e) => RebuildBoards();
+
+    /// <summary>A new selected step moves the highlight on the boards.</summary>
+    private void Editor_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ComboEditorViewModel.SelectedStep))
+        {
+            RebuildBoards();
+        }
+    }
+
+    /// <summary>
+    /// Draws the cooldown board (slots 1 to 20) and the quick board (the nine positions) from the working copy: which step
+    /// holds each one, and which step is selected.
+    /// </summary>
+    private void RebuildBoards()
+    {
+        var steps = _observedContent?.AllSteps().ToList() ?? [];
+        var selected = _observedContent?.SelectedStep;
+        var culture = CultureInfo.InvariantCulture;
+
+        CooldownCells.Clear();
+        for (var slot = 1; slot <= SlotAssignment.CooldownSlotCount; slot++)
+        {
+            var step = steps.FirstOrDefault(item => item.CooldownSlot == slot);
+            var name = App.Services.Localizer.Format("Apply.CooldownCell", slot.ToString(culture));
+            CooldownCells.Add(BoardCellFor(slot.ToString(culture), name, step, selected));
+        }
+
+        QuickCells.Clear();
+        for (var position = 1; position <= QuickSlotMap.Count; position++)
+        {
+            var label = QuickSlotMap.InputFor(position).MouseButton ?? position.ToString(culture);
+            var step = steps.FirstOrDefault(item => item.QuickPosition == position);
+            QuickCells.Add(BoardCellFor(label, label, step, selected));
+        }
+    }
+
+    /// <summary>One board cell: its caption names the slot and, when it holds a step, the step's name.</summary>
+    private static ApplyBoardCell BoardCellFor(string label, string name, ComboStepViewModel? step, ComboStepViewModel? selected)
+    {
+        var localizer = App.Services.Localizer;
+        var caption = step is null
+            ? localizer.Format("Apply.BoardCell.Empty", name)
+            : localizer.Format("Apply.BoardCell.Filled", name, step.DisplayName);
+        return new ApplyBoardCell(label, caption, step, step is not null && ReferenceEquals(step, selected));
+    }
+
+    /// <summary>A board cell is clicked: its step becomes the selected step, where the details are edited.</summary>
+    private void BoardCell_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: ApplyBoardCell { Step: { } step } })
+        {
+            ViewModel.Editor?.SelectStep(step);
+        }
+    }
+
+    /// <summary>The reminder switch: the same setting as the Settings page (the switch changes it at once).</summary>
+    private void WriteHint_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (sender is ToggleSwitch toggle && toggle.IsOn != SettingsView.ShowWriteHint)
+        {
+            SettingsView.ChooseShowWriteHint(toggle.IsOn);
+        }
+    }
+
+    /// <summary>Chooses the class picked in the searchable class list (the page then lists its guides).</summary>
+    private void ClassList_ItemChosen(object? sender, object item)
     {
         if (item is ClassOptionViewModel option)
         {
@@ -200,4 +357,21 @@ public sealed partial class ApplyComboPage : Page
             e.AcceptedOperation = DataPackageOperation.None;
         }
     }
+}
+
+/// <summary>
+/// One cell of a slot board: a cooldown slot or a quick position, its label, the step in it (null when empty), its caption
+/// for screen readers and tooltips, and whether that step is the selected one.
+/// </summary>
+public sealed class ApplyBoardCell(string label, string caption, ComboStepViewModel? step, bool isSelected)
+{
+    public string Label { get; } = label;
+
+    public string Caption { get; } = caption;
+
+    public ComboStepViewModel? Step { get; } = step;
+
+    public bool HasStep => Step is not null;
+
+    public bool IsSelected { get; } = isSelected;
 }
