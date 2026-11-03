@@ -148,8 +148,8 @@ public sealed class CharacterScanRow : ObservableObject
 /// </summary>
 public sealed partial class CharacterScanViewModel : ObservableObject
 {
-    /// <summary>The class id of the "no class" choice; real classes start at 1.</summary>
-    public const int NoClassType = 0;
+    /// <summary>The class id of the "no class" choice. It must not be a real class: the Warrior is class 0.</summary>
+    public const int NoClassType = -1;
 
     private readonly ICharacterSource _characters;
     private readonly ILocalizer _localizer;
@@ -445,7 +445,7 @@ public sealed partial class CharacterScanViewModel : ObservableObject
         foreach (var row in Rows)
         {
             var name = CharacterOverrideStore.NormalizeName(row.Name);
-            var classType = row.Class.ClassType > NoClassType ? row.Class.ClassType : (int?)null;
+            var classType = row.Class.ClassType != NoClassType ? row.Class.ClassType : (int?)null;
             if (name is null && classType is null)
             {
                 continue;
