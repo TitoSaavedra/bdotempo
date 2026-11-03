@@ -479,23 +479,16 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     /// <summary>Clears the name and class the user set for a character: the game files decide them again.</summary>
     public Task ResetCharacterEditAsync(CharacterOption option) => SaveCharacterEditAsync(option, null, null);
 
-    /// <summary>Chooses a character. When the character's class is known, that class is selected too.</summary>
+    /// <summary>
+    /// Chooses the character. The open rotation stays: when the character is of another class, the apply buttons turn off
+    /// (<see cref="IsClassMismatch"/>) instead of the rotation changing.
+    /// </summary>
     [RelayCommand]
-    private async Task SelectCharacter(CharacterOption? option)
+    private void SelectCharacter(CharacterOption? option)
     {
-        if (option is null)
+        if (option is not null)
         {
-            return;
-        }
-
-        SelectedCharacter = option;
-        if (option.ClassType is int classType)
-        {
-            var target = Classes.FirstOrDefault(item => item.ClassType == classType);
-            if (target is not null && !ReferenceEquals(target, SelectedClass))
-            {
-                await SelectClassAsync(target);
-            }
+            SelectedCharacter = option;
         }
     }
 

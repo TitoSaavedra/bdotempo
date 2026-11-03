@@ -72,15 +72,19 @@ public sealed class ApplyComboViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task Choosing_a_character_selects_its_class()
+    public async Task Choosing_a_character_of_another_class_keeps_the_rotation_and_turns_apply_off()
     {
         var vm = Create();
         await vm.InitializeAsync("warrior", "awakening");
+        Assert.False(vm.IsClassMismatch);
 
-        await vm.SelectCharacterCommand.ExecuteAsync(vm.Characters.Single(item => item.Name == "Demo Tamer"));
+        vm.SelectCharacterCommand.Execute(vm.Characters.Single(item => item.Name == "Demo Tamer"));
 
-        Assert.Equal("tamer", vm.SelectedClass?.Slug);
+        Assert.Equal("warrior", vm.SelectedClass?.Slug);
         Assert.Equal("Demo Tamer", vm.SelectedCharacter?.Name);
+        Assert.True(vm.IsClassMismatch);
+        Assert.False(vm.CanRun);
+        Assert.False(vm.ApplyCommand.CanExecute(null));
     }
 
     [Fact]
