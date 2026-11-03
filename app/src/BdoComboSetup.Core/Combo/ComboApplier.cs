@@ -106,7 +106,7 @@ public sealed class ComboApplier : IComboApplier
         ValidateRequest(request);
         var plan = CooldownPlanner.Build(request.CooldownSlots, _logger, warnings);
         var table = _loadSkillTable();
-        CheckSkills(request, plan, table);
+        CheckSkills(request, plan, table, warnings);
 
         var account = _locator.ResolveAccount();
         var path = _locator.CharacterFilePath(account, request.Pcid);
@@ -243,22 +243,42 @@ public sealed class ComboApplier : IComboApplier
         }
     }
 
-    private static void CheckSkills(ComboApplyRequest request, CooldownPlan plan, SkillTable table)
+    /// <summary>
+    /// Refuses a skill that the table knows and that does not fit (another class, another name). A skill the table does not know
+    /// at all is written as the guide gives it and reported as a warning: the client export can be older than the guides, and the
+    /// guide numbers are the game's own. The backup taken before the write still covers the file.
+    /// </summary>
+    private void CheckSkills(ComboApplyRequest request, CooldownPlan plan, SkillTable table, List<string> warnings)
     {
         var refs = plan.Planned.Select(s => new SkillRef(s.Slot, s.GuideName ?? string.Empty, s.SkillName ?? string.Empty, s.SkillNo));
-        var bad = table.Check(refs, request.ClassId).Where(f => !f.Ok).ToList();
+        var findings = table.Check(refs, request.ClassId).Where(f => !f.Ok).ToList();
+        var unknown = findings.Where(f => table.Get(f.SkillNo) is null).ToList();
+        var bad = findings.Except(unknown).ToList();
         if (bad.Count > 0)
         {
             var details = string.Join("; ", bad.Select(f => $"slot {f.Slot} (skillNo {f.SkillNo}): {string.Join(", ", f.Problems)}"));
             throw new OperationRefusedException(OperationProblem.SkillMismatch, $"combo does not match the skill table: {details}");
         }
 
+        foreach (var finding in unknown)
+        {
+            warnings.Add($"slot {finding.Slot} (skillNo {finding.SkillNo}) is not in the skill table; it is written as the guide gives it");
+            _logger.Warn("combo.skill_unverified", "A skill is not in the skill table and was not verified", new Dictionary<string, object?>
+            {
+                ["slot"] = finding.Slot,
+                ["skill_no"] = finding.SkillNo,
+            });
+        }
+
         foreach (var quick in request.QuickSlots.Where(q => q.SkillNo is not null))
         {
-            var info = table.Get(quick.SkillNo!.Value)
-                ?? throw new OperationRefusedException(
-                    OperationProblem.SkillMismatch,
-                    $"quick slot {quick.Position} (skillNo {quick.SkillNo}): skillNo not found in the skill table");
+            var info = table.Get(quick.SkillNo!.Value);
+            if (info is null)
+            {
+                warnings.Add($"quick slot {quick.Position} (skillNo {quick.SkillNo}) is not in the skill table; it is written as the guide gives it");
+                continue;
+            }
+
             if (!info.ClassIds.Contains(request.ClassId))
             {
                 throw new OperationRefusedException(
