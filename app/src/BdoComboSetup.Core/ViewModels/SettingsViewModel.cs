@@ -60,6 +60,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         SelectedLanguage = Languages.First(choice => choice.Code == runningLanguage);
         DataRootText = settings.Settings.GameDataRoot;
         ShowWriteHint = !settings.Settings.SkipWriteHint;
+        Theme = AppThemes.Normalize(settings.Settings.Theme);
+        AccentColor = AccentColors.Normalize(settings.Settings.AccentColor);
+        NavPaneOpen = settings.Settings.NavPaneOpen;
         Refresh();
     }
 
@@ -94,6 +97,21 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// <summary>True when the reminder before writing to a character is shown (off after "Don't show again").</summary>
     [ObservableProperty]
     private bool _showWriteHint;
+
+    /// <summary>The color theme ("system", "light" or "dark"). Changed with <see cref="ChooseTheme"/>.</summary>
+    [ObservableProperty]
+    private string _theme = AppThemes.FollowSystem;
+
+    /// <summary>The accent color id. Changed with <see cref="ChooseAccentColor"/>.</summary>
+    [ObservableProperty]
+    private string _accentColor = AccentColors.Default;
+
+    /// <summary>True when the left navigation menu is expanded, false when it is folded. Changed with <see cref="ChooseNavPaneOpen"/>.</summary>
+    [ObservableProperty]
+    private bool _navPaneOpen = true;
+
+    /// <summary>Raised when the saved theme or accent color actually changes, so the window can apply it.</summary>
+    public event EventHandler? AppearanceChanged;
 
     /// <summary>Reads the accounts of the saved data folder and selects the active one.</summary>
     public void Refresh()
@@ -167,6 +185,42 @@ public sealed partial class SettingsViewModel : ObservableObject
         _settings.Update(current => current with { SkipWriteHint = !show });
         ShowWriteHint = show;
         _logger.Info("settings.write_hint_saved", "Write reminder setting saved", new Dictionary<string, object?> { ["show"] = show });
+    }
+
+    /// <summary>Saves the color theme at once. Unknown values are saved as "system". Raises <see cref="AppearanceChanged"/> on a change.</summary>
+    public void ChooseTheme(string theme)
+    {
+        var normalized = AppThemes.Normalize(theme);
+        var changed = normalized != Theme;
+        _settings.Update(current => current with { Theme = normalized });
+        Theme = normalized;
+        _logger.Info("settings.theme_saved", "Theme saved", new Dictionary<string, object?> { ["theme"] = normalized });
+        if (changed)
+        {
+            AppearanceChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>Saves the accent color at once. Unknown values are saved as "violet". Raises <see cref="AppearanceChanged"/> on a change.</summary>
+    public void ChooseAccentColor(string accentColor)
+    {
+        var normalized = AccentColors.Normalize(accentColor);
+        var changed = normalized != AccentColor;
+        _settings.Update(current => current with { AccentColor = normalized });
+        AccentColor = normalized;
+        _logger.Info("settings.accent_saved", "Accent color saved", new Dictionary<string, object?> { ["accent"] = normalized });
+        if (changed)
+        {
+            AppearanceChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>Saves whether the navigation menu is expanded (true) or folded (false) at once.</summary>
+    public void ChooseNavPaneOpen(bool open)
+    {
+        _settings.Update(current => current with { NavPaneOpen = open });
+        NavPaneOpen = open;
+        _logger.Info("settings.nav_pane_saved", "Navigation menu state saved", new Dictionary<string, object?> { ["open"] = open });
     }
 
     /// <summary>Shows that the folder picker of the view failed (the reason is logged by the view).</summary>

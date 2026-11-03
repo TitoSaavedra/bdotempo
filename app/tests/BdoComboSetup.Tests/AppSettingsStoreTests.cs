@@ -45,4 +45,59 @@ public sealed class AppSettingsStoreTests : IDisposable
 
         Assert.Equal(AppSettings.DefaultGameDataRoot, store.Settings.GameDataRoot);
     }
+
+    [Fact]
+    public void Appearance_and_menu_settings_default_to_system_violet_and_an_open_menu()
+    {
+        var store = new AppSettingsStore(SettingsPath, _log.Logger);
+
+        Assert.Equal("system", store.Settings.Theme);
+        Assert.Equal("violet", store.Settings.AccentColor);
+        Assert.True(store.Settings.NavPaneOpen);
+    }
+
+    [Fact]
+    public void Appearance_and_menu_settings_are_written_and_read_back()
+    {
+        var store = new AppSettingsStore(SettingsPath, _log.Logger);
+
+        store.Update(settings => settings with
+        {
+            Theme = "dark",
+            AccentColor = "mint",
+            NavPaneOpen = false,
+        });
+
+        var reloaded = new AppSettingsStore(SettingsPath, _log.Logger).Settings;
+        Assert.Equal("dark", reloaded.Theme);
+        Assert.Equal("mint", reloaded.AccentColor);
+        Assert.False(reloaded.NavPaneOpen);
+    }
+
+    [Fact]
+    public void An_old_settings_file_without_the_new_fields_loads_with_their_defaults()
+    {
+        File.WriteAllText(SettingsPath, "{ \"GameDataRoot\": \"D:\\\\Old\", \"Language\": \"en-US\", \"SkipWriteHint\": true }");
+
+        var store = new AppSettingsStore(SettingsPath, _log.Logger);
+
+        Assert.Equal("D:\\Old", store.Settings.GameDataRoot);
+        Assert.Equal("en-US", store.Settings.Language);
+        Assert.Equal("system", store.Settings.Theme);
+        Assert.Equal("violet", store.Settings.AccentColor);
+        Assert.True(store.Settings.NavPaneOpen);
+    }
+
+    [Fact]
+    public void Unknown_theme_and_accent_values_normalize_to_the_defaults()
+    {
+        Assert.Equal("system", AppThemes.Normalize("neon"));
+        Assert.Equal("system", AppThemes.Normalize(null));
+        Assert.Equal("dark", AppThemes.Normalize(" DARK "));
+        Assert.Equal("light", AppThemes.Normalize("light"));
+        Assert.Equal("violet", AccentColors.Normalize("pink"));
+        Assert.Equal("violet", AccentColors.Normalize(""));
+        Assert.Equal("blue", AccentColors.Normalize("Blue"));
+        Assert.Equal(new[] { "violet", "amber", "mint", "rose", "blue" }, AccentColors.Supported);
+    }
 }

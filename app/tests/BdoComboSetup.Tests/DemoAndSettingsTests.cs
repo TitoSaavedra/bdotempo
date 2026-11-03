@@ -191,6 +191,56 @@ public sealed class SettingsViewModelTests : IDisposable
     }
 
     [Fact]
+    public void Appearance_choices_are_saved_at_once_and_only_a_theme_or_accent_change_raises_the_event()
+    {
+        var store = Store();
+        var vm = Create(store, _log.Logger);
+        var raised = 0;
+        vm.AppearanceChanged += (_, _) => raised++;
+
+        vm.ChooseTheme("dark");
+        Assert.Equal("dark", store.Settings.Theme);
+        Assert.Equal("dark", vm.Theme);
+        Assert.Equal(1, raised);
+
+        vm.ChooseTheme("dark");
+        Assert.Equal(1, raised);
+
+        vm.ChooseAccentColor("rose");
+        Assert.Equal("rose", store.Settings.AccentColor);
+        Assert.Equal("rose", vm.AccentColor);
+        Assert.Equal(2, raised);
+
+        vm.ChooseAccentColor("pink");
+        Assert.Equal("violet", store.Settings.AccentColor);
+        Assert.Equal("violet", vm.AccentColor);
+        Assert.Equal(3, raised);
+
+        vm.ChooseNavPaneOpen(false);
+        Assert.False(store.Settings.NavPaneOpen);
+        Assert.False(vm.NavPaneOpen);
+        Assert.Equal(3, raised);
+
+        var reloaded = new AppSettingsStore(Path.Combine(_log.Directory, "settings.json"), _log.Logger).Settings;
+        Assert.Equal("dark", reloaded.Theme);
+        Assert.Equal("violet", reloaded.AccentColor);
+        Assert.False(reloaded.NavPaneOpen);
+    }
+
+    [Fact]
+    public void The_view_model_starts_with_the_saved_appearance_and_normalizes_unknown_values()
+    {
+        var store = Store();
+        store.Update(current => current with { Theme = "neon", AccentColor = "amber", NavPaneOpen = false });
+
+        var vm = Create(store, _log.Logger);
+
+        Assert.Equal("system", vm.Theme);
+        Assert.Equal("amber", vm.AccentColor);
+        Assert.False(vm.NavPaneOpen);
+    }
+
+    [Fact]
     public void Languages_resolve_from_the_setting_then_the_windows_language()
     {
         Assert.Equal(AppLanguages.Spanish, AppLanguages.Resolve(null, new CultureInfo("es-MX")));

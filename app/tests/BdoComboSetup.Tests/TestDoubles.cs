@@ -67,6 +67,8 @@ internal sealed class FakeCharacterSource : ICharacterSource
     public IReadOnlyList<CharacterEntry> Load(string account) => account == AccountName ? Entries.ToList() : [];
 
     public void SaveOverride(string account, string pcid, string? name, int? classType) => Saved.Add((account, pcid, name, classType));
+
+    public int ResetOverrides(string account) => 0;
 }
 
 /// <summary>The reminder before a write: answers with the given answer and counts how often it was shown.</summary>

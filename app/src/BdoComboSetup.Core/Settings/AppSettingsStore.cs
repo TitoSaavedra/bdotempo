@@ -59,6 +59,65 @@ public sealed record AppSettings
 
     /// <summary>The newest version the last successful check found, shown in Settings.</summary>
     public string? LastSeenVersion { get; init; }
+
+    /// <summary>Color theme: "system" (follows Windows), "light" or "dark". See <see cref="AppThemes"/>.</summary>
+    public string Theme { get; init; } = AppThemes.FollowSystem;
+
+    /// <summary>Accent color id (violet, amber, mint, rose or blue). See <see cref="AccentColors"/>.</summary>
+    public string AccentColor { get; init; } = AccentColors.Default;
+
+    /// <summary>True when the left navigation menu is expanded, false when it is folded.</summary>
+    public bool NavPaneOpen { get; init; } = true;
+}
+
+/// <summary>The color themes the app supports and how the setting maps to one of them.</summary>
+public static class AppThemes
+{
+    /// <summary>Follow the light or dark mode of Windows.</summary>
+    public const string FollowSystem = "system";
+    public const string Light = "light";
+    public const string Dark = "dark";
+
+    public static IReadOnlyList<string> Supported { get; } = [FollowSystem, Light, Dark];
+
+    /// <summary>The supported theme (case-insensitive). Empty or unknown values give "system".</summary>
+    public static string Normalize(string? theme)
+    {
+        if (string.IsNullOrWhiteSpace(theme))
+        {
+            return FollowSystem;
+        }
+
+        return Supported.FirstOrDefault(supported => string.Equals(supported, theme.Trim(), StringComparison.OrdinalIgnoreCase))
+            ?? FollowSystem;
+    }
+}
+
+/// <summary>The accent colors the app offers (their ids are stored in the settings) and how the setting maps to one.</summary>
+public static class AccentColors
+{
+    public const string Violet = "violet";
+    public const string Amber = "amber";
+    public const string Mint = "mint";
+    public const string Rose = "rose";
+    public const string Blue = "blue";
+
+    /// <summary>The accent used when the setting is empty or unknown.</summary>
+    public const string Default = Violet;
+
+    public static IReadOnlyList<string> Supported { get; } = [Violet, Amber, Mint, Rose, Blue];
+
+    /// <summary>The supported accent id (case-insensitive). Empty or unknown values give "violet".</summary>
+    public static string Normalize(string? accent)
+    {
+        if (string.IsNullOrWhiteSpace(accent))
+        {
+            return Default;
+        }
+
+        return Supported.FirstOrDefault(supported => string.Equals(supported, accent.Trim(), StringComparison.OrdinalIgnoreCase))
+            ?? Default;
+    }
 }
 
 /// <summary>The languages the app ships (the .resw files) and how the setting maps to one of them.</summary>
