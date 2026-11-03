@@ -19,6 +19,7 @@ public sealed class XamlUidPropertyTests
     {
         ["TextBlock"] = ["Text"],
         ["Button"] = ["Content"],
+        ["HyperlinkButton"] = ["Content"],
         ["CheckBox"] = ["Content"],
         ["NavigationViewItem"] = ["Content"],
         ["ToggleSwitch"] = ["Header", "OnContent", "OffContent"],

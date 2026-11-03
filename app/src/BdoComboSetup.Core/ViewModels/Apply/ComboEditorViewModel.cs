@@ -91,62 +91,77 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     /// </summary>
     public ObservableCollection<ComboChainViewModel> ManualChains { get; }
 
-    /// <summary>
-    /// The reminder of what is not in the 20 cooldown slots: the buffs, the mobility skills, the repositioning skills (and
-    /// the combo steps that did not fit) that no cooldown slot holds. One line per group, empty when everything is placed.
-    /// </summary>
-    public string RemainingText => BuildRemainingText();
+    private IReadOnlyList<PendingGroup> _pendingGroups = [];
 
-    /// <summary>True when <see cref="RemainingText"/> has something to remind.</summary>
-    public bool HasRemaining => RemainingText.Length > 0;
+    /// <summary>
+    /// The skills of the guide that no cooldown slot holds, in groups: buffs, combo steps that did not fit, mobility and
+    /// repositioning. The editor shows them as the "still to place" list that can be dragged into the slots.
+    /// </summary>
+    public IReadOnlyList<PendingGroup> PendingGroups => _pendingGroups;
+
+    /// <summary>True when <see cref="PendingGroups"/> has something to remind.</summary>
+    public bool HasPending => _pendingGroups.Count > 0;
+
+    /// <summary>How many of the 20 cooldown slots hold a skill.</summary>
+    public int UsedSlotCount => AllSteps().Where(step => step.CooldownSlot is not null).Select(step => step.CooldownSlot!.Value).Distinct().Count();
+
+    /// <summary>The used slots as "16 / 20".</summary>
+    public string UsedSlotsText => $"{UsedSlotCount} / {SlotAssignment.CooldownSlotCount}";
+
+    /// <summary>The step that holds a cooldown slot, or null when the slot is empty.</summary>
+    public ComboStepViewModel? StepAtSlot(int slot) => AllSteps().FirstOrDefault(step => step.CooldownSlot == slot);
 
     private void RaiseRemainingChanged()
     {
-        OnPropertyChanged(nameof(RemainingText));
-        OnPropertyChanged(nameof(HasRemaining));
+        _pendingGroups = BuildPending();
+        OnPropertyChanged(nameof(PendingGroups));
+        OnPropertyChanged(nameof(HasPending));
+        OnPropertyChanged(nameof(UsedSlotCount));
+        OnPropertyChanged(nameof(UsedSlotsText));
     }
 
-    private string BuildRemainingText()
+    private List<PendingGroup> BuildPending()
     {
         var placed = AllSteps()
             .Where(step => step.CooldownSlot is not null && step.PrimarySkill is not null)
             .Select(step => step.PrimarySkill!.SkillNo)
             .ToHashSet();
 
-        string Remaining(IEnumerable<ComboChainViewModel> chains)
+        List<PendingSkill> Remaining(IEnumerable<ComboChainViewModel> chains)
         {
             var seen = new HashSet<int>();
-            var names = new List<string>();
+            var items = new List<PendingSkill>();
             foreach (var step in chains.SelectMany(chain => chain.Steps))
             {
                 if (step.PrimarySkill is { } skill && !placed.Contains(skill.SkillNo) && seen.Add(skill.SkillNo))
                 {
-                    names.Add(step.SkillName);
+                    items.Add(new PendingSkill(step, step.SkillName, step.Glyph, skill.OpenIcon));
                 }
             }
 
-            return string.Join(", ", names);
+            return items;
         }
 
         bool IsRepositioning(ComboChainViewModel chain) =>
             chain.Title.Contains("reposition", StringComparison.OrdinalIgnoreCase)
             || chain.Title.Contains("reposicion", StringComparison.OrdinalIgnoreCase);
 
-        var lines = new List<string>();
-        void Add(string key, string names)
+        bool OfKind(ComboChainViewModel chain, ComboChainKind kind) => _chainKinds.TryGetValue(chain.Index, out var found) && found == kind;
+
+        var groups = new List<PendingGroup>();
+        void Add(string titleKey, List<PendingSkill> items)
         {
-            if (names.Length > 0)
+            if (items.Count > 0)
             {
-                lines.Add(_localizer.Format(key, names));
+                groups.Add(new PendingGroup(_localizer.Get(titleKey), items.Count.ToString(CultureInfo.InvariantCulture), items));
             }
         }
 
-        bool OfKind(ComboChainViewModel chain, ComboChainKind kind) => _chainKinds.TryGetValue(chain.Index, out var found) && found == kind;
-        Add("Apply.Remaining.Buffs", Remaining(Chains.Where(chain => OfKind(chain, ComboChainKind.Buff))));
-        Add("Apply.Remaining.Combo", Remaining(Chains.Where(chain => OfKind(chain, ComboChainKind.Combo))));
-        Add("Apply.Remaining.Mobility", Remaining(ManualChains.Where(chain => !IsRepositioning(chain))));
-        Add("Apply.Remaining.Repositioning", Remaining(ManualChains.Where(IsRepositioning)));
-        return string.Join(Environment.NewLine, lines);
+        Add("Apply.Remaining.GroupBuffs", Remaining(Chains.Where(chain => OfKind(chain, ComboChainKind.Buff))));
+        Add("Apply.Remaining.GroupCombo", Remaining(Chains.Where(chain => OfKind(chain, ComboChainKind.Combo))));
+        Add("Apply.Remaining.GroupMobility", Remaining(ManualChains.Where(chain => !IsRepositioning(chain))));
+        Add("Apply.Remaining.GroupRepositioning", Remaining(ManualChains.Where(IsRepositioning)));
+        return groups;
     }
 
     /// <summary>True when the guide has mobility skills for the manual pool.</summary>

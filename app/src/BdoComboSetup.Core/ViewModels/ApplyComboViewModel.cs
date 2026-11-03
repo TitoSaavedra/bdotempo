@@ -98,7 +98,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 
         Characters = new ObservableCollection<CharacterOption>();
         Classes = new ObservableCollection<ClassOptionViewModel>(
-            catalog.Classes.Select(info => new ClassOptionViewModel(info, culture, assets, option => SelectClassAsync(option))));
+            catalog.Classes.Select(info => new ClassOptionViewModel(info, culture, assets, option => SelectClassByUserAsync(option))));
         ClassChoices = catalog.Classes
             .Select(info => new ClassChoice(info.ClassType, info.Name.For(culture), () => assets.OpenClassIcon(info.ClassType), info.Name))
             .ToList();
@@ -478,6 +478,55 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 
     /// <summary>Clears the name and class the user set for a character: the game files decide them again.</summary>
     public Task ResetCharacterEditAsync(CharacterOption option) => SaveCharacterEditAsync(option, null, null);
+
+    /// <summary>
+    /// Asks which of several characters to use. Given the candidates and the class, it returns the chosen one, or null when the
+    /// user cancels. The Combos page sets it (a dialog); without it the character already selected, or the first one, is used.
+    /// </summary>
+    public Func<IReadOnlyList<CharacterOption>, ClassOptionViewModel?, Task<CharacterOption?>>? CharacterChooser { get; set; }
+
+    /// <summary>
+    /// The user chose a class: the guide opens, then the character is settled. One character of that class is selected without
+    /// asking; with two or more the user is asked which one to apply to, once, before anything else.
+    /// </summary>
+    private async Task SelectClassByUserAsync(ClassOptionViewModel option)
+    {
+        await SelectClassAsync(option);
+        var candidates = Characters.Where(item => item.ClassType == option.ClassType).ToList();
+        if (candidates.Count == 1)
+        {
+            SelectedCharacter = candidates[0];
+        }
+        else if (candidates.Count > 1)
+        {
+            await AskCharacterAsync(candidates, option);
+        }
+    }
+
+    /// <summary>"Change" next to the character: asks again among the characters of the open class (all of them when none matches).</summary>
+    public async Task ChangeCharacterAsync()
+    {
+        var candidates = SelectedClass is { } option
+            ? Characters.Where(item => item.ClassType == option.ClassType).ToList()
+            : [];
+        if (candidates.Count == 0)
+        {
+            candidates = Characters.ToList();
+        }
+
+        await AskCharacterAsync(candidates, SelectedClass);
+    }
+
+    private async Task AskCharacterAsync(IReadOnlyList<CharacterOption> candidates, ClassOptionViewModel? option)
+    {
+        var chosen = CharacterChooser is null
+            ? candidates.FirstOrDefault(item => item.Pcid == SelectedCharacter?.Pcid) ?? candidates.FirstOrDefault()
+            : await CharacterChooser(candidates, option);
+        if (chosen is not null)
+        {
+            SelectedCharacter = chosen;
+        }
+    }
 
     /// <summary>
     /// Chooses the character. The open rotation stays: when the character is of another class, the apply buttons turn off

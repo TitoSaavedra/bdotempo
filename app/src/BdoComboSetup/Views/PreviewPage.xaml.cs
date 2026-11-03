@@ -1,3 +1,4 @@
+using Windows.ApplicationModel.DataTransfer;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Search;
 using BdoComboSetup.Core.ViewModels;
@@ -58,15 +59,61 @@ public sealed partial class PreviewPage : Page
         (Style)Application.Current.Resources[selected ? "PillSelectedStyle" : "PillStyle"];
 
     /// <summary>
-    /// "Apply to character": asks which parts are written (the bar, the memos, the quick slots) and opens the review with
-    /// that choice. Nothing is written here; the review card has the write button.
+    /// "Apply to character" (the button of the status bar): asks which parts are written (the bar, the memos, the quick slots)
+    /// and opens the review with that choice. Nothing is written here; the review card has the write button.
     /// </summary>
-    private async void EditorApply_Click(object sender, RoutedEventArgs e)
+    public async Task RequestApplyAsync()
     {
         if (await ConfirmWriteOptionsAsync())
         {
             await Apply.ApplyCommand.ExecuteAsync(null);
         }
+    }
+
+    /// <summary>The character is chosen in Combos only: this goes there.</summary>
+    private void ChangeCharacter_Click(object sender, RoutedEventArgs e) => (App.MainWindow as MainWindow)?.ShowCombos();
+
+    /// <summary>A pending skill starts to be dragged: its step takes the slot it is dropped on.</summary>
+    private void PendingSkill_DragStarting(UIElement sender, DragStartingEventArgs args)
+    {
+        if (sender is FrameworkElement { DataContext: PendingSkill pending })
+        {
+            SlotDrag.Step = pending.Step;
+            SlotDrag.FromSlot = null;
+            args.Data.SetText(pending.Name);
+        }
+        else
+        {
+            args.Cancel = true;
+        }
+    }
+
+    private void PendingSkill_DropCompleted(UIElement sender, DropCompletedEventArgs args) => SlotDrag.Clear();
+
+    /// <summary>"+": the skill takes the first free cooldown slot.</summary>
+    private void PendingAdd_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: PendingSkill pending })
+        {
+            Apply.Editor?.AddToFreeSlot(pending.Step);
+        }
+    }
+
+    /// <summary>The list accepts a skill dragged out of a slot.</summary>
+    private void PendingCard_DragOver(object sender, DragEventArgs e)
+    {
+        e.AcceptedOperation = SlotDrag.FromSlot is not null ? DataPackageOperation.Move : DataPackageOperation.None;
+    }
+
+    /// <summary>A skill dropped on the list leaves its slot, so it is pending again.</summary>
+    private void PendingCard_Drop(object sender, DragEventArgs e)
+    {
+        if (SlotDrag.FromSlot is not null && SlotDrag.Step is { } step)
+        {
+            Apply.Editor?.AssignCooldown(step, null);
+        }
+
+        SlotDrag.Clear();
     }
 
     /// <summary>Saves the parts to write in the view model. False when the user cancels or checks nothing.</summary>

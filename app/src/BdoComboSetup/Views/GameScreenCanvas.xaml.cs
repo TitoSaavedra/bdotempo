@@ -1,3 +1,4 @@
+using Windows.ApplicationModel.DataTransfer;
 using System.ComponentModel;
 using System.Runtime.InteropServices.WindowsRuntime;
 using BdoComboSetup.Core.Game;
@@ -241,6 +242,43 @@ public sealed partial class GameScreenCanvas : UserControl
         viewModel.ClearSlotEditMessage();
         ShowSkillPicker(anchor, slot, viewModel);
     }
+
+    /// <summary>A slot with a skill starts to be dragged: dropped on another slot the two swap, dropped on the pending list it is emptied.</summary>
+    private void CooldownSlot_DragStarting(UIElement sender, DragStartingEventArgs args)
+    {
+        var step = sender is FrameworkElement { DataContext: SlotViewModel slot }
+            ? App.Services.ApplyCombo.Editor?.StepAtSlot(slot.Number)
+            : null;
+        if (step is null)
+        {
+            args.Cancel = true;
+            return;
+        }
+
+        SlotDrag.Step = step;
+        SlotDrag.FromSlot = ((SlotViewModel)((FrameworkElement)sender).DataContext).Number;
+        args.Data.SetText(step.SkillName);
+    }
+
+    private void CooldownSlot_DragOver(object sender, DragEventArgs e) =>
+        e.AcceptedOperation = SlotDrag.Step is not null ? DataPackageOperation.Move : DataPackageOperation.None;
+
+    /// <summary>
+    /// A skill dropped on a slot takes it (from the pending list or from another slot). The skill that was in the slot goes to
+    /// the slot the dragged one left, or back to the pending list.
+    /// </summary>
+    private void CooldownSlot_Drop(object sender, DragEventArgs e)
+    {
+        if (SlotDrag.Step is { } step && sender is FrameworkElement { DataContext: SlotViewModel slot })
+        {
+            App.Services.ApplyCombo.Editor?.AssignCooldown(step, slot.Number);
+        }
+
+        SlotDrag.Clear();
+        e.Handled = true;
+    }
+
+    private void CooldownSlot_DropCompleted(UIElement sender, DropCompletedEventArgs args) => SlotDrag.Clear();
 
     /// <summary>Opens the picker of one slot under the slot itself. It is built here because every slot opens its own.</summary>
     private void ShowSkillPicker(FrameworkElement anchor, SlotViewModel slot, PreviewViewModel viewModel)

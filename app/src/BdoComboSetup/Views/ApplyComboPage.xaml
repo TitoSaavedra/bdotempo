@@ -11,6 +11,41 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
+        <!-- One character of the account in the choice dialog: class icon and name only. Name and class are edited in Settings. -->
+        <DataTemplate x:Key="CharacterTemplate" x:DataType="combo:CharacterOption">
+            <Grid ColumnSpacing="10" Padding="4,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <controls:AssetIcon
+                    Monochrome="True"
+                    Width="28"
+                    Height="28"
+                    IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
+                    Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
+                <TextBlock
+                    Grid.Column="1"
+                    Text="{x:Bind Name, Mode=OneTime}"
+                    FontWeight="SemiBold"
+                    VerticalAlignment="Center"
+                    TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- The character that is selected, next to "Change". -->
+        <DataTemplate x:Key="SelectedCharacterTemplate" x:DataType="combo:CharacterOption">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <controls:AssetIcon
+                    Monochrome="True"
+                    Width="24"
+                    Height="24"
+                    IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
+                    Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
+                <TextBlock Text="{x:Bind Name, Mode=OneTime}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </DataTemplate>
+
         <!-- One class of the class list: its icon and its name. The selected class gets the glass highlight. -->
         <DataTemplate x:Key="ClassRowTemplate" x:DataType="vm:ClassOptionViewModel">
             <Grid Margin="0,1">
@@ -429,8 +464,21 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
 
-                <!-- There is no character picker here: the character is chosen once, in the status bar of the window. -->
+                <!-- The character of the whole app is chosen here, once: choosing a class with several characters asks which one. -->
                 <StackPanel Grid.Row="1" Spacing="6" Padding="6,0">
+                    <TextBlock x:Uid="Apply/CharacterHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ContentControl
+                            Content="{x:Bind ViewModel.SelectedCharacter, Mode=OneWay}"
+                            ContentTemplate="{StaticResource SelectedCharacterTemplate}"
+                            HorizontalContentAlignment="Left"
+                            VerticalAlignment="Center" />
+                        <Button Grid.Column="1" x:Uid="Apply/ChangeCharacterButton" Click="ChangeCharacter_Click" />
+                    </Grid>
                     <TextBlock
                         Text="{x:Bind ViewModel.CharactersMessage, Mode=OneWay}"
                         FontSize="12"

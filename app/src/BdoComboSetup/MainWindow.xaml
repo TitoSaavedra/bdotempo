@@ -14,41 +14,6 @@
     </Window.SystemBackdrop>
 
     <Grid x:Name="RootGrid">
-        <Grid.Resources>
-            <!-- The character of the whole app is chosen here, once: class icon and name only (name and class are edited in Settings). -->
-            <DataTemplate x:Key="CharacterTemplate" x:DataType="combo:CharacterOption">
-                <Grid ColumnSpacing="8" Padding="4,2">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <controls:AssetIcon
-                        Monochrome="True"
-                        Width="24"
-                        Height="24"
-                        IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
-                        Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
-                    <TextBlock
-                        Grid.Column="1"
-                        Text="{x:Bind Name, Mode=OneTime}"
-                        VerticalAlignment="Center"
-                        TextTrimming="CharacterEllipsis" />
-                </Grid>
-            </DataTemplate>
-
-            <!-- The character shown on the picker button. -->
-            <DataTemplate x:Key="SelectedCharacterTemplate" x:DataType="combo:CharacterOption">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <controls:AssetIcon
-                        Monochrome="True"
-                        Width="20"
-                        Height="20"
-                        IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
-                        Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
-                    <TextBlock Text="{x:Bind Name, Mode=OneTime}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                </StackPanel>
-            </DataTemplate>
-        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -214,7 +179,6 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <StackPanel
@@ -252,26 +216,15 @@
                         Foreground="{ThemeResource GlassMutedTextBrush}" />
                 </StackPanel>
 
-                <!-- The character the whole app works with (Apply combo and Preview). -->
-                <controls:SearchablePicker
-                    x:Name="CharacterPicker"
+                <!-- Writes the combo to the character (the editor only): it asks which parts, then opens the review. -->
+                <Button
+                    x:Name="ApplyBarButton"
+                    x:Uid="Preview/ApplyButton"
                     Grid.Column="1"
-                    Margin="0,0,16,0"
-                    MinWidth="200"
-                    MaxWidth="280"
-                    VerticalAlignment="Center"
-                    ItemsSource="{x:Bind Apply.Characters, Mode=OneWay}"
-                    ItemTemplate="{StaticResource CharacterTemplate}"
-                    SelectedItem="{x:Bind Apply.SelectedCharacter, Mode=OneWay}"
-                    SelectedTemplate="{StaticResource SelectedCharacterTemplate}"
-                    Chosen="CharacterPicker_Chosen" />
-
-                <TextBlock
-                    x:Name="VersionText"
-                    Grid.Column="2"
-                    VerticalAlignment="Center"
-                    FontSize="12"
-                    Foreground="{ThemeResource GlassMutedTextBrush}" />
+                    Visibility="Collapsed"
+                    IsEnabled="{x:Bind Apply.CanRun, Mode=OneWay}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    Click="ApplyBarButton_Click" />
             </Grid>
         </Border>
     </Grid>

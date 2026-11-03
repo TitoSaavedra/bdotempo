@@ -945,9 +945,19 @@
   <data name="Apply.ClassMismatch" xml:space="preserve"><value>The combo is for {1}, but {0} is another class. Choose a character of that class to apply it.</value></data>
   <data name="Apply.ApplyInPreviewHint.Text" xml:space="preserve"><value>Combos are not applied here. Review the changes and apply them in Preview.</value></data>
   <data name="Apply.GoToPreviewButton.Content" xml:space="preserve"><value>Go to Preview to apply</value></data>
-  <data name="Apply.Remaining.Title.Text" xml:space="preserve"><value>Skills that are not in the 20 slots</value></data>
-  <data name="Apply.Remaining.Buffs" xml:space="preserve"><value>Buffs: {0}</value></data>
-  <data name="Apply.Remaining.Combo" xml:space="preserve"><value>Combo: {0}</value></data>
-  <data name="Apply.Remaining.Mobility" xml:space="preserve"><value>Mobility: {0}</value></data>
-  <data name="Apply.Remaining.Repositioning" xml:space="preserve"><value>Repositioning: {0}</value></data>
+  <data name="Apply.Remaining.Title.Text" xml:space="preserve"><value>Still to place</value></data>
+  <data name="Apply.Remaining.Hint.Text" xml:space="preserve"><value>Guide skills that are not in the 20 slots. Drag them to a slot, or tap + to use the first free one.</value></data>
+  <data name="Apply.Remaining.GroupBuffs" xml:space="preserve"><value>Buffs</value></data>
+  <data name="Apply.Remaining.GroupCombo" xml:space="preserve"><value>Combo</value></data>
+  <data name="Apply.Remaining.GroupMobility" xml:space="preserve"><value>Mobility</value></data>
+  <data name="Apply.Remaining.GroupRepositioning" xml:space="preserve"><value>Repositioning</value></data>
+  <data name="Apply.Remaining.Done.Text" xml:space="preserve"><value>Every skill of the guide is in the slots.</value></data>
+  <data name="Preview.Slots.Header.Text" xml:space="preserve"><value>Slots in use</value></data>
+  <data name="Preview.ChangeCharacterButton.Content" xml:space="preserve"><value>Change in Combos</value></data>
+  <data name="Preview.DragHint.Text" xml:space="preserve"><value>Drag a skill to a slot, between slots to swap them, or onto "Still to place" to remove it.</value></data>
+  <data name="Apply.CharacterDialog.Title" xml:space="preserve"><value>Which character to apply to?</value></data>
+  <data name="Apply.CharacterDialog.Body" xml:space="preserve"><value>You have {0} {1} characters in this account. The one you pick is used in the editor and when applying.</value></data>
+  <data name="Apply.CharacterDialog.BodyAny" xml:space="preserve"><value>Pick the character to apply to. It is used in the editor and when applying.</value></data>
+  <data name="Apply.CharacterDialog.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Apply.ChangeCharacterButton.Content" xml:space="preserve"><value>Change</value></data>
 </root>

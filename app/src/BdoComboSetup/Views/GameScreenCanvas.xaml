@@ -29,6 +29,12 @@
                 Opacity="{x:Bind Opacity, Mode=OneWay}"
                 RenderTransformOrigin="0,0"
                 Background="Transparent"
+                CanDrag="{x:Bind HasSkill, Mode=OneWay}"
+                AllowDrop="True"
+                DragStarting="CooldownSlot_DragStarting"
+                DragOver="CooldownSlot_DragOver"
+                Drop="CooldownSlot_Drop"
+                DropCompleted="CooldownSlot_DropCompleted"
                 Tapped="CooldownSlot_Tapped"
                 Visibility="{x:Bind IsDrawn, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <Grid.RenderTransform>

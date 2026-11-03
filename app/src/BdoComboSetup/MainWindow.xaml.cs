@@ -34,7 +34,8 @@ public sealed partial class MainWindow : Window
     {
         Apply = App.Services.ApplyCombo;
         InitializeComponent();
-        CharacterPicker.SetFields(item => Apply.CharacterSearchTexts((CharacterOption)item));
+        ContentFrame.Navigated += (_, e) =>
+            ApplyBarButton.Visibility = e.SourcePageType == typeof(PreviewPage) ? Visibility.Visible : Visibility.Collapsed;
 
         var services = App.Services;
         _menuCloseTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
@@ -43,7 +44,6 @@ public sealed partial class MainWindow : Window
         _menuCloseTimer.Tick += (_, _) => CloseMenuIfIdle();
         Title = services.Localizer.Get("AppTitle");
         TitleText.Text = Title;
-        VersionText.Text = services.Localizer.Format("StatusBar.Version", AppVersion.Current.ToString());
 
         // The game state of the status bar: a process lookup every few seconds on the UI thread, never a capture.
         GameDetectedText.Text = services.Localizer.Get("StatusBar.GameDetected");
@@ -268,15 +268,15 @@ public sealed partial class MainWindow : Window
     /// <summary>Shows the Preview page (the combos are written from there).</summary>
     public void ShowPreview() => Nav.SelectedItem = PreviewItem;
 
-    /// <summary>Opens the character picker of the status bar (used by the demo mode).</summary>
-    public void OpenCharacterPicker() => CharacterPicker.Open();
+    /// <summary>Shows the Combos page (the character is chosen there).</summary>
+    public void ShowCombos() => Nav.SelectedItem = ApplyItem;
 
-    /// <summary>Chooses the character picked in the status bar (the view model selects its class too).</summary>
-    private void CharacterPicker_Chosen(object? sender, object item)
+    /// <summary>The apply button of the status bar: the editor asks which parts to write and opens the review.</summary>
+    private async void ApplyBarButton_Click(object sender, RoutedEventArgs e)
     {
-        if (item is CharacterOption option)
+        if (ContentFrame.Content is PreviewPage page)
         {
-            Apply.SelectCharacterCommand.Execute(option);
+            await page.RequestApplyAsync();
         }
     }
 

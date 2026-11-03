@@ -24,6 +24,67 @@
             <Setter Property="Padding" Value="14" />
         </Style>
 
+        <!-- The character shown in the sidebar: class icon and name only. -->
+        <DataTemplate x:Key="SelectedCharacterTemplate" x:DataType="combo:CharacterOption">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <controls:AssetIcon
+                    Monochrome="True"
+                    Width="32"
+                    Height="32"
+                    IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
+                    Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
+                <TextBlock Text="{x:Bind Name, Mode=OneTime}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- A skill that no slot holds: drag it to a slot, or tap + for the first free slot. -->
+        <DataTemplate x:Key="PendingSkillTemplate" x:DataType="vm:PendingSkill">
+            <Grid
+                Margin="0,0,0,5"
+                Padding="6,5"
+                ColumnSpacing="8"
+                CornerRadius="8"
+                Background="{ThemeResource GlassChipBrush}"
+                CanDrag="True"
+                DragStarting="PendingSkill_DragStarting"
+                DropCompleted="PendingSkill_DropCompleted">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <controls:AssetIcon
+                    Width="28"
+                    Height="28"
+                    IconSource="{x:Bind OpenIcon, Mode=OneTime}"
+                    Glyph="{x:Bind Glyph, Mode=OneTime}" />
+                <TextBlock
+                    Grid.Column="1"
+                    Text="{x:Bind Name, Mode=OneTime}"
+                    FontSize="13"
+                    VerticalAlignment="Center"
+                    TextTrimming="CharacterEllipsis" />
+                <Button
+                    Grid.Column="2"
+                    Content="+"
+                    Padding="10,2"
+                    MinHeight="0"
+                    MinWidth="0"
+                    Click="PendingAdd_Click" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- One group of pending skills: its title and count, then its skills. -->
+        <DataTemplate x:Key="PendingGroupTemplate" x:DataType="vm:PendingGroup">
+            <StackPanel Margin="0,10,0,0" Spacing="4">
+                <Grid>
+                    <TextBlock Text="{x:Bind Title, Mode=OneTime}" FontSize="11" CharacterSpacing="60" Opacity="0.75" />
+                    <TextBlock Text="{x:Bind CountText, Mode=OneTime}" FontSize="11" HorizontalAlignment="Right" Opacity="0.75" />
+                </Grid>
+                <ItemsControl ItemsSource="{x:Bind Items, Mode=OneTime}" ItemTemplate="{StaticResource PendingSkillTemplate}" />
+            </StackPanel>
+        </DataTemplate>
+
     </Page.Resources>
 
     <Grid Padding="24,16" ColumnSpacing="16">
@@ -57,21 +118,6 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
 
-                <!-- The reminder of the skills that no cooldown slot holds: buffs, mobility and repositioning (and combo steps that did not fit). -->
-                <Border
-                    Style="{StaticResource EditorCard}"
-                    Margin="0,8,0,0"
-                    BorderBrush="{ThemeResource SystemFillColorCautionBrush}"
-                    Visibility="{x:Bind Apply.Editor.HasRemaining, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <StackPanel Spacing="4">
-                        <TextBlock x:Uid="Apply/Remaining/Title" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                        <TextBlock
-                            Text="{x:Bind Apply.Editor.RemainingText, Mode=OneWay}"
-                            TextWrapping="Wrap"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                    </StackPanel>
-                </Border>
             </StackPanel>
 
             <!-- The review of the character file: opened by "Apply to character" with the chosen parts. -->
@@ -193,6 +239,72 @@
             VerticalScrollBarVisibility="Auto">
             <StackPanel Spacing="12">
 
+                <!-- Personaje: who the combo is applied to. It is chosen in Combos, so here it can only be changed there. -->
+                <Border Style="{StaticResource SideCardStyle}">
+                    <StackPanel Spacing="8">
+                        <ContentControl
+                            Content="{x:Bind Apply.SelectedCharacter, Mode=OneWay}"
+                            ContentTemplate="{StaticResource SelectedCharacterTemplate}"
+                            HorizontalContentAlignment="Left" />
+                        <HyperlinkButton
+                            x:Uid="Preview/ChangeCharacterButton"
+                            Padding="0,2"
+                            Click="ChangeCharacter_Click" />
+                        <TextBlock
+                            Text="{x:Bind Apply.ClassMismatchText, Mode=OneWay}"
+                            Visibility="{x:Bind Apply.IsClassMismatch, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                            FontSize="12"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource SystemFillColorCautionBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Casillas: how many of the 20 slots hold a skill. -->
+                <Border Style="{StaticResource SideCardStyle}">
+                    <StackPanel Spacing="8">
+                        <Grid>
+                            <TextBlock x:Uid="Preview/Slots/Header" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                Text="{x:Bind Apply.Editor.UsedSlotsText, Mode=OneWay}"
+                                HorizontalAlignment="Right"
+                                Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        </Grid>
+                        <ProgressBar Minimum="0" Maximum="20" Value="{x:Bind Apply.Editor.UsedSlotCount, Mode=OneWay}" />
+                        <TextBlock
+                            x:Uid="Preview/DragHint"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Opacity="0.7"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Te falta poner: the skills of the guide that no slot holds. Dragging a slot here takes its skill out of the slot. -->
+                <Border
+                    x:Name="PendingCard"
+                    Style="{StaticResource SideCardStyle}"
+                    BorderBrush="{ThemeResource SystemFillColorCautionBrush}"
+                    AllowDrop="True"
+                    DragOver="PendingCard_DragOver"
+                    Drop="PendingCard_Drop">
+                    <StackPanel>
+                        <TextBlock x:Uid="Apply/Remaining/Title" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                        <TextBlock
+                            x:Uid="Apply/Remaining/Hint"
+                            FontSize="12"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <ItemsControl
+                            ItemsSource="{x:Bind Apply.Editor.PendingGroups, Mode=OneWay}"
+                            ItemTemplate="{StaticResource PendingGroupTemplate}" />
+                        <TextBlock
+                            x:Uid="Apply/Remaining/Done"
+                            Margin="0,10,0,0"
+                            FontSize="12"
+                            Foreground="{ThemeResource GlassSuccessBrush}"
+                            Visibility="{x:Bind Apply.Editor.HasPending, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                    </StackPanel>
+                </Border>
+
                 <!-- Estado: whether the game is detected, its resolution and the capture switch. -->
                 <Border Style="{StaticResource SideCardStyle}">
                     <StackPanel Spacing="8">
@@ -288,25 +400,6 @@
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Opacity="0.7"
                             TextWrapping="Wrap" />
-                    </StackPanel>
-                </Border>
-
-                <!-- Personaje: the character of the combo and the apply action. -->
-                <Border Style="{StaticResource SideCardStyle}">
-                    <StackPanel Spacing="10">
-                        <TextBlock x:Uid="Preview/CharacterHeading" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                        <TextBlock
-                            Text="{x:Bind Apply.ClassMismatchText, Mode=OneWay}"
-                            Visibility="{x:Bind Apply.IsClassMismatch, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
-                            FontSize="12"
-                            TextWrapping="Wrap"
-                            Foreground="{ThemeResource SystemFillColorCautionBrush}" />
-                        <Button
-                            x:Uid="Preview/ApplyButton"
-                            HorizontalAlignment="Stretch"
-                            Click="EditorApply_Click"
-                            IsEnabled="{x:Bind Apply.CanRun, Mode=OneWay}"
-                            Style="{StaticResource AccentButtonStyle}" />
                     </StackPanel>
                 </Border>
 

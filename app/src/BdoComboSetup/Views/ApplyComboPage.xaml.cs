@@ -34,6 +34,7 @@ public sealed partial class ApplyComboPage : Page
         ComboSlotPicker.SetFields(item => [((ComboSlotOption)item).Label]);
         Loaded += Page_Loaded;
         Unloaded += Page_Unloaded;
+        ViewModel.CharacterChooser = ChooseCharacterAsync;
     }
 
     /// <summary>The texts a skill is searched by in the "Add skill" list: both names and the number.</summary>
@@ -150,7 +151,7 @@ public sealed partial class ApplyComboPage : Page
     private void DemoCharacterPicker_Loaded(object sender, RoutedEventArgs e)
     {
         Loaded -= DemoCharacterPicker_Loaded;
-        (App.MainWindow as MainWindow)?.OpenCharacterPicker();
+        _ = ViewModel.ChangeCharacterAsync();
     }
 
     /// <summary>Follows the working copy while the page is shown: the boards are drawn again when it changes.</summary>
@@ -163,6 +164,11 @@ public sealed partial class ApplyComboPage : Page
     /// <summary>Stops following the working copy, so a page that is not shown is not kept alive by the view model.</summary>
     private void Page_Unloaded(object sender, RoutedEventArgs e)
     {
+        if (ViewModel.CharacterChooser == ChooseCharacterAsync)
+        {
+            ViewModel.CharacterChooser = null;
+        }
+
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
         AttachContent(null);
     }
@@ -254,6 +260,49 @@ public sealed partial class ApplyComboPage : Page
 
     /// <summary>Combos are written from Preview: this opens it, with the same character and combo.</summary>
     private void GoToPreview_Click(object sender, RoutedEventArgs e) => (App.MainWindow as MainWindow)?.ShowPreview();
+
+    /// <summary>"Change": asks again which character to use.</summary>
+    private async void ChangeCharacter_Click(object sender, RoutedEventArgs e) => await ViewModel.ChangeCharacterAsync();
+
+    /// <summary>
+    /// The dialog that asks which character to apply to: shown when the chosen class has several characters in the account, and
+    /// by "Change". Returns the character the user taps, or null when the dialog is closed without a choice.
+    /// </summary>
+    private async Task<CharacterOption?> ChooseCharacterAsync(IReadOnlyList<CharacterOption> candidates, ClassOptionViewModel? option)
+    {
+        var localizer = App.Services.Localizer;
+        var list = new ListView
+        {
+            ItemsSource = candidates,
+            ItemTemplate = (DataTemplate)Resources["CharacterTemplate"],
+            SelectionMode = ListViewSelectionMode.None,
+            IsItemClickEnabled = true,
+            MaxHeight = 320,
+        };
+        var body = option is null
+            ? localizer.Get("Apply.CharacterDialog.BodyAny")
+            : localizer.Format("Apply.CharacterDialog.Body", candidates.Count, option.Name);
+        var panel = new StackPanel { Spacing = 12 };
+        panel.Children.Add(new TextBlock { Text = body, TextWrapping = TextWrapping.Wrap });
+        panel.Children.Add(list);
+
+        CharacterOption? chosen = null;
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = localizer.Get("Apply.CharacterDialog.Title"),
+            Content = panel,
+            CloseButtonText = localizer.Get("Apply.CharacterDialog.Cancel"),
+        };
+        list.ItemClick += (_, e) =>
+        {
+            chosen = e.ClickedItem as CharacterOption;
+            dialog.Hide();
+        };
+
+        await dialog.ShowAsync();
+        return chosen;
+    }
 
     /// <summary>Chooses the class picked in the searchable class list (the page then lists its guides).</summary>
     private void ClassList_ItemChosen(object? sender, object item)
