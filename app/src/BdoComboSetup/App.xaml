@@ -9,221 +9,356 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+
+                <!--
+                    Glass palette (the "C · Shell cristal" design). It is merged AFTER XamlControlsResources on purpose: a merged
+                    dictionary is searched last-to-first, so these keys win over the control library's own theme resources (its accent
+                    tan and opaque grays were shadowing the top-level ThemeDictionaries). Light and Dark must always define the same keys.
+                    ThemeService rewrites the accent in place.
+                -->
+                <ResourceDictionary>
+                    <ResourceDictionary.ThemeDictionaries>
+                    <ResourceDictionary x:Key="Light">
+                        <!-- Accent colors: rewritten by ThemeService when the accent changes (SystemAccentColor family and the brushes below). -->
+                        <Color x:Key="SystemAccentColor">#FF6F5CFF</Color>
+                        <Color x:Key="SystemAccentColorLight1">#FF8574FF</Color>
+                        <Color x:Key="SystemAccentColorLight2">#FF9A8DFF</Color>
+                        <Color x:Key="SystemAccentColorLight3">#FFB7AEFF</Color>
+                        <Color x:Key="SystemAccentColorDark1">#FF6453E6</Color>
+                        <Color x:Key="SystemAccentColorDark2">#FF5345BF</Color>
+                        <Color x:Key="SystemAccentColorDark3">#FF432599</Color>
+                        <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="AccentFillColorSelectedTextBackgroundBrush" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="AccentTextFillColorTertiaryBrush" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="HyperlinkForeground" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorBrush" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="TextControlElevationBorderFocusedBrush" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="PreviewSlotHoverBorderBrush" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#FF6655EB" />
+                        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPointerOverBrush" Color="#FF6655EB" />
+                        <SolidColorBrush x:Key="AccentFillColorTertiaryBrush" Color="#FF5D4DD6" />
+                        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPressedBrush" Color="#FF5D4DD6" />
+                        <SolidColorBrush x:Key="AccentFillColorDisabledBrush" Color="#2A141325" />
+                        <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#FF6655EB" />
+                        <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#FF5D4DD6" />
+                        <SolidColorBrush x:Key="ToggleSwitchFillOnDisabled" Color="#2A141325" />
+                        <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" Color="#FF6655EB" />
+                        <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPressed" Color="#FF5D4DD6" />
+                        <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedDisabled" Color="#2A141325" />
+                        <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFill" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFillPointerOver" Color="#FF6655EB" />
+                        <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFillPressed" Color="#FF5D4DD6" />
+                        <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFillDisabled" Color="#2A141325" />
+                        <SolidColorBrush x:Key="SliderTrackValueFill" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="SliderTrackValueFillPointerOver" Color="#FF6655EB" />
+                        <SolidColorBrush x:Key="SliderTrackValueFillPressed" Color="#FF5D4DD6" />
+                        <SolidColorBrush x:Key="SliderTrackValueFillDisabled" Color="#2A141325" />
+                        <SolidColorBrush x:Key="SliderThumbBackground" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="SliderThumbBackgroundPointerOver" Color="#FF6655EB" />
+                        <SolidColorBrush x:Key="SliderThumbBackgroundPressed" Color="#FF5D4DD6" />
+                        <SolidColorBrush x:Key="SliderThumbBackgroundDisabled" Color="#2A141325" />
+                        <SolidColorBrush x:Key="AccentButtonBackground" Color="#FF6F5CFF" />
+                        <SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#FF6655EB" />
+                        <SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#FF5D4DD6" />
+                        <SolidColorBrush x:Key="AccentButtonBackgroundDisabled" Color="#2A141325" />
+                        <SolidColorBrush x:Key="AccentButtonForeground" Color="#FFFFFFFF" />
+                        <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FFFFFFFF" />
+                        <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FFFFFFFF" />
+                        <SolidColorBrush x:Key="TextOnAccentFillColorPrimaryBrush" Color="#FFFFFFFF" />
+                        <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#FFFFFFFF" />
+                        <SolidColorBrush x:Key="AccentButtonBorderBrush" Color="#00000000" />
+                        <SolidColorBrush x:Key="AccentButtonBorderBrushPointerOver" Color="#00000000" />
+                        <SolidColorBrush x:Key="AccentButtonBorderBrushPressed" Color="#00000000" />
+                        <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#FF8F80FF" Offset="0" /><GradientStop Color="#FF6F5CFF" Offset="1" /></LinearGradientBrush>
+                        <SolidColorBrush x:Key="PreviewSlotFrameBrush" Color="#736F5CFF" />
+                        <SolidColorBrush x:Key="PreviewSlotHoverFillBrush" Color="#4D6F5CFF" />
+                        <RadialGradientBrush x:Key="GlassGlowAccentBrush" Center="0.08,-0.06" GradientOrigin="0.08,-0.06" RadiusX="0.3875" RadiusY="0.358"><GradientStop Color="#4D6F5CFF" Offset="0" /><GradientStop Color="#006F5CFF" Offset="1" /></RadialGradientBrush>
+                        <!-- Surfaces: transparent page backgrounds, translucent glass cards, controls and lines (the same hue family as the shell). -->
+                        <SolidColorBrush x:Key="ApplicationPageBackgroundThemeBrush" Color="#00000000" />
+                        <SolidColorBrush x:Key="SolidBackgroundFillColorBaseBrush" Color="#00000000" />
+                        <SolidColorBrush x:Key="SolidBackgroundFillColorSecondaryBrush" Color="#00000000" />
+                        <SolidColorBrush x:Key="SolidBackgroundFillColorTertiaryBrush" Color="#00000000" />
+                        <SolidColorBrush x:Key="LayerFillColorDefaultBrush" Color="#66FFFFFF" />
+                        <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#B8FFFFFF" />
+                        <SolidColorBrush x:Key="CardBackgroundFillColorSecondaryBrush" Color="#D9FFFFFF" />
+                        <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#17141325" />
+                        <SolidColorBrush x:Key="ControlFillColorDefaultBrush" Color="#B8FFFFFF" />
+                        <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#D9FFFFFF" />
+                        <SolidColorBrush x:Key="ControlFillColorTertiaryBrush" Color="#F2FFFFFF" />
+                        <SolidColorBrush x:Key="ControlFillColorInputActiveBrush" Color="#F2FFFFFF" />
+                        <SolidColorBrush x:Key="ControlAltFillColorSecondaryBrush" Color="#1A141325" />
+                        <SolidColorBrush x:Key="ControlStrongStrokeColorDefaultBrush" Color="#8C141325" />
+                        <SolidColorBrush x:Key="ControlElevationBorderBrush" Color="#17141325" />
+                        <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="#26141325" />
+                        <SolidColorBrush x:Key="SubtleFillColorTransparentBrush" Color="#00000000" />
+                        <SolidColorBrush x:Key="SubtleFillColorSecondaryBrush" Color="#14141325" />
+                        <SolidColorBrush x:Key="GlassLineBrush" Color="#17141325" />
+                        <SolidColorBrush x:Key="GlassChipBrush" Color="#0F141325" />
+                        <SolidColorBrush x:Key="GlassSelectedFillBrush" Color="#D9FFFFFF" />
+                        <SolidColorBrush x:Key="GlassNavSelectedBrush" Color="#FFFFFFFF" />
+                        <SolidColorBrush x:Key="GlassWindowTintBrush" Color="#8CFFFFFF" />
+                        <SolidColorBrush x:Key="GlassWindowBorderBrush" Color="#BFFFFFFF" />
+                        <SolidColorBrush x:Key="GlassStatusBarBrush" Color="#80FFFFFF" />
+                        <SolidColorBrush x:Key="PreviewSurfaceBrush" Color="#FF0C1118" />
+                        <!-- Controls: buttons, combo boxes, text boxes, toggles and check boxes (glass fills, hairline borders). -->
+                        <SolidColorBrush x:Key="ButtonBackground" Color="#B8FFFFFF" />
+                        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#D9FFFFFF" />
+                        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#F2FFFFFF" />
+                        <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#0F141325" />
+                        <SolidColorBrush x:Key="ButtonBorderBrush" Color="#17141325" />
+                        <SolidColorBrush x:Key="ButtonForeground" Color="#FF141325" />
+                        <SolidColorBrush x:Key="ComboBoxBackground" Color="#B8FFFFFF" />
+                        <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#D9FFFFFF" />
+                        <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#F2FFFFFF" />
+                        <SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="#0F141325" />
+                        <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#17141325" />
+                        <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#8C141325" />
+                        <SolidColorBrush x:Key="ComboBoxForeground" Color="#FF141325" />
+                        <SolidColorBrush x:Key="ComboBoxPlaceholderForeground" Color="#FF6F6D86" />
+                        <SolidColorBrush x:Key="TextControlBackground" Color="#B8FFFFFF" />
+                        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#D9FFFFFF" />
+                        <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#F2FFFFFF" />
+                        <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="#0F141325" />
+                        <SolidColorBrush x:Key="TextControlBorderBrush" Color="#26141325" />
+                        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#8C141325" />
+                        <SolidColorBrush x:Key="TextControlForeground" Color="#FF141325" />
+                        <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#FF6F6D86" />
+                        <SolidColorBrush x:Key="CheckBoxBorderBrush" Color="#8C141325" />
+                        <SolidColorBrush x:Key="CheckBoxBackgroundUnchecked" Color="#B8FFFFFF" />
+                        <SolidColorBrush x:Key="ToggleSwitchFillOff" Color="#1A141325" />
+                        <SolidColorBrush x:Key="ToggleSwitchFillOffPointerOver" Color="#26141325" />
+                        <SolidColorBrush x:Key="ToggleSwitchStrokeOff" Color="#8C141325" />
+                        <SolidColorBrush x:Key="ListViewItemBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#D9FFFFFF" />
+                        <!-- Popups: tool tips, menu flyouts and dialogs (more opaque, so the text stays readable over the shell). -->
+                        <SolidColorBrush x:Key="ToolTipBackground" Color="#F7FFFFFF" />
+                        <SolidColorBrush x:Key="ToolTipForeground" Color="#FF141325" />
+                        <SolidColorBrush x:Key="ToolTipBorderBrush" Color="#26141325" />
+                        <SolidColorBrush x:Key="MenuFlyoutPresenterBackground" Color="#F7FFFFFF" />
+                        <SolidColorBrush x:Key="MenuFlyoutPresenterBorderBrush" Color="#26141325" />
+                        <SolidColorBrush x:Key="MenuFlyoutItemForeground" Color="#FF141325" />
+                        <SolidColorBrush x:Key="ContentDialogBackground" Color="#F7FFFFFF" />
+                        <SolidColorBrush x:Key="ContentDialogBorderBrush" Color="#26141325" />
+                        <SolidColorBrush x:Key="ContentDialogForeground" Color="#FF141325" />
+                        <!-- Text: the same three levels in both themes (primary, secondary, muted) and the semantic success color. -->
+                        <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#FF141325" />
+                        <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#FF3B3A52" />
+                        <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#FF6F6D86" />
+                        <SolidColorBrush x:Key="TextFillColorDisabledBrush" Color="#5C141325" />
+                        <SolidColorBrush x:Key="GlassMutedTextBrush" Color="#FF6F6D86" />
+                        <SolidColorBrush x:Key="GlassSuccessBrush" Color="#FF11795F" />
+                        <!-- Navigation: transparent panes, glass item states; the selection indicator is the accent (above). -->
+                        <SolidColorBrush x:Key="NavigationViewItemBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="NavigationViewItemBackgroundPointerOver" Color="#D9FFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewItemBackgroundPressed" Color="#D9FFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewItemBackgroundSelected" Color="#FFFFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPointerOver" Color="#FFFFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPressed" Color="#FFFFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewItemForeground" Color="#FF3B3A52" />
+                        <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="#FF141325" />
+                        <SolidColorBrush x:Key="NavigationViewItemForegroundPressed" Color="#FF141325" />
+                        <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="#FF141325" />
+                        <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="#FF141325" />
+                        <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="#FF141325" />
+                        <SolidColorBrush x:Key="NavigationViewItemHeaderForeground" Color="#FF6F6D86" />
+                        <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="NavigationViewButtonBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="NavigationViewButtonBackgroundPointerOver" Color="#D9FFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewButtonBackgroundPressed" Color="#D9FFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewButtonForeground" Color="#FF3B3A52" />
+                        <SolidColorBrush x:Key="NavigationViewButtonForegroundPointerOver" Color="#FF141325" />
+                        <!-- Preview: the game surface is always dark (the capture is black); its frames take the accent and a muted blue-gray. -->
+                        <SolidColorBrush x:Key="PreviewOverlayBrush" Color="#B8070A0E" />
+                        <SolidColorBrush x:Key="PreviewOverlayLineBrush" Color="#24FFFFFF" />
+                        <SolidColorBrush x:Key="PreviewOnSurfaceTextBrush" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="PreviewOnSurfaceMutedBrush" Color="#FF8A88A0" />
+                        <SolidColorBrush x:Key="PreviewQuickSlotFrameBrush" Color="#A67A8BA6" />
+                        <!-- Window backdrop: the gradient behind everything (base + accent, mint and rose glows). -->
+                        <LinearGradientBrush x:Key="GlassBackdropBrush" StartPoint="0.55,0" EndPoint="0.45,1"><GradientStop Color="#E6F7F5FF" Offset="0" /><GradientStop Color="#E6F4F8FB" Offset="0.46" /><GradientStop Color="#E6FDF7F6" Offset="1" /></LinearGradientBrush>
+                        <RadialGradientBrush x:Key="GlassGlowMintBrush" Center="0.92,0.04" GradientOrigin="0.92,0.04" RadiusX="0.342" RadiusY="0.347"><GradientStop Color="#3825C9A3" Offset="0" /><GradientStop Color="#0025C9A3" Offset="1" /></RadialGradientBrush>
+                        <RadialGradientBrush x:Key="GlassGlowRoseBrush" Center="0.5,1.08" GradientOrigin="0.5,1.08" RadiusX="0.327" RadiusY="0.427"><GradientStop Color="#2EFF6B9A" Offset="0" /><GradientStop Color="#00FF6B9A" Offset="1" /></RadialGradientBrush>
+                    </ResourceDictionary>
+                    <ResourceDictionary x:Key="Dark">
+                        <!-- Accent colors: rewritten by ThemeService when the accent changes (SystemAccentColor family and the brushes below). -->
+                        <Color x:Key="SystemAccentColor">#FF9A8CFF</Color>
+                        <Color x:Key="SystemAccentColorLight1">#FFA99DFF</Color>
+                        <Color x:Key="SystemAccentColorLight2">#FFB8AFFF</Color>
+                        <Color x:Key="SystemAccentColorLight3">#FFCDC5FF</Color>
+                        <Color x:Key="SystemAccentColorDark1">#FF8B7EE6</Color>
+                        <Color x:Key="SystemAccentColorDark2">#FF7369BF</Color>
+                        <Color x:Key="SystemAccentColorDark3">#FF5C5499</Color>
+                        <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="AccentFillColorSelectedTextBackgroundBrush" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="AccentTextFillColorTertiaryBrush" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="HyperlinkForeground" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorBrush" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="TextControlElevationBorderFocusedBrush" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="PreviewSlotHoverBorderBrush" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#FFA69AFF" />
+                        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPointerOverBrush" Color="#FFA69AFF" />
+                        <SolidColorBrush x:Key="AccentFillColorTertiaryBrush" Color="#FF877BE0" />
+                        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPressedBrush" Color="#FF877BE0" />
+                        <SolidColorBrush x:Key="AccentFillColorDisabledBrush" Color="#2AFFFFFF" />
+                        <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#FFA69AFF" />
+                        <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#FF877BE0" />
+                        <SolidColorBrush x:Key="ToggleSwitchFillOnDisabled" Color="#2AFFFFFF" />
+                        <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" Color="#FFA69AFF" />
+                        <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPressed" Color="#FF877BE0" />
+                        <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedDisabled" Color="#2AFFFFFF" />
+                        <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFill" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFillPointerOver" Color="#FFA69AFF" />
+                        <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFillPressed" Color="#FF877BE0" />
+                        <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFillDisabled" Color="#2AFFFFFF" />
+                        <SolidColorBrush x:Key="SliderTrackValueFill" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="SliderTrackValueFillPointerOver" Color="#FFA69AFF" />
+                        <SolidColorBrush x:Key="SliderTrackValueFillPressed" Color="#FF877BE0" />
+                        <SolidColorBrush x:Key="SliderTrackValueFillDisabled" Color="#2AFFFFFF" />
+                        <SolidColorBrush x:Key="SliderThumbBackground" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="SliderThumbBackgroundPointerOver" Color="#FFA69AFF" />
+                        <SolidColorBrush x:Key="SliderThumbBackgroundPressed" Color="#FF877BE0" />
+                        <SolidColorBrush x:Key="SliderThumbBackgroundDisabled" Color="#2AFFFFFF" />
+                        <SolidColorBrush x:Key="AccentButtonBackground" Color="#FF9A8CFF" />
+                        <SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#FFA69AFF" />
+                        <SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#FF877BE0" />
+                        <SolidColorBrush x:Key="AccentButtonBackgroundDisabled" Color="#2AFFFFFF" />
+                        <SolidColorBrush x:Key="AccentButtonForeground" Color="#FF160F06" />
+                        <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FF160F06" />
+                        <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FF160F06" />
+                        <SolidColorBrush x:Key="TextOnAccentFillColorPrimaryBrush" Color="#FF160F06" />
+                        <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#FF160F06" />
+                        <SolidColorBrush x:Key="AccentButtonBorderBrush" Color="#00000000" />
+                        <SolidColorBrush x:Key="AccentButtonBorderBrushPointerOver" Color="#00000000" />
+                        <SolidColorBrush x:Key="AccentButtonBorderBrushPressed" Color="#00000000" />
+                        <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#FFB0A5FF" Offset="0" /><GradientStop Color="#FF9A8CFF" Offset="1" /></LinearGradientBrush>
+                        <SolidColorBrush x:Key="PreviewSlotFrameBrush" Color="#739A8CFF" />
+                        <SolidColorBrush x:Key="PreviewSlotHoverFillBrush" Color="#4D9A8CFF" />
+                        <RadialGradientBrush x:Key="GlassGlowAccentBrush" Center="0.08,-0.06" GradientOrigin="0.08,-0.06" RadiusX="0.3875" RadiusY="0.358"><GradientStop Color="#429A8CFF" Offset="0" /><GradientStop Color="#009A8CFF" Offset="1" /></RadialGradientBrush>
+                        <!-- Surfaces: transparent page backgrounds, translucent glass cards, controls and lines (the same hue family as the shell). -->
+                        <SolidColorBrush x:Key="ApplicationPageBackgroundThemeBrush" Color="#00000000" />
+                        <SolidColorBrush x:Key="SolidBackgroundFillColorBaseBrush" Color="#00000000" />
+                        <SolidColorBrush x:Key="SolidBackgroundFillColorSecondaryBrush" Color="#00000000" />
+                        <SolidColorBrush x:Key="SolidBackgroundFillColorTertiaryBrush" Color="#00000000" />
+                        <SolidColorBrush x:Key="LayerFillColorDefaultBrush" Color="#0FFFFFFF" />
+                        <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#12FFFFFF" />
+                        <SolidColorBrush x:Key="CardBackgroundFillColorSecondaryBrush" Color="#1AFFFFFF" />
+                        <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#17FFFFFF" />
+                        <SolidColorBrush x:Key="ControlFillColorDefaultBrush" Color="#12FFFFFF" />
+                        <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#1AFFFFFF" />
+                        <SolidColorBrush x:Key="ControlFillColorTertiaryBrush" Color="#22FFFFFF" />
+                        <SolidColorBrush x:Key="ControlFillColorInputActiveBrush" Color="#1AFFFFFF" />
+                        <SolidColorBrush x:Key="ControlAltFillColorSecondaryBrush" Color="#14FFFFFF" />
+                        <SolidColorBrush x:Key="ControlStrongStrokeColorDefaultBrush" Color="#8CFFFFFF" />
+                        <SolidColorBrush x:Key="ControlElevationBorderBrush" Color="#17FFFFFF" />
+                        <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="#26FFFFFF" />
+                        <SolidColorBrush x:Key="SubtleFillColorTransparentBrush" Color="#00000000" />
+                        <SolidColorBrush x:Key="SubtleFillColorSecondaryBrush" Color="#14FFFFFF" />
+                        <SolidColorBrush x:Key="GlassLineBrush" Color="#17FFFFFF" />
+                        <SolidColorBrush x:Key="GlassChipBrush" Color="#14FFFFFF" />
+                        <SolidColorBrush x:Key="GlassSelectedFillBrush" Color="#1AFFFFFF" />
+                        <SolidColorBrush x:Key="GlassNavSelectedBrush" Color="#1FFFFFFF" />
+                        <SolidColorBrush x:Key="GlassWindowTintBrush" Color="#9918162C" />
+                        <SolidColorBrush x:Key="GlassWindowBorderBrush" Color="#1AFFFFFF" />
+                        <SolidColorBrush x:Key="GlassStatusBarBrush" Color="#0AFFFFFF" />
+                        <SolidColorBrush x:Key="PreviewSurfaceBrush" Color="#FF0C1118" />
+                        <!-- Controls: buttons, combo boxes, text boxes, toggles and check boxes (glass fills, hairline borders). -->
+                        <SolidColorBrush x:Key="ButtonBackground" Color="#12FFFFFF" />
+                        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#1AFFFFFF" />
+                        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#22FFFFFF" />
+                        <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#0AFFFFFF" />
+                        <SolidColorBrush x:Key="ButtonBorderBrush" Color="#17FFFFFF" />
+                        <SolidColorBrush x:Key="ButtonForeground" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="ComboBoxBackground" Color="#12FFFFFF" />
+                        <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#1AFFFFFF" />
+                        <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#22FFFFFF" />
+                        <SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="#0AFFFFFF" />
+                        <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#17FFFFFF" />
+                        <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#8CFFFFFF" />
+                        <SolidColorBrush x:Key="ComboBoxForeground" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="ComboBoxPlaceholderForeground" Color="#FF9A98B4" />
+                        <SolidColorBrush x:Key="TextControlBackground" Color="#12FFFFFF" />
+                        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#1AFFFFFF" />
+                        <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#1FFFFFFF" />
+                        <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="#0AFFFFFF" />
+                        <SolidColorBrush x:Key="TextControlBorderBrush" Color="#26FFFFFF" />
+                        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#8CFFFFFF" />
+                        <SolidColorBrush x:Key="TextControlForeground" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#FF9A98B4" />
+                        <SolidColorBrush x:Key="CheckBoxBorderBrush" Color="#8CFFFFFF" />
+                        <SolidColorBrush x:Key="CheckBoxBackgroundUnchecked" Color="#12FFFFFF" />
+                        <SolidColorBrush x:Key="ToggleSwitchFillOff" Color="#14FFFFFF" />
+                        <SolidColorBrush x:Key="ToggleSwitchFillOffPointerOver" Color="#1CFFFFFF" />
+                        <SolidColorBrush x:Key="ToggleSwitchStrokeOff" Color="#8CFFFFFF" />
+                        <SolidColorBrush x:Key="ListViewItemBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#1FFFFFFF" />
+                        <!-- Popups: tool tips, menu flyouts and dialogs (more opaque, so the text stays readable over the shell). -->
+                        <SolidColorBrush x:Key="ToolTipBackground" Color="#F21E1C2E" />
+                        <SolidColorBrush x:Key="ToolTipForeground" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="ToolTipBorderBrush" Color="#26FFFFFF" />
+                        <SolidColorBrush x:Key="MenuFlyoutPresenterBackground" Color="#F21E1C2E" />
+                        <SolidColorBrush x:Key="MenuFlyoutPresenterBorderBrush" Color="#26FFFFFF" />
+                        <SolidColorBrush x:Key="MenuFlyoutItemForeground" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="ContentDialogBackground" Color="#F21E1C2E" />
+                        <SolidColorBrush x:Key="ContentDialogBorderBrush" Color="#26FFFFFF" />
+                        <SolidColorBrush x:Key="ContentDialogForeground" Color="#FFF1F0FB" />
+                        <!-- Text: the same three levels in both themes (primary, secondary, muted) and the semantic success color. -->
+                        <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#FFCFCDE6" />
+                        <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#FF9A98B4" />
+                        <SolidColorBrush x:Key="TextFillColorDisabledBrush" Color="#5CFFFFFF" />
+                        <SolidColorBrush x:Key="GlassMutedTextBrush" Color="#FF9A98B4" />
+                        <SolidColorBrush x:Key="GlassSuccessBrush" Color="#FF46DCB8" />
+                        <!-- Navigation: transparent panes, glass item states; the selection indicator is the accent (above). -->
+                        <SolidColorBrush x:Key="NavigationViewItemBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="NavigationViewItemBackgroundPointerOver" Color="#1AFFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewItemBackgroundPressed" Color="#1AFFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewItemBackgroundSelected" Color="#1FFFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPointerOver" Color="#1FFFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPressed" Color="#1FFFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewItemForeground" Color="#FFCFCDE6" />
+                        <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="NavigationViewItemForegroundPressed" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="NavigationViewItemHeaderForeground" Color="#FF9A98B4" />
+                        <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="NavigationViewButtonBackground" Color="#00000000" />
+                        <SolidColorBrush x:Key="NavigationViewButtonBackgroundPointerOver" Color="#1AFFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewButtonBackgroundPressed" Color="#1AFFFFFF" />
+                        <SolidColorBrush x:Key="NavigationViewButtonForeground" Color="#FFCFCDE6" />
+                        <SolidColorBrush x:Key="NavigationViewButtonForegroundPointerOver" Color="#FFF1F0FB" />
+                        <!-- Preview: the game surface is always dark (the capture is black); its frames take the accent and a muted blue-gray. -->
+                        <SolidColorBrush x:Key="PreviewOverlayBrush" Color="#B8070A0E" />
+                        <SolidColorBrush x:Key="PreviewOverlayLineBrush" Color="#24FFFFFF" />
+                        <SolidColorBrush x:Key="PreviewOnSurfaceTextBrush" Color="#FFF1F0FB" />
+                        <SolidColorBrush x:Key="PreviewOnSurfaceMutedBrush" Color="#FF6F6D86" />
+                        <SolidColorBrush x:Key="PreviewQuickSlotFrameBrush" Color="#A68FA3BF" />
+                        <!-- Window backdrop: the gradient behind everything (base + accent, mint and rose glows). -->
+                        <LinearGradientBrush x:Key="GlassBackdropBrush" StartPoint="0.55,0" EndPoint="0.45,1"><GradientStop Color="#E60E0D1C" Offset="0" /><GradientStop Color="#E60A0F18" Offset="0.46" /><GradientStop Color="#E6150D14" Offset="1" /></LinearGradientBrush>
+                        <RadialGradientBrush x:Key="GlassGlowMintBrush" Center="0.92,0.04" GradientOrigin="0.92,0.04" RadiusX="0.342" RadiusY="0.347"><GradientStop Color="#2425C9A3" Offset="0" /><GradientStop Color="#0025C9A3" Offset="1" /></RadialGradientBrush>
+                        <RadialGradientBrush x:Key="GlassGlowRoseBrush" Center="0.5,1.08" GradientOrigin="0.5,1.08" RadiusX="0.327" RadiusY="0.427"><GradientStop Color="#1FFF6B9A" Offset="0" /><GradientStop Color="#00FF6B9A" Offset="1" /></RadialGradientBrush>
+                    </ResourceDictionary>
+                    </ResourceDictionary.ThemeDictionaries>
+                </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
-
-            <!--
-                Glass palette (the "C · Shell cristal" design). The theme is chosen at run time by ThemeService: it sets
-                RequestedTheme on the window root, so Light or Dark is picked from these dictionaries (Default follows Windows).
-                Surfaces are translucent over the window backdrop. The accent brushes (AccentFillColorDefaultBrush,
-                AccentTextFillColorPrimaryBrush, TextOnAccentFillColorPrimaryBrush, AccentGradientBrush, AccentButton*,
-                GlassGlow* accent stops) are rewritten in place by ThemeService when the accent color changes; the values
-                below are only the defaults (violet).
-            -->
-            <ResourceDictionary.ThemeDictionaries>
-                <ResourceDictionary x:Key="Light">
-                    <!-- Surfaces and lines -->
-                    <SolidColorBrush x:Key="ApplicationPageBackgroundThemeBrush" Color="#00000000" />
-                    <SolidColorBrush x:Key="SolidBackgroundFillColorBaseBrush" Color="#FFF5F4FA" />
-                    <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#B8FFFFFF" />
-                    <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#17141325" />
-                    <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#80FFFFFF" />
-                    <SolidColorBrush x:Key="GlassLineBrush" Color="#17141325" />
-                    <SolidColorBrush x:Key="GlassChipBrush" Color="#0F141325" />
-                    <SolidColorBrush x:Key="GlassSelectedFillBrush" Color="#D9FFFFFF" />
-                    <SolidColorBrush x:Key="GlassNavSelectedBrush" Color="#FFFFFFFF" />
-                    <SolidColorBrush x:Key="GlassWindowTintBrush" Color="#8CFFFFFF" />
-                    <SolidColorBrush x:Key="GlassWindowBorderBrush" Color="#BFFFFFFF" />
-                    <SolidColorBrush x:Key="GlassStatusBarBrush" Color="#80FFFFFF" />
-                    <SolidColorBrush x:Key="PreviewSurfaceBrush" Color="#FF0C1118" />
-
-                    <!-- Text -->
-                    <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#FF141325" />
-                    <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#FF3B3A52" />
-                    <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#FF6F6D86" />
-                    <SolidColorBrush x:Key="GlassMutedTextBrush" Color="#FF6F6D86" />
-                    <SolidColorBrush x:Key="GlassSuccessBrush" Color="#FF11795F" />
-
-                    <!-- Buttons (the secondary ones are glass; the accent one is AccentButtonBackground) -->
-                    <SolidColorBrush x:Key="ButtonBackground" Color="#B8FFFFFF" />
-                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#D9FFFFFF" />
-                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#D9FFFFFF" />
-                    <SolidColorBrush x:Key="ButtonBorderBrush" Color="#17141325" />
-                    <SolidColorBrush x:Key="ButtonForeground" Color="#FF141325" />
-
-                    <!-- Navigation: transparent panes, glass item states, accent-free selection (the accent is the glyph) -->
-                    <SolidColorBrush x:Key="NavigationViewItemBackground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewItemBackgroundPointerOver" Color="#D9FFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewItemBackgroundPressed" Color="#D9FFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewItemBackgroundSelected" Color="#FFFFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPointerOver" Color="#FFFFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPressed" Color="#FFFFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewItemForeground" Color="#FF3B3A52" />
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="#FF141325" />
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundPressed" Color="#FF141325" />
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="#FF141325" />
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="#FF141325" />
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="#FF141325" />
-                    <SolidColorBrush x:Key="NavigationViewItemHeaderForeground" Color="#FF6F6D86" />
-                    <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewButtonBackground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewButtonBackgroundPointerOver" Color="#D9FFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewButtonBackgroundPressed" Color="#D9FFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewButtonForeground" Color="#FF3B3A52" />
-                    <SolidColorBrush x:Key="NavigationViewButtonForegroundPointerOver" Color="#FF141325" />
-
-                    <!-- Accent (violet by default): rewritten in place by ThemeService -->
-                    <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#FF6F5CFF" />
-                    <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#FF6F5CFF" />
-                    <SolidColorBrush x:Key="TextOnAccentFillColorPrimaryBrush" Color="#FFFFFFFF" />
-                    <SolidColorBrush x:Key="AccentButtonForeground" Color="#FFFFFFFF" />
-                    <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FFFFFFFF" />
-                    <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FFFFFFFF" />
-                    <SolidColorBrush x:Key="AccentButtonBorderBrush" Color="#00000000" />
-                    <SolidColorBrush x:Key="AccentButtonBorderBrushPointerOver" Color="#00000000" />
-                    <SolidColorBrush x:Key="AccentButtonBorderBrushPressed" Color="#00000000" />
-                    <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#FF8F80FF" Offset="0" />
-                        <GradientStop Color="#FF6F5CFF" Offset="1" />
-                    </LinearGradientBrush>
-                    <LinearGradientBrush x:Key="AccentButtonBackground" StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#FF8F80FF" Offset="0" />
-                        <GradientStop Color="#FF6F5CFF" Offset="1" />
-                    </LinearGradientBrush>
-                    <LinearGradientBrush x:Key="AccentButtonBackgroundPointerOver" StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#FF9D90FF" Offset="0" />
-                        <GradientStop Color="#FF7B69FF" Offset="1" />
-                    </LinearGradientBrush>
-                    <LinearGradientBrush x:Key="AccentButtonBackgroundPressed" StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#FF6F5CFF" Offset="0" />
-                        <GradientStop Color="#FF6251E0" Offset="1" />
-                    </LinearGradientBrush>
-
-                    <!-- Window backdrop: the gradient behind everything (base + accent, mint and rose glows) -->
-                    <LinearGradientBrush x:Key="GlassBackdropBrush" StartPoint="0.55,0" EndPoint="0.45,1">
-                        <GradientStop Color="#E6F7F5FF" Offset="0" />
-                        <GradientStop Color="#E6F4F8FB" Offset="0.46" />
-                        <GradientStop Color="#E6FDF7F6" Offset="1" />
-                    </LinearGradientBrush>
-                    <RadialGradientBrush x:Key="GlassGlowAccentBrush" Center="0.08,-0.06" GradientOrigin="0.08,-0.06" RadiusX="0.3875" RadiusY="0.358">
-                        <GradientStop Color="#4D6F5CFF" Offset="0" />
-                        <GradientStop Color="#006F5CFF" Offset="1" />
-                    </RadialGradientBrush>
-                    <RadialGradientBrush x:Key="GlassGlowMintBrush" Center="0.92,0.04" GradientOrigin="0.92,0.04" RadiusX="0.342" RadiusY="0.347">
-                        <GradientStop Color="#3825C9A3" Offset="0" />
-                        <GradientStop Color="#0025C9A3" Offset="1" />
-                    </RadialGradientBrush>
-                    <RadialGradientBrush x:Key="GlassGlowRoseBrush" Center="0.5,1.08" GradientOrigin="0.5,1.08" RadiusX="0.327" RadiusY="0.427">
-                        <GradientStop Color="#2EFF6B9A" Offset="0" />
-                        <GradientStop Color="#00FF6B9A" Offset="1" />
-                    </RadialGradientBrush>
-                </ResourceDictionary>
-
-                <ResourceDictionary x:Key="Dark">
-                    <!-- Surfaces and lines -->
-                    <SolidColorBrush x:Key="ApplicationPageBackgroundThemeBrush" Color="#00000000" />
-                    <SolidColorBrush x:Key="SolidBackgroundFillColorBaseBrush" Color="#FF14131F" />
-                    <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#12FFFFFF" />
-                    <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#17FFFFFF" />
-                    <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#0AFFFFFF" />
-                    <SolidColorBrush x:Key="GlassLineBrush" Color="#17FFFFFF" />
-                    <SolidColorBrush x:Key="GlassChipBrush" Color="#14FFFFFF" />
-                    <SolidColorBrush x:Key="GlassSelectedFillBrush" Color="#1AFFFFFF" />
-                    <SolidColorBrush x:Key="GlassNavSelectedBrush" Color="#1FFFFFFF" />
-                    <SolidColorBrush x:Key="GlassWindowTintBrush" Color="#9918162C" />
-                    <SolidColorBrush x:Key="GlassWindowBorderBrush" Color="#1AFFFFFF" />
-                    <SolidColorBrush x:Key="GlassStatusBarBrush" Color="#0AFFFFFF" />
-                    <SolidColorBrush x:Key="PreviewSurfaceBrush" Color="#FF0C1118" />
-
-                    <!-- Text -->
-                    <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#FFF1F0FB" />
-                    <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#FFCFCDE6" />
-                    <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#FF9A98B4" />
-                    <SolidColorBrush x:Key="GlassMutedTextBrush" Color="#FF9A98B4" />
-                    <SolidColorBrush x:Key="GlassSuccessBrush" Color="#FF46DCB8" />
-
-                    <!-- Buttons (the secondary ones are glass; the accent one is AccentButtonBackground) -->
-                    <SolidColorBrush x:Key="ButtonBackground" Color="#12FFFFFF" />
-                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#1AFFFFFF" />
-                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#1AFFFFFF" />
-                    <SolidColorBrush x:Key="ButtonBorderBrush" Color="#17FFFFFF" />
-                    <SolidColorBrush x:Key="ButtonForeground" Color="#FFF1F0FB" />
-
-                    <!-- Navigation: transparent panes, glass item states, accent-free selection (the accent is the glyph) -->
-                    <SolidColorBrush x:Key="NavigationViewItemBackground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewItemBackgroundPointerOver" Color="#1AFFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewItemBackgroundPressed" Color="#1AFFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewItemBackgroundSelected" Color="#1FFFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPointerOver" Color="#1FFFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPressed" Color="#1FFFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewItemForeground" Color="#FFCFCDE6" />
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="#FFF1F0FB" />
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundPressed" Color="#FFF1F0FB" />
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="#FFF1F0FB" />
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="#FFF1F0FB" />
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPressed" Color="#FFF1F0FB" />
-                    <SolidColorBrush x:Key="NavigationViewItemHeaderForeground" Color="#FF9A98B4" />
-                    <SolidColorBrush x:Key="NavigationViewSelectionIndicatorForeground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewContentBackground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewButtonBackground" Color="#00000000" />
-                    <SolidColorBrush x:Key="NavigationViewButtonBackgroundPointerOver" Color="#1AFFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewButtonBackgroundPressed" Color="#1AFFFFFF" />
-                    <SolidColorBrush x:Key="NavigationViewButtonForeground" Color="#FFCFCDE6" />
-                    <SolidColorBrush x:Key="NavigationViewButtonForegroundPointerOver" Color="#FFF1F0FB" />
-
-                    <!-- Accent (violet by default): rewritten in place by ThemeService -->
-                    <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#FF9A8CFF" />
-                    <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#FF9A8CFF" />
-                    <SolidColorBrush x:Key="TextOnAccentFillColorPrimaryBrush" Color="#FF160F06" />
-                    <SolidColorBrush x:Key="AccentButtonForeground" Color="#FF160F06" />
-                    <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FF160F06" />
-                    <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FF160F06" />
-                    <SolidColorBrush x:Key="AccentButtonBorderBrush" Color="#00000000" />
-                    <SolidColorBrush x:Key="AccentButtonBorderBrushPointerOver" Color="#00000000" />
-                    <SolidColorBrush x:Key="AccentButtonBorderBrushPressed" Color="#00000000" />
-                    <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#FFB0A5FF" Offset="0" />
-                        <GradientStop Color="#FF9A8CFF" Offset="1" />
-                    </LinearGradientBrush>
-                    <LinearGradientBrush x:Key="AccentButtonBackground" StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#FFB0A5FF" Offset="0" />
-                        <GradientStop Color="#FF9A8CFF" Offset="1" />
-                    </LinearGradientBrush>
-                    <LinearGradientBrush x:Key="AccentButtonBackgroundPointerOver" StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#FFBAB1FF" Offset="0" />
-                        <GradientStop Color="#FFA295FF" Offset="1" />
-                    </LinearGradientBrush>
-                    <LinearGradientBrush x:Key="AccentButtonBackgroundPressed" StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#FF9A8CFF" Offset="0" />
-                        <GradientStop Color="#FF887BE0" Offset="1" />
-                    </LinearGradientBrush>
-
-                    <!-- Window backdrop: the gradient behind everything (base + accent, mint and rose glows) -->
-                    <LinearGradientBrush x:Key="GlassBackdropBrush" StartPoint="0.55,0" EndPoint="0.45,1">
-                        <GradientStop Color="#E60E0D1C" Offset="0" />
-                        <GradientStop Color="#E60A0F18" Offset="0.46" />
-                        <GradientStop Color="#E6150D14" Offset="1" />
-                    </LinearGradientBrush>
-                    <RadialGradientBrush x:Key="GlassGlowAccentBrush" Center="0.08,-0.06" GradientOrigin="0.08,-0.06" RadiusX="0.3875" RadiusY="0.358">
-                        <GradientStop Color="#429A8CFF" Offset="0" />
-                        <GradientStop Color="#009A8CFF" Offset="1" />
-                    </RadialGradientBrush>
-                    <RadialGradientBrush x:Key="GlassGlowMintBrush" Center="0.92,0.04" GradientOrigin="0.92,0.04" RadiusX="0.342" RadiusY="0.347">
-                        <GradientStop Color="#2425C9A3" Offset="0" />
-                        <GradientStop Color="#0025C9A3" Offset="1" />
-                    </RadialGradientBrush>
-                    <RadialGradientBrush x:Key="GlassGlowRoseBrush" Center="0.5,1.08" GradientOrigin="0.5,1.08" RadiusX="0.327" RadiusY="0.427">
-                        <GradientStop Color="#1FFF6B9A" Offset="0" />
-                        <GradientStop Color="#00FF6B9A" Offset="1" />
-                    </RadialGradientBrush>
-                </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries>
 
             <local:BoolToVisibilityConverter x:Key="BoolToVisibility" />
             <conv:OffsetToMarginConverter x:Key="OffsetToMargin" />

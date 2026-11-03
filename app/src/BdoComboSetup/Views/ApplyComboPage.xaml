@@ -355,7 +355,7 @@
             </StackPanel>
         </DataTemplate>
 
-        <!-- A guide spec (Awakening, Succession, ...). The selected one is gold. -->
+        <!-- A guide spec (Awakening, Succession, ...). The selected one takes the accent. -->
         <DataTemplate x:Key="SpecTemplate" x:DataType="vm:SpecOptionViewModel">
             <Button
                 Command="{x:Bind SelectCommand}"

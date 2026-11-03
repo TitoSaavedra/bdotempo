@@ -61,15 +61,15 @@ public sealed partial class ApplyComboPage : Page
         _ => InfoBarSeverity.Informational,
     };
 
-    /// <summary>The card of a step: gold outline when it is selected.</summary>
+    /// <summary>The card of a step: accent outline when it is selected.</summary>
     public static Style CardStyle(bool selected) =>
         (Style)App.Current.Resources[selected ? "StepCardSelectedStyle" : "StepCardStyle"];
 
-    /// <summary>A spec pill: gold when it is the selected spec.</summary>
+    /// <summary>A spec pill: accent when it is the selected spec.</summary>
     public static Style PillStyle(bool selected) =>
         (Style)App.Current.Resources[selected ? "PillSelectedStyle" : "PillStyle"];
 
-    /// <summary>A class tile: gold when it is the selected class.</summary>
+    /// <summary>A class tile: accent when it is the selected class.</summary>
     public static Style ClassTileStyle(bool selected) =>
         (Style)App.Current.Resources[selected ? "ClassTileSelectedStyle" : "ClassTileStyle"];
 

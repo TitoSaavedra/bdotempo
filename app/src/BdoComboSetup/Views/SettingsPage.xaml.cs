@@ -6,6 +6,7 @@ using BdoComboSetup.Core.Search;
 using BdoComboSetup.Core.Settings;
 using BdoComboSetup.Core.Updates;
 using BdoComboSetup.Core.ViewModels;
+using BdoComboSetup.Services;
 using BdoComboSetup.Views.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -29,20 +30,6 @@ public sealed partial class SettingsPage : Page
 
     /// <summary>The filled circle of each accent swatch, by accent id.</summary>
     private readonly IReadOnlyDictionary<string, Ellipse> _swatchFills;
-
-    /// <summary>
-    /// The accent of each swatch as ARGB: the light-theme color and the dark-theme color (the page's palette, the only colors here
-    /// that are not theme resources). A swatch takes the color of the theme the page is in.
-    /// </summary>
-    private static readonly IReadOnlyDictionary<string, (uint Light, uint Dark)> SwatchPalette =
-        new Dictionary<string, (uint Light, uint Dark)>(StringComparer.Ordinal)
-        {
-            [AccentColors.Violet] = (0xFF6F5CFF, 0xFF9A8CFF),
-            [AccentColors.Amber] = (0xFFB8720F, 0xFFE8A33D),
-            [AccentColors.Mint] = (0xFF0F8F73, 0xFF3ECFAE),
-            [AccentColors.Rose] = (0xFFE5427A, 0xFFFF7AA6),
-            [AccentColors.Blue] = (0xFF2B6FE0, 0xFF5AA0FF),
-        };
 
     public SettingsPage()
     {
@@ -114,22 +101,18 @@ public sealed partial class SettingsPage : Page
     /// <summary>The window's theme changed (Windows switched, or the theme was set): the swatches take the other palette color.</summary>
     private void Page_ActualThemeChanged(FrameworkElement sender, object args) => RefreshSwatches();
 
-    /// <summary>Paints each swatch with its accent for the theme the page is in.</summary>
+    /// <summary>
+    /// Paints each swatch with its accent for the theme the page is in. The accents are the ones ThemeService applies, so a
+    /// swatch always shows the color the app takes when it is chosen.
+    /// </summary>
     private void RefreshSwatches()
     {
         var dark = ActualTheme == ElementTheme.Dark;
         foreach (var (accent, fill) in _swatchFills)
         {
-            var (light, darkArgb) = SwatchPalette[accent];
-            fill.Fill = new Microsoft.UI.Xaml.Media.SolidColorBrush(FromArgb(dark ? darkArgb : light));
+            fill.Fill = new Microsoft.UI.Xaml.Media.SolidColorBrush(ThemeService.AccentFor(accent, dark));
         }
     }
-
-    private static Windows.UI.Color FromArgb(uint argb) => Windows.UI.Color.FromArgb(
-        (byte)(argb >> 24),
-        (byte)(argb >> 16),
-        (byte)(argb >> 8),
-        (byte)argb);
 
     private void Page_Unloaded(object sender, RoutedEventArgs e) => ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
 

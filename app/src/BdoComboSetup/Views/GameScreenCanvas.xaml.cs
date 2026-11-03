@@ -209,8 +209,8 @@ public sealed partial class GameScreenCanvas : UserControl
     {
         if (sender is Border border)
         {
-            border.Background = (Brush)Resources["SlotHoverFill"];
-            border.BorderBrush = (Brush)Resources["SlotHoverBorder"];
+            border.Background = (Brush)Application.Current.Resources["PreviewSlotHoverFillBrush"];
+            border.BorderBrush = (Brush)Application.Current.Resources["PreviewSlotHoverBorderBrush"];
             border.BorderThickness = new Thickness(2);
         }
     }
@@ -220,7 +220,7 @@ public sealed partial class GameScreenCanvas : UserControl
         if (sender is Border border)
         {
             border.Background = (Brush)Resources["SlotIdleFill"];
-            border.BorderBrush = (Brush)Resources["SlotIdleBorder"];
+            border.BorderBrush = (Brush)Application.Current.Resources["PreviewSlotFrameBrush"];
             border.BorderThickness = new Thickness(1);
         }
     }

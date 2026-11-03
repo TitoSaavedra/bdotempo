@@ -8,16 +8,9 @@
     >
 
     <UserControl.Resources>
-        <!-- The key legend of a quick slot: #40D7FD for a skill, #626262 when empty (items are not in the combo, so no #88DF00). -->
-        <SolidColorBrush x:Key="LegendSkillBrush" Color="#FF40D7FD" />
-        <SolidColorBrush x:Key="LegendEmptyBrush" Color="#FF626262" />
-        <SolidColorBrush x:Key="HiddenOutlineBrush" Color="#CCFFFFFF" />
-        <!-- The frame of the editable cooldown slots (gold) and of the read-only quick slots (blue). -->
+        <!-- The surface of a cooldown slot: a faint dark fill on the game capture (the frame and the hover are the palette's). -->
         <SolidColorBrush x:Key="SlotIdleFill" Color="#26000000" />
-        <SolidColorBrush x:Key="SlotIdleBorder" Color="#73E8C36A" />
-        <SolidColorBrush x:Key="SlotHoverFill" Color="#4DE8C36A" />
-        <SolidColorBrush x:Key="SlotHoverBorder" Color="#FFE8C36A" />
-        <SolidColorBrush x:Key="QuickSlotIdleBorder" Color="#403FA9FF" />
+        <SolidColorBrush x:Key="HiddenOutlineBrush" Color="#CCFFFFFF" />
 
         <!-- Every slot is a child of one grid, placed by its margin (game pixels, top-left corner of the panel). -->
         <ItemsPanelTemplate x:Key="OverlayPanel">
@@ -80,7 +73,7 @@
                     StrokeThickness="1"
                     StrokeDashArray="3 2"
                     Visibility="{x:Bind ShowsDashedOutline, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                <!-- The frame of the slot: the cooldown slots are the editable ones, so they get a gold frame and a pencil. -->
+                <!-- The frame of the slot: the cooldown slots are the editable ones, so they get the accent frame and a pencil. -->
                 <Border
                     x:Uid="Preview/SlotClickTooltip"
                     Width="50"
@@ -88,7 +81,7 @@
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
                     Background="{StaticResource SlotIdleFill}"
-                    BorderBrush="{StaticResource SlotIdleBorder}"
+                    BorderBrush="{ThemeResource PreviewSlotFrameBrush}"
                     BorderThickness="1"
                     CornerRadius="4"
                     PointerEntered="CooldownSlot_PointerEntered"
@@ -96,7 +89,7 @@
                 <FontIcon
                     Glyph="&#xE70F;"
                     FontSize="10"
-                    Foreground="#E6E8C36A"
+                    Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
                     Margin="0,2,4,0"
@@ -145,7 +138,7 @@
                     FontSize="14"
                     TextAlignment="Center"
                     Text="{x:Bind KeyLabel, Mode=OneWay}"
-                    Foreground="{StaticResource LegendSkillBrush}"
+                    Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                     Visibility="{x:Bind HasSkill, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                 <TextBlock
                     Width="50"
@@ -157,7 +150,7 @@
                     FontSize="14"
                     TextAlignment="Center"
                     Text="{x:Bind KeyLabel, Mode=OneWay}"
-                    Foreground="{StaticResource LegendEmptyBrush}"
+                    Foreground="{ThemeResource PreviewOnSurfaceMutedBrush}"
                     Visibility="{x:Bind HasSkill, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
                 <Rectangle
                     Width="50"
@@ -168,14 +161,14 @@
                     StrokeThickness="1"
                     StrokeDashArray="3 2"
                     Visibility="{x:Bind ShowsDashedOutline, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                <!-- The quick slots are read-only here: a soft blue frame and a tooltip say so. -->
+                <!-- The quick slots are read-only here: a soft muted frame and a tooltip say so. -->
                 <Border
                     x:Uid="Preview/QuickSlotTooltip"
                     Width="50"
                     Height="65"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
-                    BorderBrush="{StaticResource QuickSlotIdleBorder}"
+                    BorderBrush="{ThemeResource PreviewQuickSlotFrameBrush}"
                     BorderThickness="1"
                     CornerRadius="4" />
             </Grid>

@@ -134,8 +134,8 @@
                         VerticalAlignment="Top"
                         Margin="14"
                         Padding="12,5"
-                        Background="#B8070A0E"
-                        BorderBrush="#24FFFFFF"
+                        Background="{ThemeResource PreviewOverlayBrush}"
+                        BorderBrush="{ThemeResource PreviewOverlayLineBrush}"
                         BorderThickness="1"
                         CornerRadius="99"
                         IsHitTestVisible="False">
@@ -156,7 +156,7 @@
                                 Text="{x:Bind ViewModel.CapturePillText, Mode=OneWay}"
                                 FontSize="12"
                                 FontWeight="SemiBold"
-                                Foreground="#FFE8EDF3"
+                                Foreground="{ThemeResource PreviewOnSurfaceTextBrush}"
                                 VerticalAlignment="Center" />
                         </StackPanel>
                     </Border>
@@ -166,11 +166,11 @@
             <!-- The two kinds of slots, as the game surface draws them. -->
             <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="16">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Rectangle Width="10" Height="10" Fill="#E8C36A" RadiusX="2" RadiusY="2" />
+                    <Rectangle Width="10" Height="10" Fill="{ThemeResource AccentFillColorDefaultBrush}" RadiusX="2" RadiusY="2" />
                     <TextBlock x:Uid="Preview/LegendCooldown" FontSize="12" VerticalAlignment="Center" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Rectangle Width="10" Height="10" Fill="#3FA9FF" Opacity="0.6" RadiusX="2" RadiusY="2" />
+                    <Rectangle Width="10" Height="10" Fill="{ThemeResource PreviewQuickSlotFrameBrush}" RadiusX="2" RadiusY="2" />
                     <TextBlock x:Uid="Preview/LegendQuick" FontSize="12" VerticalAlignment="Center" />
                 </StackPanel>
             </StackPanel>
