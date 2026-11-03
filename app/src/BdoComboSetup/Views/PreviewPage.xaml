@@ -56,6 +56,22 @@
                         VerticalAlignment="Center"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
+
+                <!-- The reminder of the skills that no cooldown slot holds: buffs, mobility and repositioning (and combo steps that did not fit). -->
+                <Border
+                    Style="{StaticResource EditorCard}"
+                    Margin="0,8,0,0"
+                    BorderBrush="{ThemeResource SystemFillColorCautionBrush}"
+                    Visibility="{x:Bind Apply.Editor.HasRemaining, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Spacing="4">
+                        <TextBlock x:Uid="Apply/Remaining/Title" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                        <TextBlock
+                            Text="{x:Bind Apply.Editor.RemainingText, Mode=OneWay}"
+                            TextWrapping="Wrap"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </Border>
             </StackPanel>
 
             <!-- The review of the character file: opened by "Apply to character" with the chosen parts. -->

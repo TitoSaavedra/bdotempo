@@ -18,10 +18,10 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     /// <summary>The first cooldown slot of the default layout's combo steps.</summary>
     private const int FirstComboSlot = 1;
 
-    /// <summary>The last cooldown slot that the default layout gives to combo steps; buffs use the slots after it.</summary>
+    /// <summary>The last cooldown slot that the default layout gives to the steps of the other combos (the main combo may use up to 20).</summary>
     private const int LastComboSlot = 12;
 
-    /// <summary>The first cooldown slot of the default layout's buff steps.</summary>
+    /// <summary>The first cooldown slot of the default layout's buff steps (later when the main combo needs more slots).</summary>
     private const int FirstBuffSlot = 13;
 
     private readonly ComboGuide _guide;
@@ -32,6 +32,9 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     private readonly ClassSkillSource? _classSkills;
     private readonly Dictionary<int, ComboSkill> _skillsByNo;
     private bool _tracking;
+
+    /// <summary>The kind of each shown chain, by its index in the guide (the reminder of the remaining skills reads it).</summary>
+    private readonly Dictionary<int, ComboChainKind> _chainKinds = [];
 
     private ComboEditorViewModel(
         int classType,
@@ -59,6 +62,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         QuickOptions = BuildQuickOptions(localizer);
         Chains = new ObservableCollection<ComboChainViewModel>();
         ManualChains = new ObservableCollection<ComboChainViewModel>();
+        ContentChanged += (_, _) => RaiseRemainingChanged();
     }
 
     /// <summary>
@@ -86,6 +90,64 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     /// never with the combo.
     /// </summary>
     public ObservableCollection<ComboChainViewModel> ManualChains { get; }
+
+    /// <summary>
+    /// The reminder of what is not in the 20 cooldown slots: the buffs, the mobility skills, the repositioning skills (and
+    /// the combo steps that did not fit) that no cooldown slot holds. One line per group, empty when everything is placed.
+    /// </summary>
+    public string RemainingText => BuildRemainingText();
+
+    /// <summary>True when <see cref="RemainingText"/> has something to remind.</summary>
+    public bool HasRemaining => RemainingText.Length > 0;
+
+    private void RaiseRemainingChanged()
+    {
+        OnPropertyChanged(nameof(RemainingText));
+        OnPropertyChanged(nameof(HasRemaining));
+    }
+
+    private string BuildRemainingText()
+    {
+        var placed = AllSteps()
+            .Where(step => step.CooldownSlot is not null && step.PrimarySkill is not null)
+            .Select(step => step.PrimarySkill!.SkillNo)
+            .ToHashSet();
+
+        string Remaining(IEnumerable<ComboChainViewModel> chains)
+        {
+            var seen = new HashSet<int>();
+            var names = new List<string>();
+            foreach (var step in chains.SelectMany(chain => chain.Steps))
+            {
+                if (step.PrimarySkill is { } skill && !placed.Contains(skill.SkillNo) && seen.Add(skill.SkillNo))
+                {
+                    names.Add(step.SkillName);
+                }
+            }
+
+            return string.Join(", ", names);
+        }
+
+        bool IsRepositioning(ComboChainViewModel chain) =>
+            chain.Title.Contains("reposition", StringComparison.OrdinalIgnoreCase)
+            || chain.Title.Contains("reposicion", StringComparison.OrdinalIgnoreCase);
+
+        var lines = new List<string>();
+        void Add(string key, string names)
+        {
+            if (names.Length > 0)
+            {
+                lines.Add(_localizer.Format(key, names));
+            }
+        }
+
+        bool OfKind(ComboChainViewModel chain, ComboChainKind kind) => _chainKinds.TryGetValue(chain.Index, out var found) && found == kind;
+        Add("Apply.Remaining.Buffs", Remaining(Chains.Where(chain => OfKind(chain, ComboChainKind.Buff))));
+        Add("Apply.Remaining.Combo", Remaining(Chains.Where(chain => OfKind(chain, ComboChainKind.Combo))));
+        Add("Apply.Remaining.Mobility", Remaining(ManualChains.Where(chain => !IsRepositioning(chain))));
+        Add("Apply.Remaining.Repositioning", Remaining(ManualChains.Where(IsRepositioning)));
+        return string.Join(Environment.NewLine, lines);
+    }
 
     /// <summary>True when the guide has mobility skills for the manual pool.</summary>
     public bool HasManualSteps => ManualChains.Any(chain => chain.HasSteps);
@@ -526,6 +588,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         SelectedStep = null;
         Chains.Clear();
         ManualChains.Clear();
+        _chainKinds.Clear();
         var profileChains = IndexProfileChains(profile);
         var defaults = profile is null ? DefaultSlots() : new Dictionary<(int Chain, int Step), DefaultSlot>();
         var built = new List<(ComboChainKind Kind, ComboChainViewModel Chain)>();
@@ -549,6 +612,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
             var title = string.IsNullOrWhiteSpace(chain.Title)
                 ? _localizer.Format("Apply.ChainFallbackTitle", (index + 1).ToString(CultureInfo.InvariantCulture))
                 : chain.Title;
+            _chainKinds[index] = kind;
             built.Add((kind, new ComboChainViewModel(this, index, title, string.Join(" · ", chain.Notes), steps, AvailableSkills, _localizer)));
         }
 
@@ -573,6 +637,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         SelectedStep = AllSteps().FirstOrDefault();
         OnPropertyChanged(nameof(TotalSteps));
         OnPropertyChanged(nameof(HasManualSteps));
+        RaiseRemainingChanged();
         _tracking = true;
 
         _logger.Info("apply.guide.loaded", "Working copy built", new Dictionary<string, object?>
@@ -635,12 +700,15 @@ public sealed partial class ComboEditorViewModel : ObservableObject
 
     /// <summary>
     /// The default layout of a guide with no saved profile. Only buff and combo chains take part (mobility is a manual
-    /// pool): combo steps fill cooldown slots 1..12 in guide order, then buff steps fill 13..20. A skill takes one slot,
-    /// at its first step. The key legend of the step becomes the memo, except the player's own key ("Hotkey" or "Hotbar").
+    /// pool). The main combo (the first combo chain of the guide) fills cooldown slots 1..20 in guide order, so none of its
+    /// steps is lost. The steps of the other combos continue up to slot 12, then the buff steps take the slots from 13 (or
+    /// right after the main combo when it is longer) up to 20. A skill takes one slot, at its first step. The key legend of
+    /// the step becomes the memo, except the player's own key ("Hotkey" or "Hotbar").
     /// </summary>
     private Dictionary<(int Chain, int Step), DefaultSlot> DefaultSlots()
     {
         var placements = new List<(int Chain, int Step, ComboChainKind Kind, ComboSkill Skill, string? Keys)>();
+        var mainComboChain = -1;
         for (var chainIndex = 0; chainIndex < _guide.Chains.Count; chainIndex++)
         {
             var chain = _guide.Chains[chainIndex];
@@ -648,6 +716,11 @@ public sealed partial class ComboEditorViewModel : ObservableObject
             if (kind is not (ComboChainKind.Combo or ComboChainKind.Buff))
             {
                 continue;
+            }
+
+            if (kind == ComboChainKind.Combo && mainComboChain < 0)
+            {
+                mainComboChain = chainIndex;
             }
 
             for (var stepIndex = 0; stepIndex < chain.Steps.Count; stepIndex++)
@@ -662,8 +735,10 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         var result = new Dictionary<(int Chain, int Step), DefaultSlot>();
         var placedSkills = new HashSet<int>();
         var nextComboSlot = FirstComboSlot;
-        var nextBuffSlot = FirstBuffSlot;
-        foreach (var placement in placements.OrderBy(item => item.Kind == ComboChainKind.Combo ? 0 : 1))
+        var nextBuffSlot = 0;
+        var ordered = placements
+            .OrderBy(item => item.Chain == mainComboChain ? 0 : item.Kind == ComboChainKind.Combo ? 1 : 2);
+        foreach (var placement in ordered)
         {
             if (!placedSkills.Add(placement.Skill.SkillNo))
             {
@@ -673,7 +748,8 @@ public sealed partial class ComboEditorViewModel : ObservableObject
             int slot;
             if (placement.Kind == ComboChainKind.Combo)
             {
-                if (nextComboSlot > LastComboSlot)
+                var lastSlot = placement.Chain == mainComboChain ? SlotAssignment.CooldownSlotCount : LastComboSlot;
+                if (nextComboSlot > lastSlot)
                 {
                     continue;
                 }
@@ -682,6 +758,11 @@ public sealed partial class ComboEditorViewModel : ObservableObject
             }
             else
             {
+                if (nextBuffSlot == 0)
+                {
+                    nextBuffSlot = Math.Max(FirstBuffSlot, nextComboSlot);
+                }
+
                 if (nextBuffSlot > SlotAssignment.CooldownSlotCount)
                 {
                     continue;

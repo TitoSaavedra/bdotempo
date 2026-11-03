@@ -945,4 +945,9 @@
   <data name="Apply.ClassMismatch" xml:space="preserve"><value>El combo es de {1}, pero {0} es de otra clase. Elige un personaje de esa clase para aplicarlo.</value></data>
   <data name="Apply.ApplyInPreviewHint.Text" xml:space="preserve"><value>Los combos no se aplican aquí. Revisa los cambios y aplícalos en Vista previa.</value></data>
   <data name="Apply.GoToPreviewButton.Content" xml:space="preserve"><value>Ir a Vista previa para aplicar</value></data>
+  <data name="Apply.Remaining.Title.Text" xml:space="preserve"><value>Skills que no están en las 20 casillas</value></data>
+  <data name="Apply.Remaining.Buffs" xml:space="preserve"><value>Buffs: {0}</value></data>
+  <data name="Apply.Remaining.Combo" xml:space="preserve"><value>Combo: {0}</value></data>
+  <data name="Apply.Remaining.Mobility" xml:space="preserve"><value>Movilidad: {0}</value></data>
+  <data name="Apply.Remaining.Repositioning" xml:space="preserve"><value>Reposicionamiento: {0}</value></data>
 </root>
