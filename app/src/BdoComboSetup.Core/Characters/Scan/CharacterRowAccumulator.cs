@@ -169,18 +169,21 @@ public sealed class CharacterRowAccumulator
 
     /// <summary>
     /// The readings of one list position and how many times each was seen. The name and level are voted as one reading; the
-    /// memo is voted on its own, because the small memo text is the line the OCR garbles most.
+    /// memo and the class are voted on their own, because the small memo text and the icon are what a frame taken mid-scroll
+    /// garbles most (a row first seen blurred must not keep "no class" once later frames recognized the icon).
     /// </summary>
     private sealed class RowVotes(CharacterRowReading first)
     {
         private readonly List<(CharacterRowReading Reading, int Count)> _groups = [(first, 1)];
         private readonly List<(CharacterRowCandidate Row, int Count)> _memos = [];
+        private readonly List<(int ClassType, int Count)> _classes = [];
 
         /// <summary>Starts a position with its first reading, which already counts as a memo vote.</summary>
         public static RowVotes Start(CharacterRowReading first)
         {
             var votes = new RowVotes(first);
             votes.AddMemo(first.Row);
+            votes.AddClass(first.ClassType);
             return votes;
         }
 
@@ -198,14 +201,15 @@ public sealed class CharacterRowAccumulator
                     }
                 }
 
-                if (BestMemo() is not { } memo || string.Equals(memo.Memo, best.Reading.Row.Memo, StringComparison.Ordinal))
+                var reading = best.Reading with { ClassType = BestClass() ?? best.Reading.ClassType };
+                if (BestMemo() is not { } memo || string.Equals(memo.Memo, reading.Row.Memo, StringComparison.Ordinal))
                 {
-                    return best.Reading;
+                    return reading;
                 }
 
-                return best.Reading with
+                return reading with
                 {
-                    Row = best.Reading.Row with
+                    Row = reading.Row with
                     {
                         Memo = memo.Memo,
                         MemoLeft = memo.MemoLeft,
@@ -220,6 +224,7 @@ public sealed class CharacterRowAccumulator
         public void Add(CharacterRowReading reading)
         {
             AddMemo(reading.Row);
+            AddClass(reading.ClassType);
             for (var index = 0; index < _groups.Count; index++)
             {
                 if (SameText(_groups[index].Reading.Row, reading.Row))
@@ -230,6 +235,40 @@ public sealed class CharacterRowAccumulator
             }
 
             _groups.Add((reading, 1));
+        }
+
+        private void AddClass(int? classType)
+        {
+            if (classType is not int value)
+            {
+                return;
+            }
+
+            for (var index = 0; index < _classes.Count; index++)
+            {
+                if (_classes[index].ClassType == value)
+                {
+                    _classes[index] = (value, _classes[index].Count + 1);
+                    return;
+                }
+            }
+
+            _classes.Add((value, 1));
+        }
+
+        /// <summary>The most recognized class (the earliest on a tie), or null when no frame recognized the icon.</summary>
+        private int? BestClass()
+        {
+            (int ClassType, int Count)? best = null;
+            foreach (var vote in _classes)
+            {
+                if (best is not { } current || vote.Count > current.Count)
+                {
+                    best = vote;
+                }
+            }
+
+            return best?.ClassType;
         }
 
         private void AddMemo(CharacterRowCandidate row)
