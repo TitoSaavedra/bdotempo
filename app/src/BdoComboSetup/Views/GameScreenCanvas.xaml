@@ -202,7 +202,7 @@
     </UserControl.Resources>
 
     <!-- The game screen in game pixels, scaled as a whole (fit times zoom). The scroll viewer shows what is larger than the window. -->
-    <Border Background="#FF000000">
+    <Border Background="#FF000000" CornerRadius="14">
         <ScrollViewer
             x:Name="Viewport"
             HorizontalScrollBarVisibility="Auto"
@@ -211,6 +211,7 @@
             VerticalScrollMode="Auto"
             ZoomMode="Disabled"
             SizeChanged="Viewport_SizeChanged"
+            ViewChanged="Viewport_ViewChanged"
             PointerWheelChanged="Viewport_PointerWheelChanged">
             <Grid
                 x:Name="ScreenHost"

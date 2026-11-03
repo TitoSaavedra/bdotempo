@@ -45,7 +45,18 @@ public sealed partial class PreviewPage : Page
         }
     }
 
+    /// <summary>The fit button: the slots fill the window (the same as the "fit to slots" pill).</summary>
     private void Fit_Click(object sender, RoutedEventArgs e) => ViewModel.FitToView();
+
+    private void FitWindow_Click(object sender, RoutedEventArgs e) => ViewModel.SetFitMode(CanvasFitMode.Window);
+
+    private void FitSlots_Click(object sender, RoutedEventArgs e) => ViewModel.SetFitMode(CanvasFitMode.Slots);
+
+    private void FitReal_Click(object sender, RoutedEventArgs e) => ViewModel.SetFitMode(CanvasFitMode.Real);
+
+    /// <summary>The look of a fit pill: the accent gradient while its fit is the active one, the glass pill otherwise.</summary>
+    public Style PillStyleFor(bool selected) =>
+        (Style)Application.Current.Resources[selected ? "PillSelectedStyle" : "PillStyle"];
 
     /// <summary>Chooses the character whose slots are edited and written.</summary>
     private void EditorCharacterPicker_Chosen(object? sender, object item)

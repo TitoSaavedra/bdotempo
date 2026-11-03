@@ -19,7 +19,12 @@
             <Setter Property="Padding" Value="14" />
         </Style>
 
-        <!-- One character of the account in the header picker: class icon and name only. -->
+        <!-- A glass card of the sidebar: state, settings and character. -->
+        <Style x:Key="SideCardStyle" TargetType="Border" BasedOn="{StaticResource GlassCardStyle}">
+            <Setter Property="Padding" Value="14" />
+        </Style>
+
+        <!-- One character of the account in the character picker: class icon and name only. -->
         <DataTemplate x:Key="EditorCharacterTemplate" x:DataType="combo:CharacterOption">
             <Grid ColumnSpacing="8" Padding="4,2">
                 <Grid.ColumnDefinitions>
@@ -53,22 +58,24 @@
         </DataTemplate>
     </Page.Resources>
 
-    <Grid Padding="32,24" RowSpacing="12">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <Grid Padding="24,16" ColumnSpacing="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="280" />
+        </Grid.ColumnDefinitions>
 
-        <!-- Header: the combo in the editor, the character and the apply action. -->
-        <Grid Grid.Row="0" ColumnSpacing="16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Spacing="2">
+        <!-- The game and what is drawn on it: the header, the review, the live surface, the legend and the status. -->
+        <Grid RowSpacing="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Header: the combo in the editor. -->
+            <StackPanel Grid.Row="0" Spacing="2">
                 <TextBlock x:Uid="Preview/Title" Style="{ThemeResource TitleTextBlockStyle}" />
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBlock
@@ -82,123 +89,246 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <controls:SearchablePicker
-                    x:Name="EditorCharacterPicker"
-                    MinWidth="280"
-                    MaxWidth="340"
-                    HorizontalAlignment="Left"
-                    ItemsSource="{x:Bind Apply.Characters, Mode=OneWay}"
-                    ItemTemplate="{StaticResource EditorCharacterTemplate}"
-                    SelectedItem="{x:Bind Apply.SelectedCharacter, Mode=OneWay}"
-                    SelectedTemplate="{StaticResource EditorSelectedCharacterTemplate}"
-                    Chosen="EditorCharacterPicker_Chosen" />
-                <Button
-                    x:Uid="Preview/ApplyButton"
-                    Click="EditorApply_Click"
-                    IsEnabled="{x:Bind Apply.CanRun, Mode=OneWay}"
-                    Style="{StaticResource AccentButtonStyle}" />
+
+            <!-- The review of the character file: opened by "Apply to character" with the chosen parts. -->
+            <Border
+                Grid.Row="1"
+                Style="{StaticResource EditorCard}"
+                BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                Visibility="{x:Bind Apply.IsReviewOpen, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel Spacing="8">
+                    <TextBlock x:Uid="Apply/ReviewTitle" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                    <TextBlock Text="{x:Bind Apply.ReviewSummary, Mode=OneWay}" />
+                    <ListView
+                        ItemsSource="{x:Bind Apply.ReviewLines, Mode=OneWay}"
+                        SelectionMode="None"
+                        MaxHeight="140" />
+                    <TextBlock
+                        x:Uid="Apply/ReviewBackupNote"
+                        FontSize="12"
+                        TextWrapping="Wrap"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button
+                            x:Uid="Apply/WriteButton"
+                            Command="{x:Bind Apply.ConfirmWriteCommand}"
+                            Style="{StaticResource AccentButtonStyle}" />
+                        <Button x:Uid="Apply/CancelReviewButton" Command="{x:Bind Apply.CancelReviewCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- The live game: a large glass card. The slots are drawn over the capture (black when the game is not visible),
+                 and a pill in the corner says what is captured. -->
+            <Border
+                Grid.Row="2"
+                Padding="0"
+                Style="{StaticResource PreviewSurfaceStyle}"
+                CornerRadius="18"
+                >
+                <Grid>
+                    <local:GameScreenCanvas DataContext="{x:Bind ViewModel}" />
+
+                    <Border
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="14"
+                        Padding="12,5"
+                        Background="#B8070A0E"
+                        BorderBrush="#24FFFFFF"
+                        BorderThickness="1"
+                        CornerRadius="99"
+                        IsHitTestVisible="False">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Grid Width="8" Height="8" VerticalAlignment="Center">
+                                <Ellipse
+                                    Width="8"
+                                    Height="8"
+                                    Fill="{ThemeResource GlassSuccessBrush}"
+                                    Visibility="{x:Bind ViewModel.IsCapturing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                <Ellipse
+                                    Width="8"
+                                    Height="8"
+                                    Fill="{ThemeResource GlassMutedTextBrush}"
+                                    Visibility="{x:Bind ViewModel.IsCapturing, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                            </Grid>
+                            <TextBlock
+                                Text="{x:Bind ViewModel.CapturePillText, Mode=OneWay}"
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                Foreground="#FFE8EDF3"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- The two kinds of slots, as the game surface draws them. -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="16">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Rectangle Width="10" Height="10" Fill="#E8C36A" RadiusX="2" RadiusY="2" />
+                    <TextBlock x:Uid="Preview/LegendCooldown" FontSize="12" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Rectangle Width="10" Height="10" Fill="#3FA9FF" Opacity="0.6" RadiusX="2" RadiusY="2" />
+                    <TextBlock x:Uid="Preview/LegendQuick" FontSize="12" VerticalAlignment="Center" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Status: only what the user needs to know (a missing layout, why the background is black, how the editor works
+                 and why the last pick did nothing). -->
+            <StackPanel Grid.Row="4" Spacing="2">
+                <TextBlock
+                    Text="{x:Bind ViewModel.SlotEditMessage, Mode=OneWay}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                    TextWrapping="Wrap"
+                    Visibility="{x:Bind ViewModel.HasSlotEditMessage, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock
+                    x:Uid="Preview/SlotEditHint"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Opacity="0.7"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.LayoutStatusText, Mode=OneWay}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Opacity="0.8"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.CaptureStatusText, Mode=OneWay}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Opacity="0.7"
+                    TextWrapping="Wrap" />
             </StackPanel>
         </Grid>
 
-        <!-- Toolbar: layout, hidden slots, fit and zoom. Nothing else: the page shows the slots over the game. -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="16">
-            <ComboBox
-                x:Name="LayoutBox"
-                x:Uid="Preview/LayoutBox"
-                MinWidth="180"
-                VerticalAlignment="Bottom"
-                ItemsSource="{x:Bind ViewModel.LayoutOptions, Mode=OneTime}"
-                DisplayMemberPath="Label"
-                SelectedItem="{x:Bind ViewModel.SelectedLayoutOption, Mode=TwoWay}" />
-            <ToggleSwitch
-                x:Name="CaptureToggle"
-                x:Uid="Preview/CaptureToggle"
-                IsOn="{x:Bind ViewModel.CaptureGame, Mode=TwoWay}" />
-            <ToggleSwitch
-                x:Name="HiddenToggle"
-                x:Uid="Preview/HiddenToggle"
-                IsOn="{x:Bind ViewModel.ShowHiddenSlots, Mode=TwoWay}" />
-            <Button
-                x:Uid="Preview/FitButton"
-                VerticalAlignment="Bottom"
-                Click="Fit_Click" />
-            <TextBlock
-                Text="{x:Bind ViewModel.ZoomText, Mode=OneWay}"
-                VerticalAlignment="Bottom"
-                Opacity="0.8" />
-            <Border
-                Width="1"
-                Height="20"
-                VerticalAlignment="Center"
-                Background="{ThemeResource CardStrokeColorDefaultBrush}" />
-            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                <Rectangle Width="10" Height="10" Fill="#E8C36A" RadiusX="2" RadiusY="2" />
-                <TextBlock x:Uid="Preview/LegendCooldown" FontSize="12" VerticalAlignment="Center" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                <Rectangle Width="10" Height="10" Fill="#3FA9FF" Opacity="0.6" RadiusX="2" RadiusY="2" />
-                <TextBlock x:Uid="Preview/LegendQuick" FontSize="12" VerticalAlignment="Center" />
-            </StackPanel>
-        </StackPanel>
+        <!-- The sidebar: the state of the game, the view settings and the character with its apply action. -->
+        <ScrollViewer
+            Grid.Column="1"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="12">
 
-        <!-- The review of the character file: opened by "Apply to character" with the chosen parts. -->
-        <Border
-            Grid.Row="2"
-            Style="{StaticResource EditorCard}"
-            BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
-            Visibility="{x:Bind Apply.IsReviewOpen, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <StackPanel Spacing="8">
-                <TextBlock x:Uid="Apply/ReviewTitle" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                <TextBlock Text="{x:Bind Apply.ReviewSummary, Mode=OneWay}" />
-                <ListView
-                    ItemsSource="{x:Bind Apply.ReviewLines, Mode=OneWay}"
-                    SelectionMode="None"
-                    MaxHeight="140" />
-                <TextBlock
-                    x:Uid="Apply/ReviewBackupNote"
-                    FontSize="12"
-                    TextWrapping="Wrap"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button
-                        x:Uid="Apply/WriteButton"
-                        Command="{x:Bind Apply.ConfirmWriteCommand}"
-                        Style="{StaticResource AccentButtonStyle}" />
-                    <Button x:Uid="Apply/CancelReviewButton" Command="{x:Bind Apply.CancelReviewCommand}" />
-                </StackPanel>
+                <!-- Estado: whether the game is detected, its resolution and the capture switch. -->
+                <Border Style="{StaticResource SideCardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock x:Uid="Preview/StateHeading" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Grid Width="8" Height="8" VerticalAlignment="Center">
+                                <Ellipse
+                                    Width="8"
+                                    Height="8"
+                                    Fill="{ThemeResource GlassSuccessBrush}"
+                                    Visibility="{x:Bind ViewModel.IsCapturing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                <Ellipse
+                                    Width="8"
+                                    Height="8"
+                                    Fill="{ThemeResource GlassMutedTextBrush}"
+                                    Visibility="{x:Bind ViewModel.IsCapturing, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                            </Grid>
+                            <TextBlock
+                                Text="{x:Bind ViewModel.StateText, Mode=OneWay}"
+                                VerticalAlignment="Center"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <TextBlock
+                            Text="{x:Bind ViewModel.GameSizeText, Mode=OneWay}"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <ToggleSwitch
+                            x:Name="CaptureToggle"
+                            x:Uid="Preview/CaptureToggle"
+                            IsOn="{x:Bind ViewModel.CaptureGame, Mode=TwoWay}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Ajustes: the layout, the hidden slots and the view fit (three pills and the zoom). -->
+                <Border Style="{StaticResource SideCardStyle}">
+                    <StackPanel Spacing="10">
+                        <TextBlock x:Uid="Preview/SettingsHeading" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                        <ComboBox
+                            x:Name="LayoutBox"
+                            x:Uid="Preview/LayoutBox"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{x:Bind ViewModel.LayoutOptions, Mode=OneTime}"
+                            DisplayMemberPath="Label"
+                            SelectedItem="{x:Bind ViewModel.SelectedLayoutOption, Mode=TwoWay}" />
+                        <ToggleSwitch
+                            x:Name="HiddenToggle"
+                            x:Uid="Preview/HiddenToggle"
+                            IsOn="{x:Bind ViewModel.ShowHiddenSlots, Mode=TwoWay}" />
+
+                        <TextBlock
+                            x:Uid="Preview/FitHeading"
+                            Style="{ThemeResource BodyStrongTextBlockStyle}"
+                            Margin="0,6,0,0" />
+                        <!-- The three fits: a segmented group of pills. None is selected after a manual zoom or pan. -->
+                        <StackPanel Spacing="6">
+                            <Button
+                                x:Uid="Preview/FitWindow"
+                                Click="FitWindow_Click"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Style="{x:Bind PillStyleFor(ViewModel.IsWindowFit), Mode=OneWay}" />
+                            <Button
+                                x:Uid="Preview/FitSlots"
+                                Click="FitSlots_Click"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Style="{x:Bind PillStyleFor(ViewModel.IsSlotsFit), Mode=OneWay}" />
+                            <Button
+                                x:Uid="Preview/FitReal"
+                                Click="FitReal_Click"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Style="{x:Bind PillStyleFor(ViewModel.IsRealFit), Mode=OneWay}" />
+                        </StackPanel>
+
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button
+                                x:Uid="Preview/FitButton"
+                                Click="Fit_Click" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Text="{x:Bind ViewModel.ZoomText, Mode=OneWay}"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Opacity="0.8" />
+                        </Grid>
+                        <TextBlock
+                            x:Uid="Preview/FitHint"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Opacity="0.7"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Personaje: the character of the combo and the apply action. -->
+                <Border Style="{StaticResource SideCardStyle}">
+                    <StackPanel Spacing="10">
+                        <TextBlock x:Uid="Preview/CharacterHeading" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                        <controls:SearchablePicker
+                            x:Name="EditorCharacterPicker"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{x:Bind Apply.Characters, Mode=OneWay}"
+                            ItemTemplate="{StaticResource EditorCharacterTemplate}"
+                            SelectedItem="{x:Bind Apply.SelectedCharacter, Mode=OneWay}"
+                            SelectedTemplate="{StaticResource EditorSelectedCharacterTemplate}"
+                            Chosen="EditorCharacterPicker_Chosen" />
+                        <Button
+                            x:Uid="Preview/ApplyButton"
+                            HorizontalAlignment="Stretch"
+                            Click="EditorApply_Click"
+                            IsEnabled="{x:Bind Apply.CanRun, Mode=OneWay}"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </StackPanel>
+                </Border>
+
             </StackPanel>
-        </Border>
-
-        <!-- The slots over the live game capture (black when the game is not visible). -->
-        <local:GameScreenCanvas
-            Grid.Row="3"
-            DataContext="{x:Bind ViewModel}" />
-
-        <!-- Status: only what the user needs to know (a missing layout, why the background is black, how the editor works
-             and why the last pick did nothing). -->
-        <StackPanel Grid.Row="4" Spacing="2">
-            <TextBlock
-                Text="{x:Bind ViewModel.SlotEditMessage, Mode=OneWay}"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                TextWrapping="Wrap"
-                Visibility="{x:Bind ViewModel.HasSlotEditMessage, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-            <TextBlock
-                x:Uid="Preview/SlotEditHint"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Opacity="0.7"
-                TextWrapping="Wrap" />
-            <TextBlock
-                Text="{x:Bind ViewModel.LayoutStatusText, Mode=OneWay}"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Opacity="0.8"
-                TextWrapping="Wrap" />
-            <TextBlock
-                Text="{x:Bind ViewModel.CaptureStatusText, Mode=OneWay}"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Opacity="0.7"
-                TextWrapping="Wrap" />
-        </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>

@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using VirtualKey = Windows.System.VirtualKey;
 
 namespace BdoComboSetup.Views;
 
@@ -31,8 +32,14 @@ public sealed partial class GameScreenCanvas : UserControl
     /// <summary>Scroll offsets to restore after the next layout pass, so a wheel zoom keeps the pointer's point still.</summary>
     private (double Horizontal, double Vertical)? _pendingOffset;
 
-    /// <summary>True when the scroll position should move to the frame of the slots once the new size is laid out.</summary>
-    private bool _frameRequested;
+    /// <summary>True when the scroll position should move to the view model's scroll target once the new size is laid out.</summary>
+    private bool _scrollRequested;
+
+    /// <summary>True while the user presses on the view: a scroll during the press is a pan by hand.</summary>
+    private bool _pointerDown;
+
+    /// <summary>True while a pan key (arrows, page, home, end) is held on the view: a scroll then is a pan by hand.</summary>
+    private bool _panKeyDown;
 
     /// <summary>True while the game capture is stopped because the capture switch is off.</summary>
     private bool _capturePaused;
@@ -44,6 +51,13 @@ public sealed partial class GameScreenCanvas : UserControl
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         ScreenHost.LayoutUpdated += OnScreenLayoutUpdated;
+
+        // Handled events too: the scroll bars and the slots handle their own presses, and a pan must still be seen.
+        Viewport.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler(Viewport_PointerDown), handledEventsToo: true);
+        Viewport.AddHandler(UIElement.PointerReleasedEvent, new PointerEventHandler(Viewport_PointerUp), handledEventsToo: true);
+        Viewport.AddHandler(UIElement.PointerCaptureLostEvent, new PointerEventHandler(Viewport_PointerUp), handledEventsToo: true);
+        Viewport.AddHandler(UIElement.KeyDownEvent, new KeyEventHandler(Viewport_KeyDown), handledEventsToo: true);
+        Viewport.AddHandler(UIElement.KeyUpEvent, new KeyEventHandler(Viewport_KeyUp), handledEventsToo: true);
     }
 
     private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
@@ -63,7 +77,7 @@ public sealed partial class GameScreenCanvas : UserControl
         {
             _viewModel.PropertyChanged += OnViewModelChanged;
             _viewModel.FrameRequested += OnFrameRequested;
-            _frameRequested = true;
+            _scrollRequested = true;
             ApplyScale();
         }
     }
@@ -272,6 +286,43 @@ public sealed partial class GameScreenCanvas : UserControl
     private void Viewport_SizeChanged(object sender, SizeChangedEventArgs e) =>
         _viewModel?.SetViewport(Viewport.ActualWidth, Viewport.ActualHeight);
 
+    /// <summary>
+    /// The scroll position changed. When the user is panning (a press on the view, a scroll bar drag, a touch drag or a pan
+    /// key), the view is no longer one of the fit modes. Changes the code makes itself (a fit, a resize, a wheel zoom) happen
+    /// without a press or a key, so they do not count.
+    /// </summary>
+    private void Viewport_ViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
+    {
+        if (_pointerDown || _panKeyDown)
+        {
+            _viewModel?.EnterCustomView();
+        }
+    }
+
+    private void Viewport_PointerDown(object sender, PointerRoutedEventArgs e) => _pointerDown = true;
+
+    private void Viewport_PointerUp(object sender, PointerRoutedEventArgs e) => _pointerDown = false;
+
+    private void Viewport_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (IsPanKey(e.Key))
+        {
+            _panKeyDown = true;
+        }
+    }
+
+    private void Viewport_KeyUp(object sender, KeyRoutedEventArgs e)
+    {
+        if (IsPanKey(e.Key))
+        {
+            _panKeyDown = false;
+        }
+    }
+
+    private static bool IsPanKey(VirtualKey key) =>
+        key is VirtualKey.Left or VirtualKey.Right or VirtualKey.Up or VirtualKey.Down
+            or VirtualKey.PageUp or VirtualKey.PageDown or VirtualKey.Home or VirtualKey.End;
+
     /// <summary>Mouse wheel: zooms by notches, keeping the content under the pointer where it is.</summary>
     private void Viewport_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
     {
@@ -304,27 +355,26 @@ public sealed partial class GameScreenCanvas : UserControl
             CanvasZoom.AnchoredOffset(vertical, pointer.Y, oldScale, newScale));
     }
 
-    /// <summary>The view model asks for the frame of the slots (fit button, a new layout): move there now, or once laid out.</summary>
+    /// <summary>The view model asks for a fit, a new layout or a new size: apply the scale and move to the scroll target now, or once laid out.</summary>
     private void OnFrameRequested(object? sender, EventArgs e)
     {
-        _frameRequested = true;
+        _scrollRequested = true;
         ApplyScale();
         ScreenHost.UpdateLayout();
-        ApplyFrame();
+        ApplyScroll();
     }
 
-    /// <summary>Scrolls to the top-left of the frame of the slots at the current scale. Waits until the viewport has a size.</summary>
-    private void ApplyFrame()
+    /// <summary>Scrolls to the view model's scroll target for the active fit. Waits until the viewport has a size.</summary>
+    private void ApplyScroll()
     {
         if (_viewModel is not { ViewportKnown: true } viewModel)
         {
             return;
         }
 
-        var scale = viewModel.ScreenScale;
-        var frame = viewModel.Frame;
-        _frameRequested = false;
-        Viewport.ChangeView(frame.Left * scale, frame.Top * scale, null, disableAnimation: true);
+        _scrollRequested = false;
+        var (horizontal, vertical) = viewModel.ScrollTarget;
+        Viewport.ChangeView(horizontal, vertical, null, disableAnimation: true);
     }
 
     /// <summary>Applies the scroll offset that a wheel zoom asked for, or the frame, once the new size is laid out.</summary>
@@ -337,9 +387,9 @@ public sealed partial class GameScreenCanvas : UserControl
             return;
         }
 
-        if (_frameRequested)
+        if (_scrollRequested)
         {
-            ApplyFrame();
+            ApplyScroll();
         }
     }
 }

@@ -871,4 +871,43 @@
   <data name="Apply.ApplyToCharacter" xml:space="preserve">
     <value>Apply to {0}</value>
   </data>
+  <data name="Preview.StateHeading.Text" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="Preview.SettingsHeading.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Preview.CharacterHeading.Text" xml:space="preserve">
+    <value>Character</value>
+  </data>
+  <data name="Preview.FitHeading.Text" xml:space="preserve">
+    <value>View fit</value>
+  </data>
+  <data name="Preview.FitWindow.Content" xml:space="preserve">
+    <value>Fit to window</value>
+  </data>
+  <data name="Preview.FitSlots.Content" xml:space="preserve">
+    <value>Fit to slots</value>
+  </data>
+  <data name="Preview.FitReal.Content" xml:space="preserve">
+    <value>Actual size</value>
+  </data>
+  <data name="Preview.FitHint.Text" xml:space="preserve">
+    <value>Window: the whole capture fits this window. Slots: the frame of the slots fills the window. Actual size: 1:1, scroll to see the rest. The mouse wheel or dragging the view leaves the zoom free.</value>
+  </data>
+  <data name="Preview.Capture.Live" xml:space="preserve">
+    <value>Capturing BlackDesert64.exe</value>
+  </data>
+  <data name="Preview.Capture.Paused" xml:space="preserve">
+    <value>Capture paused</value>
+  </data>
+  <data name="Preview.State.Detected" xml:space="preserve">
+    <value>Game detected</value>
+  </data>
+  <data name="Preview.State.NotDetected" xml:space="preserve">
+    <value>Game not detected</value>
+  </data>
+  <data name="Preview.Game.Resolution" xml:space="preserve">
+    <value>Game at {0}×{1}</value>
+  </data>
 </root>

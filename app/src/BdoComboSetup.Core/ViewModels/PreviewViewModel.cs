@@ -43,6 +43,7 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
     private int _missingPanelCount;
     private double _viewportWidth;
     private double _viewportHeight;
+    private CanvasFitMode _fitMode = CanvasFitMode.Slots;
     private bool _disposed;
 
     /// <param name="slotEditor">
@@ -81,6 +82,7 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         _showHiddenSlots = startup.ShowHiddenSlots;
         _cooldownDemo = startup.CooldownDemo;
         _zoom = CanvasZoom.ClampZoom(startup.Zoom ?? CanvasZoom.FitZoom);
+        _fitMode = startup.Zoom is null ? CanvasFitMode.Slots : CanvasFitMode.Custom;
 
         CooldownSlots = new ObservableCollection<SlotViewModel>(
             Enumerable.Range(1, SlotAssignment.CooldownSlotCount)
@@ -195,8 +197,8 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Set by the mouse wheel and the fit button. 1 = fit: the frame of the slots fills the viewport; below 1 the whole
-    /// game screen comes into view.
+    /// The zoom relative to <see cref="FitScale"/>. The fit modes set it (Slots is 1, Window and Real compute theirs) and the
+    /// mouse wheel changes it, which makes the view custom. Below 1 the whole game screen comes into view.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ScreenScale), nameof(ZoomText))]
@@ -216,7 +218,7 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
     /// <summary>True once the view has reported a viewport with a size (until then the fit is not known).</summary>
     public bool ViewportKnown => _viewportWidth > 0 && _viewportHeight > 0;
 
-    /// <summary>Raised when the view should move the scroll position to <see cref="Frame"/> (the fit button, a new layout).</summary>
+    /// <summary>Raised when the view should move to <see cref="ScrollTarget"/> (a fit chosen, a new layout, a resized viewport).</summary>
     public event EventHandler? FrameRequested;
 
     /// <summary>The scale of the canvas on screen: fit times zoom. The view applies it as a render transform.</summary>
@@ -224,6 +226,66 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
 
     /// <summary>Zoom as a percentage of the real game size (100 = the game's own pixels).</summary>
     public string ZoomText => _localizer.Format("Preview.Zoom", (int)Math.Round(ScreenScale * 100, MidpointRounding.AwayFromZero));
+
+    /// <summary>
+    /// The active fit: Window, Slots or Real when one is chosen (the pills), Custom after a manual zoom or pan.
+    /// </summary>
+    public CanvasFitMode FitMode => _fitMode;
+
+    public bool IsWindowFit => _fitMode == CanvasFitMode.Window;
+
+    public bool IsSlotsFit => _fitMode == CanvasFitMode.Slots;
+
+    public bool IsRealFit => _fitMode == CanvasFitMode.Real;
+
+    /// <summary>
+    /// Where the view scrolls to for the active fit, in screen pixels. Window needs no scroll (the fitted screen is centred);
+    /// Real centres on the frame of the slots; Slots and Custom start on the frame. Kept within the content.
+    /// </summary>
+    public (double Horizontal, double Vertical) ScrollTarget
+    {
+        get
+        {
+            if (_fitMode == CanvasFitMode.Window)
+            {
+                return (0, 0);
+            }
+
+            var scale = ScreenScale;
+            var contentWidth = GameWidth * scale;
+            var contentHeight = GameHeight * scale;
+            if (_fitMode == CanvasFitMode.Real)
+            {
+                return (
+                    CanvasZoom.CenteredOffset((Frame.Left + (Frame.Width / 2)) * scale, contentWidth, _viewportWidth),
+                    CanvasZoom.CenteredOffset((Frame.Top + (Frame.Height / 2)) * scale, contentHeight, _viewportHeight));
+            }
+
+            return (
+                CanvasZoom.ClampOffset(Frame.Left * scale, contentWidth, _viewportWidth),
+                CanvasZoom.ClampOffset(Frame.Top * scale, contentHeight, _viewportHeight));
+        }
+    }
+
+    /// <summary>True while the game window is captured and drawn behind the slots (the live pill and the "detected" line).</summary>
+    public bool IsCapturing => CaptureGame && GameScreen.State == GameScreenState.Capturing;
+
+    /// <summary>The game as the state card names it: detected, not detected, or paused by its switch.</summary>
+    public string StateText => IsCapturing
+        ? _localizer.Get("Preview.State.Detected")
+        : CaptureGame
+            ? _localizer.Get("Preview.State.NotDetected")
+            : _localizer.Get("Preview.Capture.Paused");
+
+    /// <summary>The pill over the game surface: the capture state in one line.</summary>
+    public string CapturePillText => IsCapturing
+        ? _localizer.Get("Preview.Capture.Live")
+        : CaptureGame
+            ? CaptureStatusText
+            : _localizer.Get("Preview.Capture.Paused");
+
+    /// <summary>The size of the game screen the slots are placed on, for the state card.</summary>
+    public string GameSizeText => _localizer.Format("Preview.Game.Resolution", (int)GameWidth, (int)GameHeight);
 
     /// <summary>Draws the hidden game slots dimmed with a dashed outline. Off by default.</summary>
     [ObservableProperty]
@@ -233,7 +295,7 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
     /// Draws the live game behind the slots. Turned off, the capture is stopped: nothing of the game window is read.
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CaptureStatusText))]
+    [NotifyPropertyChangedFor(nameof(CaptureStatusText), nameof(IsCapturing), nameof(StateText), nameof(CapturePillText))]
     private bool _captureGame = true;
 
     /// <summary>Debug: a 60% cooldown on the first cooldown slot with a skill. Off by default; never saved.</summary>
@@ -263,8 +325,14 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
             _ => _localizer.Get("Preview.Capture.NotRunning"),
         };
 
-    /// <summary>Raises the property that shows the capture state (called on the UI thread after a poll).</summary>
-    public void RefreshCaptureStatus() => OnPropertyChanged(nameof(CaptureStatusText));
+    /// <summary>Raises the properties that show the capture state (called on the UI thread after a poll).</summary>
+    public void RefreshCaptureStatus()
+    {
+        OnPropertyChanged(nameof(CaptureStatusText));
+        OnPropertyChanged(nameof(IsCapturing));
+        OnPropertyChanged(nameof(StateText));
+        OnPropertyChanged(nameof(CapturePillText));
+    }
 
     /// <summary>Picks another layout and remembers it in the settings.</summary>
     public void SelectLayout(GameUiLayoutId layout)
@@ -287,34 +355,75 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         FrameRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>The view reports its viewport size; the fit scale follows it.</summary>
+    /// <summary>
+    /// The view reports its viewport size. The active fit follows it, and the view moves to that fit again; a custom view
+    /// keeps the scale it shows.
+    /// </summary>
     public void SetViewport(double width, double height)
     {
         _viewportWidth = width;
         _viewportHeight = height;
         UpdateFitScale();
-    }
-
-    /// <summary>Zooms by mouse-wheel notches (positive zooms in). Never below fit.</summary>
-    public void ZoomBy(int notches)
-    {
-        var before = Zoom;
-        Zoom = CanvasZoom.Step(Zoom, notches);
-        if (Zoom != before)
+        if (_fitMode != CanvasFitMode.Custom)
         {
-            _logger.Debug("preview.zoom.changed", "Zoom changed", new Dictionary<string, object?>
-            {
-                ["zoom"] = Math.Round(Zoom, 3),
-            });
+            FrameRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
-    /// <summary>Back to fit: the slots fill the window (the frame of the slots, not the whole game screen).</summary>
-    public void FitToView()
+    /// <summary>
+    /// Zooms by mouse-wheel notches (positive zooms in). A zoom that changes the view is a manual zoom: no fit stays selected.
+    /// </summary>
+    public void ZoomBy(int notches)
     {
-        Zoom = CanvasZoom.FitZoom;
-        _logger.Debug("preview.zoom.fit", "Fit to the slots");
+        var before = Zoom;
+        var (min, max) = CanvasZoom.WheelRange(WindowZoom, RealZoom);
+        Zoom = CanvasZoom.Step(Zoom, notches, min, max);
+        if (Zoom == before)
+        {
+            return;
+        }
+
+        EnterCustomView();
+        _logger.Debug("preview.zoom.changed", "Zoom changed", new Dictionary<string, object?>
+        {
+            ["zoom"] = Math.Round(Zoom, 3),
+        });
+    }
+
+    /// <summary>
+    /// Chooses one of the fit modes (the pills). Custom is not a choice: a manual zoom or pan leaves it (see
+    /// <see cref="EnterCustomView"/>). The view moves to the new fit (see <see cref="ScrollTarget"/>).
+    /// </summary>
+    public void SetFitMode(CanvasFitMode mode)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(mode, CanvasFitMode.Custom);
+        _fitMode = mode;
+        ApplyFitMode();
+        NotifyFitMode();
+        _logger.Debug("preview.fit.selected", "Fit mode selected", new Dictionary<string, object?>
+        {
+            ["mode"] = mode.ToString(),
+        });
         FrameRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Back to fit: the slots fill the window (the frame of the slots, not the whole game screen).</summary>
+    public void FitToView() => SetFitMode(CanvasFitMode.Slots);
+
+    /// <summary>
+    /// The view was zoomed or panned by hand (the wheel, a scroll bar, touch). No fit mode is selected any more; the zoom
+    /// stays where it is.
+    /// </summary>
+    public void EnterCustomView()
+    {
+        if (_fitMode == CanvasFitMode.Custom)
+        {
+            return;
+        }
+
+        _fitMode = CanvasFitMode.Custom;
+        NotifyFitMode();
+        _logger.Debug("preview.fit.custom", "The view was zoomed or panned by hand");
     }
 
     public void Dispose()
@@ -452,7 +561,55 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(Frame));
     }
 
-    private void UpdateFitScale() => FitScale = CanvasZoom.FitScale(_viewportWidth, _viewportHeight, Frame.Width, Frame.Height);
+    /// <summary>
+    /// Recomputes the fit scale of the frame. A fit mode asks for its own zoom again; a custom view keeps the scale it shows,
+    /// so a resize or a changed frame does not jump the picture.
+    /// </summary>
+    private void UpdateFitScale()
+    {
+        var shown = ScreenScale;
+        FitScale = CanvasZoom.FitScale(_viewportWidth, _viewportHeight, Frame.Width, Frame.Height);
+        if (_fitMode == CanvasFitMode.Custom)
+        {
+            Zoom = CanvasZoom.ZoomFor(shown, FitScale);
+        }
+        else
+        {
+            ApplyFitMode();
+        }
+    }
+
+    /// <summary>Sets the zoom that the active fit mode asks for (Custom has none: its zoom stays).</summary>
+    private void ApplyFitMode()
+    {
+        switch (_fitMode)
+        {
+            case CanvasFitMode.Window:
+                Zoom = WindowZoom;
+                break;
+            case CanvasFitMode.Slots:
+                Zoom = CanvasZoom.FitZoom;
+                break;
+            case CanvasFitMode.Real:
+                Zoom = RealZoom;
+                break;
+        }
+    }
+
+    private void NotifyFitMode()
+    {
+        OnPropertyChanged(nameof(FitMode));
+        OnPropertyChanged(nameof(IsWindowFit));
+        OnPropertyChanged(nameof(IsSlotsFit));
+        OnPropertyChanged(nameof(IsRealFit));
+    }
+
+    /// <summary>The zoom that shows the whole game screen in the viewport.</summary>
+    private double WindowZoom =>
+        CanvasZoom.ZoomFor(CanvasZoom.FitScale(_viewportWidth, _viewportHeight, GameWidth, GameHeight), FitScale);
+
+    /// <summary>The zoom at 1:1 (one game pixel per screen pixel).</summary>
+    private double RealZoom => CanvasZoom.ZoomFor(CanvasZoom.RealScale, FitScale);
 
     private IEnumerable<PanelViewModel> AllPanels() => CooldownSlots.Cast<PanelViewModel>().Concat(QuickSlots);
 
