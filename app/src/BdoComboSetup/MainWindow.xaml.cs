@@ -193,7 +193,7 @@ public sealed partial class MainWindow : Window
     private bool FocusIsOnMenu()
     {
         var focused = FocusManager.GetFocusedElement(RootGrid.XamlRoot);
-        return focused is NavigationViewItem || ReferenceEquals(focused, EdgeHandle);
+        return focused is NavigationViewItem || (ReferenceEquals(focused, EdgeHandle) && EdgeHandle.FocusState == FocusState.Keyboard);
     }
 
     /// <summary>The pointer is over the open menu when it is within the menu width (the content is to the right of it).</summary>
@@ -243,8 +243,17 @@ public sealed partial class MainWindow : Window
         ScheduleMenuClose();
     }
 
-    /// <summary>Keyboard focus on the handle opens the menu, as the pointer does.</summary>
-    private void EdgeHandle_GotFocus(object sender, RoutedEventArgs e) => OpenMenu();
+    /// <summary>
+    /// Keyboard focus on the handle opens the menu, as the pointer does. Focus that the framework gives back to the handle when the
+    /// menu closes is programmatic and must not reopen it (that made the menu open and close in a loop).
+    /// </summary>
+    private void EdgeHandle_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (EdgeHandle.FocusState == FocusState.Keyboard)
+        {
+            OpenMenu();
+        }
+    }
 
     private void EdgeHandle_LostFocus(object sender, RoutedEventArgs e) => ScheduleMenuClose();
 
