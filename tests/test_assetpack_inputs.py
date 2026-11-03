@@ -24,7 +24,7 @@ def write_client(root: Path, skill_numbers=(1, 2, 10), class_types=(16,)) -> Non
         _write(root / art.source, synthetic_png(12, 12, seed=len(art.key)))
 
 
-def write_staging(root: Path, names=("catalog.json", "skills.json", "skill_classes.json", "guide-tamer.awakening.json")) -> None:
+def write_staging(root: Path, names=("catalog.json", "skills.json", "skill_classes.json", "skill-table.json", "guide-tamer.awakening.json")) -> None:
     for name in names:
         _write(root / name, b'{"schema": 1}\n')
 
@@ -50,7 +50,7 @@ class CollectInputsTests(unittest.TestCase):
         keys = sorted(item.key for item in collect_inputs(self.client, self.staging))
 
         expected = sorted(
-            ["skill-1.png", "skill-2.png", "skill-10.png", "class-16.png", "catalog.json", "skills.json", "skill_classes.json", "guide-tamer.awakening.json"]
+            ["skill-1.png", "skill-2.png", "skill-10.png", "class-16.png", "catalog.json", "skills.json", "skill-table.json", "skill_classes.json", "guide-tamer.awakening.json"]
             + [art.key for art in SLOT_ART]
         )
         self.assertEqual(expected, keys)

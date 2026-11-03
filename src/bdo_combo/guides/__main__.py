@@ -16,7 +16,14 @@ from .. import log
 from .bundle import BundleError, build_bundle
 from .client import ClientExport, ClientExportError
 from .importer import import_guides, write_outputs
-from .skill_classes import CLASS_SKILLS_RESOURCE, SkillClassesError, build_skill_catalog, load_skill_table
+from .skill_classes import (
+    CLASS_SKILLS_RESOURCE,
+    SKILL_TABLE_RESOURCE,
+    SkillClassesError,
+    build_apply_skill_table,
+    build_skill_catalog,
+    load_skill_table,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CLASSHUB_DIR = REPO_ROOT / "data" / "classhub"
@@ -118,6 +125,14 @@ def _bundle(args: argparse.Namespace) -> int:
         encoding="utf-8",
     )
     print(f"class skill catalog {catalog_path}: {catalog_path.stat().st_size} bytes")
+
+    # The table the app checks a combo against before it writes: shipped in the pack, so the app needs no client export.
+    table_path = out_dir / SKILL_TABLE_RESOURCE
+    table_path.write_text(
+        json.dumps(build_apply_skill_table(skill_table), ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    print(f"apply skill table {table_path}: {table_path.stat().st_size} bytes")
     print(f"bundle {out_dir}: {stats.files} files, {stats.total_bytes} bytes")
     print(f"skill icons {stats.skill_icons}, class icons {stats.class_icons}, guides {stats.guides}")
     print(f"skills described {stats.skills_described}, missing skill icons {len(stats.missing_skill_icons)}")

@@ -195,7 +195,7 @@ public sealed class AppServices : IDisposable
                 backups,
                 guard,
                 files,
-                () => SkillTable.Load(settings.Settings.SkillsJsonPath, logger),
+                () => SkillTable.LoadFromPack(packResources, logger),
                 logger);
         var profiles = new ComboProfileStore(
             startup.DemoData ? Path.Combine(demoFolder, "profiles") : ComboProfileStore.DefaultDirectory,

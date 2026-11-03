@@ -63,7 +63,7 @@ def _class_icons(folder: Path) -> list[PackInput]:
 def _json_bundle(staging_dir: Path) -> list[PackInput]:
     if not staging_dir.is_dir():
         raise AssetPackError(f"staging folder not found: {staging_dir}; run build-assets first")
-    names = ("catalog.json", "skills.json", "skill_classes.json")
+    names = ("catalog.json", "skills.json", "skill_classes.json", "skill-table.json")
     for name in names:
         if not (staging_dir / name).is_file():
             raise AssetPackError(f"{name} not found in {staging_dir}; run build-assets first")

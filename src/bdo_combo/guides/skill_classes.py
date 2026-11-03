@@ -24,6 +24,7 @@ from .. import log
 MAX_CLASSES_PER_GROUP = 9
 RESOURCE_NAME = "skill_classes.json"
 CLASS_SKILLS_RESOURCE = "class-skills.json"
+SKILL_TABLE_RESOURCE = "skill-table.json"
 
 # In-game markup such as <PAColor0xff2bbbff>...</PAOldColor> is not part of the name.
 _MARKUP = re.compile(r"<[^>]+>")
@@ -99,6 +100,32 @@ def build_skill_catalog(source: dict[str, Any]) -> dict[str, Any]:
     }
     log.info("skill catalog built", classes=len(classes), skills=sum(len(skills) for skills in classes.values()))
     return {"classes": classes}
+
+
+def build_apply_skill_table(source: dict[str, Any]) -> dict[str, Any]:
+    """The skill table the app checks a combo against before writing: every rank with its skill number, name and classes.
+
+    Same shape as the source (``{"groups": [{"name", "classes", "ranks": [{"skillNo", "name"}]}]}``) with only the fields the
+    app reads, so the app has no need for the client export at run time. Markup is removed from the names.
+    """
+    groups = source.get("groups")
+    if not isinstance(groups, list):
+        raise SkillClassesError("the skill table has no 'groups' list")
+
+    kept: list[dict[str, Any]] = []
+    for group in groups:
+        if not isinstance(group, dict):
+            raise SkillClassesError("a group is not an object")
+        classes = [c for c in (group.get("classes") or []) if isinstance(c, int) and not isinstance(c, bool)]
+        ranks = []
+        for rank in group.get("ranks") or []:
+            skill_no = rank.get("skillNo") if isinstance(rank, dict) else None
+            if isinstance(skill_no, int) and not isinstance(skill_no, bool):
+                ranks.append({"skillNo": skill_no, "name": _MARKUP.sub("", rank.get("name") or "").strip()})
+        if ranks:
+            kept.append({"name": _MARKUP.sub("", group.get("name") or "").strip(), "classes": classes, "ranks": ranks})
+    log.info("apply skill table built", groups=len(kept), ranks=sum(len(group["ranks"]) for group in kept))
+    return {"groups": kept}
 
 
 def load_skill_table(path: Path) -> dict[str, Any]:

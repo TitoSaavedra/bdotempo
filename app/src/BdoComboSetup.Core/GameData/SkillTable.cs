@@ -60,18 +60,51 @@ public sealed class SkillTable
         return have.StartsWith(want, StringComparison.Ordinal) || want.StartsWith(have, StringComparison.Ordinal);
     }
 
-    /// <summary>Loads the table. A missing or unreadable file is refused (the apply is never attempted without it).</summary>
+    /// <summary>The name of the table inside the asset pack.</summary>
+    public const string PackResourceName = "skill-table.json";
+
+    /// <summary>
+    /// Reads the table from the asset pack (the only place the app finds it: the pack carries everything about the game).
+    /// A pack without it, or with a broken one, is refused: the apply is never attempted without the table.
+    /// </summary>
+    public static SkillTable LoadFromPack(Assets.IEmbeddedResources resources, AppLogger logger)
+    {
+        ArgumentNullException.ThrowIfNull(resources);
+        using var stream = resources.Open(PackResourceName);
+        if (stream is null)
+        {
+            throw new OperationRefusedException(OperationProblem.SkillTableMissing, $"the asset pack has no {PackResourceName}");
+        }
+
+        using var reader = new StreamReader(stream);
+        return Parse(reader.ReadToEnd(), PackResourceName, logger);
+    }
+
+    /// <summary>Loads the table from a file (tests and tools). A missing or unreadable file is refused.</summary>
     public static SkillTable Load(string path, AppLogger logger)
     {
-        using var scope = logger.BeginOperation("skills.load", new Dictionary<string, object?> { ["file"] = Path.GetFileName(path) });
+        if (!File.Exists(path))
+        {
+            throw new OperationRefusedException(OperationProblem.SkillTableMissing, $"skills file not found: {Path.GetFileName(path)}");
+        }
+
         try
         {
-            if (!File.Exists(path))
-            {
-                throw new OperationRefusedException(OperationProblem.SkillTableMissing, $"skills file not found: {Path.GetFileName(path)}");
-            }
+            return Parse(File.ReadAllText(path), Path.GetFileName(path), logger);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw new OperationRefusedException(OperationProblem.SkillTableMissing, $"cannot read skills file {Path.GetFileName(path)}: {ex.Message}");
+        }
+    }
 
-            using var document = JsonDocument.Parse(File.ReadAllText(path));
+    private static SkillTable Parse(string json, string label, AppLogger logger)
+    {
+        var path = label;
+        using var scope = logger.BeginOperation("skills.load", new Dictionary<string, object?> { ["file"] = label });
+        try
+        {
+            using var document = JsonDocument.Parse(json);
             var root = document.RootElement;
             if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("groups", out var groups) || groups.ValueKind != JsonValueKind.Array)
             {
@@ -119,10 +152,10 @@ public sealed class SkillTable
             logger.Info("skills.loaded", "Skill table loaded", new Dictionary<string, object?> { ["skills"] = bySkillNo.Count });
             return new SkillTable(bySkillNo);
         }
-        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException)
         {
             scope.Fail(ex);
-            throw new OperationRefusedException(OperationProblem.SkillTableMissing, $"cannot read skills file {Path.GetFileName(path)}: {ex.Message}");
+            throw new OperationRefusedException(OperationProblem.SkillTableMissing, $"cannot read skills file {path}: {ex.Message}");
         }
     }
 

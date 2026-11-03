@@ -14,7 +14,6 @@ public sealed record AppSettings
     public const string DefaultGameDataRoot = @"C:\Users\TitoS\OneDrive\Documentos\Black Desert";
 
     /// <summary>Default skill table, exported by the Scrappers project.</summary>
-    public const string DefaultSkillsJsonPath = @"D:\extracted_bdo\class_skills.json";
 
     /// <summary>Black Desert data folder (the one with UserCache). Character files are written under it.</summary>
     public string GameDataRoot { get; init; } = DefaultGameDataRoot;
@@ -28,8 +27,6 @@ public sealed record AppSettings
     /// <summary>Where backup sets are written. Null means "_backups" inside <see cref="GameDataRoot"/>.</summary>
     public string? BackupsRoot { get; init; }
 
-    /// <summary>Skill table (class_skills.json) that combos are checked against. Apply is refused without it.</summary>
-    public string SkillsJsonPath { get; init; } = DefaultSkillsJsonPath;
 
     /// <summary>Rows and columns of the cooldown bar. The default is 2 x 10 (20 slots).</summary>
     public int CooldownRows { get; init; } = 2;
