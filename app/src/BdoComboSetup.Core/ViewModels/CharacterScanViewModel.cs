@@ -42,12 +42,9 @@ public sealed class CharacterScanRow : ObservableObject
 
         Classes = classes;
         var classType = detectedClass ?? entry.ClassType;
+        // The icon first; when it was not recognized, the class the game files already give the character (or "Sin clase").
+        // Either way the row stays automatic, so a later, clearer reading can still replace it.
         _class = classes.FirstOrDefault(choice => choice.ClassType == classType) ?? classes[0];
-        if (detectedClass is null)
-        {
-            // "Sin clase": the row can still take one while the scan runs, so a better guess can replace it.
-            _class = classes[0];
-        }
         _autoClass = _class;
     }
 
@@ -304,7 +301,7 @@ public sealed partial class CharacterScanViewModel : ObservableObject
             return;
         }
 
-        var result = _accumulator.AddPage(page, _entries.Count, scrollFraction);
+        var result = _accumulator.AddPage(page, _entries.Count);
         PageHint = result.Outcome switch
         {
             RowMergeOutcome.Unplaced => _localizer.Get("Characters.ScanPageUnplaced"),

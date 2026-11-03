@@ -26,18 +26,20 @@ public enum RowMergeOutcome
 public readonly record struct RowMergeResult(RowMergeOutcome Outcome, int Added, int Total);
 
 /// <summary>
-/// Accumulates the rows of the selection screen while the player scrolls the list, keyed by their position in the list.
-/// A page is placed by finding where it overlaps the known rows (a contiguous run of same level and similar name); when
-/// there is no overlap it can be placed by the scroll bar fraction, which gives the first visible row. Rows already known
-/// are never replaced, so scrolling up and down cannot duplicate a character, and a page that cannot be placed adds
-/// nothing. Every later reading of a known row is a vote: the reading seen most often wins (the earliest on a tie), so one
-/// OCR slip on a frame taken mid-scroll cannot stick. The list never grows past the number of characters of the account.
+/// Accumulates the rows of the selection screen while the player scrolls the list. Positions are relative to the first page
+/// read, so the scan can start with the list scrolled anywhere (they may even go negative). A page is placed only by finding
+/// where it overlaps the known rows (a contiguous run of same level and similar name): the scroll bar is not used, because
+/// it is too imprecise to anchor a page and a wrong anchor shifts every later row. A page that does not overlap (a fast flick)
+/// adds nothing and waits for the player to scroll back. Rows already known are never replaced, so scrolling up and down cannot
+/// duplicate a character. Every later reading of a known row is a vote: the reading seen most often wins (the earliest on a
+/// tie), so one OCR slip on a frame taken mid-scroll cannot stick. The known rows never span more than the number of
+/// characters of the account.
 /// </summary>
 public sealed class CharacterRowAccumulator
 {
     private readonly SortedDictionary<int, RowVotes> _known = [];
 
-    /// <summary>The rows read so far, in list order (positions with no reading are simply absent).</summary>
+    /// <summary>The rows read so far, in list order. They form one contiguous run, because every page overlaps the known rows.</summary>
     public IReadOnlyList<CharacterRowReading> Rows => _known.Values.Select(votes => votes.Best).ToList();
 
     /// <summary>How many characters have a reading. When it equals the account's count, the list is complete.</summary>
@@ -45,14 +47,8 @@ public sealed class CharacterRowAccumulator
 
     public void Reset() => _known.Clear();
 
-    /// <summary>
-    /// Merges one visible page. <paramref name="expectedCount"/> is the number of characters of the account (0: no limit);
-    /// <paramref name="scrollFraction"/> is the scroll bar position (0 at the top, 1 at the bottom), or null.
-    /// </summary>
-    public RowMergeResult AddPage(
-        IReadOnlyList<CharacterRowReading> page,
-        int expectedCount,
-        double? scrollFraction = null)
+    /// <summary>Merges one visible page. <paramref name="expectedCount"/> is the number of characters of the account (0: no limit).</summary>
+    public RowMergeResult AddPage(IReadOnlyList<CharacterRowReading> page, int expectedCount)
     {
         ArgumentNullException.ThrowIfNull(page);
         var limit = expectedCount > 0 ? expectedCount : int.MaxValue;
@@ -67,22 +63,9 @@ public sealed class CharacterRowAccumulator
             return new RowMergeResult(RowMergeOutcome.Full, 0, Count);
         }
 
-        var (placement, fromOverlap) = Place(cleaned, limit, scrollFraction);
-        if (placement is not { } start || start < 0 || start + cleaned.Count > limit)
+        if (Place(cleaned) is not { } start || SpanWith(start, cleaned.Count) > limit)
         {
             return new RowMergeResult(RowMergeOutcome.Unplaced, 0, Count);
-        }
-
-        if (!fromOverlap)
-        {
-            // A scroll bar placement is only accepted when it does not contradict what is known.
-            for (var index = 0; index < cleaned.Count; index++)
-            {
-                if (_known.TryGetValue(start + index, out var known) && !SameRow(known.Best.Row, cleaned[index].Row))
-                {
-                    return new RowMergeResult(RowMergeOutcome.Unplaced, 0, Count);
-                }
-            }
         }
 
         var added = 0;
@@ -110,86 +93,30 @@ public sealed class CharacterRowAccumulator
         return new RowMergeResult(outcome, added, Count);
     }
 
-    /// <summary>
-    /// Where the page starts: the overlap first (exact), the scroll bar second (estimated, tried at the estimate and its
-    /// neighbours until one does not contradict the known rows). Null when neither works.
-    /// </summary>
-    private (int? Start, bool FromOverlap) Place(
-        List<CharacterRowReading> page,
-        int limit,
-        double? scrollFraction)
+    /// <summary>How many positions the known rows would cover once a page of <paramref name="count"/> rows starts at <paramref name="start"/>.</summary>
+    private int SpanWith(int start, int count)
     {
-        if (Count > 0)
+        if (_known.Count == 0)
         {
-            var (overlap, pageOffset, rowIndex) = FindBestOverlap(page);
-            if (overlap >= MinimumOverlap(page.Count, Count))
-            {
-                var start = rowIndex - pageOffset;
-                if (start >= 0 && start + page.Count <= limit)
-                {
-                    return (start, true);
-                }
-            }
+            return count;
         }
 
-        if (scrollFraction is { } fraction && limit != int.MaxValue)
-        {
-            var estimate = (int)Math.Round(fraction * Math.Max(0, limit - page.Count));
-            var best = -1;
-            var bestScore = int.MinValue;
-            foreach (var delta in new[] { 0, -1, 1, -2, 2 })
-            {
-                var start = estimate + delta;
-                if (start < 0 || start + page.Count > limit)
-                {
-                    continue;
-                }
+        return Math.Max(_known.Keys.Max(), start + count - 1) - Math.Min(_known.Keys.Min(), start) + 1;
+    }
 
-                var matches = 0;
-                var conflicts = 0;
-                for (var index = 0; index < page.Count; index++)
-                {
-                    if (!_known.TryGetValue(start + index, out var known))
-                    {
-                        continue;
-                    }
-
-                    if (SameRow(known.Best.Row, page[index].Row))
-                    {
-                        matches++;
-                    }
-                    else
-                    {
-                        conflicts++;
-                    }
-                }
-
-                if (conflicts > 0)
-                {
-                    continue;
-                }
-
-                var score = (matches * 10) - Math.Abs(delta);
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    best = start;
-                }
-            }
-
-            if (best >= 0)
-            {
-                return (best, false);
-            }
-        }
-
-        // The first page with no scroll bar: the list is assumed to start at the top.
+    /// <summary>
+    /// Where the page starts: the first page defines position 0; every other page must overlap the known rows. Null when it
+    /// does not (the player flicked past it).
+    /// </summary>
+    private int? Place(List<CharacterRowReading> page)
+    {
         if (Count == 0)
         {
-            return (0, false);
+            return 0;
         }
 
-        return (null, false);
+        var (overlap, pageOffset, rowIndex) = FindBestOverlap(page);
+        return overlap >= MinimumOverlap(page.Count, Count) ? rowIndex - pageOffset : null;
     }
 
     /// <summary>Rows that can be matched: a name is required and consecutive duplicates inside the page are dropped.</summary>
