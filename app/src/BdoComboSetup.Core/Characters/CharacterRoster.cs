@@ -23,9 +23,11 @@ public enum ClassSource
     Unknown,
 }
 
-/// <summary>A live character of an account, with its name and class resolved.</summary>
+/// <summary>A character of an account, with its name and class resolved.</summary>
 /// <param name="Label">The player's own memo of the character (CharacterMemo of gameVariable_lobby.xml), complete and exact,
 /// or null when the character has none. The character selection screen shows it above the level.</param>
+/// <param name="HasGameData">True when the game has written the character's file (the character entered the world once).
+/// Only these characters can be chosen for the Combos page and the Preview; the others are listed but not selectable.</param>
 public sealed record CharacterEntry(
     string Pcid,
     int Order,
@@ -33,7 +35,8 @@ public sealed record CharacterEntry(
     NameSource NameSource,
     int? ClassType,
     ClassSource ClassSource,
-    string? Label = null);
+    string? Label = null,
+    bool HasGameData = true);
 
 /// <summary>The characters of the active account, and the user's own names and classes for them.</summary>
 public interface ICharacterSource
@@ -41,7 +44,7 @@ public interface ICharacterSource
     /// <summary>The account the Apply page works with, or null when no account can be found.</summary>
     string? ActiveAccount();
 
-    /// <summary>The live characters of an account, in the game's order.</summary>
+    /// <summary>The characters of an account, in the game's order: every character of the account order list.</summary>
     IReadOnlyList<CharacterEntry> Load(string account);
 
     /// <summary>Saves the user's name and class for a character. Null values clear that part.</summary>
@@ -53,11 +56,13 @@ public interface ICharacterSource
 }
 
 /// <summary>
-/// Builds the character selector of an account. Live characters are the pcids of the account's CharacterOrderList
-/// (gamevariable.xml) that also have a 17-digit folder with a gameVariable.xml under 11\. The stale folders, the
-/// sidecar files (gamevariable-*.xml) and the characters not in the order list are ignored.
+/// Builds the character list of an account. Every pcid of the account's CharacterOrderList (gamevariable.xml) is a character,
+/// as the character selection screen lists them all. A character is ready (HasGameData) when its 17-digit folder under 11\
+/// has a gameVariable.xml, which the game writes only after the player enters the world with it.
+/// The sidecar files (gamevariable-*.xml) and the folders not in the order list are ignored.
 /// Name: the user's name, then the in-game label (CharacterMemo of gameVariable_lobby.xml), then "ClassName N".
-/// Class: the user's class, then the vote over the skill numbers of the character's files, then unknown.
+/// Class: the user's class, then the vote over the skill numbers of the character's files, then unknown (a character
+/// without its file always has an unknown class unless the user set one).
 /// Files are read only; every read retries briefly when the game is writing them.
 /// </summary>
 public sealed partial class CharacterRoster(
@@ -129,17 +134,19 @@ public sealed partial class CharacterRoster(
         var labels = ReadLabels(root);
         var folders = FolderPcids(root);
 
-        var live = order
-            .Where(entry => folders.Contains(entry.Key))
+        var characters = order
             .OrderBy(entry => entry.Value)
             .ThenBy(entry => entry.Key, StringComparer.Ordinal)
             .ToList();
-        var ignored = order.Count - live.Count;
 
-        var drafts = new List<Draft>(live.Count);
-        foreach (var (pcid, position) in live)
+        var drafts = new List<Draft>(characters.Count);
+        foreach (var (pcid, position) in characters)
         {
-            var skills = SkillNumbers(Path.Combine(root, CharacterFolderName, pcid, GameDataLocator.CharacterFileName));
+            var hasGameData = folders.Contains(pcid);
+            // Without the character's file there are no skills to infer the class from: the class stays unknown.
+            IReadOnlyList<int> skills = hasGameData
+                ? SkillNumbers(Path.Combine(root, CharacterFolderName, pcid, GameDataLocator.CharacterFileName))
+                : [];
             var inferred = ClassInference.Infer(skills, skillClasses);
             var custom = overrides.Get(account, pcid);
             var classType = custom?.ClassType ?? inferred;
@@ -149,7 +156,7 @@ public sealed partial class CharacterRoster(
 
             var customName = CharacterOverrideStore.NormalizeName(custom?.Name);
             var label = labels.GetValueOrDefault(pcid);
-            drafts.Add(new Draft(pcid, position, classType, classSource, customName, label));
+            drafts.Add(new Draft(pcid, position, classType, classSource, customName, label, hasGameData));
         }
 
         var entries = new List<CharacterEntry>(drafts.Count);
@@ -164,14 +171,14 @@ public sealed partial class CharacterRoster(
                 : draft.Label is not null
                     ? (draft.Label, NameSource.Label)
                     : (FallbackName(draft.ClassType, fallbackCount[countKey]), NameSource.Fallback);
-            entries.Add(new CharacterEntry(draft.Pcid, draft.Position, name, source, draft.ClassType, draft.ClassSource, draft.Label));
+            entries.Add(new CharacterEntry(draft.Pcid, draft.Position, name, source, draft.ClassType, draft.ClassSource, draft.Label, draft.HasGameData));
         }
 
         _logger.Info("characters.loaded", "Characters of the account loaded", new Dictionary<string, object?>
         {
             ["account"] = account,
-            ["live"] = entries.Count,
-            ["ignored_order_entries"] = ignored,
+            ["characters"] = entries.Count,
+            ["with_game_data"] = entries.Count(e => e.HasGameData),
             ["custom_names"] = entries.Count(e => e.NameSource == NameSource.Custom),
             ["labels"] = entries.Count(e => e.NameSource == NameSource.Label),
             ["class_custom"] = entries.Count(e => e.ClassSource == ClassSource.Custom),
@@ -295,5 +302,6 @@ public sealed partial class CharacterRoster(
         int? ClassType,
         ClassSource ClassSource,
         string? CustomName,
-        string? Label);
+        string? Label,
+        bool HasGameData);
 }

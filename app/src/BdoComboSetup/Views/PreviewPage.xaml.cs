@@ -63,7 +63,6 @@ public sealed partial class PreviewPage : Page
     {
         var tag = sender.SelectedItem?.Tag as string ?? "slots";
         TabSlots.Visibility = tag == "slots" ? Visibility.Visible : Visibility.Collapsed;
-        PendingCard.Visibility = tag == "pending" ? Visibility.Visible : Visibility.Collapsed;
         TabSettings.Visibility = tag == "settings" ? Visibility.Visible : Visibility.Collapsed;
     }
 

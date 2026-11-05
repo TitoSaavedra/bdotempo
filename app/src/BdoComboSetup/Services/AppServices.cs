@@ -171,7 +171,6 @@ public sealed class AppServices : IDisposable
             });
         }
 
-        var display = startup.DemoData ? DemoGameLayouts.Display : GameOptionLoader.Load(GameOptionLoader.DefaultPath, logger);
         var assets = new BundledAssetProvider(packResources, logger);
         var combos = JsonCombosCatalog.Load(packResources, assets, logger);
         var guideTexts = GuideTexts.Load(packResources, logger);
@@ -185,7 +184,9 @@ public sealed class AppServices : IDisposable
 
         var files = new LocalFileStore(logger);
         var guard = new GameProcessGuard(logger);
-        Func<string> backupsRoot = () => settings.Settings.BackupsRoot ?? Path.Combine(settings.Settings.GameDataRoot, "_backups");
+        // With no data folder set there is no backups folder: the list is empty, and a restore or a write is refused by the locator.
+        Func<string> backupsRoot = () => settings.Settings.BackupsRoot
+            ?? (string.IsNullOrWhiteSpace(settings.Settings.GameDataRoot) ? string.Empty : Path.Combine(settings.Settings.GameDataRoot, "_backups"));
         var backups = new BackupService(backupsRoot, locator, files, guard, logger);
 
         // --demo never reads or writes the game files: its applier only describes what a write would do.
@@ -237,13 +238,14 @@ public sealed class AppServices : IDisposable
         // The character name scan: OCR of the selection screen with the green overlay. It reads the game, never writes it.
         var characterScan = new CharacterScanService(logger, roster, applyCombo.ClassChoices, localizer);
 
-        // The Preview page reads its layouts and the quick keys of the active account once, at startup (restart applies a change).
+        // The Preview page reads its display, layouts and the quick keys of the active account once, at startup (restart applies a change).
+        GameDisplaySettings? display = startup.DemoData ? DemoGameLayouts.Display : (string.IsNullOrWhiteSpace(locator.DataRoot) ? null : GameOptionLoader.Load(GameOptionLoader.PathIn(locator.DataRoot), logger));
         var activeAccount = startup.DemoData ? DemoGameFiles.AccountMain : locator.TryResolveAccount();
         var layouts = startup.DemoData
             ? DemoGameLayouts.Create()
             : activeAccount is null
                 ? null
-                : GameUiLayoutReader.Load(GameUiLayoutReader.DefaultPath(activeAccount), logger);
+                : GameUiLayoutReader.Load(GameUiLayoutReader.PathIn(locator.DataRoot, activeAccount), logger);
 
         // The quick keys of the character chosen on the Apply page. The demo uses the defaults and never opens a character file.
         Func<CharacterOption?, IReadOnlyDictionary<int, int>?> boundKeysOf = startup.DemoData

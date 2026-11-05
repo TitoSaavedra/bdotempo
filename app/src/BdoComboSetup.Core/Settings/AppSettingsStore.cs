@@ -10,13 +10,11 @@ namespace BdoComboSetup.Core.Settings;
 /// </summary>
 public sealed record AppSettings
 {
-    /// <summary>Default Black Desert data folder (the one that holds UserCache and _backups).</summary>
-    public const string DefaultGameDataRoot = @"C:\Users\TitoS\OneDrive\Documentos\Black Desert";
-
-    /// <summary>Default skill table, exported by the Scrappers project.</summary>
-
-    /// <summary>Black Desert data folder (the one with UserCache). Character files are written under it.</summary>
-    public string GameDataRoot { get; init; } = DefaultGameDataRoot;
+    /// <summary>
+    /// Black Desert data folder (the one with UserCache). Character files are written under it. Empty when none is saved:
+    /// <see cref="AppSettingsStore"/> then uses the first folder found on this PC, and the setup asks for one if none is found.
+    /// </summary>
+    public string GameDataRoot { get; init; } = string.Empty;
 
     /// <summary>
     /// The account the app works with, as chosen in the settings (a numeric folder under UserCache). Null means
@@ -203,28 +201,30 @@ public sealed class AppSettingsStore
             ["file"] = Path.GetFileName(_path),
         });
 
+        var loaded = new AppSettings();
         try
         {
             if (!File.Exists(_path))
             {
                 _logger.Info("settings.defaults", "No settings file yet; defaults are used");
-                return new AppSettings();
             }
-
-            var loaded = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(_path));
-            return loaded ?? new AppSettings();
+            else
+            {
+                loaded = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(_path)) ?? new AppSettings();
+            }
         }
         catch (JsonException ex)
         {
             _logger.Warn("settings.invalid", "settings.json is not valid JSON; defaults are used until the next save");
             scope.Fail(ex);
-            return new AppSettings();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             scope.Fail(ex);
-            return new AppSettings();
         }
+
+        // No folder is ever guessed: when none is saved the setup page asks for it (it only suggests the folders it finds).
+        return loaded;
     }
 
     private void Save()

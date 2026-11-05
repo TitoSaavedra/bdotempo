@@ -96,7 +96,7 @@ public sealed partial class SettingsPage : Page
     private void Page_Loaded(object sender, RoutedEventArgs e)
     {
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
-        App.Services.ApplyCombo.Characters.CollectionChanged += OnCharactersChanged;
+        App.Services.ApplyCombo.RosterCharacters.CollectionChanged += OnCharactersChanged;
         RefreshCharacterCards();
         RefreshAppearance();
         RefreshSwatches();
@@ -121,7 +121,7 @@ public sealed partial class SettingsPage : Page
     private void Page_Unloaded(object sender, RoutedEventArgs e)
     {
         ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
-        App.Services.ApplyCombo.Characters.CollectionChanged -= OnCharactersChanged;
+        App.Services.ApplyCombo.RosterCharacters.CollectionChanged -= OnCharactersChanged;
     }
 
     private void OnCharactersChanged(object? sender, NotifyCollectionChangedEventArgs e) => RefreshCharacterCards();
@@ -129,7 +129,8 @@ public sealed partial class SettingsPage : Page
     private void CharacterSearchBox_TextChanged(object sender, TextChangedEventArgs e) => RefreshCharacterCards();
 
     /// <summary>
-    /// Fills the grid with the characters that match the search box, and shows the count of the account's characters. The
+    /// Fills the grid with the characters that match the search box, and shows how many of the account's characters are ready
+    /// (have game data). Every character of the account is listed, the ones without game data dimmed. The
     /// match is the rule of the searchable lists (Core SearchText: accent- and case-insensitive, Spanish and English names).
     /// </summary>
     private void RefreshCharacterCards()
@@ -137,14 +138,16 @@ public sealed partial class SettingsPage : Page
         var apply = App.Services.ApplyCombo;
         var localizer = App.Services.Localizer;
         _shownCharacters.Clear();
-        foreach (var character in SearchText.Filter(apply.Characters, CharacterSearchBox.Text, apply.CharacterSearchTexts))
+        foreach (var character in SearchText.Filter(apply.RosterCharacters, CharacterSearchBox.Text, apply.CharacterSearchTexts))
         {
             _shownCharacters.Add(character);
         }
 
-        CharactersCountText.Text = apply.Characters.Count == 1
-            ? localizer.Get("Settings.CharactersCountOne")
-            : localizer.Format("Settings.CharactersCount", apply.Characters.Count);
+        var ready = apply.Characters.Count;
+        var total = apply.RosterCharacters.Count;
+        CharactersCountText.Text = total == 1
+            ? localizer.Format("Settings.CharactersReadyCountOne", ready)
+            : localizer.Format("Settings.CharactersReadyCount", ready, total);
         CharactersEmptyText.Visibility = _shownCharacters.Count == 0 && !string.IsNullOrWhiteSpace(CharacterSearchBox.Text)
             ? Visibility.Visible
             : Visibility.Collapsed;
@@ -240,6 +243,9 @@ public sealed partial class SettingsPage : Page
         var choice = classType is int value ? app.ApplyCombo.ClassChoices.FirstOrDefault(item => item.ClassType == value) : null;
         return choice?.Name ?? app.Localizer.Get("Settings.CharacterClassUnknown");
     }
+
+    /// <summary>The "no game data yet" badge of a character card: shown only for a character the game has not written yet.</summary>
+    public static Visibility NoGameDataVisibilityOf(bool hasGameData) => hasGameData ? Visibility.Collapsed : Visibility.Visible;
 
     /// <summary>Reloads the active account's characters (a change in the data folder or account applies here too).</summary>
     private async Task RefreshCharactersAsync()

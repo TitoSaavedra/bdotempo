@@ -104,6 +104,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         _currentCombo = currentCombo;
 
         Characters = new ObservableCollection<CharacterOption>();
+        RosterCharacters = new ObservableCollection<CharacterOption>();
         Classes = new ObservableCollection<ClassOptionViewModel>(
             catalog.Classes.Select(info => new ClassOptionViewModel(info, culture, assets, option => SelectClassByUserAsync(option))));
         ClassChoices = catalog.Classes
@@ -119,8 +120,23 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         SelectedComboSlot = ComboSlots[0];
     }
 
-    /// <summary>The live characters of the active account, in the game's order. Filled by RefreshCharactersAsync.</summary>
+    /// <summary>The characters that can be chosen (their game data is there), in the game's order. Filled by RefreshCharactersAsync.</summary>
     public ObservableCollection<CharacterOption> Characters { get; }
+
+    /// <summary>Every character of the account, ready or not, in the game's order: the Settings list. Filled by RefreshCharactersAsync.</summary>
+    public ObservableCollection<CharacterOption> RosterCharacters { get; }
+
+    /// <summary>The characters without game data: listed, dimmed and never selectable. Filled by RefreshCharactersAsync.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasUnreadyCharacters), nameof(UnreadyText))]
+    private IReadOnlyList<CharacterOption> _unreadyCharacters = [];
+
+    public bool HasUnreadyCharacters => UnreadyCharacters.Count > 0;
+
+    /// <summary>"2 personajes necesitan entrar una vez al juego", or the singular form.</summary>
+    public string UnreadyText => UnreadyCharacters.Count == 1
+        ? _localizer.Get("Apply.UnreadyOne")
+        : _localizer.Format("Apply.UnreadyCount", UnreadyCharacters.Count);
 
     /// <summary>Every class that can be picked in the character editor (all classes with a guide, in classType order).</summary>
     public IReadOnlyList<ClassChoice> ClassChoices { get; }
@@ -360,8 +376,9 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Reloads the live characters of the active account (the account can change in the settings, and a name or class can
-    /// change in the editor). The selected character is kept when it is still there; its class follows it when it changed.
+    /// Reloads the characters of the active account (the account can change in the settings, and a name or class can change
+    /// in the editor). Only the characters with game data can be chosen; the others are in <see cref="RosterCharacters"/>.
+    /// The selected character is kept when it is still there; its class follows it when it changed.
     /// </summary>
     public async Task RefreshCharactersAsync()
     {
@@ -385,15 +402,24 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         var previous = SelectedCharacter?.Pcid ?? _lastCharacterPcid;
         ActiveAccount = account;
         _entries = entries.ToDictionary(entry => entry.Pcid, StringComparer.Ordinal);
+        // The selectable list is filled first: the roster's change event (the Settings list and its count) reads both lists.
+        var roster = entries.Select(entry => new CharacterOption(entry.Name, entry.Pcid, entry.ClassType, entry.HasGameData)).ToList();
         Characters.Clear();
-        foreach (var entry in entries)
+        foreach (var option in roster.Where(option => option.HasGameData))
         {
-            Characters.Add(new CharacterOption(entry.Name, entry.Pcid, entry.ClassType));
+            Characters.Add(option);
         }
 
+        RosterCharacters.Clear();
+        foreach (var option in roster)
+        {
+            RosterCharacters.Add(option);
+        }
+
+        UnreadyCharacters = roster.Where(option => !option.HasGameData).ToList();
         CharactersMessage = account is null
             ? _localizer.Get("Apply.NoAccount")
-            : entries.Count == 0 ? _localizer.Get("Apply.NoCharacters") : string.Empty;
+            : Characters.Count == 0 ? _localizer.Get("Apply.NoCharacters") : string.Empty;
 
         var kept = Characters.FirstOrDefault(item => item.Pcid == previous) ?? Characters.FirstOrDefault();
         SelectedCharacter = kept;
@@ -408,7 +434,8 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 
         _logger.Info("apply.characters.refreshed", "Character list refreshed", new Dictionary<string, object?>
         {
-            ["characters"] = Characters.Count,
+            ["characters"] = RosterCharacters.Count,
+            ["selectable"] = Characters.Count,
             ["account_found"] = account is not null,
         });
     }

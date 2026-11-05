@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="BdoComboSetup.Views.Controls.SkillHoverCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:BdoComboSetup.Views.Controls"
+    MinWidth="200"
+    MaxWidth="320"
+    IsHitTestVisible="False">
+
+    <!-- The card of a skill's hover, drawn by SkillTooltips in a popup. It is one shared card: its content is set in code each time it
+         opens (SkillHoverCard.Fill), so nothing is bound once and kept stale. The rows are a fixed pool of 10 (the most a card shows);
+         a row that has no line is collapsed. Each row is one line, cut with an ellipsis, so the card has a known height. -->
+    <Border
+        Padding="12"
+        CornerRadius="10"
+        BorderThickness="1"
+        Background="{ThemeResource ToolTipBackground}"
+        BorderBrush="{ThemeResource ToolTipBorderBrush}">
+        <StackPanel Spacing="8">
+            <Grid ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <controls:AssetIcon
+                    x:Name="SkillIcon"
+                    Width="40"
+                    Height="40"
+                    VerticalAlignment="Center" />
+                <TextBlock
+                    x:Name="NameText"
+                    Grid.Column="1"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    VerticalAlignment="Center"
+                    MaxLines="2"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="Wrap"
+                    Foreground="{ThemeResource ToolTipForeground}" />
+            </Grid>
+
+            <TextBlock
+                x:Name="DescriptionText"
+                FontSize="12"
+                MaxLines="5"
+                TextTrimming="CharacterEllipsis"
+                TextWrapping="Wrap"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Visibility="Collapsed" />
+
+            <StackPanel x:Name="RowsPanel" Spacing="4">
+                <TextBlock x:Name="Row0" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Foreground="{ThemeResource ToolTipForeground}">
+                    <Run x:Name="Label0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Run x:Name="Value0" />
+                </TextBlock>
+                <TextBlock x:Name="Row1" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Foreground="{ThemeResource ToolTipForeground}">
+                    <Run x:Name="Label1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Run x:Name="Value1" />
+                </TextBlock>
+                <TextBlock x:Name="Row2" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Foreground="{ThemeResource ToolTipForeground}">
+                    <Run x:Name="Label2" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Run x:Name="Value2" />
+                </TextBlock>
+                <TextBlock x:Name="Row3" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Foreground="{ThemeResource ToolTipForeground}">
+                    <Run x:Name="Label3" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Run x:Name="Value3" />
+                </TextBlock>
+                <TextBlock x:Name="Row4" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Foreground="{ThemeResource ToolTipForeground}">
+                    <Run x:Name="Label4" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Run x:Name="Value4" />
+                </TextBlock>
+                <TextBlock x:Name="Row5" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Foreground="{ThemeResource ToolTipForeground}">
+                    <Run x:Name="Label5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Run x:Name="Value5" />
+                </TextBlock>
+                <TextBlock x:Name="Row6" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Foreground="{ThemeResource ToolTipForeground}">
+                    <Run x:Name="Label6" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Run x:Name="Value6" />
+                </TextBlock>
+                <TextBlock x:Name="Row7" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Foreground="{ThemeResource ToolTipForeground}">
+                    <Run x:Name="Label7" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Run x:Name="Value7" />
+                </TextBlock>
+                <TextBlock x:Name="Row8" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Foreground="{ThemeResource ToolTipForeground}">
+                    <Run x:Name="Label8" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Run x:Name="Value8" />
+                </TextBlock>
+                <TextBlock x:Name="Row9" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Foreground="{ThemeResource ToolTipForeground}">
+                    <Run x:Name="Label9" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Run x:Name="Value9" />
+                </TextBlock>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

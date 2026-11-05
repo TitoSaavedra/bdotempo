@@ -63,7 +63,8 @@
                 BorderBrush="{ThemeResource GlassLineBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
-                Padding="10,8">
+                Padding="10,8"
+                Opacity="{x:Bind local:ApplyComboPage.CharacterOpacityOf(HasGameData), Mode=OneTime}">
                 <Grid ColumnSpacing="10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -81,6 +82,12 @@
                             Text="{x:Bind local:SettingsPage.ClassNameOf(ClassType), Mode=OneTime}"
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <!-- Shown only while the game has not written the character's file; the tooltip says what to do. -->
+                        <TextBlock
+                            x:Uid="Settings/CharacterNoDataBadge"
+                            FontSize="11"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Visibility="{x:Bind local:SettingsPage.NoGameDataVisibilityOf(HasGameData), Mode=OneTime}" />
                     </StackPanel>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                         <Button

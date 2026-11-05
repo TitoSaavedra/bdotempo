@@ -155,23 +155,7 @@ public static class QuickSlotLegend
 /// </summary>
 public static partial class QuickSlotKeyReader
 {
-    private const string CharacterFolder = "11";
-    private const string CharacterFileName = "gameVariable.xml";
     private const string RowStart = "<ShortcutKey_Action_Key";
-
-    public static string CharacterFilePath(string accountFolder, string pcid)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(accountFolder);
-        ArgumentException.ThrowIfNullOrWhiteSpace(pcid);
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "Black Desert",
-            "UserCache",
-            accountFolder,
-            CharacterFolder,
-            pcid,
-            CharacterFileName);
-    }
 
     /// <summary>Quick slot to keyCode for every ShortcutKey_Action_Key row of the text. Unknown rows are skipped.</summary>
     public static IReadOnlyDictionary<int, int> Parse(string text)

@@ -299,7 +299,7 @@
                 </StackPanel>
             </Grid>
 
-            <!-- The side panel: the character stays on top, and one tab shows at a time below it: Casillas, Pendientes, Ajustes. -->
+            <!-- The side panel: the character stays on top, and one tab shows at a time below it: Casillas or Ajustes. -->
             <Grid Grid.Column="1" RowSpacing="8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -333,19 +333,20 @@
                     x:Name="EditorTabs"
                     SelectionChanged="EditorTabs_SelectionChanged">
                     <SelectorBarItem x:Name="TabSlotsItem" x:Uid="Preview/TabSlots" Tag="slots" IsSelected="True" />
-                    <SelectorBarItem x:Name="TabPendingItem" x:Uid="Preview/TabPending" Tag="pending" />
                     <SelectorBarItem x:Name="TabSettingsItem" x:Uid="Preview/TabSettings" Tag="settings" />
                 </SelectorBar>
 
-                <!-- The content of the selected tab scrolls on its own when it is taller than the panel. -->
-                <ScrollViewer
-                    Grid.Row="2"
-                    HorizontalScrollBarVisibility="Disabled"
-                    VerticalScrollBarVisibility="Auto">
-                    <StackPanel Spacing="8">
+                <!-- The content of the selected tab. Casillas fills the rest of the panel; Ajustes scrolls on its own when it is taller. -->
+                <Grid Grid.Row="2">
+
+                    <Grid x:Name="TabSlots" RowSpacing="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
 
                         <!-- Casillas: how many of the 20 slots hold a skill. -->
-                        <Border x:Name="TabSlots" Style="{StaticResource GlassPanelStyle}">
+                        <Border Style="{StaticResource GlassPanelStyle}">
                             <StackPanel Spacing="8">
                                 <Grid>
                                     <TextBlock x:Uid="Preview/Slots/Header" Style="{ThemeResource BodyStrongTextBlockStyle}" />
@@ -362,32 +363,51 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Pendientes: the skills of the guide that no slot holds. Dragging a slot here takes its skill out of the slot. -->
+                        <!-- Pending skills: the skills of the guide that no slot holds. Dragging a slot here takes its skill out of the slot. -->
                         <Border
+                            Grid.Row="1"
                             x:Name="PendingCard"
                             x:Uid="Apply/Remaining/Hint"
                             Style="{StaticResource GlassPanelStyle}"
                             BorderBrush="{ThemeResource SystemFillColorCautionBrush}"
                             AllowDrop="True"
                             DragOver="PendingCard_DragOver"
-                            Drop="PendingCard_Drop"
-                            Visibility="Collapsed">
-                            <StackPanel>
+                            Drop="PendingCard_Drop">
+                            <Grid RowSpacing="8">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
                                 <TextBlock x:Uid="Apply/Remaining/Title" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <ItemsControl
-                                    ItemsSource="{x:Bind Apply.Editor.PendingGroups, Mode=OneWay}"
-                                    ItemTemplate="{StaticResource PendingGroupTemplate}" />
+
+                                <!-- The list scrolls on its own inside the height that is left under the title. -->
+                                <ScrollViewer
+                                    Grid.Row="1"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl
+                                        ItemsSource="{x:Bind Apply.Editor.PendingGroups, Mode=OneWay}"
+                                        ItemTemplate="{StaticResource PendingGroupTemplate}" />
+                                </ScrollViewer>
+
                                 <TextBlock
+                                    Grid.Row="2"
                                     x:Uid="Apply/Remaining/Done"
-                                    Margin="0,10,0,0"
                                     FontSize="12"
                                     Foreground="{ThemeResource GlassSuccessBrush}"
                                     Visibility="{x:Bind Apply.Editor.HasPending, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-                            </StackPanel>
+                            </Grid>
                         </Border>
+                    </Grid>
 
-                        <!-- Ajustes: the layout and the hidden slots, then the view fit: three pills, the Fit button and the zoom. -->
-                        <Border x:Name="TabSettings" Style="{StaticResource GlassPanelStyle}" Visibility="Collapsed">
+                    <!-- Ajustes: the layout and the hidden slots, then the view fit: three pills, the Fit button and the zoom. -->
+                    <ScrollViewer
+                        x:Name="TabSettings"
+                        HorizontalScrollBarVisibility="Disabled"
+                        VerticalScrollBarVisibility="Auto"
+                        Visibility="Collapsed">
+                        <Border Style="{StaticResource GlassPanelStyle}">
                             <StackPanel Spacing="10">
                                 <TextBlock x:Uid="Preview/SettingsHeading" Style="{ThemeResource BodyStrongTextBlockStyle}" />
                                 <ComboBox
@@ -449,9 +469,9 @@
                                 </StackPanel>
                             </StackPanel>
                         </Border>
+                    </ScrollViewer>
 
-                    </StackPanel>
-                </ScrollViewer>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

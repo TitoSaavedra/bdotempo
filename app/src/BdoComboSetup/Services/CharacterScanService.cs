@@ -42,6 +42,12 @@ public sealed class CharacterScanService : IDisposable
     private bool _selectionChecked;
     private bool _disposed;
 
+    /// <summary>What the last reading was based on: the frames analyzed in this scan, and the size and blackness of the last one.</summary>
+    private int _framesRead;
+    private int _lastWidth;
+    private int _lastHeight;
+    private bool _lastFrameBlack;
+
     public CharacterScanService(
         AppLogger logger,
         ICharacterSource characters,
@@ -89,25 +95,27 @@ public sealed class CharacterScanService : IDisposable
             return false;
         }
 
+        _framesRead = 0;
+        _lastWidth = 0;
+        _lastHeight = 0;
+        _lastFrameBlack = false;
         var window = _locator.Find();
         if (window is null)
         {
-            _logger.Info("character_scan.no_window", "The scan found no game window");
-            ViewModel.ReportFailure("Characters.ScanGameMissing");
+            ReportBlocked("game_not_found", "Characters.ScanGameMissing");
             return false;
         }
 
         if (window.IsMinimized)
         {
-            _logger.Info("character_scan.minimized", "The scan found the game window minimized");
-            ViewModel.ReportFailure("Characters.ScanGameMinimized");
+            ReportBlocked("game_minimized", "Characters.ScanGameMinimized");
             return false;
         }
 
         _ocr ??= CharacterNameOcr.TryCreate(_logger);
         if (_ocr is null)
         {
-            ViewModel.ReportFailure("Characters.ScanOcrMissing");
+            ReportBlocked("no_ocr_language", "Characters.ScanOcrMissing");
             return false;
         }
 
@@ -124,7 +132,7 @@ public sealed class CharacterScanService : IDisposable
         _window = window.Handle;
         if (!_overlay.Show(_window))
         {
-            ViewModel.ReportFailure("Characters.ScanOverlayFailed");
+            ReportBlocked("overlay_failed", "Characters.ScanOverlayFailed");
             return false;
         }
 
@@ -141,9 +149,21 @@ public sealed class CharacterScanService : IDisposable
         return true;
     }
 
-    /// <summary>The player is done: stops the capture and builds the review table (or reports the count mismatch).</summary>
+    /// <summary>
+    /// The player is done: stops the capture and builds the review table. When nothing was read, the reason is shown instead
+    /// of the count; a count mismatch is shown by the view model.
+    /// </summary>
     public void Finish()
     {
+        if (ViewModel.RowsRead == 0)
+        {
+            // The reason is read before the capture stops, because stopping changes the capture state.
+            var (reason, messageKey) = NoRowsReason();
+            StopCapture("finished");
+            ReportBlocked(reason, messageKey);
+            return;
+        }
+
         StopCapture("finished");
         ViewModel.Finish();
     }
@@ -204,7 +224,7 @@ public sealed class CharacterScanService : IDisposable
             if (window is null)
             {
                 StopCapture("game_closed");
-                ViewModel.ReportFailure("Characters.ScanGameMissing");
+                ReportBlocked("game_not_found", "Characters.ScanGameMissing");
                 return;
             }
 
@@ -218,7 +238,7 @@ public sealed class CharacterScanService : IDisposable
             if (_screen.State == GameScreenState.Failed)
             {
                 StopCapture("capture_failed");
-                ViewModel.ReportFailure("Characters.ScanCaptureFailed");
+                ReportBlocked("capture_failed", "Characters.ScanCaptureFailed");
                 return;
             }
 
@@ -236,6 +256,10 @@ public sealed class CharacterScanService : IDisposable
             _busy = true;
             _lastFrameVersion = version;
             _lastOcrMs = now;
+            _framesRead++;
+            _lastWidth = frame.Width;
+            _lastHeight = frame.Height;
+            _lastFrameBlack = FrameDarkness.IsMostlyBlack(frame);
             try
             {
                 var page = await _ocr.ReadAsync(frame, _classIcons);
@@ -247,10 +271,17 @@ public sealed class CharacterScanService : IDisposable
                 if (!_selectionChecked)
                 {
                     _selectionChecked = true;
+                    if (_lastFrameBlack)
+                    {
+                        StopCapture("black_frame");
+                        ReportBlocked("black_frame", "Characters.ScanFrameBlack");
+                        return;
+                    }
+
                     if (!page.IsSelectionScreen)
                     {
                         StopCapture("not_selection");
-                        ViewModel.ReportFailure("Characters.ScanNotSelectionScreen");
+                        ReportBlocked("not_selection", "Characters.ScanNotSelectionScreen");
                         return;
                     }
                 }
@@ -274,6 +305,44 @@ public sealed class CharacterScanService : IDisposable
             StopCapture("failed");
             ViewModel.ReportFailure("Characters.ScanFailed");
         }
+    }
+
+    /// <summary>
+    /// The reason nothing was read, from the capture state and the last frame: the window is missing, minimized or failed
+    /// (before any frame), a black last frame, or a frame that showed no names (also when the capture delivered no frame yet).
+    /// </summary>
+    private (string Reason, string MessageKey) NoRowsReason()
+    {
+        if (_framesRead == 0)
+        {
+            return _screen.State switch
+            {
+                GameScreenState.NotRunning => ("game_not_found", "Characters.ScanGameMissing"),
+                GameScreenState.Minimized => ("game_minimized", "Characters.ScanGameMinimized"),
+                GameScreenState.Failed => ("capture_failed", "Characters.ScanCaptureFailed"),
+                _ => ("no_frame", "Characters.ScanNoNames"),
+            };
+        }
+
+        return _lastFrameBlack
+            ? ("black_frame", "Characters.ScanFrameBlack")
+            : ("no_names", "Characters.ScanNoNames");
+    }
+
+    /// <summary>
+    /// Shows why the scan cannot read anything and logs the reason as a warning, with the frame size and the OCR language
+    /// (never the pixels). The caller has already stopped the capture.
+    /// </summary>
+    private void ReportBlocked(string reason, string messageKey)
+    {
+        _logger.Warn("character_scan.blocked", "The character scan could not read the names", new Dictionary<string, object?>
+        {
+            ["reason"] = reason,
+            ["frame_width"] = _lastWidth > 0 ? _lastWidth : null,
+            ["frame_height"] = _lastHeight > 0 ? _lastHeight : null,
+            ["ocr_language"] = _ocr?.LanguageTag,
+        });
+        ViewModel.ReportFailure(messageKey);
     }
 
     private void StopCapture(string reason)

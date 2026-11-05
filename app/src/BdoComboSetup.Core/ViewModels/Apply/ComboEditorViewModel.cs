@@ -119,11 +119,31 @@ public sealed partial class ComboEditorViewModel : ObservableObject
 
     private void RaiseRemainingChanged()
     {
+        RefreshSkillSlots();
         _pendingGroups = BuildPending();
         OnPropertyChanged(nameof(PendingGroups));
         OnPropertyChanged(nameof(HasPending));
         OnPropertyChanged(nameof(UsedSlotCount));
         OnPropertyChanged(nameof(UsedSlotsText));
+    }
+
+    /// <summary>
+    /// Gives every step the cooldown slots of its skill, in slot order, so a skill placed in several slots shows all of them on
+    /// each of its cards. A step without a cooldown slot shows none.
+    /// </summary>
+    private void RefreshSkillSlots()
+    {
+        var steps = AllSteps().ToList();
+        foreach (var step in steps)
+        {
+            var skillNo = step.PrimarySkill?.SkillNo;
+            var slots = steps
+                .Where(item => item.CooldownSlot is not null && skillNo is not null && item.PrimarySkill?.SkillNo == skillNo)
+                .Select(item => item.CooldownSlot!.Value)
+                .OrderBy(slot => slot)
+                .ToList();
+            step.SetSkillSlots(step.CooldownSlot is null || skillNo is null ? [] : slots);
+        }
     }
 
     private List<PendingGroup> BuildPending()
@@ -532,6 +552,82 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Puts a step on a board position the way a drop does. A step dragged from a chain card that holds no position on the
+    /// board is placed, and a step that is moved from a cell follows the swap rule. When <see cref="DropMakesDuplicate"/> is
+    /// true, the position gets a new step with the same skill instead, inserted right after the step in its chain; the step
+    /// keeps its position. The guide is never touched.
+    /// </summary>
+    /// <returns>The step that holds the position: the duplicate when one was made, otherwise <paramref name="step"/>.</returns>
+    public ComboStepViewModel DropOnBoard(ComboStepViewModel step, ComboBoard board, int position, BoardDrop how)
+    {
+        ArgumentNullException.ThrowIfNull(step);
+        ValidatePosition(board, position);
+        var chain = FindChain(step) ?? throw new ArgumentException("The step is not in this combo.", nameof(step));
+        if (!DropMakesDuplicate(step, board, position, how))
+        {
+            SlotAssignment.Assign(AllSteps(), step, position, item => SlotOf(item, board), (item, value) => SetSlot(item, board, value));
+            return step;
+        }
+
+        var copy = new ComboStepViewModel(null, [step.PrimarySkill!], null, null, null, _localizer, _culture, memo: step.Memo);
+        Attach(copy);
+        chain.Steps.Insert(chain.Steps.IndexOf(step) + 1, copy);
+        SlotAssignment.Assign(AllSteps(), copy, position, item => SlotOf(item, board), (item, value) => SetSlot(item, board, value));
+        _logger.Info("apply.step.duplicated", "A step was copied onto a board position; the original keeps its position", new Dictionary<string, object?>
+        {
+            ["chain"] = chain.Index,
+            ["board"] = board.ToString(),
+            ["position"] = position,
+            ["skill_no"] = copy.PrimarySkill?.SkillNo,
+        });
+        return copy;
+    }
+
+    /// <summary>
+    /// True when a drop of the step on the position makes a duplicate rather than a move: the step is copied (<see cref="BoardDrop.Copy"/>),
+    /// or it is dragged from a chain card while it already holds a position on this board. A step dropped on the position it
+    /// holds changes nothing, so it is not a duplicate either.
+    /// </summary>
+    public bool DropMakesDuplicate(ComboStepViewModel step, ComboBoard board, int position, BoardDrop how)
+    {
+        ArgumentNullException.ThrowIfNull(step);
+        var held = SlotOf(step, board);
+        if (held == position || step.PrimarySkill is null)
+        {
+            return false;
+        }
+
+        return how == BoardDrop.Copy || (how == BoardDrop.Place && held is not null);
+    }
+
+    private static void ValidatePosition(ComboBoard board, int position)
+    {
+        if (board == ComboBoard.Cooldown && !SlotAssignment.IsCooldownSlot(position))
+        {
+            throw new ArgumentOutOfRangeException(nameof(position), position, "Cooldown slots are 1 to 20.");
+        }
+
+        if (board == ComboBoard.Quick && !SlotAssignment.IsQuickPosition(position))
+        {
+            throw new ArgumentOutOfRangeException(nameof(position), position, $"Quick positions are 1 to {QuickSlotKeys.ComboPositionCount}.");
+        }
+    }
+
+    private static int? SlotOf(ComboStepViewModel step, ComboBoard board) => board == ComboBoard.Cooldown ? step.CooldownSlot : step.QuickPosition;
+
+    private static void SetSlot(ComboStepViewModel step, ComboBoard board, int? value)
+    {
+        if (board == ComboBoard.Cooldown)
+        {
+            step.CooldownSlot = value;
+        }
+        else
+        {
+            step.QuickPosition = value;
+        }
+    }
+
+    /// <summary>
     /// Puts another skill in the step that holds a cooldown slot: the edit that the "Slot editor" page makes. The step keeps
     /// its place in the chain, its keys, notes, memo, quick position and custom name; only the skill changes.
     /// <para>
@@ -760,12 +856,13 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     /// The default layout of a guide with no saved profile. Only buff and combo chains take part (mobility is a manual
     /// pool). The main combo (the first combo chain of the guide) fills cooldown slots 1..20 in guide order, so none of its
     /// steps is lost. The steps of the other combos continue up to slot 12, then the buff steps take the slots from 13 (or
-    /// right after the main combo when it is longer) up to 20. A skill takes one slot, at its first step. The key legend of
-    /// the step becomes the memo, except the player's own key ("Hotkey" or "Hotbar").
+    /// right after the main combo when it is longer) up to 20. Every step takes its own slot, even when its skill repeats
+    /// (a skill cast again at the end of the combo keeps its second slot). The key legend of the step becomes the memo,
+    /// except the player's own key ("Hotkey" or "Hotbar").
     /// </summary>
     private Dictionary<(int Chain, int Step), DefaultSlot> DefaultSlots()
     {
-        var placements = new List<(int Chain, int Step, ComboChainKind Kind, ComboSkill Skill, string? Keys)>();
+        var placements = new List<(int Chain, int Step, ComboChainKind Kind, string? Keys)>();
         var mainComboChain = -1;
         for (var chainIndex = 0; chainIndex < _guide.Chains.Count; chainIndex++)
         {
@@ -785,24 +882,18 @@ public sealed partial class ComboEditorViewModel : ObservableObject
             {
                 if (chain.Steps[stepIndex].Skills.Count > 0)
                 {
-                    placements.Add((chainIndex, stepIndex, kind, chain.Steps[stepIndex].Skills[0], chain.Steps[stepIndex].Keys));
+                    placements.Add((chainIndex, stepIndex, kind, chain.Steps[stepIndex].Keys));
                 }
             }
         }
 
         var result = new Dictionary<(int Chain, int Step), DefaultSlot>();
-        var placedSkills = new HashSet<int>();
         var nextComboSlot = FirstComboSlot;
         var nextBuffSlot = 0;
         var ordered = placements
             .OrderBy(item => item.Chain == mainComboChain ? 0 : item.Kind == ComboChainKind.Combo ? 1 : 2);
         foreach (var placement in ordered)
         {
-            if (!placedSkills.Add(placement.Skill.SkillNo))
-            {
-                continue;
-            }
-
             int slot;
             if (placement.Kind == ComboChainKind.Combo)
             {

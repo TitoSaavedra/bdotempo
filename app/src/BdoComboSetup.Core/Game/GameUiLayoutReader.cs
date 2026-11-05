@@ -15,15 +15,12 @@ public static partial class GameUiLayoutReader
 {
     public const string FileName = "gamevariable.xml";
 
-    public static string DefaultPath(string accountFolder)
+    /// <summary>The file of an account under a Black Desert data folder: DataRoot\UserCache\&lt;account&gt;\gamevariable.xml.</summary>
+    public static string PathIn(string dataRoot, string accountFolder)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(dataRoot);
         ArgumentException.ThrowIfNullOrWhiteSpace(accountFolder);
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "Black Desert",
-            "UserCache",
-            accountFolder,
-            FileName);
+        return Path.Combine(dataRoot, "UserCache", accountFolder, FileName);
     }
 
     /// <summary>Parses the file text. Never throws for malformed rows: they are counted and skipped.</summary>

@@ -411,10 +411,20 @@ public sealed partial class CharacterScanViewModel : ObservableObject
         IsScanning = false;
     }
 
-    /// <summary>Shows a failure of the capture or of the OCR on the page.</summary>
+    /// <summary>How many characters have a reading so far.</summary>
+    public int RowsRead => _accumulator.Count;
+
+    /// <summary>
+    /// Shows why the scan cannot read anything. The count is dropped when nothing was read: "0 de 3" says nothing, the reason does.
+    /// </summary>
     public void ReportFailure(string messageKey)
     {
         IsScanning = false;
+        if (_accumulator.Count == 0)
+        {
+            CountText = string.Empty;
+        }
+
         ShowMessage(StatusSeverity.Error, _localizer.Get(messageKey));
     }
 

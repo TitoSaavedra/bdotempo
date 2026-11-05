@@ -24,7 +24,7 @@
 
         <!-- One character of the account in the choice dialog: class icon and name only. Name and class are edited in Settings. -->
         <DataTemplate x:Key="CharacterTemplate" x:DataType="combo:CharacterOption">
-            <Grid ColumnSpacing="10" Padding="4,6">
+            <Grid ColumnSpacing="10" Padding="4,6" Opacity="{x:Bind local:ApplyComboPage.CharacterOpacityOf(HasGameData), Mode=OneTime}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -85,118 +85,125 @@
         </DataTemplate>
 
         <!-- One cooldown slot of the board (1 to 20): its number, the skill in it, and the accent outline when selected.
-             A click selects its step; a filled slot is dragged to another cell or out of the board, a step is dropped on it. -->
+             A tap selects its step; a filled slot is dragged to another cell or out of the board, and every cell takes a drop.
+             The cell is a Grid with a transparent background, not a Button: a Button's own pointer handling swallowed the drag
+             (the same as the Preview's slots, which accept drops). -->
         <DataTemplate x:Key="CooldownCellTemplate" x:DataType="local:ApplyBoardCell">
-            <Button
-                Click="BoardCell_Click"
-                Padding="0"
-                Margin="0"
+            <Grid
                 MinHeight="46"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Stretch"
-                VerticalContentAlignment="Stretch"
                 Background="Transparent"
-                BorderThickness="0"
                 AllowDrop="True"
                 CanDrag="{x:Bind HasStep, Mode=OneTime}"
                 DragStarting="BoardCell_DragStarting"
+                DragEnter="BoardCell_DragOver"
                 DragOver="BoardCell_DragOver"
+                DragLeave="BoardCell_DragLeave"
                 Drop="BoardCell_Drop"
                 DropCompleted="Drag_Completed"
+                Tapped="BoardCell_Tapped"
                 AutomationProperties.Name="{x:Bind Caption, Mode=OneTime}"
                 ToolTipService.ToolTip="{x:Bind Caption, Mode=OneTime}">
-                <Grid>
-                    <Border
-                        CornerRadius="8"
-                        BorderThickness="1"
-                        Background="{ThemeResource ControlFillColorSecondaryBrush}"
-                        BorderBrush="{ThemeResource GlassLineBrush}" />
-                    <Border
-                        CornerRadius="8"
-                        BorderThickness="2"
-                        BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
-                        Visibility="{x:Bind IsSelected, Mode=OneTime, Converter={StaticResource BoolToVisibility}}" />
-                    <TextBlock
-                        Text="{x:Bind Label, Mode=OneTime}"
-                        Margin="6,4,0,0"
-                        FontSize="10"
-                        FontWeight="SemiBold"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Top"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                    <controls:AssetIcon
-                        Width="28"
-                        Height="28"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Visibility="{x:Bind HasStep, Mode=OneTime, Converter={StaticResource BoolToVisibility}}"
-                        controls:SkillTooltips.Skill="{x:Bind Step.PrimarySkill, Mode=OneTime}"
-                        IconSource="{x:Bind Step.PrimarySkill.OpenIcon, Mode=OneTime}"
-                        Glyph="{x:Bind Step.Glyph, Mode=OneTime}" />
-                </Grid>
-            </Button>
+                <Border
+                    CornerRadius="8"
+                    BorderThickness="1"
+                    Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                    BorderBrush="{ThemeResource GlassLineBrush}" />
+                <Border
+                    CornerRadius="8"
+                    BorderThickness="2"
+                    BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                    Visibility="{x:Bind IsSelected, Mode=OneTime, Converter={StaticResource BoolToVisibility}}" />
+                <Border
+                    CornerRadius="8"
+                    BorderThickness="2"
+                    BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                    Background="{ThemeResource AccentFillColorSecondaryBrush}"
+                    IsHitTestVisible="False"
+                    Visibility="{x:Bind IsDropTarget, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock
+                    Text="{x:Bind Label, Mode=OneTime}"
+                    Margin="6,4,0,0"
+                    FontSize="10"
+                    FontWeight="SemiBold"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    IsHitTestVisible="False"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                <controls:AssetIcon
+                    Width="28"
+                    Height="28"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Visibility="{x:Bind HasStep, Mode=OneTime, Converter={StaticResource BoolToVisibility}}"
+                    controls:SkillTooltips.Skill="{x:Bind Step.PrimarySkill, Mode=OneTime}"
+                    IconSource="{x:Bind Step.PrimarySkill.OpenIcon, Mode=OneTime}"
+                    Glyph="{x:Bind Step.Glyph, Mode=OneTime}" />
+            </Grid>
         </DataTemplate>
 
         <!-- One quick position of the board: its number, its input label when it has one, and the skill on it. Dragged and dropped
              like a cooldown cell. -->
         <DataTemplate x:Key="QuickCellTemplate" x:DataType="local:ApplyBoardCell">
-            <Button
-                Click="BoardCell_Click"
-                Padding="0"
-                Margin="0"
+            <Grid
                 MinHeight="40"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Stretch"
-                VerticalContentAlignment="Stretch"
                 Background="Transparent"
-                BorderThickness="0"
                 AllowDrop="True"
                 CanDrag="{x:Bind HasStep, Mode=OneTime}"
                 DragStarting="BoardCell_DragStarting"
+                DragEnter="BoardCell_DragOver"
                 DragOver="BoardCell_DragOver"
+                DragLeave="BoardCell_DragLeave"
                 Drop="BoardCell_Drop"
                 DropCompleted="Drag_Completed"
+                Tapped="BoardCell_Tapped"
                 AutomationProperties.Name="{x:Bind Caption, Mode=OneTime}"
                 ToolTipService.ToolTip="{x:Bind Caption, Mode=OneTime}">
-                <Grid>
-                    <Border
-                        CornerRadius="8"
-                        BorderThickness="1"
-                        Background="{ThemeResource ControlFillColorSecondaryBrush}"
-                        BorderBrush="{ThemeResource GlassLineBrush}" />
-                    <Border
-                        CornerRadius="8"
-                        BorderThickness="2"
-                        BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
-                        Visibility="{x:Bind IsSelected, Mode=OneTime, Converter={StaticResource BoolToVisibility}}" />
-                    <TextBlock
-                        Text="{x:Bind Label, Mode=OneTime}"
-                        Margin="3,2,0,0"
-                        FontSize="9"
-                        FontWeight="SemiBold"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Top"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                    <TextBlock
-                        Text="{x:Bind Input, Mode=OneTime}"
-                        Margin="0,2,3,0"
-                        FontSize="9"
-                        FontWeight="SemiBold"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Top"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Visibility="{x:Bind HasInput, Mode=OneTime, Converter={StaticResource BoolToVisibility}}" />
-                    <controls:AssetIcon
-                        Width="20"
-                        Height="20"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Visibility="{x:Bind HasStep, Mode=OneTime, Converter={StaticResource BoolToVisibility}}"
-                        controls:SkillTooltips.Skill="{x:Bind Step.PrimarySkill, Mode=OneTime}"
-                        IconSource="{x:Bind Step.PrimarySkill.OpenIcon, Mode=OneTime}"
-                        Glyph="{x:Bind Step.Glyph, Mode=OneTime}" />
-                </Grid>
-            </Button>
+                <Border
+                    CornerRadius="8"
+                    BorderThickness="1"
+                    Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                    BorderBrush="{ThemeResource GlassLineBrush}" />
+                <Border
+                    CornerRadius="8"
+                    BorderThickness="2"
+                    BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                    Visibility="{x:Bind IsSelected, Mode=OneTime, Converter={StaticResource BoolToVisibility}}" />
+                <Border
+                    CornerRadius="8"
+                    BorderThickness="2"
+                    BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                    Background="{ThemeResource AccentFillColorSecondaryBrush}"
+                    IsHitTestVisible="False"
+                    Visibility="{x:Bind IsDropTarget, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock
+                    Text="{x:Bind Label, Mode=OneTime}"
+                    Margin="3,2,0,0"
+                    FontSize="9"
+                    FontWeight="SemiBold"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    IsHitTestVisible="False"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                <TextBlock
+                    Text="{x:Bind Input, Mode=OneTime}"
+                    Margin="0,2,3,0"
+                    FontSize="9"
+                    FontWeight="SemiBold"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    IsHitTestVisible="False"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Visibility="{x:Bind HasInput, Mode=OneTime, Converter={StaticResource BoolToVisibility}}" />
+                <controls:AssetIcon
+                    Width="20"
+                    Height="20"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Visibility="{x:Bind HasStep, Mode=OneTime, Converter={StaticResource BoolToVisibility}}"
+                    controls:SkillTooltips.Skill="{x:Bind Step.PrimarySkill, Mode=OneTime}"
+                    IconSource="{x:Bind Step.PrimarySkill.OpenIcon, Mode=OneTime}"
+                    Glyph="{x:Bind Step.Glyph, Mode=OneTime}" />
+            </Grid>
         </DataTemplate>
 
         <!-- One step of a chain. The order of the list is the order of the combo. -->
@@ -539,6 +546,45 @@
                         FontSize="12"
                         TextWrapping="Wrap"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                    <!-- The characters the game has not written yet: counted here, listed in the flyout (dimmed, not selectable). -->
+                    <StackPanel
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        Visibility="{x:Bind ViewModel.HasUnreadyCharacters, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock
+                            Text="{x:Bind ViewModel.UnreadyText, Mode=OneWay}"
+                            FontSize="12"
+                            TextWrapping="Wrap"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <Button
+                            x:Uid="Apply/UnreadyLinkButton"
+                            FontSize="12"
+                            Padding="4,0"
+                            MinHeight="0"
+                            MinWidth="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}">
+                            <Button.Flyout>
+                                <Flyout>
+                                    <StackPanel Spacing="8" Width="340">
+                                        <TextBlock
+                                            x:Uid="Apply/UnreadyFlyoutHint"
+                                            FontSize="12"
+                                            TextWrapping="Wrap"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        <ListView
+                                            ItemsSource="{x:Bind ViewModel.UnreadyCharacters, Mode=OneWay}"
+                                            ItemTemplate="{StaticResource CharacterTemplate}"
+                                            SelectionMode="None"
+                                            MaxHeight="300" />
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                    </StackPanel>
                 </StackPanel>
 
                 <TextBlock Grid.Row="2" x:Uid="Apply/ClassHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" Padding="6,0" />

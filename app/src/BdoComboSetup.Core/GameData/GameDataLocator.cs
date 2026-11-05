@@ -30,6 +30,8 @@ public sealed class GameDataLocator
 {
     public const string CharacterFileName = "gameVariable.xml";
 
+    private const string NotSetMessage = "the Black Desert data folder is not set or does not exist; choose it in Settings";
+
     private static readonly Regex DigitsRe = new("\\A[0-9]+\\z");
 
     private readonly Func<string> _dataRoot;
@@ -65,7 +67,20 @@ public sealed class GameDataLocator
         }
     }
 
-    public string UserCacheDir => Path.Combine(DataRoot, "UserCache");
+    /// <summary>DataRoot\UserCache. Refuses to build it from an empty data folder, which would be a path relative to the working folder.</summary>
+    public string UserCacheDir
+    {
+        get
+        {
+            var root = DataRoot;
+            if (string.IsNullOrWhiteSpace(root))
+            {
+                throw new OperationRefusedException(OperationProblem.AccountNotFound, NotSetMessage);
+            }
+
+            return Path.Combine(root, "UserCache");
+        }
+    }
 
     public static bool IsDigits(string value) => DigitsRe.IsMatch(value);
 
@@ -89,10 +104,7 @@ public sealed class GameDataLocator
     /// </summary>
     public IReadOnlyList<AccountInfo> FindAccounts()
     {
-        if (!Directory.Exists(UserCacheDir))
-        {
-            throw new OperationRefusedException(OperationProblem.AccountNotFound, "UserCache folder not found under the data directory");
-        }
+        RequireDataRoot();
 
         var accounts = new List<AccountInfo>();
         foreach (var directory in Directory.EnumerateDirectories(UserCacheDir).OrderBy(d => d, StringComparer.Ordinal))
@@ -148,6 +160,39 @@ public sealed class GameDataLocator
     /// modified most recently (logged as a warning). Throws <see cref="OperationRefusedException"/> when there is none.
     /// </summary>
     public string ResolveAccount()
+    {
+        RequireDataRoot();
+
+        var account = PickAccount();
+        if (ListCharacters(account).Count == 0)
+        {
+            _logger.Warn(
+                "locator.account_no_characters",
+                "The account has no character folder yet; log in to the game with a character once",
+                new Dictionary<string, object?> { ["account"] = account });
+        }
+
+        return account;
+    }
+
+    /// <summary>Throws when the data folder is not set, does not exist or has no UserCache folder. The messages have no path in them.</summary>
+    private void RequireDataRoot()
+    {
+        var state = CheckDataRoot(DataRoot);
+        if (state == DataRootState.Missing)
+        {
+            throw new OperationRefusedException(OperationProblem.AccountNotFound, NotSetMessage);
+        }
+
+        if (state == DataRootState.NoUserCache)
+        {
+            throw new OperationRefusedException(
+                OperationProblem.AccountNotFound,
+                "the data folder has no UserCache folder; choose the Black Desert data folder in Settings");
+        }
+    }
+
+    private string PickAccount()
     {
         var explicitAccount = ExplicitAccount;
         if (explicitAccount is not null)

@@ -24,8 +24,7 @@ public sealed record ComboFile(
     string Source,
     string Description,
     IReadOnlyDictionary<string, (int First, int Last)> Layout,
-    IReadOnlyList<ComboEntry> Entries,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<ComboEntry> Entries);
 
 /// <summary>
 /// Reads combo files (schema 2) and turns them into cooldown slots. The layout names three groups in fixed order:
@@ -86,27 +85,6 @@ public static class ComboFileReader
                 throw Invalid("combo must have at least one entry in 'slots'");
             }
 
-            var warnings = new List<string>();
-            var seen = new Dictionary<int, int>();
-            foreach (var entry in entries)
-            {
-                if (seen.TryGetValue(entry.SkillNo, out var firstSlot))
-                {
-                    var message = $"same skillNo used in more than one slot (first slot {firstSlot}, slot {entry.Slot})";
-                    warnings.Add(message);
-                    logger.Warn("combo.duplicate_skill", "same skillNo used in more than one slot", new Dictionary<string, object?>
-                    {
-                        ["skill_no"] = entry.SkillNo,
-                        ["first_slot"] = firstSlot,
-                        ["slot"] = entry.Slot,
-                    });
-                }
-                else
-                {
-                    seen[entry.SkillNo] = entry.Slot;
-                }
-            }
-
             var result = new ComboFile(
                 name,
                 ReadString(root, "class"),
@@ -115,8 +93,7 @@ public static class ComboFileReader
                 ReadString(root, "source"),
                 ReadString(root, "description"),
                 layout,
-                entries,
-                warnings);
+                entries);
             logger.Info("combo.loaded", "Combo file loaded", new Dictionary<string, object?>
             {
                 ["combo"] = name,

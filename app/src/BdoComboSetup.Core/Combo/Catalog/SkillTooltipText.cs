@@ -35,6 +35,15 @@ public static class SkillTooltipText
     private const int GlyphLetters = 2;
 
     /// <summary>
+    /// The most lines a hover card shows, so it never grows past its height. A longer list keeps the first lines and ends with
+    /// the <see cref="MoreMarker"/> row, which stands for the rest.
+    /// </summary>
+    public const int MaxRows = 10;
+
+    /// <summary>The row that stands for the lines a full card leaves out.</summary>
+    public const string MoreMarker = "…";
+
+    /// <summary>
     /// Builds the tooltip of a skill. The name is in the app language (the game tooltip's name when the guide has none). Labeled
     /// lines are "label: value"; the rest are plain text lines. Blank fields are left out, so no empty line is ever built.
     /// </summary>
@@ -62,9 +71,13 @@ public static class SkillTooltipText
             Description: string.IsNullOrWhiteSpace(skill.DescriptionEs) ? null : skill.DescriptionEs.Trim(),
             Glyph: GlyphOf(name),
             OpenIcon: skill.OpenIcon,
-            Lines: lines);
+            Lines: LimitRows(lines));
     }
 
+    /// <summary>
+    /// Adds the game's lines in priority order: keys, level, cooldown, costs, damage, PvP, then the plain text lines. The card keeps
+    /// the first <see cref="MaxRows"/> of them, so the long tail is what gets cut.
+    /// </summary>
     private static void AddGameLines(SkillTooltip game, ILocalizer localizer, CultureInfo culture, List<SkillTooltipLine> lines)
     {
         var keys = game.Keys.Where(key => !string.IsNullOrWhiteSpace(key)).ToList();
@@ -78,6 +91,11 @@ public static class SkillTooltipText
             lines.Add(Labeled(localizer.Get("SkillTooltip.Level"), level.ToString(culture)));
         }
 
+        if (game.CooldownSeconds is { } seconds and > 0d)
+        {
+            lines.Add(Labeled(localizer.Get("SkillTooltip.Cooldown"), localizer.Format("SkillTooltip.CooldownValue", Number(seconds, culture))));
+        }
+
         foreach (var cost in game.Costs)
         {
             var value = $"{cost.Value} {cost.Type}".Trim();
@@ -88,11 +106,6 @@ public static class SkillTooltipText
 
             var label = string.IsNullOrWhiteSpace(cost.Label) ? localizer.Get("SkillTooltip.Cost") : cost.Label;
             lines.Add(Labeled(label, value));
-        }
-
-        if (game.CooldownSeconds is { } seconds and > 0d)
-        {
-            lines.Add(Labeled(localizer.Get("SkillTooltip.Cooldown"), localizer.Format("SkillTooltip.CooldownValue", Number(seconds, culture))));
         }
 
         foreach (var row in game.Damage)
@@ -115,6 +128,19 @@ public static class SkillTooltipText
         lines.AddRange(PlainLines(game.Protection));
         lines.AddRange(PlainLines(game.Extras));
         lines.AddRange(PlainLines(game.Features));
+    }
+
+    /// <summary>Keeps the first <see cref="MaxRows"/> lines; when some are left out, the last row becomes the <see cref="MoreMarker"/>.</summary>
+    private static IReadOnlyList<SkillTooltipLine> LimitRows(IReadOnlyList<SkillTooltipLine> lines)
+    {
+        if (lines.Count <= MaxRows)
+        {
+            return lines;
+        }
+
+        var kept = lines.Take(MaxRows - 1).ToList();
+        kept.Add(new SkillTooltipLine(string.Empty, MoreMarker));
+        return kept;
     }
 
     private static IEnumerable<SkillTooltipLine> PlainLines(IEnumerable<string> texts) =>

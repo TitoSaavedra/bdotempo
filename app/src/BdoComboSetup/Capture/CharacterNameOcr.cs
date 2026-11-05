@@ -64,6 +64,9 @@ internal sealed class CharacterNameOcr
         }
     }
 
+    /// <summary>The language the engine reads, for the logs (for example "es-MX").</summary>
+    public string LanguageTag => _engine.RecognizerLanguage.LanguageTag;
+
     /// <summary>Recognizes one captured frame: the character rows, the scroll bar position and the selection screen check.</summary>
     public async Task<CharacterOcrPage> ReadAsync(
         GameScreenFrame frame,

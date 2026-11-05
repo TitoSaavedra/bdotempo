@@ -9,6 +9,7 @@ using BdoComboSetup.Core.ViewModels;
 using BdoComboSetup.Views.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using Windows.ApplicationModel.DataTransfer;
 
@@ -32,6 +33,9 @@ public sealed partial class ApplyComboPage : Page
     /// pool). It is set when a drag starts and cleared when it ends; the drop targets read it.
     /// </summary>
     private BoardDrag? _drag;
+
+    /// <summary>The board cell that shows the drop highlight while a drag hovers it, or null.</summary>
+    private ApplyBoardCell? _dropCell;
 
     public ApplyComboPage()
     {
@@ -131,6 +135,11 @@ public sealed partial class ApplyComboPage : Page
 
     /// <summary>The glyph drawn in place of the icon: a question mark for an unknown class.</summary>
     public static string ClassGlyphOf(int? classType) => classType is null ? "?" : string.Empty;
+
+    /// <summary>The opacity of a character without game data: dimmed, still readable, and never selectable.</summary>
+    public static double CharacterOpacityOf(bool hasGameData) => hasGameData ? 1 : UnreadyOpacity;
+
+    private const double UnreadyOpacity = 0.55;
 
     /// <summary>Demo only: asks to write once the page is loaded, so the reminder has its window.</summary>
     private async void DemoWriteHint_Loaded(object sender, RoutedEventArgs e)
@@ -243,11 +252,11 @@ public sealed partial class ApplyComboPage : Page
         var caption = step is null
             ? localizer.Format("Apply.BoardCell.Empty", name)
             : localizer.Format("Apply.BoardCell.Filled", name, step.DisplayName);
-        return new ApplyBoardCell(kind, number, input, caption, step, step is not null && ReferenceEquals(step, selected));
+        return new ApplyBoardCell(kind, number, input, name, caption, step, step is not null && ReferenceEquals(step, selected));
     }
 
-    /// <summary>A board cell is clicked: its step becomes the selected step, where the details are edited.</summary>
-    private void BoardCell_Click(object sender, RoutedEventArgs e)
+    /// <summary>A board cell is tapped (a press without a drag): its step becomes the selected step, where the details are edited.</summary>
+    private void BoardCell_Tapped(object sender, TappedRoutedEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: ApplyBoardCell { Step: { } step } })
         {
@@ -268,15 +277,48 @@ public sealed partial class ApplyComboPage : Page
         }
     }
 
-    /// <summary>A cell accepts a dragged step: the step takes the cell, and the editor's swap rule moves the step that was there.</summary>
-    private void BoardCell_DragOver(object sender, DragEventArgs e) =>
-        e.AcceptedOperation = _drag is not null ? DataPackageOperation.Move : DataPackageOperation.None;
+    /// <summary>
+    /// Every board cell, empty or filled, accepts the drag in progress (a chain step, a pending skill, or a cell of either board)
+    /// while a drag is under way. It shows the target cell's highlight. The caption and the operation say what the drop does:
+    /// "Copy to ..." when it makes a duplicate, "Move to ..." otherwise (the editor's swap rule moves the step that was in the cell).
+    /// </summary>
+    private void BoardCell_DragOver(object sender, DragEventArgs e)
+    {
+        if (_drag is null || ViewModel.Editor is not { } editor || sender is not FrameworkElement { DataContext: ApplyBoardCell cell })
+        {
+            e.AcceptedOperation = DataPackageOperation.None;
+            SetDropCell(null);
+            return;
+        }
+
+        var duplicates = editor.DropMakesDuplicate(_drag.Step, BoardOf(cell.Kind), cell.Number, HowOf(_drag, e.Modifiers));
+        e.AcceptedOperation = duplicates ? DataPackageOperation.Copy : DataPackageOperation.Move;
+        if (e.DragUIOverride is { } visual)
+        {
+            visual.Caption = App.Services.Localizer.Format(duplicates ? "Apply.DropCopyOnCell" : "Apply.DropOnCell", cell.Name);
+            visual.IsCaptionVisible = true;
+            visual.IsGlyphVisible = true;
+        }
+
+        SetDropCell(cell);
+        e.Handled = true;
+    }
+
+    /// <summary>The pointer left a cell: its highlight goes off (the next cell it enters lights up on its own DragOver).</summary>
+    private void BoardCell_DragLeave(object sender, DragEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: ApplyBoardCell cell } && ReferenceEquals(cell, _dropCell))
+        {
+            SetDropCell(null);
+        }
+    }
 
     private void BoardCell_Drop(object sender, DragEventArgs e)
     {
+        SetDropCell(null);
         if (_drag is { } drag && sender is FrameworkElement { DataContext: ApplyBoardCell cell })
         {
-            SetBoardPosition(drag.Step, cell.Kind, cell.Number);
+            PlaceDrag(drag, cell.Kind, cell.Number, HowOf(drag, e.Modifiers));
         }
 
         _drag = null;
@@ -289,6 +331,7 @@ public sealed partial class ApplyComboPage : Page
     /// </summary>
     private void ChainsArea_DragOver(object sender, DragEventArgs e)
     {
+        SetDropCell(null);
         if (_drag?.Origin is not null)
         {
             e.AcceptedOperation = DataPackageOperation.Move;
@@ -297,18 +340,77 @@ public sealed partial class ApplyComboPage : Page
 
     private void ChainsArea_Drop(object sender, DragEventArgs e)
     {
+        SetDropCell(null);
         if (_drag is { Origin: { } origin } drag)
         {
-            SetBoardPosition(drag.Step, origin, null);
+            PlaceDrag(drag, origin, null, BoardDrop.Move);
             _drag = null;
             e.Handled = true;
         }
     }
 
-    /// <summary>A drag ended (dropped or cancelled): nothing is dragged any more.</summary>
-    private void Drag_Completed(UIElement sender, DropCompletedEventArgs args) => _drag = null;
+    /// <summary>A drag ended (dropped or cancelled): nothing is dragged any more, and no cell is highlighted.</summary>
+    private void Drag_Completed(UIElement sender, DropCompletedEventArgs args)
+    {
+        _drag = null;
+        SetDropCell(null);
+    }
 
-    /// <summary>Puts a step on a board position of the given kind; a null position takes it out. The view model applies the swap rule.</summary>
+    /// <summary>Shows the drop highlight on one cell and removes it from the cell that had it.</summary>
+    private void SetDropCell(ApplyBoardCell? cell)
+    {
+        if (ReferenceEquals(_dropCell, cell))
+        {
+            return;
+        }
+
+        if (_dropCell is not null)
+        {
+            _dropCell.IsDropTarget = false;
+        }
+
+        _dropCell = cell;
+        if (cell is not null)
+        {
+            cell.IsDropTarget = true;
+        }
+    }
+
+    /// <summary>
+    /// A drop puts the dragged step where it was dropped, as the editor's drop rules say (see <see cref="ComboEditorViewModel.DropOnBoard"/>);
+    /// a null position takes it out of its board. The step that now holds the position is selected, so the details and the
+    /// highlight follow it.
+    /// </summary>
+    private void PlaceDrag(BoardDrag drag, ApplyBoardKind kind, int? position, BoardDrop how)
+    {
+        var editor = ViewModel.Editor;
+        if (editor is null)
+        {
+            return;
+        }
+
+        var placed = drag.Step;
+        if (position is int target)
+        {
+            placed = editor.DropOnBoard(drag.Step, BoardOf(kind), target, how);
+        }
+        else
+        {
+            SetBoardPosition(drag.Step, kind, null);
+        }
+
+        editor.SelectStep(placed);
+        App.Services.Logger.Info("apply.board.dropped", "A step was dropped on a board", new Dictionary<string, object?>
+        {
+            ["target_board"] = kind.ToString(),
+            ["position"] = position,
+            ["origin_board"] = drag.Origin?.ToString(),
+            ["how"] = how.ToString(),
+            ["duplicated"] = !ReferenceEquals(placed, drag.Step),
+        });
+    }
+
+    /// <summary>Takes a step out of a board position (the only use of a null position: a drop on the chains).</summary>
     private void SetBoardPosition(ComboStepViewModel step, ApplyBoardKind kind, int? position)
     {
         var editor = ViewModel.Editor;
@@ -328,11 +430,25 @@ public sealed partial class ApplyComboPage : Page
         }
     }
 
-    /// <summary>Starts a drag of a step: its name is the drag caption, as in the Editor.</summary>
+    private static ComboBoard BoardOf(ApplyBoardKind kind) => kind == ApplyBoardKind.Cooldown ? ComboBoard.Cooldown : ComboBoard.Quick;
+
+    /// <summary>
+    /// How a drag lands on a board: a chain card or the mobility pool places its step; a board cell moves it, or copies it while
+    /// Ctrl is held.
+    /// </summary>
+    private static BoardDrop HowOf(BoardDrag drag, Windows.ApplicationModel.DataTransfer.DragDrop.DragDropModifiers modifiers) =>
+        drag.Origin is null ? BoardDrop.Place : modifiers.HasFlag(Windows.ApplicationModel.DataTransfer.DragDrop.DragDropModifiers.Control) ? BoardDrop.Copy : BoardDrop.Move;
+
+    /// <summary>
+    /// Starts a drag of a step: its name is the drag data. The source allows Move and Copy; the target picks Copy when the drop
+    /// makes a duplicate (a Ctrl drag of a cell, or a card of a step that already holds a slot on the board) and Move otherwise.
+    /// </summary>
     private void StartDrag(ComboStepViewModel step, ApplyBoardKind? origin, DragStartingEventArgs args)
     {
         _drag = new BoardDrag(step, origin);
-        args.Data.SetText(step.SkillName);
+        args.AllowedOperations = DataPackageOperation.Move | DataPackageOperation.Copy;
+        args.Data.RequestedOperation = DataPackageOperation.Move;
+        args.Data.SetText(step.DisplayName);
     }
 
     /// <summary>Combos are written from Preview: this opens it, with the same character and combo.</summary>
@@ -343,14 +459,16 @@ public sealed partial class ApplyComboPage : Page
 
     /// <summary>
     /// The dialog that asks which character to apply to: shown when the chosen class has several characters in the account, and
-    /// by "Change". Returns the character the user taps, or null when the dialog is closed without a choice.
+    /// by "Change". Returns the character the user taps, or null when the dialog is closed without a choice. The characters
+    /// without game data of the same class are listed dimmed after the choosable ones; tapping them does nothing.
     /// </summary>
     private async Task<CharacterOption?> ChooseCharacterAsync(IReadOnlyList<CharacterOption> candidates, ClassOptionViewModel? option)
     {
         var localizer = App.Services.Localizer;
+        var unready = ViewModel.UnreadyCharacters.Where(item => option is null || item.ClassType == option.ClassType);
         var list = new ListView
         {
-            ItemsSource = candidates,
+            ItemsSource = candidates.Concat(unready).ToList(),
             ItemTemplate = (DataTemplate)Resources["CharacterTemplate"],
             SelectionMode = ListViewSelectionMode.None,
             IsItemClickEnabled = true,
@@ -373,7 +491,12 @@ public sealed partial class ApplyComboPage : Page
         };
         list.ItemClick += (_, e) =>
         {
-            chosen = e.ClickedItem as CharacterOption;
+            if (e.ClickedItem is not CharacterOption { HasGameData: true } character)
+            {
+                return;
+            }
+
+            chosen = character;
             dialog.Hide();
         };
 
@@ -497,10 +620,16 @@ public enum ApplyBoardKind
 
 /// <summary>
 /// One cell of a slot board: its board and number (a cooldown slot or a quick position), its input label (empty when it has
-/// none), the step in it (null when empty), its caption for screen readers and tooltips, and whether that step is the selected one.
+/// none), its name ("Slot 5"), the step in it (null when empty), its caption for screen readers and tooltips, whether that step
+/// is the selected one, and whether a drag is hovering it (the drop highlight, the only property that changes).
 /// </summary>
-public sealed class ApplyBoardCell(ApplyBoardKind kind, int number, string input, string caption, ComboStepViewModel? step, bool isSelected)
+public sealed class ApplyBoardCell(ApplyBoardKind kind, int number, string input, string name, string caption, ComboStepViewModel? step, bool isSelected)
+    : INotifyPropertyChanged
 {
+    private bool _isDropTarget;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
     public ApplyBoardKind Kind { get; } = kind;
 
     public int Number { get; } = number;
@@ -511,6 +640,9 @@ public sealed class ApplyBoardCell(ApplyBoardKind kind, int number, string input
 
     public bool HasInput => Input.Length > 0;
 
+    /// <summary>The cell's name without its step, such as "Slot 5"; the drop caption names it.</summary>
+    public string Name { get; } = name;
+
     public string Caption { get; } = caption;
 
     public ComboStepViewModel? Step { get; } = step;
@@ -518,6 +650,22 @@ public sealed class ApplyBoardCell(ApplyBoardKind kind, int number, string input
     public bool HasStep => Step is not null;
 
     public bool IsSelected { get; } = isSelected;
+
+    /// <summary>True while a drag hovers this cell: the cell is drawn with the drop highlight.</summary>
+    public bool IsDropTarget
+    {
+        get => _isDropTarget;
+        set
+        {
+            if (_isDropTarget == value)
+            {
+                return;
+            }
+
+            _isDropTarget = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsDropTarget)));
+        }
+    }
 }
 
 /// <summary>What is being dragged on the Combos page: a step, and the board cell it comes from (null from a chain card or the mobility pool).</summary>

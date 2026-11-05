@@ -8,7 +8,10 @@ namespace BdoComboSetup.Core.Combo;
 /// </summary>
 public sealed record CooldownPlan(int[] Skills, IReadOnlyDictionary<int, string> Memos, IReadOnlyList<CooldownSlot> Planned);
 
-/// <summary>Port of the planning rules of the Python tool's build_plan: validation, duplicate warnings and memo dedupe.</summary>
+/// <summary>
+/// Port of the planning rules of the Python tool's build_plan: validation and memo dedupe. A SkillNo may take several slots
+/// (a skill cast again later in the combo has its own slot); only the memo is one per SkillNo, as the game keeps it.
+/// </summary>
 public static class CooldownPlanner
 {
     public const int SlotCount = 20;
@@ -44,17 +47,6 @@ public static class CooldownPlanner
         foreach (var slot in slots)
         {
             skills[slot.Slot] = slot.SkillNo;
-        }
-
-        foreach (var group in slots.GroupBy(s => s.SkillNo).Where(g => g.Count() > 1))
-        {
-            var message = $"same skillNo used in more than one slot of the plan ({group.Count()} slots)";
-            warnings.Add(message);
-            logger.Warn("combo.plan_duplicate_skill", "same skillNo used in more than one slot of the plan", new Dictionary<string, object?>
-            {
-                ["skill_no"] = group.Key,
-                ["slots"] = group.Count(),
-            });
         }
 
         var memos = new Dictionary<int, string>();

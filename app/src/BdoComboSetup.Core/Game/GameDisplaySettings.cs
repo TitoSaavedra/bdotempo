@@ -56,13 +56,17 @@ public static class GameOptionParser
     }
 }
 
-/// <summary>Loads GameOption.txt from the user's Documents\Black Desert folder, or from an explicit path.</summary>
+/// <summary>Loads GameOption.txt, which the game keeps directly under its data folder (next to UserCache).</summary>
 public static class GameOptionLoader
 {
     public const string FileName = "GameOption.txt";
 
-    public static string DefaultPath =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Black Desert", FileName);
+    /// <summary>GameOption.txt of a Black Desert data folder: DataRoot\GameOption.txt.</summary>
+    public static string PathIn(string dataRoot)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(dataRoot);
+        return Path.Combine(dataRoot, FileName);
+    }
 
     /// <summary>Returns the settings, or null when the file is missing or has no usable width and height.</summary>
     public static GameDisplaySettings? Load(string path, AppLogger logger)

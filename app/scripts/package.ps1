@@ -44,7 +44,7 @@ function Invoke-Publish {
         Remove-Item -LiteralPath $publish -Recurse -Force
     }
     Write-Host "Publishing the framework-dependent win-x64 app $version ..."
-    & dotnet publish $project -c Release -r win-x64 -p:Platform=x64 "-p:PublishDir=$publish\"
+    & dotnet publish $project -c Release -r win-x64 -p:Platform=x64 -p:SelfContained=true "-p:PublishDir=$publish\"
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet publish failed with exit code $LASTEXITCODE."
     }

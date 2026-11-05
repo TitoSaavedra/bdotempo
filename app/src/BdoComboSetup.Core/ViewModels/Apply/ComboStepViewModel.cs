@@ -27,6 +27,9 @@ public sealed partial class ComboStepViewModel : ObservableObject
     /// <summary>The skill the slot editor picked for this step, or null for the guide's own skill.</summary>
     private ComboSkill? _replacedSkill;
 
+    /// <summary>The cooldown slots that hold this step's skill (see <see cref="SetSkillSlots"/>).</summary>
+    private IReadOnlyList<int> _skillSlots = [];
+
     public ComboStepViewModel(
         int? baseStep,
         IReadOnlyList<ComboSkill> skills,
@@ -151,8 +154,20 @@ public sealed partial class ComboStepViewModel : ObservableObject
         ? QuickSlotKeys.ComboLabel(position)
         : string.Empty;
 
-    /// <summary>"#n" for the cooldown slot, or empty.</summary>
-    public string CooldownLabel => CooldownSlot is int slot ? "#" + slot.ToString(CultureInfo.InvariantCulture) : string.Empty;
+    /// <summary>
+    /// "#n" for the cooldown slot, or empty. When the skill sits in several slots, every one of them: "#1 #9".
+    /// </summary>
+    public string CooldownLabel => string.Join(" ", _skillSlots.Select(slot => "#" + slot.ToString(CultureInfo.InvariantCulture)));
+
+    /// <summary>
+    /// Sets the cooldown slots that hold this step's skill, in slot order, the step's own slot included. The editor sets them
+    /// after every change of the working copy.
+    /// </summary>
+    internal void SetSkillSlots(IReadOnlyList<int> slots)
+    {
+        _skillSlots = slots;
+        OnPropertyChanged(nameof(CooldownLabel));
+    }
 
     /// <summary>Name and key for screen readers.</summary>
     public string AutomationName => string.IsNullOrEmpty(KeyLegend)

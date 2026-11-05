@@ -347,7 +347,7 @@
     <value>Show hidden slots</value>
   </data>
   <data name="Preview.FitButton.Content" xml:space="preserve">
-    <value>Fit to slots</value>
+    <value>Fit</value>
   </data>
   <data name="Preview.Layout.Tooltip" xml:space="preserve">
     <value>The game interface the preview draws: the current one or one of the three saved ones (UI 1 to UI 3).</value>
@@ -448,7 +448,7 @@
   <data name="Settings.LanguageHeader.Text" xml:space="preserve"><value>Language</value></data>
   <data name="Settings.LanguageSpanish" xml:space="preserve"><value>Spanish</value></data>
   <data name="Settings.LanguageEnglish" xml:space="preserve"><value>English (United States)</value></data>
-  <data name="Settings.FolderMissing" xml:space="preserve"><value>The folder does not exist.</value></data>
+  <data name="Settings.FolderMissing" xml:space="preserve"><value>The Black Desert data folder was not found. Choose it with Browse..., or type it and press Save.</value></data>
   <data name="Settings.FolderNoUserCache" xml:space="preserve"><value>This folder has no UserCache folder. Choose the Black Desert data folder.</value></data>
   <data name="Settings.FolderOk" xml:space="preserve"><value>Folder OK. {0} account(s) found.</value></data>
   <data name="Settings.NoAccounts" xml:space="preserve"><value>The folder is valid, but it has no account with a character folder yet.</value></data>
@@ -544,11 +544,17 @@
   <data name="Settings.CharactersSearchBox.PlaceholderText" xml:space="preserve">
     <value>Search by name or class</value>
   </data>
-  <data name="Settings.CharactersCount" xml:space="preserve">
-    <value>{0} characters</value>
+  <data name="Settings.CharactersReadyCount" xml:space="preserve">
+    <value>{0} of {1} characters ready</value>
   </data>
-  <data name="Settings.CharactersCountOne" xml:space="preserve">
-    <value>1 character</value>
+  <data name="Settings.CharactersReadyCountOne" xml:space="preserve">
+    <value>{0} of 1 character ready</value>
+  </data>
+  <data name="Settings.CharacterNoDataBadge.Text" xml:space="preserve">
+    <value>No game data yet</value>
+  </data>
+  <data name="Settings.CharacterNoDataBadge.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Log in once with this character in the game to be able to apply combos to it</value>
   </data>
   <data name="Settings.CharacterClassUnknown" xml:space="preserve">
     <value>Unknown class</value>
@@ -731,7 +737,7 @@
     <value>The character memos do not match the game order (only {0} of {1} match). The scan probably read another list or the order changed; start again.</value>
   </data>
   <data name="Characters.ScanNotSelectionScreen" xml:space="preserve">
-    <value>I do not see the character selection screen. Open the character list (with the enter-the-game button at the bottom) and start again.</value>
+    <value>I do not see the character selection screen. Open the character list (with the enter-the-game button at the bottom), keep the list visible and start again.</value>
   </data>
   <data name="Characters.ScanReady" xml:space="preserve">
     <value>{0} characters read. Review the names and classes before saving.</value>
@@ -756,6 +762,12 @@
   </data>
   <data name="Characters.ScanFailed" xml:space="preserve">
     <value>Reading stopped because of an error. Check the log for details.</value>
+  </data>
+  <data name="Characters.ScanFrameBlack" xml:space="preserve">
+    <value>The Black Desert capture comes in black. Keep the window visible, not minimized or covered, on the character selection screen and start again.</value>
+  </data>
+  <data name="Characters.ScanNoNames" xml:space="preserve">
+    <value>No names were read. Keep the character list visible, with no menus over it, and start again.</value>
   </data>
   <data name="Settings.SetupButton.Content" xml:space="preserve"><value>Run setup again</value></data>
   <data name="Setup.Title.Text" xml:space="preserve">
@@ -846,13 +858,13 @@
     <value>View fit</value>
   </data>
   <data name="Preview.FitWindow.Content" xml:space="preserve">
-    <value>Fit to window</value>
+    <value>Window</value>
   </data>
   <data name="Preview.FitSlots.Content" xml:space="preserve">
-    <value>Fit to slots</value>
+    <value>Slots</value>
   </data>
   <data name="Preview.FitReal.Content" xml:space="preserve">
-    <value>Actual size</value>
+    <value>Actual</value>
   </data>
   <data name="Preview.Capture.Live" xml:space="preserve">
     <value>Capturing BlackDesert64.exe</value>
@@ -905,6 +917,12 @@
   <data name="Apply.BoardCell.Empty" xml:space="preserve">
     <value>{0}, empty</value>
   </data>
+  <data name="Apply.DropOnCell" xml:space="preserve">
+    <value>Move to {0}</value>
+  </data>
+  <data name="Apply.DropCopyOnCell" xml:space="preserve">
+    <value>Copy to {0}</value>
+  </data>
   <data name="Apply.ApplyToCharacter" xml:space="preserve">
     <value>Apply to {0}</value>
   </data>
@@ -920,9 +938,20 @@
   <data name="Apply.Remaining.Done.Text" xml:space="preserve"><value>Every skill of the guide is in the slots.</value></data>
   <data name="Preview.Slots.Header.Text" xml:space="preserve"><value>Slots in use</value></data>
   <data name="Preview.TabSlots.Text" xml:space="preserve"><value>Slots</value></data>
-  <data name="Preview.TabPending.Text" xml:space="preserve"><value>Pending</value></data>
   <data name="Preview.TabSettings.Text" xml:space="preserve"><value>Settings</value></data>
   <data name="Preview.ChangeCharacterButton.Content" xml:space="preserve"><value>Change in Combos</value></data>
+  <data name="Apply.UnreadyCount" xml:space="preserve">
+    <value>{0} characters need to log in once in the game</value>
+  </data>
+  <data name="Apply.UnreadyOne" xml:space="preserve">
+    <value>1 character needs to log in once in the game</value>
+  </data>
+  <data name="Apply.UnreadyLinkButton.Content" xml:space="preserve">
+    <value>See which</value>
+  </data>
+  <data name="Apply.UnreadyFlyoutHint.Text" xml:space="preserve">
+    <value>Log in with each one in the game and reopen the app</value>
+  </data>
   <data name="Apply.CharacterDialog.Title" xml:space="preserve"><value>Which character to apply to?</value></data>
   <data name="Apply.CharacterDialog.Body" xml:space="preserve"><value>You have {0} {1} characters in this account. The one you pick is used in the editor and when applying.</value></data>
   <data name="Apply.CharacterDialog.BodyAny" xml:space="preserve"><value>Pick the character to apply to. It is used in the editor and when applying.</value></data>
@@ -932,7 +961,7 @@
   <data name="Apply.GoToPreviewButton.ToolTipService.ToolTip" xml:space="preserve"><value>Combos are applied from Preview.</value></data>
   <data name="Apply.Remaining.Hint.ToolTipService.ToolTip" xml:space="preserve"><value>Guide skills that are not in the 20 slots. Drag one to a slot or tap +.</value></data>
   <data name="Preview.DragHint.ToolTipService.ToolTip" xml:space="preserve"><value>Drag a skill to a slot, or between slots to swap them.</value></data>
-  <data name="Preview.FitHeading.ToolTipService.ToolTip" xml:space="preserve"><value>Window, Slots or Actual size. The mouse wheel leaves the zoom free.</value></data>
+  <data name="Preview.FitHeading.ToolTipService.ToolTip" xml:space="preserve"><value>Window, Slots or Actual. The mouse wheel leaves the zoom free.</value></data>
   <data name="Settings.LanguageBox.ToolTipService.ToolTip" xml:space="preserve"><value>Applies after the app restarts.</value></data>
   <data name="Settings.ShowWriteHintToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Shows a reminder before each write to a character.</value></data>
   <data name="Settings.FolderBox.ToolTipService.ToolTip" xml:space="preserve"><value>It must contain a UserCache folder.</value></data>
@@ -945,4 +974,8 @@
   <data name="SkillTooltip.Damage" xml:space="preserve"><value>Damage</value></data>
   <data name="SkillTooltip.Hits" xml:space="preserve"><value>{0} hits</value></data>
   <data name="SkillTooltip.Pvp" xml:space="preserve"><value>PvP damage</value></data>
+  <data name="Preview.FitWindow.ToolTipService.ToolTip" xml:space="preserve"><value>Fit the view to the window</value></data>
+  <data name="Preview.FitSlots.ToolTipService.ToolTip" xml:space="preserve"><value>Fit the view to the slots</value></data>
+  <data name="Preview.FitReal.ToolTipService.ToolTip" xml:space="preserve"><value>Actual game size (100%)</value></data>
+  <data name="Preview.FitButton.ToolTipService.ToolTip" xml:space="preserve"><value>Back to fitting the slots</value></data>
 </root>

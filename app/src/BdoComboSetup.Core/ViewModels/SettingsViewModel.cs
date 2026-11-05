@@ -293,12 +293,15 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     /// <summary>
     /// Takes the current settings as the running ones: the initial setup just saved them, so asking for a restart would be
-    /// wrong. The accounts and the folder status are read again.
+    /// wrong. The folder text, the accounts and the folder status are read again.
     /// </summary>
     public void AdoptRunningConfiguration()
     {
         _runningDataRoot = _settings.Settings.GameDataRoot;
         _runningAccount = _settings.Settings.GameAccount;
+        // The view model is built at startup, before the setup page saves the folder: the text box must show the saved one,
+        // not the value it read when it was built.
+        DataRootText = _settings.Settings.GameDataRoot;
         Refresh();
     }
 
