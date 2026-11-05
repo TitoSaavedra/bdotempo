@@ -182,6 +182,25 @@ public sealed partial class ApplyComboPage : Page
         }
     }
 
+    private void GuideTabs_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args) => ShowGuideTab();
+
+    /// <summary>
+    /// Shows the chains or the Add-ons list, as the tab says. A guide without add-ons always shows the chains, and the tab goes
+    /// back to Combo so it never points at an empty list.
+    /// </summary>
+    private void ShowGuideTab()
+    {
+        var hasAddons = _observedContent?.HasAddons == true || ViewModel.Editor?.HasAddons == true;
+        if (!hasAddons && !ReferenceEquals(GuideTabs.SelectedItem, ChainsTabItem))
+        {
+            GuideTabs.SelectedItem = ChainsTabItem;
+        }
+
+        var addons = hasAddons && ReferenceEquals(GuideTabs.SelectedItem, AddonsTabItem);
+        AddonsScroll.Visibility = addons ? Visibility.Visible : Visibility.Collapsed;
+        ChainsScroll.Visibility = addons ? Visibility.Collapsed : Visibility.Visible;
+    }
+
     /// <summary>Moves the subscriptions to the new working copy and draws its boards.</summary>
     private void AttachContent(ComboEditorViewModel? editor)
     {
@@ -192,6 +211,7 @@ public sealed partial class ApplyComboPage : Page
         }
 
         _observedContent = editor;
+        ShowGuideTab();
         if (editor is not null)
         {
             editor.ContentChanged += Editor_ContentChanged;

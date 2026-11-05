@@ -687,9 +687,31 @@
                             </ItemsControl.ItemsPanel>
                         </ItemsControl>
                     </ScrollViewer>
+
+                    <!-- Combo (the chains) or Add-ons. Add-ons shows only when the guide has some. -->
+                    <SelectorBar x:Name="GuideTabs" Margin="-12,4,0,0" SelectionChanged="GuideTabs_SelectionChanged">
+                        <SelectorBarItem x:Name="ChainsTabItem" x:Uid="Apply/TabChains" IsSelected="True" />
+                        <SelectorBarItem
+                            x:Name="AddonsTabItem"
+                            x:Uid="Apply/TabAddons"
+                            Visibility="{x:Bind ViewModel.Editor.HasAddons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    </SelectorBar>
                 </StackPanel>
 
-                <!-- The chains: buffs and combos in the guide's order, then the class add-ons and the mobility pool. -->
+                <!-- The Add-ons tab: the class add-ons of the guide, read-only. Shown instead of the chains while its tab is selected. -->
+                <ScrollViewer
+                    x:Name="AddonsScroll"
+                    Grid.Row="3"
+                    VerticalScrollBarVisibility="Auto"
+                    Padding="18,4,18,16"
+                    Visibility="Collapsed">
+                    <ItemsControl
+                        Padding="0,0,6,0"
+                        ItemsSource="{x:Bind ViewModel.Editor.Addons, Mode=OneWay}"
+                        ItemTemplate="{StaticResource AddonTemplate}" />
+                </ScrollViewer>
+
+                <!-- The chains: buffs and combos in the guide's order, then the mobility pool. -->
                 <!-- A board cell's step dropped anywhere on the chains takes it out of its cell (see ChainsArea_Drop). -->
                 <ScrollViewer x:Name="ChainsScroll" Grid.Row="3" VerticalScrollBarVisibility="Auto" Padding="18,4,18,16" AllowDrop="True">
                     <StackPanel Spacing="0" Padding="0,0,6,0">
@@ -706,17 +728,6 @@
                         <ItemsControl
                             ItemsSource="{x:Bind ViewModel.Editor.Chains, Mode=OneWay}"
                             ItemTemplate="{StaticResource ChainTemplate}" />
-
-                        <!-- Class add-ons: read-only information of the guide. -->
-                        <StackPanel
-                            Spacing="6"
-                            Margin="0,10,0,0"
-                            Visibility="{x:Bind ViewModel.Editor.HasAddons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock x:Uid="Apply/SectionAddons" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            <ItemsControl
-                                ItemsSource="{x:Bind ViewModel.Editor.Addons, Mode=OneWay}"
-                                ItemTemplate="{StaticResource AddonTemplate}" />
-                        </StackPanel>
 
                         <StackPanel
                             Spacing="4"

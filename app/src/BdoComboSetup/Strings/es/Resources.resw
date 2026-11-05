@@ -319,9 +319,8 @@
   <data name="Apply.StatusSlotDeleted" xml:space="preserve">
     <value>El combo guardado se borró. Lo que ves sigue en el editor, sin guardar.</value>
   </data>
-  <data name="Apply.SectionAddons.Text" xml:space="preserve">
-    <value>Adicionales de la clase</value>
-  </data>
+  <data name="Apply.TabChains.Text" xml:space="preserve"><value>Combo</value></data>
+  <data name="Apply.TabAddons.Text" xml:space="preserve"><value>Add-ons</value></data>
   <data name="Preview.ApplyButton.Content" xml:space="preserve">
     <value>Aplicar</value>
   </data>
