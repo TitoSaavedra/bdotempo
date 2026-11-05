@@ -29,6 +29,9 @@ public sealed partial class MainWindow : Window
     /// <summary>The "Next" action of the tour's tip: its availability follows the step (a waiting step disables it).</summary>
     private readonly TourCommand _tourNext;
 
+    /// <summary>True while the tour has the Editor's Ajustes tab selected; the Casillas tab comes back when its step is left.</summary>
+    private bool _tourShowsSettingsTab;
+
     /// <summary>The side of the ghost tile of the drag cue, in device-independent pixels (see the XAML).</summary>
     private const double DragCueSize = 36;
 
@@ -232,7 +235,7 @@ public sealed partial class MainWindow : Window
         var page = App.Services.Tour.Current?.Id switch
         {
             "character" or "drag" => typeof(ApplyComboPage),
-            "apply" => typeof(PreviewPage),
+            "editor-settings" or "apply" => typeof(PreviewPage),
             _ => null,
         };
         if (page is not null)
@@ -385,6 +388,7 @@ public sealed partial class MainWindow : Window
         var services = App.Services;
         services.Tour.UpdateCombo(services.ApplyCombo.HasEditor);
         var step = services.Tour.Current;
+        SyncTourSettingsTab(step?.Id == "editor-settings");
         if (step is null)
         {
             CloseTourTip();
@@ -409,18 +413,35 @@ public sealed partial class MainWindow : Window
         ShowTourTip(step, target);
     }
 
+    /// <summary>
+    /// The Editor's Ajustes tab is selected while the editor-settings step is shown, and the Casillas tab comes back when that step is
+    /// left or the tour ends. Only a tab the tour selected is put back: a tab the user picks is never changed here. When the Editor is
+    /// not the page shown, nothing is selected now; the page of a new visit starts on Casillas and is selected again by the next refresh.
+    /// </summary>
+    private void SyncTourSettingsTab(bool show)
+    {
+        if (!show && !_tourShowsSettingsTab)
+        {
+            return;
+        }
+
+        _tourShowsSettingsTab = show;
+        (ContentFrame.Content as PreviewPage)?.ShowSettingsTab(show);
+    }
+
     /// <summary>The element a step points at. Null when the page of the step is not the one shown.</summary>
     private UIElement? TourTargetOf(string stepId) => stepId switch
     {
         "character" => (ContentFrame.Content as ApplyComboPage)?.TourCharacterTarget,
         "drag" => (ContentFrame.Content as ApplyComboPage)?.TourChainsTarget,
         "editor" => EditorTab,
+        "editor-settings" => (ContentFrame.Content as PreviewPage)?.TourSettingsTarget,
         "apply" => (ContentFrame.Content as PreviewPage)?.TourApplyTarget,
         "settings" => SettingsButton,
         _ => null,
     };
 
-    /// <summary>Fills the tip with the step (title, text, the "n / 5" caption, the buttons) and opens it at its target.</summary>
+    /// <summary>Fills the tip with the step (title, text, the "n / 6" caption, the buttons) and opens it at its target.</summary>
     private void ShowTourTip(TourStep step, UIElement target)
     {
         var services = App.Services;
@@ -439,6 +460,8 @@ public sealed partial class MainWindow : Window
             PreferredPlacement = step.Id switch
             {
                 "character" => TeachingTipPlacementMode.RightTop,
+                // The side panel of the Editor is at the right edge of the window, so the Ajustes tip opens on its left.
+                "editor-settings" => TeachingTipPlacementMode.Left,
                 "apply" => TeachingTipPlacementMode.Top,
                 _ => TeachingTipPlacementMode.Bottom,
             },

@@ -35,8 +35,11 @@ public sealed partial class PreviewPage : Page
     /// <summary>The guided tour: its state drives whether the Apply button is enabled.</summary>
     public TourService Tour => App.Services.Tour;
 
-    /// <summary>The guided tour's step 4 target: the Apply button of the side panel.</summary>
+    /// <summary>The guided tour's Apply step target: the Apply button of the side panel.</summary>
     public Button TourApplyTarget => ApplyButton;
+
+    /// <summary>The guided tour's Settings step target: the Ajustes tab of the side panel.</summary>
+    public SelectorBarItem TourSettingsTarget => TabSettingsItem;
 
     /// <summary>The Apply button is enabled when the combo can be applied and no guided tour is running.</summary>
     public static bool ApplyEnabled(bool canRun, bool tourActive) => canRun && !tourActive;
@@ -73,9 +76,21 @@ public sealed partial class PreviewPage : Page
         (Style)Application.Current.Resources[selected ? "PillSelectedStyle" : "PillStyle"];
 
     /// <summary>Shows the content of the chosen tab and hides the others. Slots is the first tab.</summary>
-    private void EditorTabs_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    private void EditorTabs_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args) =>
+        ShowTab(sender.SelectedItem?.Tag as string ?? "slots");
+
+    /// <summary>
+    /// Selects the Ajustes tab (true) or the Casillas tab (false) from code, for the guided tour. Setting the selection raises
+    /// SelectionChanged, and the tab's content is shown the same way the click shows it.
+    /// </summary>
+    public void ShowSettingsTab(bool show)
     {
-        var tag = sender.SelectedItem?.Tag as string ?? "slots";
+        EditorTabs.SelectedItem = show ? TabSettingsItem : TabSlotsItem;
+        ShowTab(show ? "settings" : "slots");
+    }
+
+    private void ShowTab(string tag)
+    {
         TabSlots.Visibility = tag == "slots" ? Visibility.Visible : Visibility.Collapsed;
         TabSettings.Visibility = tag == "settings" ? Visibility.Visible : Visibility.Collapsed;
     }

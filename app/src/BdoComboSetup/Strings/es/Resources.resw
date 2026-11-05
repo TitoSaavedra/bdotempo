@@ -957,6 +957,8 @@
   <data name="Tour.Drag.Text" xml:space="preserve"><value>Llévala a una casilla de la derecha. Inténtalo tú.</value></data>
   <data name="Tour.Editor.Title" xml:space="preserve"><value>Editor</value></data>
   <data name="Tour.Editor.Text" xml:space="preserve"><value>Mira tus casillas sobre el juego.</value></data>
+  <data name="Tour.EditorSettings.Title" xml:space="preserve"><value>Ajustes</value></data>
+  <data name="Tour.EditorSettings.Text" xml:space="preserve"><value>Disposición, slots ocultos, captura del juego y ajuste de la vista.</value></data>
   <data name="Tour.Apply.Title" xml:space="preserve"><value>Aplicar</value></data>
   <data name="Tour.Apply.Text" xml:space="preserve"><value>Aquí se escribe el combo en tu personaje. En el tour no se escribe nada.</value></data>
   <data name="Tour.Settings.Title" xml:space="preserve"><value>Configuración</value></data>

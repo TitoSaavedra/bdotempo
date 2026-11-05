@@ -957,6 +957,8 @@
   <data name="Tour.Drag.Text" xml:space="preserve"><value>Drop it on a slot on the right. Try it.</value></data>
   <data name="Tour.Editor.Title" xml:space="preserve"><value>Editor</value></data>
   <data name="Tour.Editor.Text" xml:space="preserve"><value>See your slots over the game.</value></data>
+  <data name="Tour.EditorSettings.Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Tour.EditorSettings.Text" xml:space="preserve"><value>Layout, hidden slots, game capture and view fit.</value></data>
   <data name="Tour.Apply.Title" xml:space="preserve"><value>Apply</value></data>
   <data name="Tour.Apply.Text" xml:space="preserve"><value>This writes the combo to your character. Nothing is written during the tour.</value></data>
   <data name="Tour.Settings.Title" xml:space="preserve"><value>Settings</value></data>

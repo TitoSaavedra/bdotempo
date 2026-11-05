@@ -32,6 +32,7 @@ public sealed class TourFlow
         new("character", "Tour.Character.Title", "Tour.Character.Text", WaitsForAction: false),
         new("drag", "Tour.Drag.Title", "Tour.Drag.Text", WaitsForAction: true),
         new("editor", "Tour.Editor.Title", "Tour.Editor.Text", WaitsForAction: false),
+        new("editor-settings", "Tour.EditorSettings.Title", "Tour.EditorSettings.Text", WaitsForAction: false),
         new("apply", "Tour.Apply.Title", "Tour.Apply.Text", WaitsForAction: false),
         new("settings", "Tour.Settings.Title", "Tour.Settings.Text", WaitsForAction: false),
     ];
@@ -76,7 +77,7 @@ public sealed class TourFlow
 
     public int StepCount => _steps.Count;
 
-    /// <summary>The 1-based number of the current step, for the "n / 5" caption; 0 when the tour is not active.</summary>
+    /// <summary>The 1-based number of the current step, for the "n / 6" caption; 0 when the tour is not active.</summary>
     public int StepNumber => IsActive ? _index + 1 : 0;
 
     /// <summary>The current step, or null when the tour is not active.</summary>

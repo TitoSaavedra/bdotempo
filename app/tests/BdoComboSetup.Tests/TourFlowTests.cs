@@ -32,11 +32,11 @@ public sealed class TourFlowTests
         Assert.True(flow.IsActive);
         Assert.Equal(1, flow.StepNumber);
         Assert.Equal("character", flow.Current?.Id);
-        Assert.Equal(5, flow.StepCount);
+        Assert.Equal(6, flow.StepCount);
     }
 
     [Fact]
-    public void Next_AdvancesThroughAllFiveStepsInOrder_AndTheLastNextFinishes()
+    public void Next_AdvancesThroughAllSixStepsInOrder_AndTheLastNextFinishes()
     {
         var flow = new TourFlow();
         var ended = new List<TourEndReason>();
@@ -51,7 +51,7 @@ public sealed class TourFlowTests
             flow.Next();
         }
 
-        Assert.Equal(new[] { "character", "drag", "editor", "apply", "settings" }, ids);
+        Assert.Equal(new[] { "character", "drag", "editor", "editor-settings", "apply", "settings" }, ids);
         Assert.Equal(new[] { TourEndReason.Finished }, ended);
         Assert.False(flow.IsActive);
         Assert.Null(flow.Current);
@@ -83,7 +83,7 @@ public sealed class TourFlowTests
     [Fact]
     public void SkipStep_OnTheLastStep_FinishesTheTour()
     {
-        var flow = FlowAt(4);
+        var flow = FlowAt(5);
         var ended = new List<TourEndReason>();
         flow.Ended += (_, e) => ended.Add(e.Reason);
 
@@ -108,6 +108,7 @@ public sealed class TourFlowTests
     [InlineData(2)]
     [InlineData(3)]
     [InlineData(4)]
+    [InlineData(5)]
     public void Skip_AtAnyStep_EndsWithSkipped(int index)
     {
         var flow = FlowAt(index);
@@ -161,6 +162,18 @@ public sealed class TourFlowTests
     }
 
     [Fact]
+    public void EditorSettingsStep_DoesNotWait_SoNextGoesOnToApply()
+    {
+        var flow = FlowAt(3);
+
+        Assert.Equal("editor-settings", flow.Current?.Id);
+        Assert.False(flow.IsWaitingForAction);
+        Assert.True(flow.CanAdvance);
+        Assert.True(flow.Next());
+        Assert.Equal("apply", flow.Current?.Id);
+    }
+
+    [Fact]
     public void IsApplyBlocked_IsTrueWhileActive_AndFalseAfterSkipOrFinish()
     {
         var skipped = FlowAt(2);
@@ -168,7 +181,7 @@ public sealed class TourFlowTests
         skipped.Skip();
         Assert.False(skipped.IsApplyBlocked);
 
-        var finished = FlowAt(4);
+        var finished = FlowAt(5);
         Assert.True(finished.IsApplyBlocked);
         Assert.True(finished.Next());
         Assert.False(finished.IsActive);
