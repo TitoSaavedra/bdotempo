@@ -30,9 +30,9 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="MinHeight" Value="0" />
-            <Setter Property="Width" Value="32" />
-            <Setter Property="Height" Value="32" />
-            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="CornerRadius" Value="13" />
             <!-- A Button defaults to the left of its cell; the swatch must sit in the middle of the ring cell. -->
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -168,8 +168,8 @@
         </DataTemplate>
     </Page.Resources>
 
-    <!-- Rows: the heading and the tabs (fixed), the tab content (fills the height), the status line (fixed). Only the
-         General, Game and Updates tabs scroll; the Characters tab fits the window height. -->
+    <!-- Rows: the heading and the tabs (fixed), the tab content (fills the height), the status line (fixed). The General tab
+         scrolls inside its own ScrollViewer; the Characters tab fits the window height. -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -179,11 +179,12 @@
 
         <StackPanel Padding="24,16,24,0" Spacing="10" MaxWidth="1080" HorizontalAlignment="Left">
 
-            <!-- Heading -->
+            <!-- Heading: the title, and Back to the page Settings was opened from. -->
             <Grid ColumnSpacing="12" Margin="0,0,0,4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <FontIcon Glyph="&#xE713;"
                     FontSize="26"
@@ -192,6 +193,11 @@
                 <StackPanel Grid.Column="1" Spacing="2">
                     <TextBlock x:Uid="Settings/Title" Style="{ThemeResource TitleTextBlockStyle}" />
                 </StackPanel>
+                <Button
+                    Grid.Column="2"
+                    x:Uid="Settings/BackButton"
+                    VerticalAlignment="Center"
+                    Click="Back_Click" />
             </Grid>
 
             <!-- Changes that only take effect after a restart (language, data folder, Preview account). -->
@@ -205,25 +211,25 @@
                 </InfoBar.ActionButton>
             </InfoBar>
 
-            <!-- The tabs: each one shows a group of cards. General is shown first. -->
-            <SelectorBar x:Name="SettingsTabs" SelectionChanged="SettingsTabs_SelectionChanged">
-                <SelectorBarItem x:Name="TabGeneralItem" x:Uid="Settings/TabGeneral" Tag="general" IsSelected="True" />
-                <SelectorBarItem x:Name="TabGameItem" x:Uid="Settings/TabGame" Tag="game" />
-                <SelectorBarItem x:Name="TabCharactersItem" x:Uid="Settings/TabCharacters" Tag="characters" />
-                <SelectorBarItem x:Name="TabUpdatesItem" x:Uid="Settings/TabUpdates" Tag="updates" />
+            <!-- The two tabs: General (the settings) and Characters (the account's characters and the OCR scan). -->
+            <SelectorBar SelectionChanged="SettingsTabs_SelectionChanged">
+                <SelectorBarItem x:Uid="Settings/TabGeneral" Tag="general" IsSelected="True" />
+                <SelectorBarItem x:Uid="Settings/TabCharacters" Tag="characters" />
             </SelectorBar>
         </StackPanel>
 
-        <!-- The tabs other than Characters scroll inside this ScrollViewer. -->
+        <!-- General: two sections of cards, Aplicación and Juego (with Actualizaciones under it). Two columns when the window
+             is wide, one column when it is narrow. Each card keeps its natural height. The tab scrolls inside this ScrollViewer. -->
         <ScrollViewer
-            x:Name="TabsScroll"
+            x:Name="GeneralScroll"
             Grid.Row="1"
             Padding="24,10,24,16"
             VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="10" MaxWidth="1080" HorizontalAlignment="Left">
-
-            <!-- General: appearance, language and the write reminder. -->
-            <Grid x:Name="TabGeneral" ColumnSpacing="10" RowSpacing="10">
+            <Grid
+                x:Name="GeneralLayout"
+                MaxWidth="1080"
+                HorizontalAlignment="Left"
+                ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -232,348 +238,439 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroup>
+                        <VisualState x:Name="WideGeneralLayout">
+                            <VisualState.StateTriggers>
+                                <AdaptiveTrigger MinWindowWidth="960" />
+                            </VisualState.StateTriggers>
+                            <VisualState.Setters>
+                                <Setter Target="ApplicationColumn.(Grid.Row)" Value="0" />
+                                <Setter Target="ApplicationColumn.(Grid.Column)" Value="0" />
+                                <Setter Target="ApplicationColumn.(Grid.ColumnSpan)" Value="1" />
+                                <Setter Target="GameColumn.(Grid.Row)" Value="0" />
+                                <Setter Target="GameColumn.(Grid.Column)" Value="1" />
+                                <Setter Target="GameColumn.(Grid.ColumnSpan)" Value="1" />
+                                <Setter Target="GameColumn.Margin" Value="0" />
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="NarrowGeneralLayout">
+                            <VisualState.StateTriggers>
+                                <AdaptiveTrigger MinWindowWidth="0" />
+                            </VisualState.StateTriggers>
+                            <VisualState.Setters>
+                                <Setter Target="ApplicationColumn.(Grid.Row)" Value="0" />
+                                <Setter Target="ApplicationColumn.(Grid.Column)" Value="0" />
+                                <Setter Target="ApplicationColumn.(Grid.ColumnSpan)" Value="2" />
+                                <Setter Target="GameColumn.(Grid.Row)" Value="1" />
+                                <Setter Target="GameColumn.(Grid.Column)" Value="0" />
+                                <Setter Target="GameColumn.(Grid.ColumnSpan)" Value="2" />
+                                <Setter Target="GameColumn.Margin" Value="0,12,0,0" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateManager.VisualStateGroups>
 
-                <!-- Appearance: the theme (follows Windows or fixed) and the accent color for the theme. Applies at once. -->
-                <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="8">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="&#xE790;"
-                                FontSize="18"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                VerticalAlignment="Top"
-                                Margin="0,2,0,0" />
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock x:Uid="Settings/Appearance/Header" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            </StackPanel>
-                        </Grid>
+                <!-- Aplicación: how the app looks and speaks, and the write reminder. -->
+                <StackPanel x:Name="ApplicationColumn" Grid.Row="0" Grid.Column="0" Spacing="12">
+                    <TextBlock
+                        x:Uid="Settings/SectionAppHeader"
+                        Style="{ThemeResource BodyStrongTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
-                        <!-- Theme: three pills. The selected one is filled with the accent (set in code-behind). -->
+                    <!-- Appearance: the theme (follows Windows or fixed), the accent color and the skill tooltips. Applies at once. -->
+                    <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel Spacing="8">
-                            <TextBlock x:Uid="Settings/Appearance/ThemeHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button
-                                    x:Name="ThemeSystemButton"
-                                    x:Uid="Settings/Appearance/ThemeSystem"
-                                    Tag="system"
-                                    Click="Theme_Click"
-                                    Style="{StaticResource PillStyle}" />
-                                <Button
-                                    x:Name="ThemeLightButton"
-                                    x:Uid="Settings/Appearance/ThemeLight"
-                                    Tag="light"
-                                    Click="Theme_Click"
-                                    Style="{StaticResource PillStyle}" />
-                                <Button
-                                    x:Name="ThemeDarkButton"
-                                    x:Uid="Settings/Appearance/ThemeDark"
-                                    Tag="dark"
-                                    Click="Theme_Click"
-                                    Style="{StaticResource PillStyle}" />
-                            </StackPanel>
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE790;"
+                                    FontSize="18"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    VerticalAlignment="Top"
+                                    Margin="0,2,0,0" />
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <TextBlock x:Uid="Settings/Appearance/Header" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Theme: three pills. The selected one is filled with the accent (set in code-behind). -->
+                            <Grid MinHeight="32" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Uid="Settings/Appearance/ThemeHeader" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <Button
+                                        x:Name="ThemeSystemButton"
+                                        x:Uid="Settings/Appearance/ThemeSystem"
+                                        Tag="system"
+                                        Click="Theme_Click"
+                                        Style="{StaticResource PillStyle}" />
+                                    <Button
+                                        x:Name="ThemeLightButton"
+                                        x:Uid="Settings/Appearance/ThemeLight"
+                                        Tag="light"
+                                        Click="Theme_Click"
+                                        Style="{StaticResource PillStyle}" />
+                                    <Button
+                                        x:Name="ThemeDarkButton"
+                                        x:Uid="Settings/Appearance/ThemeDark"
+                                        Tag="dark"
+                                        Click="Theme_Click"
+                                        Style="{StaticResource PillStyle}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Accent color: the name of the chosen accent beside its label; five swatches, the chosen one has a ring. -->
+                            <Grid MinHeight="32" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <TextBlock x:Uid="Settings/Appearance/AccentHeader" VerticalAlignment="Center" />
+                                    <TextBlock
+                                        Text="{x:Bind local:SettingsPage.AccentNameOf(ViewModel.AccentColor), Mode=OneWay}"
+                                        VerticalAlignment="Center"
+                                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <Grid Width="32" Height="32">
+                                        <Button x:Uid="Settings/Appearance/SwatchViolet" Tag="violet" Click="Accent_Click" Style="{StaticResource AccentSwatchStyle}">
+                                            <Ellipse x:Name="SwatchFillViolet" Width="26" Height="26" />
+                                        </Button>
+                                        <Border
+                                            x:Name="AccentRingViolet"
+                                            Width="32"
+                                            Height="32"
+                                            CornerRadius="16"
+                                            BorderThickness="2"
+                                            BorderBrush="{ThemeResource TextFillColorPrimaryBrush}"
+                                            IsHitTestVisible="False"
+                                            Visibility="Collapsed" />
+                                    </Grid>
+                                    <Grid Width="32" Height="32">
+                                        <Button x:Uid="Settings/Appearance/SwatchAmber" Tag="amber" Click="Accent_Click" Style="{StaticResource AccentSwatchStyle}">
+                                            <Ellipse x:Name="SwatchFillAmber" Width="26" Height="26" />
+                                        </Button>
+                                        <Border
+                                            x:Name="AccentRingAmber"
+                                            Width="32"
+                                            Height="32"
+                                            CornerRadius="16"
+                                            BorderThickness="2"
+                                            BorderBrush="{ThemeResource TextFillColorPrimaryBrush}"
+                                            IsHitTestVisible="False"
+                                            Visibility="Collapsed" />
+                                    </Grid>
+                                    <Grid Width="32" Height="32">
+                                        <Button x:Uid="Settings/Appearance/SwatchMint" Tag="mint" Click="Accent_Click" Style="{StaticResource AccentSwatchStyle}">
+                                            <Ellipse x:Name="SwatchFillMint" Width="26" Height="26" />
+                                        </Button>
+                                        <Border
+                                            x:Name="AccentRingMint"
+                                            Width="32"
+                                            Height="32"
+                                            CornerRadius="16"
+                                            BorderThickness="2"
+                                            BorderBrush="{ThemeResource TextFillColorPrimaryBrush}"
+                                            IsHitTestVisible="False"
+                                            Visibility="Collapsed" />
+                                    </Grid>
+                                    <Grid Width="32" Height="32">
+                                        <Button x:Uid="Settings/Appearance/SwatchRose" Tag="rose" Click="Accent_Click" Style="{StaticResource AccentSwatchStyle}">
+                                            <Ellipse x:Name="SwatchFillRose" Width="26" Height="26" />
+                                        </Button>
+                                        <Border
+                                            x:Name="AccentRingRose"
+                                            Width="32"
+                                            Height="32"
+                                            CornerRadius="16"
+                                            BorderThickness="2"
+                                            BorderBrush="{ThemeResource TextFillColorPrimaryBrush}"
+                                            IsHitTestVisible="False"
+                                            Visibility="Collapsed" />
+                                    </Grid>
+                                    <Grid Width="32" Height="32">
+                                        <Button x:Uid="Settings/Appearance/SwatchBlue" Tag="blue" Click="Accent_Click" Style="{StaticResource AccentSwatchStyle}">
+                                            <Ellipse x:Name="SwatchFillBlue" Width="26" Height="26" />
+                                        </Button>
+                                        <Border
+                                            x:Name="AccentRingBlue"
+                                            Width="32"
+                                            Height="32"
+                                            CornerRadius="16"
+                                            BorderThickness="2"
+                                            BorderBrush="{ThemeResource TextFillColorPrimaryBrush}"
+                                            IsHitTestVisible="False"
+                                            Visibility="Collapsed" />
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Skill tooltips: hovering a skill shows its icon, cost, cooldown and damage. Applies at once. -->
+                            <Grid MinHeight="32" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Uid="Settings/Appearance/SkillTooltipsLabel" VerticalAlignment="Center" />
+                                <ToggleSwitch
+                                    Grid.Column="1"
+                                    x:Uid="Settings/Appearance/SkillTooltipsToggle"
+                                    VerticalAlignment="Center"
+                                    IsOn="{x:Bind ViewModel.ShowSkillTooltips, Mode=OneWay}"
+                                    Toggled="SkillTooltipsToggle_Toggled" />
+                            </Grid>
                         </StackPanel>
+                    </Border>
 
-                        <!-- Accent color: the name of the chosen accent beside its title; five swatches, the chosen one has a ring. -->
+                    <!-- Language: es or en-US. Takes effect after a restart. -->
+                    <Border Style="{StaticResource CardBorderStyle}">
                         <StackPanel Spacing="8">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock x:Uid="Settings/Appearance/AccentHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE774;"
+                                    FontSize="18"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    VerticalAlignment="Top"
+                                    Margin="0,2,0,0" />
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <TextBlock x:Uid="Settings/LanguageHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid MinHeight="32" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Uid="Settings/LanguageLabel" VerticalAlignment="Center" />
+                                <ComboBox
+                                    Grid.Column="1"
+                                    x:Name="LanguageBox"
+                                    x:Uid="Settings/LanguageBox"
+                                    MinWidth="200"
+                                    VerticalAlignment="Center"
+                                    ItemsSource="{x:Bind ViewModel.Languages, Mode=OneWay}"
+                                    SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=OneWay}"
+                                    SelectionChanged="LanguageBox_SelectionChanged">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:LanguageChoice">
+                                            <TextBlock Text="{x:Bind Name, Mode=OneTime}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Avisos: the reminder before a write to a character. Turn it on again after "Don't show again". -->
+                    <Border Style="{StaticResource CardBorderStyle}">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xEA8F;"
+                                    FontSize="18"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    VerticalAlignment="Top"
+                                    Margin="0,2,0,0" />
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <TextBlock x:Uid="Settings/WarningsHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid MinHeight="32" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Uid="Settings/ShowWriteHintLabel" VerticalAlignment="Center" />
+                                <ToggleSwitch
+                                    Grid.Column="1"
+                                    x:Uid="Settings/ShowWriteHintToggle"
+                                    VerticalAlignment="Center"
+                                    IsOn="{x:Bind ViewModel.ShowWriteHint, Mode=OneWay}"
+                                    Toggled="ShowWriteHint_Toggled" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Juego: the game folder, the account and the initial setup; then Actualizaciones. -->
+                <StackPanel x:Name="GameColumn" Grid.Row="0" Grid.Column="1" Spacing="12">
+                    <TextBlock
+                        x:Uid="Settings/SectionGameHeader"
+                        Style="{ThemeResource BodyStrongTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                    <!-- Game: the Black Desert folder (browse, or type a path and save it; a folder without UserCache is refused),
+                         the account (the numeric folders under UserCache that have an 11 folder; the one chosen is remembered) and
+                         the initial setup. -->
+                    <Border Style="{StaticResource CardBorderStyle}">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE8B7;"
+                                    FontSize="18"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    VerticalAlignment="Top"
+                                    Margin="0,2,0,0" />
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <TextBlock x:Uid="Settings/GameCardHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid MinHeight="32" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Uid="Settings/FolderLabel" VerticalAlignment="Center" />
+                                <Grid Grid.Column="1" ColumnSpacing="8" VerticalAlignment="Center">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox
+                                        x:Uid="Settings/FolderBox"
+                                        Text="{x:Bind ViewModel.DataRootText, Mode=TwoWay}" />
+                                    <Button Grid.Column="1" x:Uid="Settings/FolderBrowseButton" Click="Browse_Click" />
+                                    <Button
+                                        Grid.Column="2"
+                                        x:Uid="Settings/FolderSaveButton"
+                                        Click="SaveFolder_Click"
+                                        Style="{StaticResource AccentButtonStyle}" />
+                                </Grid>
+                            </Grid>
+                            <Grid MinHeight="32" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Uid="Settings/AccountHeader" VerticalAlignment="Center" />
+                                <controls:SearchablePicker
+                                    Grid.Column="1"
+                                    x:Name="AccountPicker"
+                                    Width="260"
+                                    VerticalAlignment="Center"
+                                    ItemsSource="{x:Bind ViewModel.Accounts, Mode=OneWay}"
+                                    ItemTemplate="{StaticResource AccountChoiceTemplate}"
+                                    SelectedItem="{x:Bind ViewModel.SelectedAccount, Mode=OneWay}"
+                                    SelectedTemplate="{StaticResource AccountChoiceTemplate}"
+                                    Chosen="AccountPicker_Chosen" />
+                            </Grid>
+                            <Grid MinHeight="32" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Uid="Settings/SetupLabel" VerticalAlignment="Center" />
+                                <Button
+                                    Grid.Column="1"
+                                    x:Uid="Settings/SetupButton"
+                                    VerticalAlignment="Center"
+                                    Click="Setup_Click" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock
+                        x:Uid="Settings/UpdatesHeader"
+                        Style="{ThemeResource BodyStrongTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                    <!-- Updates: the version, the last check and a manual check, the install button (only when a newer release exists),
+                         the progress of a download, and the switch for the check at startup. Nothing is installed without the button. -->
+                    <Border Style="{StaticResource CardBorderStyle}">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE895;"
+                                    FontSize="18"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    VerticalAlignment="Top"
+                                    Margin="0,2,0,0" />
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <TextBlock x:Uid="Settings/UpdatesCardHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid MinHeight="32" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
                                 <TextBlock
-                                    Text="{x:Bind local:SettingsPage.AccentNameOf(ViewModel.AccentColor), Mode=OneWay}"
-                                    Style="{ThemeResource BodyStrongTextBlockStyle}"
-                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Grid Width="40" Height="40">
-                                    <Button x:Uid="Settings/Appearance/SwatchViolet" Tag="violet" Click="Accent_Click" Style="{StaticResource AccentSwatchStyle}">
-                                        <Ellipse x:Name="SwatchFillViolet" Width="32" Height="32" />
-                                    </Button>
-                                    <Border
-                                        x:Name="AccentRingViolet"
-                                        Width="40"
-                                        Height="40"
-                                        CornerRadius="20"
-                                        BorderThickness="2"
-                                        BorderBrush="{ThemeResource TextFillColorPrimaryBrush}"
-                                        IsHitTestVisible="False"
-                                        Visibility="Collapsed" />
-                                </Grid>
-                                <Grid Width="40" Height="40">
-                                    <Button x:Uid="Settings/Appearance/SwatchAmber" Tag="amber" Click="Accent_Click" Style="{StaticResource AccentSwatchStyle}">
-                                        <Ellipse x:Name="SwatchFillAmber" Width="32" Height="32" />
-                                    </Button>
-                                    <Border
-                                        x:Name="AccentRingAmber"
-                                        Width="40"
-                                        Height="40"
-                                        CornerRadius="20"
-                                        BorderThickness="2"
-                                        BorderBrush="{ThemeResource TextFillColorPrimaryBrush}"
-                                        IsHitTestVisible="False"
-                                        Visibility="Collapsed" />
-                                </Grid>
-                                <Grid Width="40" Height="40">
-                                    <Button x:Uid="Settings/Appearance/SwatchMint" Tag="mint" Click="Accent_Click" Style="{StaticResource AccentSwatchStyle}">
-                                        <Ellipse x:Name="SwatchFillMint" Width="32" Height="32" />
-                                    </Button>
-                                    <Border
-                                        x:Name="AccentRingMint"
-                                        Width="40"
-                                        Height="40"
-                                        CornerRadius="20"
-                                        BorderThickness="2"
-                                        BorderBrush="{ThemeResource TextFillColorPrimaryBrush}"
-                                        IsHitTestVisible="False"
-                                        Visibility="Collapsed" />
-                                </Grid>
-                                <Grid Width="40" Height="40">
-                                    <Button x:Uid="Settings/Appearance/SwatchRose" Tag="rose" Click="Accent_Click" Style="{StaticResource AccentSwatchStyle}">
-                                        <Ellipse x:Name="SwatchFillRose" Width="32" Height="32" />
-                                    </Button>
-                                    <Border
-                                        x:Name="AccentRingRose"
-                                        Width="40"
-                                        Height="40"
-                                        CornerRadius="20"
-                                        BorderThickness="2"
-                                        BorderBrush="{ThemeResource TextFillColorPrimaryBrush}"
-                                        IsHitTestVisible="False"
-                                        Visibility="Collapsed" />
-                                </Grid>
-                                <Grid Width="40" Height="40">
-                                    <Button x:Uid="Settings/Appearance/SwatchBlue" Tag="blue" Click="Accent_Click" Style="{StaticResource AccentSwatchStyle}">
-                                        <Ellipse x:Name="SwatchFillBlue" Width="32" Height="32" />
-                                    </Button>
-                                    <Border
-                                        x:Name="AccentRingBlue"
-                                        Width="40"
-                                        Height="40"
-                                        CornerRadius="20"
-                                        BorderThickness="2"
-                                        BorderBrush="{ThemeResource TextFillColorPrimaryBrush}"
-                                        IsHitTestVisible="False"
-                                        Visibility="Collapsed" />
-                                </Grid>
-                            </StackPanel>
+                                    Text="{x:Bind Updates.CurrentVersionLine, Mode=OneWay}"
+                                    VerticalAlignment="Center"
+                                    TextWrapping="Wrap" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <Button x:Uid="Settings/UpdatesCheckButton" Command="{x:Bind Updates.CheckNowCommand}" />
+                                    <ProgressRing
+                                        Width="20"
+                                        Height="20"
+                                        IsActive="{x:Bind Updates.IsChecking, Mode=OneWay}"
+                                        Visibility="{x:Bind Updates.IsChecking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid MinHeight="32" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Text="{x:Bind Updates.LastCheckLine, Mode=OneWay}"
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    TextWrapping="Wrap"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <Button
+                                        Command="{x:Bind Updates.InstallCommand}"
+                                        Content="{x:Bind Updates.InstallActionText, Mode=OneWay}"
+                                        Style="{StaticResource AccentButtonStyle}"
+                                        Visibility="{x:Bind Updates.HasRelease, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                    <Button
+                                        x:Uid="Settings/UpdatesCancelButton"
+                                        Command="{x:Bind Updates.CancelDownloadCommand}"
+                                        Visibility="{x:Bind Updates.CanCancelDownload, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                </StackPanel>
+                            </Grid>
+                            <ProgressBar
+                                Maximum="100"
+                                Value="{x:Bind Updates.DownloadPercent, Mode=OneWay}"
+                                Visibility="{x:Bind Updates.IsDownloading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            <TextBlock Text="{x:Bind Updates.StatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
+                            <Grid MinHeight="32" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Uid="Settings/UpdatesStartupLabel" VerticalAlignment="Center" />
+                                <ToggleSwitch
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    IsOn="{x:Bind Updates.CheckOnStartup, Mode=OneWay}"
+                                    Toggled="UpdatesStartup_Toggled" />
+                            </Grid>
                         </StackPanel>
-                        <!-- Skill tooltips: hovering a skill shows its icon, cost, cooldown and damage. Applies at once. -->
-                        <ToggleSwitch
-                            x:Uid="Settings/Appearance/SkillTooltipsToggle"
-                            IsOn="{x:Bind ViewModel.ShowSkillTooltips, Mode=OneWay}"
-                            Toggled="SkillTooltipsToggle_Toggled" />
-                    </StackPanel>
-                </Border>
-
-                <!-- Language: es or en-US. Takes effect after a restart. -->
-                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="8">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="&#xE774;"
-                                FontSize="18"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                VerticalAlignment="Top"
-                                Margin="0,2,0,0" />
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock x:Uid="Settings/LanguageHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            </StackPanel>
-                        </Grid>
-                        <ComboBox
-                            x:Name="LanguageBox"
-                            x:Uid="Settings/LanguageBox"
-                            MinWidth="320"
-                            MaxWidth="420"
-                            HorizontalAlignment="Left"
-                            ItemsSource="{x:Bind ViewModel.Languages, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=OneWay}"
-                            SelectionChanged="LanguageBox_SelectionChanged">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="vm:LanguageChoice">
-                                    <TextBlock Text="{x:Bind Name, Mode=OneTime}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </StackPanel>
-                </Border>
-
-                <!-- The reminder before a write to a character. Turn it on again after "Don't show again". -->
-                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="8">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="&#xEA8F;"
-                                FontSize="18"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                VerticalAlignment="Top"
-                                Margin="0,2,0,0" />
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock x:Uid="Settings/WarningsHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            </StackPanel>
-                        </Grid>
-                        <ToggleSwitch
-                            x:Uid="Settings/ShowWriteHintToggle"
-                            IsOn="{x:Bind ViewModel.ShowWriteHint, Mode=OneWay}"
-                            Toggled="ShowWriteHint_Toggled" />
-                    </StackPanel>
-                </Border>
-
+                    </Border>
+                </StackPanel>
             </Grid>
-
-            <!-- Game: the account and the Black Desert folder. -->
-            <Grid x:Name="TabGame" ColumnSpacing="10" RowSpacing="10" Visibility="Collapsed">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <!-- Account: the numeric folders under UserCache that have an 11 folder. The one chosen here is remembered. -->
-                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="8">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="&#xE77B;"
-                                FontSize="18"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                VerticalAlignment="Top"
-                                Margin="0,2,0,0" />
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock x:Uid="Settings/AccountHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            </StackPanel>
-                        </Grid>
-                        <controls:SearchablePicker
-                            x:Name="AccountPicker"
-                            MinWidth="320"
-                            MaxWidth="420"
-                            HorizontalAlignment="Left"
-                            ItemsSource="{x:Bind ViewModel.Accounts, Mode=OneWay}"
-                            ItemTemplate="{StaticResource AccountChoiceTemplate}"
-                            SelectedItem="{x:Bind ViewModel.SelectedAccount, Mode=OneWay}"
-                            SelectedTemplate="{StaticResource AccountChoiceTemplate}"
-                            Chosen="AccountPicker_Chosen" />
-                    </StackPanel>
-                </Border>
-
-                <!-- Black Desert folder: browse, or type a path and save it. A folder without UserCache is refused. -->
-                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="8">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="&#xE8B7;"
-                                FontSize="18"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                VerticalAlignment="Top"
-                                Margin="0,2,0,0" />
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock x:Uid="Settings/FolderHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            </StackPanel>
-                        </Grid>
-                        <Grid ColumnSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBox
-                                x:Uid="Settings/FolderBox"
-                                Text="{x:Bind ViewModel.DataRootText, Mode=TwoWay}" />
-                            <Button Grid.Column="1" x:Uid="Settings/FolderBrowseButton" Click="Browse_Click" />
-                            <Button
-                                Grid.Column="2"
-                                x:Uid="Settings/FolderSaveButton"
-                                Click="SaveFolder_Click"
-                                Style="{StaticResource AccentButtonStyle}" />
-                        </Grid>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Button x:Uid="Settings/SetupButton" Click="Setup_Click" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-            </Grid>
-
-            <!-- Updates. -->
-            <Grid x:Name="TabUpdates" ColumnSpacing="10" RowSpacing="10" Visibility="Collapsed">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <!-- Updates: the version, the last check, a manual check, the install button (only when a newer release exists),
-                     the progress of a download, and the switch for the check at startup. Nothing is installed without the button. -->
-                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="8">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="&#xE895;"
-                                FontSize="18"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                VerticalAlignment="Top"
-                                Margin="0,2,0,0" />
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock x:Uid="Settings/UpdatesHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            </StackPanel>
-                        </Grid>
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="{x:Bind Updates.CurrentVersionLine, Mode=OneWay}" />
-                            <TextBlock
-                                Text="{x:Bind Updates.LastCheckLine, Mode=OneWay}"
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button x:Uid="Settings/UpdatesCheckButton" Command="{x:Bind Updates.CheckNowCommand}" />
-                            <ProgressRing
-                                Width="20"
-                                Height="20"
-                                IsActive="{x:Bind Updates.IsChecking, Mode=OneWay}"
-                                Visibility="{x:Bind Updates.IsChecking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                            <Button
-                                Command="{x:Bind Updates.InstallCommand}"
-                                Content="{x:Bind Updates.InstallActionText, Mode=OneWay}"
-                                Style="{StaticResource AccentButtonStyle}"
-                                Visibility="{x:Bind Updates.HasRelease, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                            <Button
-                                x:Uid="Settings/UpdatesCancelButton"
-                                Command="{x:Bind Updates.CancelDownloadCommand}"
-                                Visibility="{x:Bind Updates.CanCancelDownload, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                        </StackPanel>
-                        <ProgressBar
-                            Maximum="100"
-                            Value="{x:Bind Updates.DownloadPercent, Mode=OneWay}"
-                            Visibility="{x:Bind Updates.IsDownloading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                        <TextBlock Text="{x:Bind Updates.StatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
-                        <ToggleSwitch
-                            x:Uid="Settings/UpdatesStartupToggle"
-                            IsOn="{x:Bind Updates.CheckOnStartup, Mode=OneWay}"
-                            Toggled="UpdatesStartup_Toggled" />
-                    </StackPanel>
-                </Border>
-
-            </Grid>
-        </StackPanel>
         </ScrollViewer>
 
         <!-- Characters: the account's characters as a grid of cards (left) and the OCR scan card (right). The scan card

@@ -426,18 +426,26 @@
   </data>
   <data name="NavSettingsItem.Content" xml:space="preserve"><value>Configuración</value></data>
   <data name="Settings.Title.Text" xml:space="preserve"><value>Configuración</value></data>
+  <data name="Settings.BackButton.Content" xml:space="preserve"><value>Atrás</value></data>
+  <data name="Settings.SectionAppHeader.Text" xml:space="preserve"><value>Aplicación</value></data>
+  <data name="Settings.SectionGameHeader.Text" xml:space="preserve"><value>Juego</value></data>
+  <data name="Settings.GameCardHeader.Text" xml:space="preserve"><value>Carpeta y cuenta</value></data>
+  <data name="Settings.UpdatesCardHeader.Text" xml:space="preserve"><value>Versión y descargas</value></data>
+  <data name="Settings.FolderLabel.Text" xml:space="preserve"><value>Carpeta</value></data>
+  <data name="Settings.LanguageLabel.Text" xml:space="preserve"><value>Idioma de la interfaz</value></data>
+  <data name="Settings.SetupLabel.Text" xml:space="preserve"><value>Configuración inicial</value></data>
+  <data name="Settings.Appearance.SkillTooltipsLabel.Text" xml:space="preserve"><value>Mostrar tooltips de habilidades</value></data>
+  <data name="Settings.ShowWriteHintLabel.Text" xml:space="preserve"><value>Mostrar el aviso antes de escribir</value></data>
+  <data name="Settings.UpdatesStartupLabel.Text" xml:space="preserve"><value>Buscar actualizaciones al iniciar</value></data>
   <data name="Settings.WarningsHeader.Text" xml:space="preserve"><value>Avisos</value></data>
   <data name="Settings.RestartBar.Title" xml:space="preserve"><value>Reinicia para aplicar los cambios</value></data>
   <data name="Settings.RestartBar.Message" xml:space="preserve"><value>El idioma, la carpeta de datos y la cuenta de la vista previa se aplican al reiniciar la app.</value></data>
   <data name="Settings.RestartButton.Content" xml:space="preserve"><value>Reiniciar ahora</value></data>
   <data name="Settings.AccountHeader.Text" xml:space="preserve"><value>Cuenta</value></data>
-  <data name="Settings.FolderHeader.Text" xml:space="preserve"><value>Carpeta de Black Desert</value></data>
-  <data name="Settings.FolderBox.Header" xml:space="preserve"><value>Carpeta</value></data>
   <data name="Settings.FolderBox.PlaceholderText" xml:space="preserve"><value>Ruta de la carpeta de Black Desert</value></data>
   <data name="Settings.FolderBrowseButton.Content" xml:space="preserve"><value>Examinar...</value></data>
-  <data name="Settings.FolderSaveButton.Content" xml:space="preserve"><value>Guardar carpeta</value></data>
+  <data name="Settings.FolderSaveButton.Content" xml:space="preserve"><value>Guardar</value></data>
   <data name="Settings.LanguageHeader.Text" xml:space="preserve"><value>Idioma</value></data>
-  <data name="Settings.LanguageBox.Header" xml:space="preserve"><value>Idioma de la interfaz</value></data>
   <data name="Settings.LanguageSpanish" xml:space="preserve"><value>Español</value></data>
   <data name="Settings.LanguageEnglish" xml:space="preserve"><value>Inglés (Estados Unidos)</value></data>
   <data name="Settings.FolderMissing" xml:space="preserve"><value>La carpeta no existe.</value></data>
@@ -472,9 +480,6 @@
   <data name="Apply.WriteHint.Continue" xml:space="preserve"><value>Continuar</value></data>
   <data name="Apply.WriteHint.Cancel" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Apply.WriteHint.DontShowAgain" xml:space="preserve"><value>No volver a mostrar</value></data>
-  <data name="Settings.ShowWriteHintToggle.Header" xml:space="preserve"><value>Mostrar el aviso antes de escribir</value></data>
-  <data name="Settings.ShowWriteHintToggle.OnContent" xml:space="preserve"><value>Se muestra antes de cada escritura</value></data>
-  <data name="Settings.ShowWriteHintToggle.OffContent" xml:space="preserve"><value>Oculto</value></data>
   <data name="Settings.AccountItem" xml:space="preserve"><value>Cuenta {0}</value></data>
   <data name="AssetPack.Error.Title" xml:space="preserve">
     <value>Paquete de recursos no disponible</value>
@@ -556,9 +561,6 @@
   </data>
   <data name="Settings.UpdatesCancelButton.Content" xml:space="preserve">
     <value>Cancelar descarga</value>
-  </data>
-  <data name="Settings.UpdatesStartupToggle.Header" xml:space="preserve">
-    <value>Buscar actualizaciones al iniciar</value>
   </data>
   <data name="UpdateBar.NotesButton.Content" xml:space="preserve">
     <value>Ver notas</value>
@@ -755,9 +757,7 @@
   <data name="Characters.ScanFailed" xml:space="preserve">
     <value>La lectura se detuvo por un error. Revisa el log para ver el detalle.</value>
   </data>
-  <data name="Settings.SetupButton.Content" xml:space="preserve">
-    <value>Volver a ejecutar la configuración inicial</value>
-  </data>
+  <data name="Settings.SetupButton.Content" xml:space="preserve"><value>Volver a configurar</value></data>
   <data name="Setup.Title.Text" xml:space="preserve">
     <value>Configuración inicial</value>
   </data>
@@ -909,9 +909,7 @@
     <value>Aplicar a {0}</value>
   </data>
   <data name="Settings.TabGeneral.Text" xml:space="preserve"><value>General</value></data>
-  <data name="Settings.TabGame.Text" xml:space="preserve"><value>Juego</value></data>
   <data name="Settings.TabCharacters.Text" xml:space="preserve"><value>Personajes</value></data>
-  <data name="Settings.TabUpdates.Text" xml:space="preserve"><value>Actualizaciones</value></data>
   <data name="Apply.ClassMismatch" xml:space="preserve"><value>El combo es de {1}, pero {0} es de otra clase. Elige un personaje de esa clase para aplicarlo.</value></data>
   <data name="Apply.GoToPreviewButton.Content" xml:space="preserve"><value>Ir a Vista previa para aplicar</value></data>
   <data name="Apply.Remaining.Title.Text" xml:space="preserve"><value>Te falta poner</value></data>
@@ -938,9 +936,7 @@
   <data name="Settings.LanguageBox.ToolTipService.ToolTip" xml:space="preserve"><value>Se aplica al reiniciar la app.</value></data>
   <data name="Settings.ShowWriteHintToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Muestra un aviso antes de cada escritura en un personaje.</value></data>
   <data name="Settings.FolderBox.ToolTipService.ToolTip" xml:space="preserve"><value>Debe contener una carpeta UserCache.</value></data>
-  <data name="Settings.Appearance.SkillTooltipsToggle.Header" xml:space="preserve"><value>Mostrar tooltips de habilidades</value></data>
-  <data name="Settings.Appearance.SkillTooltipsToggle.OnContent" xml:space="preserve"><value>Se muestran al pasar el puntero</value></data>
-  <data name="Settings.Appearance.SkillTooltipsToggle.OffContent" xml:space="preserve"><value>Ocultos</value></data>
+  <data name="Settings.Appearance.SkillTooltipsToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Se muestran al pasar el puntero</value></data>
   <data name="SkillTooltip.Keys" xml:space="preserve"><value>Teclas</value></data>
   <data name="SkillTooltip.Level" xml:space="preserve"><value>Nivel</value></data>
   <data name="SkillTooltip.Cost" xml:space="preserve"><value>Coste</value></data>

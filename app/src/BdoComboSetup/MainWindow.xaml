@@ -27,7 +27,7 @@
         </Grid>
         <Border Grid.RowSpan="4" Background="{ThemeResource GlassWindowTintBrush}" />
 
-        <!-- Custom title bar: the window content extends into it (AppWindow.TitleBar). The logo chip and the title sit in its content;
+        <!-- Custom title bar: the window content extends into it (AppWindow.TitleBar). The logo chip sits in its content (no app name is drawn in the bar);
              the Settings button sits in its right header, next to the caption buttons. -->
         <TitleBar x:Name="AppTitleBar" IsBackButtonVisible="False" IsPaneToggleButtonVisible="False">
             <TitleBar.Resources>
@@ -37,9 +37,11 @@
                 <!-- The right header is centered in the title bar row by default, which puts the Settings button lower than the caption
                      buttons; top-aligned, its 32 px height lines up with them. -->
                 <VerticalAlignment x:Key="TitleBarRightHeaderVerticalAlignment">Top</VerticalAlignment>
+                <!-- The template centers the title content; the logo chip belongs at the left edge. -->
+                <HorizontalAlignment x:Key="TitleBarContentHorizontalAlignment">Left</HorizontalAlignment>
             </TitleBar.Resources>
             <TitleBar.Content>
-                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="4,0,0,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0,0,0">
                     <Border
                         Width="26"
                         Height="26"
@@ -53,12 +55,6 @@
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center" />
                     </Border>
-                    <TextBlock
-                        x:Name="TitleText"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                        VerticalAlignment="Center" />
                 </StackPanel>
             </TitleBar.Content>
             <TitleBar.RightHeader>

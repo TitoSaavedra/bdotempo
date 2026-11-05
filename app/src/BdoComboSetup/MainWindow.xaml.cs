@@ -23,7 +23,6 @@ public sealed partial class MainWindow : Window
 
         var services = App.Services;
         Title = services.Localizer.Get("AppTitle");
-        TitleText.Text = Title;
 
         // The Settings button takes its accessible name and tooltip from the Settings resource (the same text as before).
         var settingsLabel = services.Localizer.Get("NavSettingsItem.Content");
@@ -109,13 +108,16 @@ public sealed partial class MainWindow : Window
     {
         if (ContentFrame.CurrentSourcePageType == typeof(SettingsPage))
         {
-            ShowPage(_pageBeforeSettings);
+            CloseSettings();
             return;
         }
 
         _pageBeforeSettings = ContentFrame.CurrentSourcePageType ?? typeof(ApplyComboPage);
         ShowPage(typeof(SettingsPage));
     }
+
+    /// <summary>Leaves Settings for the page it was opened from (the Back button of the Settings page and the title bar button).</summary>
+    public void CloseSettings() => ShowPage(_pageBeforeSettings);
 
     /// <summary>Closing the banner (its X) is the same as "Later": hidden for this session.</summary>
     private void UpdateBar_Closed(InfoBar sender, InfoBarClosedEventArgs args) => Updates.DismissCommand.Execute(null);

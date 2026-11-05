@@ -525,16 +525,16 @@ public sealed partial class SettingsPage : Page
         }
     }
 
-    /// <summary>Shows the cards of the chosen tab and hides the others.</summary>
+    /// <summary>Shows the General cards or the Characters tab, whichever is chosen.</summary>
     private void SettingsTabs_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
-        var tag = sender.SelectedItem?.Tag as string ?? "general";
-        TabGeneral.Visibility = tag == "general" ? Visibility.Visible : Visibility.Collapsed;
-        TabGame.Visibility = tag == "game" ? Visibility.Visible : Visibility.Collapsed;
-        TabsScroll.Visibility = tag == "characters" ? Visibility.Collapsed : Visibility.Visible;
-        TabCharacters.Visibility = tag == "characters" ? Visibility.Visible : Visibility.Collapsed;
-        TabUpdates.Visibility = tag == "updates" ? Visibility.Visible : Visibility.Collapsed;
+        var characters = (sender.SelectedItem?.Tag as string) == "characters";
+        GeneralScroll.Visibility = characters ? Visibility.Collapsed : Visibility.Visible;
+        TabCharacters.Visibility = characters ? Visibility.Visible : Visibility.Collapsed;
     }
+
+    /// <summary>Leaves Settings for the page it was opened from (the Back button of the heading).</summary>
+    private void Back_Click(object sender, RoutedEventArgs e) => (App.MainWindow as MainWindow)?.CloseSettings();
 
     /// <summary>Starts a new copy of the app and closes this one, so a language or folder change applies to every page.</summary>
     private void Restart_Click(object sender, RoutedEventArgs e)
