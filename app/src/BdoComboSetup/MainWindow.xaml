@@ -34,6 +34,9 @@
                 <!-- The template keeps a minimum drag strip between the right header and the caption buttons; with it the Settings
                      button floated away from them. The title content is a drag region anyway, so the strip is not needed. -->
                 <x:Double x:Key="TitleBarMinDragRegionWidth">0</x:Double>
+                <!-- The right header is centered in the title bar row by default, which puts the Settings button lower than the caption
+                     buttons; top-aligned, its 32 px height lines up with them. -->
+                <VerticalAlignment x:Key="TitleBarRightHeaderVerticalAlignment">Top</VerticalAlignment>
             </TitleBar.Resources>
             <TitleBar.Content>
                 <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="4,0,0,0">
