@@ -51,6 +51,7 @@ public sealed class AppServices : IDisposable
         SetupViewModel setup,
         ThemeService theme,
         GameDetectionMonitor gameDetection,
+        TourService tour,
         HttpClient httpClient)
     {
         Logger = logger;
@@ -69,6 +70,7 @@ public sealed class AppServices : IDisposable
         Setup = setup;
         Theme = theme;
         GameDetection = gameDetection;
+        Tour = tour;
         _httpClient = httpClient;
     }
 
@@ -118,6 +120,9 @@ public sealed class AppServices : IDisposable
     /// capture. The demo reports no game.
     /// </summary>
     public GameDetectionMonitor GameDetection { get; }
+
+    /// <summary>The guided tour: its steps and state (the rules are in the Core's TourFlow).</summary>
+    public TourService Tour { get; }
 
     /// <summary>
     /// True when the initial setup must be shown: it was never finished, or the saved data folder is no longer usable. The
@@ -308,6 +313,9 @@ public sealed class AppServices : IDisposable
         Func<bool?> gameProbe = () => startup.DemoData ? false : GameProcessProbe.IsGameRunning(logger);
         var gameDetection = new GameDetectionMonitor(gameProbe, logger);
 
+        // The guided tour: its rules are in the Core; the service logs them and tells the window to draw the tip.
+        var tour = new TourService(logger);
+
         return new AppServices(
             logger,
             localizer,
@@ -325,6 +333,7 @@ public sealed class AppServices : IDisposable
             setup,
             theme,
             gameDetection,
+            tour,
             httpClient);
     }
 

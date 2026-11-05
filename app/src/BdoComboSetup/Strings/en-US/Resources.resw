@@ -951,4 +951,22 @@
   <data name="Preview.FitWindow.ToolTipService.ToolTip" xml:space="preserve"><value>Fit the view to the window</value></data>
   <data name="Preview.FitSlots.ToolTipService.ToolTip" xml:space="preserve"><value>Fit the view to the slots</value></data>
   <data name="Preview.FitReal.ToolTipService.ToolTip" xml:space="preserve"><value>Actual game size (100%)</value></data>
+  <data name="Tour.Character.Title" xml:space="preserve"><value>Character and class</value></data>
+  <data name="Tour.Character.Text" xml:space="preserve"><value>Choose who you are working with.</value></data>
+  <data name="Tour.Drag.Title" xml:space="preserve"><value>Drag a skill</value></data>
+  <data name="Tour.Drag.Text" xml:space="preserve"><value>Drop it on a slot on the right. Try it.</value></data>
+  <data name="Tour.Editor.Title" xml:space="preserve"><value>Editor</value></data>
+  <data name="Tour.Editor.Text" xml:space="preserve"><value>See your slots over the game.</value></data>
+  <data name="Tour.Apply.Title" xml:space="preserve"><value>Apply</value></data>
+  <data name="Tour.Apply.Text" xml:space="preserve"><value>This writes the combo to your character. Nothing is written during the tour.</value></data>
+  <data name="Tour.Settings.Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Tour.Settings.Text" xml:space="preserve"><value>Language, theme and this tour, whenever you want to repeat it.</value></data>
+  <data name="Tour.Next" xml:space="preserve"><value>Next</value></data>
+  <data name="Tour.Finish" xml:space="preserve"><value>Finish</value></data>
+  <data name="Tour.Skip" xml:space="preserve"><value>Skip</value></data>
+  <data name="Tour.DragToContinue" xml:space="preserve"><value>Drag to continue</value></data>
+  <data name="Tour.Progress" xml:space="preserve"><value>{0} / {1}</value></data>
+  <data name="Settings.HelpHeader.Text" xml:space="preserve"><value>Help</value></data>
+  <data name="Settings.HelpTourLabel.Text" xml:space="preserve"><value>Guided tour</value></data>
+  <data name="Settings.HelpTourButton.Content" xml:space="preserve"><value>Repeat tour</value></data>
 </root>

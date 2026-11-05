@@ -533,6 +533,15 @@ public sealed partial class SettingsPage : Page
     private void SaveFolder_Click(object sender, RoutedEventArgs e) => ViewModel.ChooseDataRoot(ViewModel.DataRootText);
 
     /// <summary>Reopens the initial setup (folder and account) without restarting the app.</summary>
+    /// <summary>"Repeat tour": the guided tour starts again on the Combos page.</summary>
+    private void RepeatTour_Click(object sender, RoutedEventArgs e)
+    {
+        if (App.MainWindow is MainWindow window)
+        {
+            window.StartTour();
+        }
+    }
+
     private void Setup_Click(object sender, RoutedEventArgs e)
     {
         if (App.MainWindow is MainWindow window)

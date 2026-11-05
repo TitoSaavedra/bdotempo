@@ -488,6 +488,34 @@
                             </Grid>
                         </StackPanel>
                     </Border>
+
+                    <!-- Ayuda: the guided tour, repeated on demand. It also opens after the first-run setup. -->
+                    <Border Style="{StaticResource CardBorderStyle}">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE897;"
+                                    FontSize="18"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    VerticalAlignment="Top"
+                                    Margin="0,2,0,0" />
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <TextBlock x:Uid="Settings/HelpHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid MinHeight="32" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Uid="Settings/HelpTourLabel" VerticalAlignment="Center" />
+                                <Button Grid.Column="1" x:Uid="Settings/HelpTourButton" VerticalAlignment="Center" Click="RepeatTour_Click" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
                 <!-- Juego: the game folder, the account and the initial setup; then Actualizaciones. -->

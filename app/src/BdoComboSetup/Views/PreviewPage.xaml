@@ -434,11 +434,13 @@
 
                 <!-- The footer, always visible and in the same place as the Combos footer: writes the combo to the character. -->
                 <Border Grid.Row="3" Style="{StaticResource GlassPanelStyle}" Padding="16,10,16,12">
+                    <!-- Disabled while the guided tour is active: the tour never writes. -->
                     <Button
+                        x:Name="ApplyButton"
                         x:Uid="Preview/ApplyButton"
                         Style="{StaticResource AccentButtonStyle}"
                         HorizontalAlignment="Stretch"
-                        IsEnabled="{x:Bind Apply.CanRun, Mode=OneWay}"
+                        IsEnabled="{x:Bind local:PreviewPage.ApplyEnabled(Apply.CanRun, Tour.IsActive), Mode=OneWay}"
                         Click="ApplyButton_Click" />
                 </Border>
             </Grid>

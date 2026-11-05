@@ -58,6 +58,12 @@ public sealed partial class ApplyComboPage : Page
 
     public ApplyComboViewModel ViewModel { get; }
 
+    /// <summary>The guided tour's step 1 target: the left card with the character and the class.</summary>
+    public FrameworkElement TourCharacterTarget => CharacterClassCard;
+
+    /// <summary>The guided tour step 2 target: the cooldown slot board, where the skill is dropped (the tip sits under it, so the chain list stays visible).</summary>
+    public FrameworkElement TourChainsTarget => CooldownBoard;
+
     /// <summary>The app's settings view model. The footer's reminder switch is the same setting as in the Settings page.</summary>
     public SettingsViewModel SettingsView => App.Services.SettingsView;
 
@@ -414,9 +420,13 @@ public sealed partial class ApplyComboPage : Page
         }
 
         var placed = drag.Step;
+        var placedOnBoard = false;
         if (position is int target)
         {
+            // A real drop changes who holds the position; a drop on the cell that already holds the step changes nothing.
+            var holderBefore = HolderOf(kind, target);
             placed = editor.DropOnBoard(drag.Step, BoardOf(kind), target, how);
+            placedOnBoard = !ReferenceEquals(HolderOf(kind, target), holderBefore);
         }
         else
         {
@@ -424,6 +434,12 @@ public sealed partial class ApplyComboPage : Page
         }
 
         editor.SelectStep(placed);
+        if (placedOnBoard)
+        {
+            // The guided tour's drag step waits for exactly this drop (it ignores any other).
+            App.Services.Tour.CompleteAction();
+        }
+
         App.Services.Logger.Info("apply.board.dropped", "A step was dropped on a board", new Dictionary<string, object?>
         {
             ["target_board"] = kind.ToString(),
@@ -453,6 +469,10 @@ public sealed partial class ApplyComboPage : Page
                 break;
         }
     }
+
+    /// <summary>The step that holds a board position of the working copy, or null when the position is empty.</summary>
+    private ComboStepViewModel? HolderOf(ApplyBoardKind kind, int position) =>
+        ViewModel.Editor?.AllSteps().FirstOrDefault(step => kind == ApplyBoardKind.Cooldown ? step.CooldownSlot == position : step.QuickPosition == position);
 
     private static ComboBoard BoardOf(ApplyBoardKind kind) => kind == ApplyBoardKind.Cooldown ? ComboBoard.Cooldown : ComboBoard.Quick;
 

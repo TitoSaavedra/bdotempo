@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using BdoComboSetup.Core.Tour;
 using BdoComboSetup.Core.ViewModels;
 using BdoComboSetup.Services;
 using BdoComboSetup.Views;
@@ -15,8 +16,17 @@ public sealed partial class MainWindow : Window
     /// <summary>The update state for the banner. A getter, because the x:Bind bindings are evaluated inside InitializeComponent.</summary>
     public UpdateViewModel Updates => App.Services.Updates;
 
+    /// <summary>The tip of the guided tour step that is shown (a new one is built for every step, see ShowTourTip).</summary>
+    private TeachingTip? _tourTip;
+
     /// <summary>True while a tab is selected from code after a navigation: its SelectionChanged is not a click, so it does nothing.</summary>
     private bool _syncingTabs;
+
+    /// <summary>True when the setup on screen is the first-run setup: the guided tour starts when it is left.</summary>
+    private bool _setupStartsTour;
+
+    /// <summary>The "Next" action of the tour's tip: its availability follows the step (a waiting step disables it).</summary>
+    private readonly TourCommand _tourNext;
 
     public MainWindow()
     {
@@ -57,6 +67,18 @@ public sealed partial class MainWindow : Window
         // The color theme and the accent are applied before the first page is shown.
         services.Theme.Attach(RootGrid, AppWindow);
 
+        // The guided tour: the tip follows the page, the state of the tour and the loaded combo.
+        _tourNext = new TourCommand(TourNext, () => App.Services.Tour.CanAdvance);
+        ContentFrame.Navigated += (_, _) => RefreshTourTip();
+        services.Tour.Changed += (_, _) => RefreshTourTip();
+        services.ApplyCombo.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(ApplyComboViewModel.HasEditor))
+            {
+                RefreshTourTip();
+            }
+        };
+
         // Without a readable assets.bdoa the modules cannot show icons or combos: the window shows the explanation only.
         if (services.AssetPackLoad.ErrorCode is not null)
         {
@@ -70,6 +92,11 @@ public sealed partial class MainWindow : Window
         {
             services.Logger.Info("window.setup", "Main window shows the initial setup");
             ShowSetup(firstRun: true);
+        }
+        else if (services.Startup.Tour)
+        {
+            // --tour: the guided tour opens on Combos, for testing it by hand.
+            StartTour();
         }
         else
         {
@@ -133,16 +160,207 @@ public sealed partial class MainWindow : Window
     /// <summary>
     /// Shows the initial setup page: first run, or from Settings (finishing returns there). The setup has no tabs and no Settings gear.
     /// </summary>
-    public void ShowSetup(bool firstRun) => Navigate(typeof(SetupPage), firstRun);
+    public void ShowSetup(bool firstRun)
+    {
+        _setupStartsTour = firstRun;
+        Navigate(typeof(SetupPage), firstRun);
+    }
 
     /// <summary>
     /// Leaves the initial setup: the page of the app opens. The settings just saved become the running ones, so the page does
-    /// not ask for a restart.
+    /// not ask for a restart. After the first-run setup the guided tour starts on Combos; a setup reopened from Settings does not.
     /// </summary>
     public void LeaveSetup(bool goToSettings)
     {
+        var startTour = _setupStartsTour && !goToSettings;
+        _setupStartsTour = false;
         App.Services.SettingsView.AdoptRunningConfiguration();
+        if (startTour)
+        {
+            StartTour();
+            return;
+        }
+
         ShowPage(goToSettings ? typeof(SettingsPage) : typeof(ApplyComboPage));
+    }
+
+    /// <summary>
+    /// Starts the guided tour on the Combos page. Used after the first-run setup, by "--tour" and by Settings ("Repeat tour").
+    /// A write review left open is closed first: the tour never writes, and the review's write button would still work.
+    /// </summary>
+    public void StartTour()
+    {
+        var services = App.Services;
+        if (services.ApplyCombo.IsReviewOpen && services.ApplyCombo.CancelReviewCommand.CanExecute(null))
+        {
+            services.ApplyCombo.CancelReviewCommand.Execute(null);
+        }
+
+        services.Tour.Start(services.ApplyCombo.HasEditor);
+        ShowTourStep();
+    }
+
+    /// <summary>
+    /// The "Next" of the tip: the tour moves on (or finishes), and the page of the new step is shown. A refused Next does nothing.
+    /// </summary>
+    private void TourNext()
+    {
+        if (App.Services.Tour.Next())
+        {
+            ShowTourStep();
+        }
+    }
+
+    /// <summary>Shows the page the current step needs (Combos or Editor, when the step has one) and places the tip on it.</summary>
+    private void ShowTourStep()
+    {
+        var page = App.Services.Tour.Current?.Id switch
+        {
+            "character" or "drag" => typeof(ApplyComboPage),
+            "apply" => typeof(PreviewPage),
+            _ => null,
+        };
+        if (page is not null)
+        {
+            ShowPage(page);
+        }
+
+        RefreshTourTip();
+    }
+
+    /// <summary>
+    /// Places the tip again after a change. It is deferred to the dispatcher, so the page of the step has laid out its controls.
+    /// </summary>
+    private void RefreshTourTip() => DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, PositionTourTip);
+
+    /// <summary>
+    /// Moves the tip to the target of the current step. When the tour is not active, or the page of the step is not the one
+    /// shown (the user went elsewhere), the tip is closed and the tour keeps its step: the tip returns when the page does.
+    /// </summary>
+    private void PositionTourTip()
+    {
+        var services = App.Services;
+        services.Tour.UpdateCombo(services.ApplyCombo.HasEditor);
+        var step = services.Tour.Current;
+        if (step is null)
+        {
+            CloseTourTip();
+            return;
+        }
+
+        var target = TourTargetOf(step.Id);
+        if (target is null)
+        {
+            CloseTourTip();
+            return;
+        }
+
+        if (target is FrameworkElement { IsLoaded: false } pending)
+        {
+            // The page of the step is still loading: the tip is placed once its target is loaded.
+            WaitForLoaded(pending);
+            CloseTourTip();
+            return;
+        }
+
+        ShowTourTip(step, target);
+    }
+
+    /// <summary>The element a step points at. Null when the page of the step is not the one shown.</summary>
+    private UIElement? TourTargetOf(string stepId) => stepId switch
+    {
+        "character" => (ContentFrame.Content as ApplyComboPage)?.TourCharacterTarget,
+        "drag" => (ContentFrame.Content as ApplyComboPage)?.TourChainsTarget,
+        "editor" => EditorTab,
+        "apply" => (ContentFrame.Content as PreviewPage)?.TourApplyTarget,
+        "settings" => SettingsButton,
+        _ => null,
+    };
+
+    /// <summary>Fills the tip with the step (title, text, the "n / 5" caption, the buttons) and opens it at its target.</summary>
+    private void ShowTourTip(TourStep step, UIElement target)
+    {
+        var services = App.Services;
+        var tour = services.Tour;
+        var localizer = services.Localizer;
+
+        // A new tip for every step: a tip that was open keeps the position it had (and reopening it while it is still closing
+        // is ignored), so its placement could not be changed between steps.
+        DiscardTourTip();
+
+        var tip = new TeachingTip
+        {
+            IsLightDismissEnabled = false,
+            // Placed so it never covers what the step is about: beside the tall left card, under the slot board (the skills to
+            // drag stay visible), under the title bar items.
+            PreferredPlacement = step.Id switch
+            {
+                "character" => TeachingTipPlacementMode.RightTop,
+                "apply" => TeachingTipPlacementMode.Top,
+                _ => TeachingTipPlacementMode.Bottom,
+            },
+            Title = localizer.Get(step.TitleKey),
+            Subtitle = localizer.Get(step.TextKey),
+            Content = new TextBlock
+            {
+                Text = localizer.Format("Tour.Progress", tour.StepNumber, tour.StepCount),
+                FontSize = 12,
+                Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+            },
+            CloseButtonContent = localizer.Get("Tour.Skip"),
+            ActionButtonContent = tour.IsWaitingForAction
+                ? localizer.Get("Tour.DragToContinue")
+                : localizer.Get(tour.IsLastStep ? "Tour.Finish" : "Tour.Next"),
+            ActionButtonCommand = _tourNext,
+        };
+        Grid.SetRowSpan(tip, 4);
+        tip.Closed += TourTip_Closed;
+        RootGrid.Children.Add(tip);
+        _tourTip = tip;
+        _tourNext.RaiseCanExecuteChanged();
+        tip.Target = target as FrameworkElement;
+        tip.IsOpen = true;
+    }
+
+    private void CloseTourTip() => DiscardTourTip();
+
+    /// <summary>Closes and removes the tip of the step that is shown, if any.</summary>
+    private void DiscardTourTip()
+    {
+        if (_tourTip is not { } tip)
+        {
+            return;
+        }
+
+        _tourTip = null;
+        tip.Closed -= TourTip_Closed;
+        tip.IsOpen = false;
+        tip.Target = null;
+        RootGrid.Children.Remove(tip);
+    }
+
+    /// <summary>Calls <see cref="RefreshTourTip"/> once the element has loaded.</summary>
+    private void WaitForLoaded(FrameworkElement element)
+    {
+        void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            element.Loaded -= OnLoaded;
+            RefreshTourTip();
+        }
+
+        element.Loaded += OnLoaded;
+    }
+
+    /// <summary>
+    /// The tip's close button (or Escape) skips the tour. A close made from the code is not a skip: it is the end of a step
+    /// (the tip is closed and opened again at the next target).
+    /// </summary>
+    private void TourTip_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
+    {
+        if (args.Reason != TeachingTipCloseReason.Programmatic && App.Services.Tour.IsActive)
+        {
+            App.Services.Tour.Skip();
+        }
     }
 
     /// <summary>Navigates to a page, unless the frame already shows it.</summary>

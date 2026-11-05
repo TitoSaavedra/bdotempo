@@ -2,6 +2,7 @@ using Windows.ApplicationModel.DataTransfer;
 using BdoComboSetup.Core.Combo;
 using BdoComboSetup.Core.Search;
 using BdoComboSetup.Core.ViewModels;
+using BdoComboSetup.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -30,6 +31,15 @@ public sealed partial class PreviewPage : Page
 
     /// <summary>The write side: the combo of the Combos page, its review and the write.</summary>
     public ApplyComboViewModel Apply { get; }
+
+    /// <summary>The guided tour: its state drives whether the Apply button is enabled.</summary>
+    public TourService Tour => App.Services.Tour;
+
+    /// <summary>The guided tour's step 4 target: the Apply button of the side panel.</summary>
+    public Button TourApplyTarget => ApplyButton;
+
+    /// <summary>The Apply button is enabled when the combo can be applied and no guided tour is running.</summary>
+    public static bool ApplyEnabled(bool canRun, bool tourActive) => canRun && !tourActive;
 
     /// <summary>The status line under the game takes room only when at least one of its texts has something to say.</summary>
     public static Visibility AnyTextVisibility(string? first, string? second, string? third) =>
@@ -76,6 +86,13 @@ public sealed partial class PreviewPage : Page
     /// </summary>
     public async Task RequestApplyAsync()
     {
+        // The guided tour never writes: while it runs, Apply does nothing (the button is disabled too).
+        if (App.Services.Tour.IsApplyBlocked)
+        {
+            App.Services.Logger.Info("tour.apply_blocked", "Apply ignored: the guided tour is active");
+            return;
+        }
+
         if (await ConfirmWriteOptionsAsync())
         {
             await Apply.ApplyCommand.ExecuteAsync(null);
