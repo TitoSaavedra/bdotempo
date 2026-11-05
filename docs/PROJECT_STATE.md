@@ -164,7 +164,7 @@ The old test suites (C# and Python) were deleted on purpose; the new plan to rew
 - **Combos page: dragging a skill from the chain list to a cooldown or quick board cell is still refused.** Two attempts failed
   (cells changed from Button to transparent Grid with AllowDrop; RequestedOperation Move|Copy on both drag sources).
   A temporary trace is in `Views\ApplyComboPage.xaml.cs` (`DragLog`, event `drag.trace`: steps.drag_items_starting,
-  cell.drag_over, cell.drop). Next step: start the app, drag once, read `%LOCALAPPDATA%\BDOTempo\logspp-*.log` for `drag.trace`
+  cell.drag_over, cell.drop). Next step: start the app, drag once, read `%LOCALAPPDATA%\BDOTempo\logs\app-*.log` for `drag.trace`
   to see whether DragItemsStarting fires, whether the cells receive DragOver at all, and what `_drag` is. Suspects: the ListView
   (CanReorderItems/AllowDrop) swallowing the drag, the Chains ScrollViewer `AllowDrop`, hit-testing of the cells (Border over the
   Grid), `e.Handled`. Remove the trace when fixed.
