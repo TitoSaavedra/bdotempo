@@ -413,8 +413,8 @@
         <DataTemplate x:Key="SpecTemplate" x:DataType="vm:SpecOptionViewModel">
             <Button
                 Command="{x:Bind SelectCommand}"
-                Style="{x:Bind local:ApplyComboPage.PillStyle(IsSelected), Mode=OneWay}"
-                Margin="0,0,8,0"
+                Style="{x:Bind local:ApplyComboPage.GuideTextStyle(IsSelected), Mode=OneWay}"
+                Margin="8,0,0,0"
                 Content="{x:Bind Label, Mode=OneWay}" />
         </DataTemplate>
 
@@ -673,30 +673,36 @@
                     </Button>
                 </Grid>
 
-                <!-- The guide switch: one pill per spec of the class. -->
-                <StackPanel Grid.Row="2" Padding="18,0,18,12" Spacing="6">
-                    <TextBlock x:Uid="Apply/GuideHeader" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                        <ItemsControl
-                            ItemsSource="{x:Bind ViewModel.Specs, Mode=OneWay}"
-                            ItemTemplate="{StaticResource SpecTemplate}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </ScrollViewer>
+                <!-- One row: the tabs (Combo, Add-ons) at the left and the guides of the class (Awakening, Succession, ...) at the right
+                     as plain text, the selected one in the accent color. -->
+                <Grid Grid.Row="2" Padding="18,0,18,8" ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
                     <!-- Combo (the chains) or Add-ons. Add-ons shows only when the guide has some. -->
-                    <SelectorBar x:Name="GuideTabs" Margin="-12,4,0,0" SelectionChanged="GuideTabs_SelectionChanged">
+                    <SelectorBar x:Name="GuideTabs" Margin="-12,0,0,0" SelectionChanged="GuideTabs_SelectionChanged">
                         <SelectorBarItem x:Name="ChainsTabItem" x:Uid="Apply/TabChains" IsSelected="True" />
                         <SelectorBarItem
                             x:Name="AddonsTabItem"
                             x:Uid="Apply/TabAddons"
                             Visibility="{x:Bind ViewModel.Editor.HasAddons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                     </SelectorBar>
-                </StackPanel>
+
+                    <ItemsControl
+                        Grid.Column="1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        ItemsSource="{x:Bind ViewModel.Specs, Mode=OneWay}"
+                        ItemTemplate="{StaticResource SpecTemplate}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </Grid>
 
                 <!-- The Add-ons tab: the class add-ons of the guide, read-only. Shown instead of the chains while its tab is selected. -->
                 <ScrollViewer

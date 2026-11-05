@@ -81,6 +81,10 @@ public sealed partial class ApplyComboPage : Page
         (Style)App.Current.Resources[selected ? "StepCardSelectedStyle" : "StepCardStyle"];
 
     /// <summary>A spec pill: accent when it is the selected spec.</summary>
+    /// <summary>A guide of the class in the tab row: plain text, the selected one in the accent color.</summary>
+    public static Style GuideTextStyle(bool selected) =>
+        (Style)App.Current.Resources[selected ? "GuideTextSelectedStyle" : "GuideTextStyle"];
+
     public static Style PillStyle(bool selected) =>
         (Style)App.Current.Resources[selected ? "PillSelectedStyle" : "PillStyle"];
 

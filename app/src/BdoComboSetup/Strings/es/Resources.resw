@@ -862,9 +862,6 @@
   <data name="Apply.ClassHeader.Text" xml:space="preserve">
     <value>Clase</value>
   </data>
-  <data name="Apply.GuideHeader.Text" xml:space="preserve">
-    <value>Guía</value>
-  </data>
   <data name="Apply.CooldownBoardHeader.Text" xml:space="preserve">
     <value>Casillas de recarga</value>
   </data>

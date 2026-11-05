@@ -404,6 +404,20 @@
             </Style>
 
             <!-- Apply page: a spec pill (Awakening, Succession, ...). Fully round. -->
+            <!-- A guide in the Combos tab row: plain text with no frame; the selected one is bold and in the accent color. -->
+            <Style x:Key="GuideTextStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Setter Property="Padding" Value="6,4" />
+                <Setter Property="MinHeight" Value="0" />
+                <Setter Property="FontSize" Value="14" />
+            </Style>
+            <Style x:Key="GuideTextSelectedStyle" TargetType="Button" BasedOn="{StaticResource GuideTextStyle}">
+                <Setter Property="Foreground" Value="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
             <Style x:Key="PillStyle" TargetType="Button">
                 <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
                 <Setter Property="BorderBrush" Value="{ThemeResource GlassLineBrush}" />
