@@ -67,7 +67,7 @@
   <data name="Apply.WriteDialogContinue" xml:space="preserve">
     <value>Continuar</value>
   </data>
-  <data name="Apply.RestoreButton.Content" xml:space="preserve">
+  <data name="Apply.RestoreMenuItem.Text" xml:space="preserve">
     <value>Restaurar guía</value>
   </data>
   <data name="Apply.SaveButton.Content" xml:space="preserve">
@@ -298,23 +298,29 @@
   <data name="Apply.Review.NoChanges" xml:space="preserve">
     <value>El personaje ya tiene este combo. No hay nada que escribir.</value>
   </data>
-  <data name="Apply.ComboSlotsHeader.Text" xml:space="preserve">
-    <value>Mis combos</value>
-  </data>
-  <data name="Apply.ComboNameBox.Header" xml:space="preserve">
+  <data name="Apply.ComboNameBox.AutomationProperties.Name" xml:space="preserve">
     <value>Nombre del combo</value>
   </data>
   <data name="Apply.ComboNameBox.PlaceholderText" xml:space="preserve">
     <value>Opcional</value>
   </data>
-  <data name="Apply.SaveSlotButton.Content" xml:space="preserve">
-    <value>Guardar en la ranura</value>
+  <data name="Apply.ComboMoreButton.Content" xml:space="preserve">
+    <value>⋯</value>
   </data>
-  <data name="Apply.LoadSlotButton.Content" xml:space="preserve">
+  <data name="Apply.ComboMoreButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Más acciones del combo</value>
+  </data>
+  <data name="Apply.ComboMoreButton.AutomationProperties.Name" xml:space="preserve">
+    <value>Más acciones del combo</value>
+  </data>
+  <data name="Apply.SaveSlotButton.Content" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="Apply.LoadSlotMenuItem.Text" xml:space="preserve">
     <value>Cargar</value>
   </data>
-  <data name="Apply.DeleteSlotButton.Content" xml:space="preserve">
-    <value>Borrar</value>
+  <data name="Apply.DeleteSlotMenuItem.Text" xml:space="preserve">
+    <value>Eliminar</value>
   </data>
   <data name="Apply.ComboSlotLabel" xml:space="preserve">
     <value>{0} · {1}</value>

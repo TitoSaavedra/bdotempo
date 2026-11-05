@@ -9,7 +9,12 @@
         empty-state text when nothing matches. Keyboard: type to filter; Down moves to the list; Enter in the box picks the
         first match; Enter or a click on an item picks that item. Esc is handled by the flyout that hosts it.
     -->
-    <StackPanel Spacing="8" MinWidth="260">
+    <Grid RowSpacing="8" MinWidth="260">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
         <TextBox
             x:Name="SearchBox"
             x:Uid="SearchableList/Search"
@@ -17,6 +22,7 @@
             KeyDown="SearchBox_KeyDown" />
         <ListView
             x:Name="Items"
+            Grid.Row="1"
             MaxHeight="320"
             SelectionMode="Single"
             IsItemClickEnabled="True"
@@ -25,9 +31,10 @@
         <TextBlock
             x:Name="EmptyText"
             x:Uid="SearchableList/Empty"
+            Grid.Row="2"
             Visibility="Collapsed"
             TextWrapping="Wrap"
             FontSize="12"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-    </StackPanel>
+    </Grid>
 </UserControl>

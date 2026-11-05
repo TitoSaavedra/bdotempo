@@ -57,6 +57,22 @@ public sealed partial class SearchableList : UserControl
         set => Items.ItemTemplate = value;
     }
 
+    public static readonly DependencyProperty ListMaxHeightProperty = DependencyProperty.Register(
+        nameof(ListMaxHeight),
+        typeof(double),
+        typeof(SearchableList),
+        new PropertyMetadata(320d, (sender, e) => ((SearchableList)sender).Items.MaxHeight = (double)e.NewValue));
+
+    /// <summary>
+    /// The tallest the list grows. 320 suits a list in a flyout; set it to infinity where the list sits in a row that has a
+    /// bounded height, so it fills that row and scrolls inside it.
+    /// </summary>
+    public double ListMaxHeight
+    {
+        get => (double)GetValue(ListMaxHeightProperty);
+        set => SetValue(ListMaxHeightProperty, value);
+    }
+
     public static readonly DependencyProperty FieldsOfProperty = DependencyProperty.Register(
         nameof(FieldsOf),
         typeof(object),

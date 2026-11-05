@@ -30,6 +30,7 @@ public sealed class XamlUidPropertyTests
         ["Border"] = [],
         ["ProgressBar"] = [],
         ["SelectorBarItem"] = ["Text"],
+        ["MenuFlyoutItem"] = ["Text"],
     };
 
     /// <summary>Attached and automation properties any element may take through x:Uid.</summary>

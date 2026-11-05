@@ -390,6 +390,18 @@
                 TextTrimming="CharacterEllipsis" />
         </DataTemplate>
 
+        <!-- The slot the selector shows in the compact row: its label and a chevron, without the list row's padding. -->
+        <DataTemplate x:Key="ComboSlotSelectedTemplate" x:DataType="vm:ComboSlotOption">
+            <Grid ColumnSpacing="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{x:Bind Label, Mode=OneWay}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                <FontIcon Grid.Column="1" Glyph="&#xE70D;" FontSize="10" VerticalAlignment="Center" />
+            </Grid>
+        </DataTemplate>
+
         <!-- One class add-on of the guide: icon, name, the guide's description and its effects as label and value. -->
         <DataTemplate x:Key="AddonTemplate" x:DataType="vm:ComboAddonViewModel">
             <Border
@@ -451,10 +463,10 @@
 
     <Grid Padding="16" ColumnSpacing="12" RowSpacing="10">
         <Grid.ColumnDefinitions>
-            <!-- 280 leaves the searchable class list its 260 pixels inside the card's padding. -->
-            <ColumnDefinition Width="280" />
+            <!-- The side columns shrink with the window down to their minimums; the center keeps its 320 pixels. -->
+            <ColumnDefinition Width="0.8*" MinWidth="200" MaxWidth="300" />
             <ColumnDefinition Width="*" MinWidth="320" />
-            <ColumnDefinition Width="360" />
+            <ColumnDefinition Width="0.95*" MinWidth="240" MaxWidth="380" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -505,10 +517,11 @@
                 <TextBlock Grid.Row="2" x:Uid="Apply/ClassHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" Padding="6,0" />
 
                 <!-- The classes with a guide. Searching matches the Spanish and the English name. -->
+                <!-- The class list scrolls inside its own row when the window is short; the card's edges never move. -->
                 <controls:SearchableList
-                    Grid.Row="3"
                     x:Name="ClassList"
-                    VerticalAlignment="Top"
+                    Grid.Row="3"
+                    ListMaxHeight="Infinity"
                     ItemsSource="{x:Bind ViewModel.Classes, Mode=OneWay}"
                     ItemTemplate="{StaticResource ClassRowTemplate}"
                     ItemChosen="ClassList_ItemChosen" />
@@ -550,8 +563,52 @@
                     </StackPanel>
                 </Grid>
 
+                <!-- My combos: one compact row under the guide heading. The name stays visible; Save writes the selected slot. -->
+                <Grid
+                    Grid.Row="1"
+                    Padding="18,0,18,12"
+                    ColumnSpacing="8"
+                    Visibility="{x:Bind ViewModel.HasEditor, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" MinWidth="110" />
+                        <ColumnDefinition Width="1.3*" MinWidth="100" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <controls:SearchablePicker
+                        x:Name="ComboSlotPicker"
+                        MinHeight="30"
+                        HorizontalAlignment="Stretch"
+                        ItemsSource="{x:Bind ViewModel.ComboSlots, Mode=OneWay}"
+                        ItemTemplate="{StaticResource ComboSlotTemplate}"
+                        SelectedItem="{x:Bind ViewModel.SelectedComboSlot, Mode=OneWay}"
+                        SelectedTemplate="{StaticResource ComboSlotSelectedTemplate}"
+                        Chosen="ComboSlotPicker_Chosen" />
+                    <TextBox
+                        Grid.Column="1"
+                        x:Uid="Apply/ComboNameBox"
+                        Text="{x:Bind ViewModel.ComboName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        MaxLength="60"
+                        VerticalAlignment="Center" />
+                    <Button
+                        Grid.Column="2"
+                        x:Uid="Apply/SaveSlotButton"
+                        Command="{x:Bind ViewModel.SaveProfileCommand}"
+                        Style="{StaticResource AccentButtonStyle}" />
+                    <Button Grid.Column="3" x:Uid="Apply/ComboMoreButton">
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem x:Uid="Apply/LoadSlotMenuItem" Command="{x:Bind ViewModel.LoadProfileCommand}" />
+                                <MenuFlyoutItem x:Uid="Apply/DeleteSlotMenuItem" Command="{x:Bind ViewModel.DeleteProfileCommand}" />
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem x:Uid="Apply/RestoreMenuItem" Command="{x:Bind ViewModel.RestoreBaseCommand}" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </Grid>
+
                 <!-- The guide switch: one pill per spec of the class. -->
-                <StackPanel Grid.Row="1" Padding="18,0,18,12" Spacing="6">
+                <StackPanel Grid.Row="2" Padding="18,0,18,12" Spacing="6">
                     <TextBlock x:Uid="Apply/GuideHeader" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                         <ItemsControl
@@ -621,7 +678,7 @@
             </Grid>
         </Border>
 
-        <!-- Right panel: the 20 cooldown slots, the 9 quick positions, the selected step and the saved combos. The footer stays. -->
+        <!-- Right panel: the 20 cooldown slots, the 9 quick positions and the selected step. It scrolls; the footer stays. -->
         <Border Grid.Column="2" Style="{StaticResource GlassCardStyle}" Padding="0">
             <Grid>
                 <Grid.RowDefinitions>
@@ -739,56 +796,6 @@
                                 </Grid>
                                 <Button x:Uid="Apply/ResetStepButton" Command="{x:Bind ViewModel.Editor.ResetStepCommand}" HorizontalAlignment="Stretch" />
                             </StackPanel>
-                        </StackPanel>
-
-                        <!-- My combos: the ten saved copies of the selected guide. The guide itself is never written. -->
-                        <StackPanel
-                            Spacing="8"
-                            Visibility="{x:Bind ViewModel.HasEditor, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock x:Uid="Apply/ComboSlotsHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            <controls:SearchablePicker
-                                x:Name="ComboSlotPicker"
-                                HorizontalAlignment="Stretch"
-                                ItemsSource="{x:Bind ViewModel.ComboSlots, Mode=OneWay}"
-                                ItemTemplate="{StaticResource ComboSlotTemplate}"
-                                SelectedItem="{x:Bind ViewModel.SelectedComboSlot, Mode=OneWay}"
-                                SelectedTemplate="{StaticResource ComboSlotTemplate}"
-                                Chosen="ComboSlotPicker_Chosen" />
-                            <TextBox
-                                x:Uid="Apply/ComboNameBox"
-                                Text="{x:Bind ViewModel.ComboName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                MaxLength="60" />
-                            <Grid ColumnSpacing="8" RowSpacing="8">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Button
-                                    x:Uid="Apply/SaveSlotButton"
-                                    Command="{x:Bind ViewModel.SaveProfileCommand}"
-                                    HorizontalAlignment="Stretch"
-                                    Style="{StaticResource AccentButtonStyle}" />
-                                <Button
-                                    Grid.Column="1"
-                                    x:Uid="Apply/LoadSlotButton"
-                                    Command="{x:Bind ViewModel.LoadProfileCommand}"
-                                    HorizontalAlignment="Stretch" />
-                                <Button
-                                    Grid.Row="1"
-                                    x:Uid="Apply/DeleteSlotButton"
-                                    Command="{x:Bind ViewModel.DeleteProfileCommand}"
-                                    HorizontalAlignment="Stretch" />
-                                <Button
-                                    Grid.Row="1"
-                                    Grid.Column="1"
-                                    x:Uid="Apply/RestoreButton"
-                                    Command="{x:Bind ViewModel.RestoreBaseCommand}"
-                                    HorizontalAlignment="Stretch" />
-                            </Grid>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
