@@ -57,6 +57,51 @@ public sealed class TourFlowTests
         Assert.Null(flow.Current);
     }
 
+    [Fact]
+    public void SkipStep_GoesToTheNextStep_AndTheTourStaysActive()
+    {
+        var flow = FlowAt(0);
+
+        Assert.True(flow.SkipStep());
+
+        Assert.True(flow.IsActive);
+        Assert.Equal(2, flow.StepNumber);
+    }
+
+    [Fact]
+    public void SkipStep_OnTheWaitingDragStep_MovesOnWithoutTheAction()
+    {
+        var flow = FlowAt(DragStepIndex);
+        Assert.True(flow.IsWaitingForAction);
+
+        Assert.True(flow.SkipStep());
+
+        Assert.Equal("editor", flow.Current?.Id);
+        Assert.False(flow.IsWaitingForAction);
+    }
+
+    [Fact]
+    public void SkipStep_OnTheLastStep_FinishesTheTour()
+    {
+        var flow = FlowAt(4);
+        var ended = new List<TourEndReason>();
+        flow.Ended += (_, e) => ended.Add(e.Reason);
+
+        Assert.True(flow.SkipStep());
+
+        Assert.Equal(new[] { TourEndReason.Finished }, ended);
+        Assert.False(flow.IsActive);
+    }
+
+    [Fact]
+    public void SkipStep_WhenNotActive_DoesNothing()
+    {
+        var flow = new TourFlow();
+
+        Assert.False(flow.SkipStep());
+        Assert.False(flow.IsActive);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]

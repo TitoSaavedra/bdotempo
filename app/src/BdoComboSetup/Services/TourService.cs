@@ -93,7 +93,18 @@ public sealed class TourService : INotifyPropertyChanged
         return moved;
     }
 
-    /// <summary>Ends the tour before its last step (the close button of the tip).</summary>
+    /// <summary>Skips the current step (the "Skip" button of the tip); on the last step the tour finishes.</summary>
+    public void SkipStep()
+    {
+        _logger.Info("tour.step_skipped", "Guided tour step skipped", new Dictionary<string, object?>
+        {
+            ["step"] = _flow.StepNumber,
+            ["step_id"] = _flow.Current?.Id,
+        });
+        _flow.SkipStep();
+    }
+
+    /// <summary>Ends the whole tour before its last step.</summary>
     public void Skip() => _flow.Skip();
 
     private void OnFlowChanged()

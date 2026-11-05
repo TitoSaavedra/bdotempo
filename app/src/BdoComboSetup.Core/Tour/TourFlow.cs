@@ -148,7 +148,30 @@ public sealed class TourFlow
         return true;
     }
 
-    /// <summary>Ends the tour before its last step. Does nothing when it is not active.</summary>
+    /// <summary>
+    /// Skips the current step (the tip's "Skip" button): goes to the next one even when this one waits for an action, and on the
+    /// last step it finishes the tour. False when the tour is not active.
+    /// </summary>
+    public bool SkipStep()
+    {
+        if (!IsActive)
+        {
+            return false;
+        }
+
+        if (IsLastStep)
+        {
+            Finish();
+            return true;
+        }
+
+        _index++;
+        _actionDone = false;
+        StepChanged?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
+    /// <summary>Ends the whole tour before its last step. Does nothing when it is not active.</summary>
     public void Skip() => End(TourEndReason.Skipped);
 
     /// <summary>Ends the tour as finished. Does nothing when it is not active.</summary>

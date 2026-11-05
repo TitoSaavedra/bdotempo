@@ -457,7 +457,7 @@ public sealed partial class MainWindow : Window
             ActionButtonCommand = _tourNext,
         };
         Grid.SetRowSpan(tip, 4);
-        tip.Closed += TourTip_Closed;
+        tip.CloseButtonClick += TourTip_CloseButtonClick;
         RootGrid.Children.Add(tip);
         _tourTip = tip;
         _tourNext.RaiseCanExecuteChanged();
@@ -476,7 +476,7 @@ public sealed partial class MainWindow : Window
         }
 
         _tourTip = null;
-        tip.Closed -= TourTip_Closed;
+        tip.CloseButtonClick -= TourTip_CloseButtonClick;
         tip.IsOpen = false;
         tip.Target = null;
         RootGrid.Children.Remove(tip);
@@ -494,17 +494,8 @@ public sealed partial class MainWindow : Window
         element.Loaded += OnLoaded;
     }
 
-    /// <summary>
-    /// The tip's close button (or Escape) skips the tour. A close made from the code is not a skip: it is the end of a step
-    /// (the tip is closed and opened again at the next target).
-    /// </summary>
-    private void TourTip_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
-    {
-        if (args.Reason != TeachingTipCloseReason.Programmatic && App.Services.Tour.IsActive)
-        {
-            App.Services.Tour.Skip();
-        }
-    }
+    /// <summary>The tip's "Skip" button skips this step only; the tour goes on with the next one (the last step finishes it).</summary>
+    private void TourTip_CloseButtonClick(TeachingTip sender, object args) => App.Services.Tour.SkipStep();
 
     /// <summary>Navigates to a page, unless the frame already shows it.</summary>
     private void ShowPage(Type page)
