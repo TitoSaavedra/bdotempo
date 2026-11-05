@@ -27,6 +27,7 @@ public static class BundleResourceNames
 {
     public const string Catalog = "catalog.json";
     public const string Skills = "skills.json";
+    public const string GuideTexts = "guide-texts-es.json";
 
     public static string Guide(string key) => $"guide-{key}.json";
 

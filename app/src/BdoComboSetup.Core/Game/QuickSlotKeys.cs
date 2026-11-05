@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using BdoComboSetup.Core.GameData;
 using BdoComboSetup.Core.Logging;
 
 namespace BdoComboSetup.Core.Game;
@@ -22,6 +23,9 @@ public static class QuickSlotKeys
 {
     /// <summary>Quick slots 1-20. Slots 1-10 are the main set (key 0 is slot 10).</summary>
     public const int SlotCount = 20;
+
+    /// <summary>Quick bar positions a combo fills: the user's own bar, 1-9. QuickSlotData refuses any other position.</summary>
+    public const int ComboPositionCount = QuickSlotData.PositionCount;
 
     private static readonly IReadOnlyDictionary<int, string> MouseLabels = new Dictionary<int, string>
     {
@@ -47,6 +51,24 @@ public static class QuickSlotKeys
         [9] = 57,
         [10] = 48,
     };
+
+    /// <summary>The key a quick slot shows when the character file has no binding for it, or null for slots 11-20.</summary>
+    public static QuickSlotKey? DefaultKey(int slot)
+    {
+        ValidateSlot(slot);
+        return Defaults.TryGetValue(slot, out var keyCode) ? FromKeyCode(keyCode) : null;
+    }
+
+    /// <summary>The input shown for a combo quick position with its default key: "M1" to "M6" for mouse buttons, the digit for keys.</summary>
+    public static string ComboLabel(int position)
+    {
+        if (position is < 1 or > ComboPositionCount)
+        {
+            throw new ArgumentOutOfRangeException(nameof(position), position, $"Quick positions are 1 to {ComboPositionCount}.");
+        }
+
+        return (DefaultKey(position) ?? throw new InvalidOperationException("Every combo position has a default key.")).Label;
+    }
 
     /// <summary>The key for a stored keyCode, or null when the code is unbound (0) or not a key this table knows.</summary>
     public static QuickSlotKey? FromKeyCode(int keyCode)
@@ -118,9 +140,7 @@ public static class QuickSlotLegend
             return QuickSlotKeys.FromKeyCode(keyCode);
         }
 
-        return QuickSlotKeys.Defaults.TryGetValue(slot, out var defaultCode)
-            ? QuickSlotKeys.FromKeyCode(defaultCode)
-            : null;
+        return QuickSlotKeys.DefaultKey(slot);
     }
 }
 

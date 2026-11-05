@@ -69,6 +69,12 @@ public sealed record AppSettings
     /// </summary>
     public bool NavAutoHide { get; init; } = true;
 
+    /// <summary>
+    /// True (the default) when resting the pointer on a skill shows its tooltip (icon, name, cost, cooldown, damage). False turns
+    /// those tooltips off; the other tooltips stay.
+    /// </summary>
+    public bool ShowSkillTooltips { get; init; } = true;
+
     /// <summary>The character chosen last (its pcid), selected again at the next start so it is picked only once. Null when none.</summary>
     public string? LastCharacterPcid { get; init; }
 }

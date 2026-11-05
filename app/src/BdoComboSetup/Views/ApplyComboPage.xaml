@@ -11,6 +11,17 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
+        <!-- Compact controls on this page: buttons and combo boxes are about 30 pixels high, with 13-pixel text. -->
+        <Style TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource DefaultComboBoxStyle}">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
         <!-- One character of the account in the choice dialog: class icon and name only. Name and class are edited in Settings. -->
         <DataTemplate x:Key="CharacterTemplate" x:DataType="combo:CharacterOption">
             <Grid ColumnSpacing="10" Padding="4,6">
@@ -79,7 +90,7 @@
                 Click="BoardCell_Click"
                 Padding="0"
                 Margin="0"
-                MinHeight="52"
+                MinHeight="46"
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
                 VerticalContentAlignment="Stretch"
@@ -112,6 +123,7 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Visibility="{x:Bind HasStep, Mode=OneTime, Converter={StaticResource BoolToVisibility}}"
+                        controls:SkillTooltips.Skill="{x:Bind Step.PrimarySkill, Mode=OneTime}"
                         IconSource="{x:Bind Step.PrimarySkill.OpenIcon, Mode=OneTime}"
                         Glyph="{x:Bind Step.Glyph, Mode=OneTime}" />
                 </Grid>
@@ -124,7 +136,7 @@
                 Click="BoardCell_Click"
                 Padding="0"
                 Margin="0"
-                MinHeight="44"
+                MinHeight="40"
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
                 VerticalContentAlignment="Stretch"
@@ -157,6 +169,7 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Visibility="{x:Bind HasStep, Mode=OneTime, Converter={StaticResource BoolToVisibility}}"
+                        controls:SkillTooltips.Skill="{x:Bind Step.PrimarySkill, Mode=OneTime}"
                         IconSource="{x:Bind Step.PrimarySkill.OpenIcon, Mode=OneTime}"
                         Glyph="{x:Bind Step.Glyph, Mode=OneTime}" />
                 </Grid>
@@ -166,8 +179,8 @@
         <!-- One step of a chain. The order of the list is the order of the combo. -->
         <DataTemplate x:Key="StepTemplate" x:DataType="vm:ComboStepViewModel">
             <Border
-                Margin="0,3"
-                Padding="10,8"
+                Margin="0,2"
+                Padding="8,6"
                 BorderThickness="1"
                 CornerRadius="14"
                 AutomationProperties.Name="{x:Bind AutomationName, Mode=OneWay}"
@@ -188,8 +201,9 @@
 
                     <controls:AssetIcon
                         Grid.Column="1"
-                        Width="40"
-                        Height="40"
+                        Width="36"
+                        Height="36"
+                        controls:SkillTooltips.Skill="{x:Bind PrimarySkill, Mode=OneWay}"
                         IconSource="{x:Bind PrimarySkill.OpenIcon, Mode=OneWay}"
                         Glyph="{x:Bind Glyph, Mode=OneWay}" />
 
@@ -251,8 +265,8 @@
         <!-- One step of the mobility pool. The skill gets a free cooldown slot only when the user asks for it. -->
         <DataTemplate x:Key="ManualStepTemplate" x:DataType="vm:ComboStepViewModel">
             <Border
-                Margin="0,3"
-                Padding="10,8"
+                Margin="0,2"
+                Padding="8,6"
                 CornerRadius="14"
                 BorderThickness="1"
                 BorderBrush="{ThemeResource GlassLineBrush}"
@@ -266,6 +280,7 @@
                     <controls:AssetIcon
                         Width="36"
                         Height="36"
+                        controls:SkillTooltips.Skill="{x:Bind PrimarySkill, Mode=OneWay}"
                         IconSource="{x:Bind PrimarySkill.OpenIcon, Mode=OneWay}"
                         Glyph="{x:Bind Glyph, Mode=OneWay}" />
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
@@ -291,12 +306,13 @@
             <TextBlock
                 Text="{x:Bind Name, Mode=OneTime}"
                 Padding="8,6"
-                TextTrimming="CharacterEllipsis" />
+                TextTrimming="CharacterEllipsis"
+                controls:SkillTooltips.Skill="{x:Bind Skill, Mode=OneTime}" />
         </DataTemplate>
 
         <!-- One chain of the guide: its title, its notes, its steps, and the "Add skill" picker. -->
         <DataTemplate x:Key="ChainTemplate" x:DataType="vm:ComboChainViewModel">
-            <StackPanel Margin="0,0,0,18" Spacing="4">
+            <StackPanel Margin="0,0,0,12" Spacing="4">
                 <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -304,7 +320,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Spacing="2">
-                        <TextBlock Text="{x:Bind Title, Mode=OneWay}" Style="{ThemeResource SubtitleTextBlockStyle}" TextWrapping="Wrap" />
+                        <TextBlock Text="{x:Bind Title, Mode=OneWay}" Style="{ThemeResource BodyStrongTextBlockStyle}" TextWrapping="Wrap" />
                         <TextBlock
                             Text="{x:Bind NotesText, Mode=OneWay}"
                             FontSize="12"
@@ -377,8 +393,8 @@
         <!-- One class add-on of the guide: icon, name, the guide's description and its effects as label and value. -->
         <DataTemplate x:Key="AddonTemplate" x:DataType="vm:ComboAddonViewModel">
             <Border
-                Margin="0,3"
-                Padding="10,8"
+                Margin="0,2"
+                Padding="8,6"
                 CornerRadius="14"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderThickness="1"
@@ -556,7 +572,7 @@
                         <StackPanel
                             Spacing="8"
                             Visibility="{x:Bind ViewModel.HasEditor, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
-                            <TextBlock x:Uid="Apply/EmptyTitle" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                            <TextBlock x:Uid="Apply/EmptyTitle" Style="{ThemeResource BodyStrongTextBlockStyle}" />
                             <TextBlock
                                 x:Uid="Apply/EmptyBody"
                                 TextWrapping="Wrap"
@@ -572,12 +588,7 @@
                             Spacing="6"
                             Margin="0,10,0,0"
                             Visibility="{x:Bind ViewModel.Editor.HasAddons, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock x:Uid="Apply/SectionAddons" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                            <TextBlock
-                                x:Uid="Apply/AddonsHint"
-                                FontSize="12"
-                                TextWrapping="Wrap"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Uid="Apply/SectionAddons" Style="{ThemeResource BodyStrongTextBlockStyle}" />
                             <ItemsControl
                                 ItemsSource="{x:Bind ViewModel.Editor.Addons, Mode=OneWay}"
                                 ItemTemplate="{StaticResource AddonTemplate}" />
@@ -587,12 +598,7 @@
                             Spacing="4"
                             Margin="0,10,0,0"
                             Visibility="{x:Bind ViewModel.Editor.HasManualSteps, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock x:Uid="Apply/SectionMobility" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                            <TextBlock
-                                x:Uid="Apply/MobilityHint"
-                                FontSize="12"
-                                TextWrapping="Wrap"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Uid="Apply/SectionMobility" Style="{ThemeResource BodyStrongTextBlockStyle}" />
                             <ItemsControl ItemsSource="{x:Bind ViewModel.Editor.ManualChains, Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:ComboChainViewModel">
@@ -624,7 +630,7 @@
                 </Grid.RowDefinitions>
 
                 <ScrollViewer Padding="18,16,18,8" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Spacing="18" Padding="0,0,6,0">
+                    <StackPanel Spacing="12" Padding="0,0,6,0">
                         <!-- The cooldown bar: 20 slots, five by four. Tap a slot to select its step. -->
                         <StackPanel Spacing="8">
                             <TextBlock x:Uid="Apply/CooldownBoardHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
@@ -633,11 +639,6 @@
                                     <mux:UniformGridLayout MaximumRowsOrColumns="5" MinRowSpacing="6" MinColumnSpacing="6" ItemsStretch="Fill" />
                                 </mux:ItemsRepeater.Layout>
                             </mux:ItemsRepeater>
-                            <TextBlock
-                                Text="{x:Bind local:ApplyComboPage.SlotHintText(ViewModel.Editor.SelectedStep.CooldownLabel, ViewModel.Editor.SelectedStep.DisplayName, ViewModel.Editor.SelectedStep.KeyLegend), Mode=OneWay}"
-                                FontSize="12"
-                                TextWrapping="Wrap"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
 
                         <!-- The quick bar: its nine positions, with their inputs. -->
@@ -669,8 +670,9 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <controls:AssetIcon
-                                        Width="56"
-                                        Height="56"
+                                        Width="52"
+                                        Height="52"
+                                        controls:SkillTooltips.Skill="{x:Bind ViewModel.Editor.SelectedStep.PrimarySkill, Mode=OneWay}"
                                         IconSource="{x:Bind ViewModel.Editor.SelectedStep.PrimarySkill.OpenIcon, Mode=OneWay}"
                                         Glyph="{x:Bind ViewModel.Editor.SelectedStep.Glyph, Mode=OneWay}" />
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
@@ -787,30 +789,17 @@
                                     Command="{x:Bind ViewModel.RestoreBaseCommand}"
                                     HorizontalAlignment="Stretch" />
                             </Grid>
-                            <TextBlock
-                                x:Uid="Apply/ComboSlotsHint"
-                                FontSize="12"
-                                TextWrapping="Wrap"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
 
                 <!-- The footer, always visible: combos are not written from this page, Preview does it. -->
-                <Border Grid.Row="1" Padding="18,12,18,16" BorderThickness="0,1,0,0" BorderBrush="{ThemeResource GlassLineBrush}">
-                    <StackPanel Spacing="10">
-                        <TextBlock
-                            x:Uid="Apply/ApplyInPreviewHint"
-                            FontSize="12"
-                            TextWrapping="Wrap"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        <Button
-                            x:Uid="Apply/GoToPreviewButton"
-                            Style="{StaticResource AccentButtonStyle}"
-                            HorizontalAlignment="Stretch"
-                            MinHeight="44"
-                            Click="GoToPreview_Click" />
-                    </StackPanel>
+                <Border Grid.Row="1" Padding="16,10,16,12" BorderThickness="0,1,0,0" BorderBrush="{ThemeResource GlassLineBrush}">
+                    <Button
+                        x:Uid="Apply/GoToPreviewButton"
+                        Style="{StaticResource AccentButtonStyle}"
+                        HorizontalAlignment="Stretch"
+                        Click="GoToPreview_Click" />
                 </Border>
             </Grid>
         </Border>

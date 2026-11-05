@@ -81,11 +81,11 @@
                     Visibility="{x:Bind ShowsDashedOutline, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                 <!-- The frame of the slot: the cooldown slots are the editable ones, so they get the accent frame and a pencil. -->
                 <Border
-                    x:Uid="Preview/SlotClickTooltip"
                     Width="50"
                     Height="50"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
+                    controls:SkillTooltips.Skill="{x:Bind Skill, Mode=OneWay}"
                     Background="{StaticResource SlotIdleFill}"
                     BorderBrush="{ThemeResource PreviewSlotFrameBrush}"
                     BorderThickness="1"
@@ -167,13 +167,14 @@
                     StrokeThickness="1"
                     StrokeDashArray="3 2"
                     Visibility="{x:Bind ShowsDashedOutline, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                <!-- The quick slots are read-only here: a soft muted frame and a tooltip say so. -->
+                <!-- The quick slots are read-only here: a soft muted frame. Its tooltip is the skill's. -->
                 <Border
-                    x:Uid="Preview/QuickSlotTooltip"
                     Width="50"
                     Height="65"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
+                    Background="Transparent"
+                    controls:SkillTooltips.Skill="{x:Bind Skill, Mode=OneWay}"
                     BorderBrush="{ThemeResource PreviewQuickSlotFrameBrush}"
                     BorderThickness="1"
                     CornerRadius="4" />
@@ -182,7 +183,7 @@
 
         <!-- One row of the skill picker of a cooldown slot: the skill icon and its name. -->
         <DataTemplate x:Key="SkillPickTemplate" x:DataType="core:SkillOption">
-            <Grid Padding="4,2" ColumnSpacing="8">
+            <Grid Padding="4,2" ColumnSpacing="8" Background="Transparent" controls:SkillTooltips.Skill="{x:Bind Skill, Mode=OneTime}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />

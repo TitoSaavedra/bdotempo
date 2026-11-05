@@ -9,17 +9,20 @@ namespace BdoComboSetup.Core.ViewModels;
 /// </summary>
 public sealed class ComboAddonViewModel
 {
-    public ComboAddonViewModel(ComboAddon addon, CultureInfo culture)
+    public ComboAddonViewModel(ComboAddon addon, CultureInfo culture, GuideTranslation translation)
     {
         ArgumentNullException.ThrowIfNull(addon);
         ArgumentNullException.ThrowIfNull(culture);
+        ArgumentNullException.ThrowIfNull(translation);
 
         Name = addon.Skill.Name.For(culture);
         OpenIcon = addon.Skill.OpenIcon;
-        Description = string.IsNullOrWhiteSpace(addon.Description) ? null : addon.Description.Trim();
+        Description = string.IsNullOrWhiteSpace(addon.Description) ? null : translation.Text(addon.Description.Trim());
         Effects = addon.Effects
             .Where(effect => !string.IsNullOrWhiteSpace(effect.Label) || !string.IsNullOrWhiteSpace(effect.Value))
-            .Select(effect => new ComboAddonEffectViewModel(effect.Label?.Trim() ?? string.Empty, effect.Value?.Trim() ?? string.Empty))
+            .Select(effect => new ComboAddonEffectViewModel(
+                translation.Text(effect.Label?.Trim() ?? string.Empty),
+                translation.Text(effect.Value?.Trim() ?? string.Empty)))
             .ToList();
     }
 
@@ -29,7 +32,7 @@ public sealed class ComboAddonViewModel
     /// <summary>Opens the skill icon; null from the function means the icon is missing.</summary>
     public Func<Stream?> OpenIcon { get; }
 
-    /// <summary>The guide's description of the add-on, or null when it has none.</summary>
+    /// <summary>The guide's description of the add-on in the page language, or null when it has none.</summary>
     public string? Description { get; }
 
     public bool HasDescription => Description is not null;

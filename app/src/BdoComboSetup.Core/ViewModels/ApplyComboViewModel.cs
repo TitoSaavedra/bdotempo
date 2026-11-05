@@ -5,6 +5,7 @@ using BdoComboSetup.Core.Assets;
 using BdoComboSetup.Core.Characters;
 using BdoComboSetup.Core.Confirmation;
 using BdoComboSetup.Core.Combo;
+using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.Localization;
 using BdoComboSetup.Core.Logging;
 using BdoComboSetup.Core.Operations;
@@ -59,6 +60,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
     private string? _lastCharacterPcid;
 
     private readonly Action<string>? _rememberCharacter;
+    private readonly GuideTexts? _guideTexts;
 
     public ApplyComboViewModel(
         ICombosCatalog catalog,
@@ -72,7 +74,8 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         AppLogger logger,
         ClassSkillSource? classSkills = null,
         string? lastCharacterPcid = null,
-        Action<string>? rememberCharacter = null)
+        Action<string>? rememberCharacter = null,
+        GuideTexts? guideTexts = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(assets);
@@ -95,6 +98,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         _culture = culture;
         _logger = logger;
         _classSkills = classSkills;
+        _guideTexts = guideTexts;
 
         Characters = new ObservableCollection<CharacterOption>();
         Classes = new ObservableCollection<ClassOptionViewModel>(
@@ -897,7 +901,8 @@ public sealed partial class ApplyComboViewModel : ObservableObject
                     _localizer,
                     _culture,
                     _logger,
-                    classSkills: _classSkills);
+                    classSkills: _classSkills,
+                    texts: _guideTexts);
                 _editors[key] = editor;
             }
 
@@ -1040,7 +1045,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
             {
                 ReviewLines.Add(_localizer.Format(
                     "Apply.Review.Quick",
-                    QuickSlotMap.InputFor(quick.Position).MouseButton ?? quick.Position.ToString(CultureInfo.InvariantCulture),
+                    QuickSlotKeys.ComboLabel(quick.Position),
                     NameOrEmpty(null, quick.OldSkillNo),
                     NameOrEmpty(null, quick.NewSkillNo)));
             }

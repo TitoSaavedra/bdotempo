@@ -1,3 +1,5 @@
+using BdoComboSetup.Core.Game;
+
 namespace BdoComboSetup.Core.Combo;
 
 /// <summary>
@@ -11,7 +13,7 @@ public static class SlotAssignment
 
     public static bool IsCooldownSlot(int slot) => slot is >= 1 and <= CooldownSlotCount;
 
-    public static bool IsQuickPosition(int position) => position is >= 1 and <= QuickSlotMap.Count;
+    public static bool IsQuickPosition(int position) => position is >= 1 and <= QuickSlotKeys.ComboPositionCount;
 
     /// <summary>
     /// Gives <paramref name="value"/> to <paramref name="target"/>. If another item holds that value, that item receives the

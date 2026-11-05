@@ -24,10 +24,13 @@ public sealed partial class SlotViewModel : PanelViewModel
 
     /// <summary>The skill in the slot, or null when the slot is empty. Replaced when the combo changes.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasSkill), nameof(Title), nameof(Glyph), nameof(Icon), nameof(AutomationName), nameof(Memo), nameof(CustomName), nameof(QuickPosition))]
+    [NotifyPropertyChangedFor(nameof(HasSkill), nameof(Title), nameof(Glyph), nameof(Icon), nameof(Skill), nameof(AutomationName), nameof(Memo), nameof(CustomName), nameof(QuickPosition))]
     private PreviewSlot? _data;
 
     public bool HasSkill => Data is not null;
+
+    /// <summary>The bundle's skill in the slot (for its hover tooltip), or null when the slot is empty or has no guide skill.</summary>
+    public ComboSkill? Skill => Data?.Skill;
 
     public string Title => Data is null
         ? _localizer.Get("Preview.Slot.Empty")

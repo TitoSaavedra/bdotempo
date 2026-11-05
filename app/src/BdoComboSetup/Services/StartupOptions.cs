@@ -5,7 +5,7 @@ using BdoComboSetup.Core.Game;
 namespace BdoComboSetup.Services;
 
 /// <summary>
-/// Command-line options: "--page apply|preview", "--layout general|preset1|preset2|preset3", "--hidden-slots" (draw the slots
+/// Command-line options: "--page apply|preview", "--layout general|preset1|preset2|preset3", "--no-capture" (do not capture the game window), "--hidden-slots" (draw the slots
 /// the game hides, dimmed), "--cooldown-demo" (a 60% cooldown on the first cooldown slot, debug), "--zoom &lt;n&gt;" (zoom
 /// relative to fit). For the Apply page "--class &lt;slug&gt;" and "--spec &lt;id&gt;" (for example --class tamer --spec awakening),
 /// "--demo" (synthetic characters, synthetic layouts and display, a demo applier; used for screenshots, never writes, never
@@ -28,7 +28,8 @@ public sealed record StartupOptions(
     bool DemoWriteHint = false,
     int DemoCharacters = 0,
     bool DemoCharacterPicker = false,
-    bool DemoUpdate = false)
+    bool DemoUpdate = false,
+    bool NoCapture = false)
 {
     public const string ApplyPage = "apply";
     public const string PreviewPage = "preview";
@@ -51,6 +52,7 @@ public sealed record StartupOptions(
         double? zoom = null;
         var demoCharacters = 0;
         var demoCharacterPicker = false;
+        var noCapture = false;
         for (var i = 1; i < args.Count; i++)
         {
             switch (args[i])
@@ -62,6 +64,9 @@ public sealed record StartupOptions(
                 case "--layout" when i + 1 < args.Count:
                     layout = ParseLayout(args[i + 1]);
                     i++;
+                    break;
+                case "--no-capture":
+                    noCapture = true;
                     break;
                 case "--hidden-slots":
                     showHiddenSlots = true;
@@ -127,7 +132,8 @@ public sealed record StartupOptions(
             demoWriteHint,
             demoCharacters,
             demoCharacterPicker,
-            demoUpdate);
+            demoUpdate,
+            noCapture);
     }
 
     private static string ParsePage(string text) => text.ToLowerInvariant() switch

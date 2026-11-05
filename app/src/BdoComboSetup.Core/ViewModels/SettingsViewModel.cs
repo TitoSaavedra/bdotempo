@@ -63,6 +63,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         Theme = AppThemes.Normalize(settings.Settings.Theme);
         AccentColor = AccentColors.Normalize(settings.Settings.AccentColor);
         NavAutoHide = settings.Settings.NavAutoHide;
+        ShowSkillTooltips = settings.Settings.ShowSkillTooltips;
         Refresh();
     }
 
@@ -110,8 +111,15 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _navAutoHide = true;
 
+    /// <summary>True when resting the pointer on a skill shows its tooltip (the default). Changed with <see cref="ChooseShowSkillTooltips"/>.</summary>
+    [ObservableProperty]
+    private bool _showSkillTooltips = true;
+
     /// <summary>Raised when the saved theme or accent color actually changes, so the window can apply it.</summary>
     public event EventHandler? AppearanceChanged;
+
+    /// <summary>Raised when <see cref="ShowSkillTooltips"/> changes, so the skill tooltips already on screen follow it at once.</summary>
+    public event EventHandler? SkillTooltipsChanged;
 
     /// <summary>Reads the accounts of the saved data folder and selects the active one.</summary>
     public void Refresh()
@@ -212,6 +220,19 @@ public sealed partial class SettingsViewModel : ObservableObject
         if (changed)
         {
             AppearanceChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>Saves whether resting the pointer on a skill shows its tooltip, and raises <see cref="SkillTooltipsChanged"/> on a change.</summary>
+    public void ChooseShowSkillTooltips(bool show)
+    {
+        var changed = show != ShowSkillTooltips;
+        _settings.Update(current => current with { ShowSkillTooltips = show });
+        ShowSkillTooltips = show;
+        _logger.Info("settings.skill_tooltips_saved", "Skill tooltips setting saved", new Dictionary<string, object?> { ["show"] = show });
+        if (changed)
+        {
+            SkillTooltipsChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 

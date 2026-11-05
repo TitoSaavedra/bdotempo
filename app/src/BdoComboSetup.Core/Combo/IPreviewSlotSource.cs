@@ -5,7 +5,8 @@ namespace BdoComboSetup.Core.Combo;
 
 /// <summary>
 /// One skill as the preview shows it. CooldownNumber is the cooldown slot (1-20) of the same skill and QuickPosition
-/// its quick slot (1-9), when known. OpenIcon returns a new stream of the icon, or null when there is none.
+/// its quick slot (1-9), when known. OpenIcon returns a new stream of the icon, or null when there is none. Skill is the
+/// bundle's skill when the slot comes from a guide, for its hover tooltip; null otherwise.
 /// </summary>
 public sealed record PreviewSlot(
     int? SkillNo,
@@ -14,7 +15,8 @@ public sealed record PreviewSlot(
     string? CustomName,
     int? CooldownNumber = null,
     int? QuickPosition = null,
-    Func<Stream?>? OpenIcon = null);
+    Func<Stream?>? OpenIcon = null,
+    ComboSkill? Skill = null);
 
 /// <summary>
 /// Where the preview gets what its slots show. <see cref="Changed"/> is raised when any of that changes: the combo

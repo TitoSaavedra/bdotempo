@@ -67,6 +67,28 @@ public sealed class AppLogger : IDisposable
 
     public string FilePath => _filePath;
 
+    /// <summary>
+    /// The W3C trace context of the running operation, or of the session when no operation runs. The same ids go into
+    /// every log line. A context without a trace-id (not expected) gets a fresh trace.
+    /// </summary>
+    public W3cTraceContext CurrentTraceContext
+    {
+        get
+        {
+            var activity = Activity.Current ?? _session;
+            if (activity.TraceId.Equals(default(ActivityTraceId)))
+            {
+                return W3cTraceContext.NewRoot();
+            }
+
+            return new W3cTraceContext(
+                activity.TraceId.ToHexString(),
+                activity.SpanId.ToHexString(),
+                (byte)activity.ActivityTraceFlags,
+                activity.TraceStateString);
+        }
+    }
+
     public void Debug(string eventName, string message, IReadOnlyDictionary<string, object?>? fields = null) =>
         Log(LogLevel.Debug, eventName, message, fields);
 

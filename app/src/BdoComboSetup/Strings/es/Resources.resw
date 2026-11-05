@@ -43,9 +43,6 @@
   </resheader>
 
     <data name="AppTitle" xml:space="preserve"><value>BDOTempo</value></data>
-  <data name="AppTitleBar.Title" xml:space="preserve"><value>BDOTempo</value></data>
-  <data name="NavApplyItem.Content" xml:space="preserve"><value>Combos</value></data>
-  <data name="NavPreviewItem.Content" xml:space="preserve"><value>Editor</value></data>
   <data name="Preview.CaptureToggle.Header" xml:space="preserve"><value>Capturar el juego</value></data>
   <data name="Preview.CaptureToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Muestra el juego en vivo detrás de los slots. Desactívalo para no capturar la ventana del juego.</value></data>
   <data name="Apply.Title.Text" xml:space="preserve">
@@ -101,9 +98,6 @@
   </data>
   <data name="Apply.SectionMobility.Text" xml:space="preserve">
     <value>Movilidad (manual)</value>
-  </data>
-  <data name="Apply.MobilityHint.Text" xml:space="preserve">
-    <value>Estas habilidades nunca se añaden al combo. Asigna una casilla a mano con su botón.</value>
   </data>
   <data name="Apply.GuideMissing.Text" xml:space="preserve">
     <value>Esta guía todavía no está disponible.</value>
@@ -306,9 +300,6 @@
   <data name="Apply.ComboSlotsHeader.Text" xml:space="preserve">
     <value>Mis combos</value>
   </data>
-  <data name="Apply.ComboSlotsHint.Text" xml:space="preserve">
-    <value>Hasta diez combos por clase y especialización. La guía de bdoclasshub nunca se modifica: cada ranura guarda una copia de lo que ves.</value>
-  </data>
   <data name="Apply.ComboNameBox.Header" xml:space="preserve">
     <value>Nombre del combo</value>
   </data>
@@ -345,14 +336,14 @@
   <data name="Apply.SectionAddons.Text" xml:space="preserve">
     <value>Adicionales de la clase</value>
   </data>
-  <data name="Apply.AddonsHint.Text" xml:space="preserve">
-    <value>Los adicionales de habilidad que recomienda la guía. Solo se muestran: no se escriben en el personaje.</value>
-  </data>
   <data name="Preview.Title.Text" xml:space="preserve">
     <value>Editor</value>
   </data>
   <data name="Preview.ApplyButton.Content" xml:space="preserve">
-    <value>Aplicar al personaje</value>
+    <value>Aplicar</value>
+  </data>
+  <data name="Preview.BackButton.Content" xml:space="preserve">
+    <value>Atrás</value>
   </data>
   <data name="Apply.OpenEditorButton.Content" xml:space="preserve">
     <value>Abrir el editor</value>
@@ -429,15 +420,6 @@
   <data name="Preview.Capture.Failed" xml:space="preserve">
     <value>No se pudo capturar la ventana del juego: fondo negro.</value>
   </data>
-  <data name="Preview.SlotEditHint.Text" xml:space="preserve">
-    <value>Estas son las ranuras del combo seleccionado. Haz clic en una casilla de enfriamiento para cambiar su habilidad; cuando esté listo, pulsa Aplicar al personaje. La guía no cambia.</value>
-  </data>
-  <data name="Preview.SlotClickTooltip.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Haz clic para cambiar la habilidad de esta casilla del combo.</value>
-  </data>
-  <data name="Preview.QuickSlotTooltip.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Los accesos rápidos solo se muestran. Sus teclas y posiciones se editan en Combos.</value>
-  </data>
   <data name="Preview.LegendCooldown.Text" xml:space="preserve">
     <value>Casillas de enfriamiento: haz clic para cambiar la habilidad</value>
   </data>
@@ -452,19 +434,12 @@
   </data>
   <data name="NavSettingsItem.Content" xml:space="preserve"><value>Configuración</value></data>
   <data name="Settings.Title.Text" xml:space="preserve"><value>Configuración</value></data>
-  <data name="Settings.Subtitle.Text" xml:space="preserve"><value>Cuenta, personajes, carpeta del juego, idioma y actualizaciones. Cada cambio se guarda al momento.</value></data>
-  <data name="Settings.LanguageHint.Text" xml:space="preserve"><value>El idioma de la interfaz. Se aplica al reiniciar la app.</value></data>
-  <data name="Settings.UpdatesHint.Text" xml:space="preserve"><value>La versión instalada y si hay una nueva. Nada se instala sin pulsar el botón.</value></data>
   <data name="Settings.WarningsHeader.Text" xml:space="preserve"><value>Avisos</value></data>
-  <data name="Settings.WarningsHint.Text" xml:space="preserve"><value>Qué recordatorios quieres ver mientras usas la app.</value></data>
-  <data name="Settings.SetupHint.Text" xml:space="preserve"><value>Vuelve a elegir la carpeta y la cuenta con el asistente.</value></data>
   <data name="Settings.RestartBar.Title" xml:space="preserve"><value>Reinicia para aplicar los cambios</value></data>
   <data name="Settings.RestartBar.Message" xml:space="preserve"><value>El idioma, la carpeta de datos y la cuenta de la vista previa se aplican al reiniciar la app.</value></data>
   <data name="Settings.RestartButton.Content" xml:space="preserve"><value>Reiniciar ahora</value></data>
   <data name="Settings.AccountHeader.Text" xml:space="preserve"><value>Cuenta</value></data>
-  <data name="Settings.AccountHint.Text" xml:space="preserve"><value>Carpetas numéricas dentro de UserCache que tienen una carpeta 11. Tu elección se recuerda entre sesiones.</value></data>
   <data name="Settings.FolderHeader.Text" xml:space="preserve"><value>Carpeta de Black Desert</value></data>
-  <data name="Settings.FolderHint.Text" xml:space="preserve"><value>La carpeta que contiene UserCache y _backups. Debe contener una carpeta UserCache.</value></data>
   <data name="Settings.FolderBox.Header" xml:space="preserve"><value>Carpeta</value></data>
   <data name="Settings.FolderBox.PlaceholderText" xml:space="preserve"><value>Ruta de la carpeta de Black Desert</value></data>
   <data name="Settings.FolderBrowseButton.Content" xml:space="preserve"><value>Examinar...</value></data>
@@ -500,7 +475,6 @@
   <data name="Apply.WriteHint.Continue" xml:space="preserve"><value>Continuar</value></data>
   <data name="Apply.WriteHint.Cancel" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Apply.WriteHint.DontShowAgain" xml:space="preserve"><value>No volver a mostrar</value></data>
-  <data name="Settings.ShowWriteHintHint.Text" xml:space="preserve"><value>Muestra un aviso para estar en la selección de personaje antes de cada escritura en un personaje.</value></data>
   <data name="Settings.ShowWriteHintToggle.Header" xml:space="preserve"><value>Mostrar el aviso antes de escribir</value></data>
   <data name="Settings.ShowWriteHintToggle.OnContent" xml:space="preserve"><value>Se muestra antes de cada escritura</value></data>
   <data name="Settings.ShowWriteHintToggle.OffContent" xml:space="preserve"><value>Oculto</value></data>
@@ -547,9 +521,6 @@
   <data name="Settings.CharactersHeader.Text" xml:space="preserve">
     <value>Personajes</value>
   </data>
-  <data name="Settings.CharactersHint.Text" xml:space="preserve">
-    <value>Los personajes de la cuenta activa. El nombre y la clase que pongas se guardan en la app; el juego no cambia.</value>
-  </data>
   <data name="Settings.EditCharacterButton.Content" xml:space="preserve">
     <value>Editar</value>
   </data>
@@ -567,9 +538,6 @@
   </data>
   <data name="Settings.UpdatesCancelButton.Content" xml:space="preserve">
     <value>Cancelar descarga</value>
-  </data>
-  <data name="Settings.UpdatesPortableHint.Text" xml:space="preserve">
-    <value>Esta copia es portable: el botón de actualizar abre la página de la versión en el navegador. No instala nada por sí sola.</value>
   </data>
   <data name="Settings.UpdatesStartupToggle.Header" xml:space="preserve">
     <value>Buscar actualizaciones al iniciar</value>
@@ -670,9 +638,6 @@
   <data name="Settings.ScanHeader.Text" xml:space="preserve">
     <value>Nombres de personaje (OCR)</value>
   </data>
-  <data name="Settings.ScanHint.Text" xml:space="preserve">
-    <value>Primero abre Black Desert y quédate en la pantalla de selección de personaje. No hace falta que la lista esté arriba: la app lee la barra de desplazamiento para saber en qué posición estás. Al empezar, lee las filas visibles y dibuja un recuadro verde sobre el juego; sube o baja la lista hasta completar los personajes y pulsa Terminar. Las filas ya leídas no se cuentan dos veces. Nunca se envía nada al juego.</value>
-  </data>
   <data name="Settings.ScanDialogTitle" xml:space="preserve">
     <value>Abre Black Desert</value>
   </data>
@@ -690,9 +655,6 @@
   </data>
   <data name="Settings.ScanReviewHeader.Text" xml:space="preserve">
     <value>Revisa los nombres</value>
-  </data>
-  <data name="Settings.ScanReviewHint.Text" xml:space="preserve">
-    <value>Corrige los nombres o las clases que el OCR haya leído mal y guarda. Solo se escribe el archivo de personajes de la app, nunca los del juego.</value>
   </data>
   <data name="Settings.ScanSaveButton.Content" xml:space="preserve">
     <value>Guardar nombres</value>
@@ -836,9 +798,7 @@
     <value>Juego no detectado</value>
   </data>
   <data name="Settings.Appearance.Header.Text" xml:space="preserve"><value>Apariencia</value></data>
-  <data name="Settings.Appearance.Hint.Text" xml:space="preserve"><value>Tema, color de acento y menú lateral. Cada cambio se aplica al momento.</value></data>
   <data name="Settings.Appearance.ThemeHeader.Text" xml:space="preserve"><value>Tema</value></data>
-  <data name="Settings.Appearance.ThemeHint.Text" xml:space="preserve"><value>Sigue a Windows o elige uno.</value></data>
   <data name="Settings.Appearance.ThemeSystem.Content" xml:space="preserve"><value>Sistema</value></data>
   <data name="Settings.Appearance.ThemeLight.Content" xml:space="preserve"><value>Claro</value></data>
   <data name="Settings.Appearance.ThemeDark.Content" xml:space="preserve"><value>Oscuro</value></data>
@@ -858,11 +818,6 @@
   <data name="Settings.Appearance.SwatchRose.ToolTipService.ToolTip" xml:space="preserve"><value>Rosa</value></data>
   <data name="Settings.Appearance.SwatchBlue.AutomationProperties.Name" xml:space="preserve"><value>Acento azul</value></data>
   <data name="Settings.Appearance.SwatchBlue.ToolTipService.ToolTip" xml:space="preserve"><value>Azul</value></data>
-  <data name="Settings.Appearance.NavPaneHeader.Text" xml:space="preserve"><value>Menú lateral</value></data>
-  <data name="Settings.Appearance.NavAutoHide.Content" xml:space="preserve"><value>Ocultar solo</value></data>
-  <data name="Settings.Appearance.NavAlways.Content" xml:space="preserve"><value>Siempre visible</value></data>
-  <data name="Settings.Appearance.NavPaneHint.Text" xml:space="preserve"><value>Con ocultar solo, el menú aparece al acercar el mouse al borde izquierdo.</value></data>
-  <data name="NavEdgeHandle.AutomationProperties.Name" xml:space="preserve"><value>Mostrar menú</value></data>
   <data name="Preview.StateHeading.Text" xml:space="preserve">
     <value>Estado</value>
   </data>
@@ -883,9 +838,6 @@
   </data>
   <data name="Preview.FitReal.Content" xml:space="preserve">
     <value>Tamaño real</value>
-  </data>
-  <data name="Preview.FitHint.Text" xml:space="preserve">
-    <value>Ventana: toda la captura cabe en esta ventana. Slots: el marco de las casillas llena la ventana. Tamaño real: 1:1, desplázate para ver el resto. La rueda del ratón o arrastrar la vista deja el zoom libre.</value>
   </data>
   <data name="Preview.Capture.Live" xml:space="preserve">
     <value>Capturando BlackDesert64.exe</value>
@@ -920,12 +872,6 @@
   <data name="Apply.BackupNote.Text" xml:space="preserve">
     <value>Antes de escribir se guarda una copia de seguridad verificada del personaje.</value>
   </data>
-  <data name="Apply.SlotHint.Pick" xml:space="preserve">
-    <value>Toca una casilla para ver qué lleva.</value>
-  </data>
-  <data name="Apply.SlotHint.NoSlot" xml:space="preserve">
-    <value>Este paso no tiene casilla de recarga. Elígela abajo, en el paso seleccionado.</value>
-  </data>
   <data name="Apply.CooldownCell" xml:space="preserve">
     <value>Casilla {0}</value>
   </data>
@@ -943,10 +889,8 @@
   <data name="Settings.TabCharacters.Text" xml:space="preserve"><value>Personajes</value></data>
   <data name="Settings.TabUpdates.Text" xml:space="preserve"><value>Actualizaciones</value></data>
   <data name="Apply.ClassMismatch" xml:space="preserve"><value>El combo es de {1}, pero {0} es de otra clase. Elige un personaje de esa clase para aplicarlo.</value></data>
-  <data name="Apply.ApplyInPreviewHint.Text" xml:space="preserve"><value>Los combos no se aplican aquí. Revisa los cambios y aplícalos en Vista previa.</value></data>
   <data name="Apply.GoToPreviewButton.Content" xml:space="preserve"><value>Ir a Vista previa para aplicar</value></data>
   <data name="Apply.Remaining.Title.Text" xml:space="preserve"><value>Te falta poner</value></data>
-  <data name="Apply.Remaining.Hint.Text" xml:space="preserve"><value>Skills de la guía que no están en las 20 casillas. Arrástralas a una casilla, o toca + para usar la primera libre.</value></data>
   <data name="Apply.Remaining.GroupBuffs" xml:space="preserve"><value>Buffs</value></data>
   <data name="Apply.Remaining.GroupCombo" xml:space="preserve"><value>Combo</value></data>
   <data name="Apply.Remaining.GroupMobility" xml:space="preserve"><value>Movilidad</value></data>
@@ -954,10 +898,28 @@
   <data name="Apply.Remaining.Done.Text" xml:space="preserve"><value>Todas las skills de la guía están en las casillas.</value></data>
   <data name="Preview.Slots.Header.Text" xml:space="preserve"><value>Casillas en uso</value></data>
   <data name="Preview.ChangeCharacterButton.Content" xml:space="preserve"><value>Cambiar en Combos</value></data>
-  <data name="Preview.DragHint.Text" xml:space="preserve"><value>Arrastra una skill a una casilla, entre casillas para cambiarlas, o al recuadro "Te falta poner" para quitarla.</value></data>
   <data name="Apply.CharacterDialog.Title" xml:space="preserve"><value>¿A qué personaje aplicar?</value></data>
   <data name="Apply.CharacterDialog.Body" xml:space="preserve"><value>Tienes {0} personajes de {1} en esta cuenta. Se usará el que elijas en el editor y al aplicar.</value></data>
   <data name="Apply.CharacterDialog.BodyAny" xml:space="preserve"><value>Elige el personaje al que aplicar. Se usará en el editor y al aplicar.</value></data>
   <data name="Apply.CharacterDialog.Cancel" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Apply.ChangeCharacterButton.Content" xml:space="preserve"><value>Cambiar</value></data>
+  <data name="Apply.SectionMobility.ToolTipService.ToolTip" xml:space="preserve"><value>Nunca se añaden solas. Asigna una casilla a mano con su botón.</value></data>
+  <data name="Apply.GoToPreviewButton.ToolTipService.ToolTip" xml:space="preserve"><value>Los combos se aplican desde Vista previa.</value></data>
+  <data name="Apply.Remaining.Hint.ToolTipService.ToolTip" xml:space="preserve"><value>Skills de la guía que no están en las 20 casillas. Arrástralas a una casilla o toca +.</value></data>
+  <data name="Preview.DragHint.ToolTipService.ToolTip" xml:space="preserve"><value>Arrastra una skill a una casilla o entre casillas para cambiarlas.</value></data>
+  <data name="Preview.FitHeading.ToolTipService.ToolTip" xml:space="preserve"><value>Ventana, Slots o Tamaño real. La rueda del ratón deja el zoom libre.</value></data>
+  <data name="Settings.LanguageBox.ToolTipService.ToolTip" xml:space="preserve"><value>Se aplica al reiniciar la app.</value></data>
+  <data name="Settings.ShowWriteHintToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Muestra un aviso antes de cada escritura en un personaje.</value></data>
+  <data name="Settings.FolderBox.ToolTipService.ToolTip" xml:space="preserve"><value>Debe contener una carpeta UserCache.</value></data>
+  <data name="Settings.Appearance.SkillTooltipsToggle.Header" xml:space="preserve"><value>Mostrar tooltips de habilidades</value></data>
+  <data name="Settings.Appearance.SkillTooltipsToggle.OnContent" xml:space="preserve"><value>Se muestran al pasar el puntero</value></data>
+  <data name="Settings.Appearance.SkillTooltipsToggle.OffContent" xml:space="preserve"><value>Ocultos</value></data>
+  <data name="SkillTooltip.Keys" xml:space="preserve"><value>Teclas</value></data>
+  <data name="SkillTooltip.Level" xml:space="preserve"><value>Nivel</value></data>
+  <data name="SkillTooltip.Cost" xml:space="preserve"><value>Coste</value></data>
+  <data name="SkillTooltip.Cooldown" xml:space="preserve"><value>Enfriamiento</value></data>
+  <data name="SkillTooltip.CooldownValue" xml:space="preserve"><value>{0} s</value></data>
+  <data name="SkillTooltip.Damage" xml:space="preserve"><value>Daño</value></data>
+  <data name="SkillTooltip.Hits" xml:space="preserve"><value>{0} golpes</value></data>
+  <data name="SkillTooltip.Pvp" xml:space="preserve"><value>Daño PvP</value></data>
 </root>

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using BdoComboSetup.Core.Combo;
+using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.Localization;
 using BdoComboSetup.Core.Logging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -27,6 +28,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     private readonly ComboGuide _guide;
     private readonly ILocalizer _localizer;
     private readonly CultureInfo _culture;
+    private readonly GuideTranslation _translation;
     private readonly AppLogger _logger;
     private readonly IChainKindResolver _kinds;
     private readonly ClassSkillSource? _classSkills;
@@ -44,7 +46,8 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         CultureInfo culture,
         AppLogger logger,
         IChainKindResolver kinds,
-        ClassSkillSource? classSkills)
+        ClassSkillSource? classSkills,
+        GuideTranslation translation)
     {
         ClassType = classType;
         SpecId = specId;
@@ -54,10 +57,13 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         _logger = logger;
         _kinds = kinds;
         _classSkills = classSkills;
+        _translation = translation;
+        Title = translation.Text(guide.Title);
+        Description = translation.Text(guide.Description);
 
         AvailableSkills = BuildAvailableSkills(guide, culture);
         _skillsByNo = AvailableSkills.ToDictionary(option => option.SkillNo, option => option.Skill);
-        Addons = guide.Addons.Select(addon => new ComboAddonViewModel(addon, culture)).ToList();
+        Addons = guide.Addons.Select(addon => new ComboAddonViewModel(addon, culture, translation)).ToList();
         CooldownOptions = BuildCooldownOptions(localizer);
         QuickOptions = BuildQuickOptions(localizer);
         Chains = new ObservableCollection<ComboChainViewModel>();
@@ -75,9 +81,11 @@ public sealed partial class ComboEditorViewModel : ObservableObject
 
     public string SpecId { get; }
 
-    public string Title => _guide.Title;
+    /// <summary>The guide's title in the page language.</summary>
+    public string Title { get; }
 
-    public string? Description => _guide.Description;
+    /// <summary>The guide's kicker in the page language, or null when the site has none.</summary>
+    public string? Description { get; }
 
     /// <summary>The host of the guide page on bdoclasshub.com, shown as the source. Empty when the guide has none.</summary>
     public string SourceHost => Uri.TryCreate(_guide.Source, UriKind.Absolute, out var uri) ? uri.Host : string.Empty;
@@ -246,6 +254,7 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     /// The class skill catalog: it brings back a skill the slot editor put in a step and it is not in the guide. Null: such a
     /// saved step falls back to the guide's skill.
     /// </param>
+    /// <param name="texts">The Spanish guide texts. Null: the guide stays in English.</param>
     public static ComboEditorViewModel Create(
         int classType,
         string specId,
@@ -255,7 +264,8 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         CultureInfo culture,
         AppLogger logger,
         IChainKindResolver? kinds = null,
-        ClassSkillSource? classSkills = null)
+        ClassSkillSource? classSkills = null,
+        GuideTexts? texts = null)
     {
         ArgumentNullException.ThrowIfNull(guide);
         ArgumentNullException.ThrowIfNull(localizer);
@@ -270,7 +280,8 @@ public sealed partial class ComboEditorViewModel : ObservableObject
             culture,
             logger,
             kinds ?? TitleChainKindResolver.Instance,
-            classSkills);
+            classSkills,
+            (texts ?? GuideTexts.None).ForCulture(culture));
         editor.LoadChains(profile);
         return editor;
     }
@@ -626,9 +637,9 @@ public sealed partial class ComboEditorViewModel : ObservableObject
                 : BaseSteps(index, chain, defaults);
             var title = string.IsNullOrWhiteSpace(chain.Title)
                 ? _localizer.Format("Apply.ChainFallbackTitle", (index + 1).ToString(CultureInfo.InvariantCulture))
-                : chain.Title;
+                : _translation.Text(chain.Title);
             _chainKinds[index] = kind;
-            built.Add((kind, new ComboChainViewModel(this, index, title, string.Join(" · ", chain.Notes), steps, AvailableSkills, _localizer)));
+            built.Add((kind, new ComboChainViewModel(this, index, title, string.Join(" · ", chain.Notes.Select(note => _translation.Text(note))), steps, AvailableSkills, _localizer)));
         }
 
         ClearInvalidSlots(built.SelectMany(item => item.Chain.Steps).ToList());
@@ -655,6 +666,10 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         RaiseRemainingChanged();
         _tracking = true;
 
+        _logger.Debug("apply.guide.texts", "Guide prose translated", new Dictionary<string, object?>
+        {
+            ["missing_translations"] = _translation.MissingCount,
+        });
         _logger.Info("apply.guide.loaded", "Working copy built", new Dictionary<string, object?>
         {
             ["class_type"] = ClassType,
@@ -698,15 +713,15 @@ public sealed partial class ComboEditorViewModel : ObservableObject
                         index,
                         step.Skills,
                         step.Keys,
-                        step.Extra,
-                        step.Note,
+                        _translation.Text(step.Extra),
+                        _translation.Text(step.Note),
                         _localizer,
                         _culture,
                         cooldownSlot: assigned.Slot,
                         memo: assigned.Memo);
                 }
 
-                return new ComboStepViewModel(index, step.Skills, step.Keys, step.Extra, step.Note, _localizer, _culture);
+                return new ComboStepViewModel(index, step.Skills, step.Keys, _translation.Text(step.Extra), _translation.Text(step.Note), _localizer, _culture);
             })
             .ToList();
 
@@ -815,8 +830,8 @@ public sealed partial class ComboEditorViewModel : ObservableObject
                     baseStep,
                     guideStep.Skills,
                     guideStep.Keys,
-                    guideStep.Extra,
-                    guideStep.Note,
+                    _translation.Text(guideStep.Extra),
+                    _translation.Text(guideStep.Note),
                     _localizer,
                     _culture,
                     entry.CustomName,
@@ -969,10 +984,9 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     private static IReadOnlyList<SlotOption> BuildQuickOptions(ILocalizer localizer)
     {
         var options = new List<SlotOption> { new(null, localizer.Get("Apply.OptionNone")) };
-        foreach (var input in QuickSlotMap.Inputs)
+        for (var position = 1; position <= QuickSlotKeys.ComboPositionCount; position++)
         {
-            var label = input.MouseButton ?? input.Position.ToString(CultureInfo.InvariantCulture);
-            options.Add(new SlotOption(input.Position, localizer.Format("Apply.QuickPositionOption", input.Position, label)));
+            options.Add(new SlotOption(position, localizer.Format("Apply.QuickPositionOption", position, QuickSlotKeys.ComboLabel(position))));
         }
 
         return options;

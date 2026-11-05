@@ -1,3 +1,5 @@
+using BdoComboSetup.Core.Logging;
+
 namespace BdoComboSetup.Core.Updates;
 
 /// <summary>
@@ -20,14 +22,17 @@ public sealed class HttpClientUpdateTransport(HttpClient client) : IUpdateHttpCl
     /// <summary>
     /// The client the app uses. No credentials, no cookies: the requests are anonymous GET calls to public endpoints.
     /// The timeout is infinite on purpose (the download is large); the lookup sets its own timeout per call.
+    /// Every call goes through <see cref="TracingHttpHandler"/>: it sends the W3C traceparent and logs the call.
     /// </summary>
-    public static HttpClient CreateClient()
+    public static HttpClient CreateClient(AppLogger logger)
     {
-        var handler = new SocketsHttpHandler
+        ArgumentNullException.ThrowIfNull(logger);
+        var transport = new SocketsHttpHandler
         {
             UseCookies = false,
             AllowAutoRedirect = true,
         };
+        var handler = new TracingHttpHandler(logger) { InnerHandler = transport };
         return new HttpClient(handler, disposeHandler: true)
         {
             Timeout = Timeout.InfiniteTimeSpan,

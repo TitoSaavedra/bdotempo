@@ -43,9 +43,6 @@
   </resheader>
 
     <data name="AppTitle" xml:space="preserve"><value>BDOTempo</value></data>
-  <data name="AppTitleBar.Title" xml:space="preserve"><value>BDOTempo</value></data>
-  <data name="NavApplyItem.Content" xml:space="preserve"><value>Combos</value></data>
-  <data name="NavPreviewItem.Content" xml:space="preserve"><value>Editor</value></data>
   <data name="Preview.CaptureToggle.Header" xml:space="preserve"><value>Capture the game</value></data>
   <data name="Preview.CaptureToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Shows the live game behind the slots. Turn it off to stop capturing the game window.</value></data>
   <data name="Apply.Title.Text" xml:space="preserve">
@@ -101,9 +98,6 @@
   </data>
   <data name="Apply.SectionMobility.Text" xml:space="preserve">
     <value>Mobility (manual)</value>
-  </data>
-  <data name="Apply.MobilityHint.Text" xml:space="preserve">
-    <value>These skills are never added to the combo. Give one a cooldown slot by hand with its button.</value>
   </data>
   <data name="Apply.GuideMissing.Text" xml:space="preserve">
     <value>This guide is not available yet.</value>
@@ -306,9 +300,6 @@
   <data name="Apply.ComboSlotsHeader.Text" xml:space="preserve">
     <value>My combos</value>
   </data>
-  <data name="Apply.ComboSlotsHint.Text" xml:space="preserve">
-    <value>Up to ten combos per class and spec. The bdoclasshub guide is never modified: each slot keeps a copy of what you see.</value>
-  </data>
   <data name="Apply.ComboNameBox.Header" xml:space="preserve">
     <value>Combo name</value>
   </data>
@@ -345,14 +336,14 @@
   <data name="Apply.SectionAddons.Text" xml:space="preserve">
     <value>Class add-ons</value>
   </data>
-  <data name="Apply.AddonsHint.Text" xml:space="preserve">
-    <value>The skill add-ons the guide recommends. They are shown only: nothing is written to the character.</value>
-  </data>
   <data name="Preview.Title.Text" xml:space="preserve">
     <value>Editor</value>
   </data>
   <data name="Preview.ApplyButton.Content" xml:space="preserve">
-    <value>Apply to character</value>
+    <value>Apply</value>
+  </data>
+  <data name="Preview.BackButton.Content" xml:space="preserve">
+    <value>Back</value>
   </data>
   <data name="Apply.OpenEditorButton.Content" xml:space="preserve">
     <value>Open the editor</value>
@@ -429,15 +420,6 @@
   <data name="Preview.Capture.Failed" xml:space="preserve">
     <value>The game window could not be captured: black background.</value>
   </data>
-  <data name="Preview.SlotEditHint.Text" xml:space="preserve">
-    <value>These are the slots of the selected combo. Click a cooldown slot to change its skill; when it is ready, press Apply to character. The guide is not touched.</value>
-  </data>
-  <data name="Preview.SlotClickTooltip.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Click to change the skill of this slot of the combo.</value>
-  </data>
-  <data name="Preview.QuickSlotTooltip.ToolTipService.ToolTip" xml:space="preserve">
-    <value>The quick slots are shown only. Their keys and positions are edited in Combos.</value>
-  </data>
   <data name="Preview.LegendCooldown.Text" xml:space="preserve">
     <value>Cooldown slots: click to change the skill</value>
   </data>
@@ -452,19 +434,12 @@
   </data>
   <data name="NavSettingsItem.Content" xml:space="preserve"><value>Settings</value></data>
   <data name="Settings.Title.Text" xml:space="preserve"><value>Settings</value></data>
-  <data name="Settings.Subtitle.Text" xml:space="preserve"><value>Account, characters, game folder, language and updates. Every change is saved at once.</value></data>
-  <data name="Settings.LanguageHint.Text" xml:space="preserve"><value>The interface language. It applies after the app restarts.</value></data>
-  <data name="Settings.UpdatesHint.Text" xml:space="preserve"><value>The installed version and whether a newer one exists. Nothing is installed without pressing the button.</value></data>
   <data name="Settings.WarningsHeader.Text" xml:space="preserve"><value>Warnings</value></data>
-  <data name="Settings.WarningsHint.Text" xml:space="preserve"><value>Which reminders you want to see while using the app.</value></data>
-  <data name="Settings.SetupHint.Text" xml:space="preserve"><value>Pick the folder and the account again with the wizard.</value></data>
   <data name="Settings.RestartBar.Title" xml:space="preserve"><value>Restart to apply the changes</value></data>
   <data name="Settings.RestartBar.Message" xml:space="preserve"><value>The language, the data folder and the account of the Preview page take effect after restarting the app.</value></data>
   <data name="Settings.RestartButton.Content" xml:space="preserve"><value>Restart now</value></data>
   <data name="Settings.AccountHeader.Text" xml:space="preserve"><value>Account</value></data>
-  <data name="Settings.AccountHint.Text" xml:space="preserve"><value>Numeric folders under UserCache that have an 11 folder. Your choice is remembered between sessions.</value></data>
   <data name="Settings.FolderHeader.Text" xml:space="preserve"><value>Black Desert folder</value></data>
-  <data name="Settings.FolderHint.Text" xml:space="preserve"><value>The folder that holds UserCache and _backups. It must contain a UserCache folder.</value></data>
   <data name="Settings.FolderBox.Header" xml:space="preserve"><value>Folder</value></data>
   <data name="Settings.FolderBox.PlaceholderText" xml:space="preserve"><value>Path to the Black Desert folder</value></data>
   <data name="Settings.FolderBrowseButton.Content" xml:space="preserve"><value>Browse...</value></data>
@@ -500,7 +475,6 @@
   <data name="Apply.WriteHint.Continue" xml:space="preserve"><value>Continue</value></data>
   <data name="Apply.WriteHint.Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Apply.WriteHint.DontShowAgain" xml:space="preserve"><value>Don't show again</value></data>
-  <data name="Settings.ShowWriteHintHint.Text" xml:space="preserve"><value>Shows a reminder to be on the character selection screen before each write to a character.</value></data>
   <data name="Settings.ShowWriteHintToggle.Header" xml:space="preserve"><value>Show the reminder before writing</value></data>
   <data name="Settings.ShowWriteHintToggle.OnContent" xml:space="preserve"><value>Shown before each write</value></data>
   <data name="Settings.ShowWriteHintToggle.OffContent" xml:space="preserve"><value>Hidden</value></data>
@@ -547,9 +521,6 @@
   <data name="Settings.CharactersHeader.Text" xml:space="preserve">
     <value>Characters</value>
   </data>
-  <data name="Settings.CharactersHint.Text" xml:space="preserve">
-    <value>The characters of the active account. The name and class you set are saved in the app; the game does not change.</value>
-  </data>
   <data name="Settings.EditCharacterButton.Content" xml:space="preserve">
     <value>Edit</value>
   </data>
@@ -567,9 +538,6 @@
   </data>
   <data name="Settings.UpdatesCancelButton.Content" xml:space="preserve">
     <value>Cancel download</value>
-  </data>
-  <data name="Settings.UpdatesPortableHint.Text" xml:space="preserve">
-    <value>This is the portable copy: the update button opens the release page in the browser. It never installs anything by itself.</value>
   </data>
   <data name="Settings.UpdatesStartupToggle.Header" xml:space="preserve">
     <value>Check for updates at startup</value>
@@ -670,9 +638,6 @@
   <data name="Settings.ScanHeader.Text" xml:space="preserve">
     <value>Character names (OCR)</value>
   </data>
-  <data name="Settings.ScanHint.Text" xml:space="preserve">
-    <value>First open Black Desert and stay at the character selection screen. The list does not need to be at the top: the app reads the scroll bar to know where you are. When you start, it reads the visible rows and draws a green box over the game; scroll up or down until every character is read, then press Finish. Rows already read are not counted twice. Nothing is ever sent to the game.</value>
-  </data>
   <data name="Settings.ScanDialogTitle" xml:space="preserve">
     <value>Open Black Desert</value>
   </data>
@@ -690,9 +655,6 @@
   </data>
   <data name="Settings.ScanReviewHeader.Text" xml:space="preserve">
     <value>Review the names</value>
-  </data>
-  <data name="Settings.ScanReviewHint.Text" xml:space="preserve">
-    <value>Fix the names or classes the OCR read wrong, then save. Only the app's own character file is written, never the game files.</value>
   </data>
   <data name="Settings.ScanSaveButton.Content" xml:space="preserve">
     <value>Save names</value>
@@ -836,9 +798,7 @@
     <value>Game not detected</value>
   </data>
   <data name="Settings.Appearance.Header.Text" xml:space="preserve"><value>Appearance</value></data>
-  <data name="Settings.Appearance.Hint.Text" xml:space="preserve"><value>Theme, accent color and side menu. Every change applies at once.</value></data>
   <data name="Settings.Appearance.ThemeHeader.Text" xml:space="preserve"><value>Theme</value></data>
-  <data name="Settings.Appearance.ThemeHint.Text" xml:space="preserve"><value>Follow Windows or pick one.</value></data>
   <data name="Settings.Appearance.ThemeSystem.Content" xml:space="preserve"><value>System</value></data>
   <data name="Settings.Appearance.ThemeLight.Content" xml:space="preserve"><value>Light</value></data>
   <data name="Settings.Appearance.ThemeDark.Content" xml:space="preserve"><value>Dark</value></data>
@@ -858,11 +818,6 @@
   <data name="Settings.Appearance.SwatchRose.ToolTipService.ToolTip" xml:space="preserve"><value>Rose</value></data>
   <data name="Settings.Appearance.SwatchBlue.AutomationProperties.Name" xml:space="preserve"><value>Blue accent</value></data>
   <data name="Settings.Appearance.SwatchBlue.ToolTipService.ToolTip" xml:space="preserve"><value>Blue</value></data>
-  <data name="Settings.Appearance.NavPaneHeader.Text" xml:space="preserve"><value>Side menu</value></data>
-  <data name="Settings.Appearance.NavAutoHide.Content" xml:space="preserve"><value>Auto-hide</value></data>
-  <data name="Settings.Appearance.NavAlways.Content" xml:space="preserve"><value>Always visible</value></data>
-  <data name="Settings.Appearance.NavPaneHint.Text" xml:space="preserve"><value>With auto-hide, the menu appears when you move the mouse to the left edge.</value></data>
-  <data name="NavEdgeHandle.AutomationProperties.Name" xml:space="preserve"><value>Show menu</value></data>
   <data name="Preview.StateHeading.Text" xml:space="preserve">
     <value>State</value>
   </data>
@@ -883,9 +838,6 @@
   </data>
   <data name="Preview.FitReal.Content" xml:space="preserve">
     <value>Actual size</value>
-  </data>
-  <data name="Preview.FitHint.Text" xml:space="preserve">
-    <value>Window: the whole capture fits this window. Slots: the frame of the slots fills the window. Actual size: 1:1, scroll to see the rest. The mouse wheel or dragging the view leaves the zoom free.</value>
   </data>
   <data name="Preview.Capture.Live" xml:space="preserve">
     <value>Capturing BlackDesert64.exe</value>
@@ -920,12 +872,6 @@
   <data name="Apply.BackupNote.Text" xml:space="preserve">
     <value>A verified backup of the character is saved before writing.</value>
   </data>
-  <data name="Apply.SlotHint.Pick" xml:space="preserve">
-    <value>Tap a slot to see what it holds.</value>
-  </data>
-  <data name="Apply.SlotHint.NoSlot" xml:space="preserve">
-    <value>This step has no cooldown slot. Pick one below, in the selected step.</value>
-  </data>
   <data name="Apply.CooldownCell" xml:space="preserve">
     <value>Slot {0}</value>
   </data>
@@ -943,10 +889,8 @@
   <data name="Settings.TabCharacters.Text" xml:space="preserve"><value>Characters</value></data>
   <data name="Settings.TabUpdates.Text" xml:space="preserve"><value>Updates</value></data>
   <data name="Apply.ClassMismatch" xml:space="preserve"><value>The combo is for {1}, but {0} is another class. Choose a character of that class to apply it.</value></data>
-  <data name="Apply.ApplyInPreviewHint.Text" xml:space="preserve"><value>Combos are not applied here. Review the changes and apply them in Preview.</value></data>
   <data name="Apply.GoToPreviewButton.Content" xml:space="preserve"><value>Go to Preview to apply</value></data>
   <data name="Apply.Remaining.Title.Text" xml:space="preserve"><value>Still to place</value></data>
-  <data name="Apply.Remaining.Hint.Text" xml:space="preserve"><value>Guide skills that are not in the 20 slots. Drag them to a slot, or tap + to use the first free one.</value></data>
   <data name="Apply.Remaining.GroupBuffs" xml:space="preserve"><value>Buffs</value></data>
   <data name="Apply.Remaining.GroupCombo" xml:space="preserve"><value>Combo</value></data>
   <data name="Apply.Remaining.GroupMobility" xml:space="preserve"><value>Mobility</value></data>
@@ -954,10 +898,28 @@
   <data name="Apply.Remaining.Done.Text" xml:space="preserve"><value>Every skill of the guide is in the slots.</value></data>
   <data name="Preview.Slots.Header.Text" xml:space="preserve"><value>Slots in use</value></data>
   <data name="Preview.ChangeCharacterButton.Content" xml:space="preserve"><value>Change in Combos</value></data>
-  <data name="Preview.DragHint.Text" xml:space="preserve"><value>Drag a skill to a slot, between slots to swap them, or onto "Still to place" to remove it.</value></data>
   <data name="Apply.CharacterDialog.Title" xml:space="preserve"><value>Which character to apply to?</value></data>
   <data name="Apply.CharacterDialog.Body" xml:space="preserve"><value>You have {0} {1} characters in this account. The one you pick is used in the editor and when applying.</value></data>
   <data name="Apply.CharacterDialog.BodyAny" xml:space="preserve"><value>Pick the character to apply to. It is used in the editor and when applying.</value></data>
   <data name="Apply.CharacterDialog.Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="Apply.ChangeCharacterButton.Content" xml:space="preserve"><value>Change</value></data>
+  <data name="Apply.SectionMobility.ToolTipService.ToolTip" xml:space="preserve"><value>Never added on their own. Give one a slot by hand with its button.</value></data>
+  <data name="Apply.GoToPreviewButton.ToolTipService.ToolTip" xml:space="preserve"><value>Combos are applied from Preview.</value></data>
+  <data name="Apply.Remaining.Hint.ToolTipService.ToolTip" xml:space="preserve"><value>Guide skills that are not in the 20 slots. Drag one to a slot or tap +.</value></data>
+  <data name="Preview.DragHint.ToolTipService.ToolTip" xml:space="preserve"><value>Drag a skill to a slot, or between slots to swap them.</value></data>
+  <data name="Preview.FitHeading.ToolTipService.ToolTip" xml:space="preserve"><value>Window, Slots or Actual size. The mouse wheel leaves the zoom free.</value></data>
+  <data name="Settings.LanguageBox.ToolTipService.ToolTip" xml:space="preserve"><value>Applies after the app restarts.</value></data>
+  <data name="Settings.ShowWriteHintToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Shows a reminder before each write to a character.</value></data>
+  <data name="Settings.FolderBox.ToolTipService.ToolTip" xml:space="preserve"><value>It must contain a UserCache folder.</value></data>
+  <data name="Settings.Appearance.SkillTooltipsToggle.Header" xml:space="preserve"><value>Show skill tooltips</value></data>
+  <data name="Settings.Appearance.SkillTooltipsToggle.OnContent" xml:space="preserve"><value>Shown on hover</value></data>
+  <data name="Settings.Appearance.SkillTooltipsToggle.OffContent" xml:space="preserve"><value>Hidden</value></data>
+  <data name="SkillTooltip.Keys" xml:space="preserve"><value>Keys</value></data>
+  <data name="SkillTooltip.Level" xml:space="preserve"><value>Level</value></data>
+  <data name="SkillTooltip.Cost" xml:space="preserve"><value>Cost</value></data>
+  <data name="SkillTooltip.Cooldown" xml:space="preserve"><value>Cooldown</value></data>
+  <data name="SkillTooltip.CooldownValue" xml:space="preserve"><value>{0} s</value></data>
+  <data name="SkillTooltip.Damage" xml:space="preserve"><value>Damage</value></data>
+  <data name="SkillTooltip.Hits" xml:space="preserve"><value>{0} hits</value></data>
+  <data name="SkillTooltip.Pvp" xml:space="preserve"><value>PvP damage</value></data>
 </root>

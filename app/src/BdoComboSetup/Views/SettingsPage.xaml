@@ -10,6 +10,17 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
+        <!-- Compact controls on this page: buttons and combo boxes are about 30 pixels high, with 13-pixel text. -->
+        <Style TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource DefaultComboBoxStyle}">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
         <!-- A round accent swatch. The fill of each swatch is set in code-behind (the page's accent palette, per theme). -->
         <!-- Transparent background so the hover state does not repaint the color. -->
         <Style x:Key="AccentSwatchStyle" TargetType="Button">
@@ -109,8 +120,8 @@
         </DataTemplate>
     </Page.Resources>
 
-    <ScrollViewer Padding="32,24,32,32" VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="14" MaxWidth="1080" HorizontalAlignment="Left">
+    <ScrollViewer Padding="24,16,24,24" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="10" MaxWidth="1080" HorizontalAlignment="Left">
 
             <!-- Heading -->
             <Grid ColumnSpacing="12" Margin="0,0,0,4">
@@ -124,10 +135,6 @@
                     VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" Spacing="2">
                     <TextBlock x:Uid="Settings/Title" Style="{ThemeResource TitleTextBlockStyle}" />
-                    <TextBlock
-                        x:Uid="Settings/Subtitle"
-                        TextWrapping="Wrap"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Grid>
 
@@ -151,7 +158,7 @@
             </SelectorBar>
 
             <!-- General: appearance, language and the write reminder. -->
-            <Grid x:Name="TabGeneral" ColumnSpacing="14" RowSpacing="14">
+            <Grid x:Name="TabGeneral" ColumnSpacing="10" RowSpacing="10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -161,37 +168,27 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- Appearance: the theme (follows Windows or fixed), the accent color for the theme, and the side menu. Applies at once. -->
+                <!-- Appearance: the theme (follows Windows or fixed) and the accent color for the theme. Applies at once. -->
                 <Border Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="16">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <FontIcon Glyph="&#xE790;"
-                                FontSize="20"
+                                FontSize="18"
                                 Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                 VerticalAlignment="Top"
                                 Margin="0,2,0,0" />
                             <StackPanel Grid.Column="1" Spacing="2">
                                 <TextBlock x:Uid="Settings/Appearance/Header" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <TextBlock
-                                    x:Uid="Settings/Appearance/Hint"
-                                    TextWrapping="Wrap"
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                             </StackPanel>
                         </Grid>
 
                         <!-- Theme: three pills. The selected one is filled with the accent (set in code-behind). -->
                         <StackPanel Spacing="8">
                             <TextBlock x:Uid="Settings/Appearance/ThemeHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            <TextBlock
-                                x:Uid="Settings/Appearance/ThemeHint"
-                                TextWrapping="Wrap"
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <Button
                                     x:Name="ThemeSystemButton"
@@ -296,53 +293,29 @@
                                 </Grid>
                             </StackPanel>
                         </StackPanel>
-
-                        <!-- Side menu: two pills. "Auto-hide" (the default) shows the menu at the left edge; "Always visible" keeps it open. Applies at once. -->
-                        <StackPanel Spacing="8">
-                            <TextBlock x:Uid="Settings/Appearance/NavPaneHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            <TextBlock
-                                x:Uid="Settings/Appearance/NavPaneHint"
-                                TextWrapping="Wrap"
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button
-                                    x:Name="NavAutoHideButton"
-                                    x:Uid="Settings/Appearance/NavAutoHide"
-                                    Tag="auto"
-                                    Click="NavPane_Click"
-                                    Style="{StaticResource PillStyle}" />
-                                <Button
-                                    x:Name="NavAlwaysButton"
-                                    x:Uid="Settings/Appearance/NavAlways"
-                                    Tag="always"
-                                    Click="NavPane_Click"
-                                    Style="{StaticResource PillStyle}" />
-                            </StackPanel>
-                        </StackPanel>
+                        <!-- Skill tooltips: hovering a skill shows its icon, cost, cooldown and damage. Applies at once. -->
+                        <ToggleSwitch
+                            x:Uid="Settings/Appearance/SkillTooltipsToggle"
+                            IsOn="{x:Bind ViewModel.ShowSkillTooltips, Mode=OneWay}"
+                            Toggled="SkillTooltipsToggle_Toggled" />
                     </StackPanel>
                 </Border>
 
                 <!-- Language: es or en-US. Takes effect after a restart. -->
                 <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="12">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <FontIcon Glyph="&#xE774;"
-                                FontSize="20"
+                                FontSize="18"
                                 Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                 VerticalAlignment="Top"
                                 Margin="0,2,0,0" />
                             <StackPanel Grid.Column="1" Spacing="2">
                                 <TextBlock x:Uid="Settings/LanguageHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <TextBlock
-                                    x:Uid="Settings/LanguageHint"
-                                    TextWrapping="Wrap"
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                             </StackPanel>
                         </Grid>
                         <ComboBox
@@ -365,42 +338,32 @@
 
                 <!-- The reminder before a write to a character. Turn it on again after "Don't show again". -->
                 <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="12">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <FontIcon Glyph="&#xEA8F;"
-                                FontSize="20"
+                                FontSize="18"
                                 Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                 VerticalAlignment="Top"
                                 Margin="0,2,0,0" />
                             <StackPanel Grid.Column="1" Spacing="2">
                                 <TextBlock x:Uid="Settings/WarningsHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <TextBlock
-                                    x:Uid="Settings/WarningsHint"
-                                    TextWrapping="Wrap"
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                             </StackPanel>
                         </Grid>
                         <ToggleSwitch
                             x:Uid="Settings/ShowWriteHintToggle"
                             IsOn="{x:Bind ViewModel.ShowWriteHint, Mode=OneWay}"
                             Toggled="ShowWriteHint_Toggled" />
-                        <TextBlock
-                            x:Uid="Settings/ShowWriteHintHint"
-                            TextWrapping="Wrap"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
                 </Border>
 
             </Grid>
 
             <!-- Game: the account and the Black Desert folder. -->
-            <Grid x:Name="TabGame" ColumnSpacing="14" RowSpacing="14" Visibility="Collapsed">
+            <Grid x:Name="TabGame" ColumnSpacing="10" RowSpacing="10" Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -411,24 +374,19 @@
 
                 <!-- Account: the numeric folders under UserCache that have an 11 folder. The one chosen here is remembered. -->
                 <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="12">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <FontIcon Glyph="&#xE77B;"
-                                FontSize="20"
+                                FontSize="18"
                                 Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                 VerticalAlignment="Top"
                                 Margin="0,2,0,0" />
                             <StackPanel Grid.Column="1" Spacing="2">
                                 <TextBlock x:Uid="Settings/AccountHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <TextBlock
-                                    x:Uid="Settings/AccountHint"
-                                    TextWrapping="Wrap"
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                             </StackPanel>
                         </Grid>
                         <controls:SearchablePicker
@@ -446,24 +404,19 @@
 
                 <!-- Black Desert folder: browse, or type a path and save it. A folder without UserCache is refused. -->
                 <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="12">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <FontIcon Glyph="&#xE8B7;"
-                                FontSize="20"
+                                FontSize="18"
                                 Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                 VerticalAlignment="Top"
                                 Margin="0,2,0,0" />
                             <StackPanel Grid.Column="1" Spacing="2">
                                 <TextBlock x:Uid="Settings/FolderHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <TextBlock
-                                    x:Uid="Settings/FolderHint"
-                                    TextWrapping="Wrap"
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                             </StackPanel>
                         </Grid>
                         <Grid ColumnSpacing="8">
@@ -484,12 +437,6 @@
                         </Grid>
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <Button x:Uid="Settings/SetupButton" Click="Setup_Click" />
-                            <TextBlock
-                                x:Uid="Settings/SetupHint"
-                                FontSize="12"
-                                VerticalAlignment="Center"
-                                TextWrapping="Wrap"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -497,7 +444,7 @@
             </Grid>
 
             <!-- Characters: the roster of the account and the OCR scan. -->
-            <Grid x:Name="TabCharacters" ColumnSpacing="14" RowSpacing="14" Visibility="Collapsed">
+            <Grid x:Name="TabCharacters" ColumnSpacing="10" RowSpacing="10" Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -509,24 +456,19 @@
 
                 <!-- Characters of the active account: the name and class the app shows for each one. Edit and reset are per row. -->
                 <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="12">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <FontIcon Glyph="&#xE716;"
-                                FontSize="20"
+                                FontSize="18"
                                 Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                 VerticalAlignment="Top"
                                 Margin="0,2,0,0" />
                             <StackPanel Grid.Column="1" Spacing="2">
                                 <TextBlock x:Uid="Settings/CharactersHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <TextBlock
-                                    x:Uid="Settings/CharactersHint"
-                                    TextWrapping="Wrap"
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                 <TextBlock
                                     x:Name="CharactersMessageText"
                                     TextWrapping="Wrap"
@@ -540,24 +482,19 @@
 
                 <!-- OCR scan of the character selection screen: reads names and classes, shows them over the game, and saves them. -->
                 <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="12">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <FontIcon Glyph="&#xE890;"
-                                FontSize="20"
+                                FontSize="18"
                                 Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                 VerticalAlignment="Top"
                                 Margin="0,2,0,0" />
                             <StackPanel Grid.Column="1" Spacing="2">
                                 <TextBlock x:Uid="Settings/ScanHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <TextBlock
-                                    x:Uid="Settings/ScanHint"
-                                    TextWrapping="Wrap"
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                             </StackPanel>
                         </Grid>
                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -595,11 +532,6 @@
                             Spacing="8"
                             Visibility="{x:Bind Scan.HasReview, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                             <TextBlock x:Uid="Settings/ScanReviewHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            <TextBlock
-                                x:Uid="Settings/ScanReviewHint"
-                                TextWrapping="Wrap"
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                             <ScrollViewer MaxHeight="420" VerticalScrollBarVisibility="Auto">
                                 <ItemsControl
                                     ItemsSource="{x:Bind Scan.Rows, Mode=OneWay}"
@@ -620,7 +552,7 @@
             </Grid>
 
             <!-- Updates. -->
-            <Grid x:Name="TabUpdates" ColumnSpacing="14" RowSpacing="14" Visibility="Collapsed">
+            <Grid x:Name="TabUpdates" ColumnSpacing="10" RowSpacing="10" Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -632,24 +564,19 @@
                 <!-- Updates: the version, the last check, a manual check, the install button (only when a newer release exists),
                      the progress of a download, and the switch for the check at startup. Nothing is installed without the button. -->
                 <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="12">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <FontIcon Glyph="&#xE895;"
-                                FontSize="20"
+                                FontSize="18"
                                 Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                 VerticalAlignment="Top"
                                 Margin="0,2,0,0" />
                             <StackPanel Grid.Column="1" Spacing="2">
                                 <TextBlock x:Uid="Settings/UpdatesHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <TextBlock
-                                    x:Uid="Settings/UpdatesHint"
-                                    TextWrapping="Wrap"
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                             </StackPanel>
                         </Grid>
                         <StackPanel Spacing="4">
@@ -681,12 +608,6 @@
                             Value="{x:Bind Updates.DownloadPercent, Mode=OneWay}"
                             Visibility="{x:Bind Updates.IsDownloading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         <TextBlock Text="{x:Bind Updates.StatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
-                        <TextBlock
-                            x:Uid="Settings/UpdatesPortableHint"
-                            TextWrapping="Wrap"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Visibility="{x:Bind Updates.IsPortable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                         <ToggleSwitch
                             x:Uid="Settings/UpdatesStartupToggle"
                             IsOn="{x:Bind Updates.CheckOnStartup, Mode=OneWay}"

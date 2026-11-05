@@ -75,6 +75,18 @@ public sealed class AppSettingsStoreTests : IDisposable
     }
 
     [Fact]
+    public void Skill_tooltips_are_on_by_default_and_the_choice_is_written_and_read_back()
+    {
+        var store = new AppSettingsStore(SettingsPath, _log.Logger);
+        Assert.True(store.Settings.ShowSkillTooltips);
+
+        store.Update(settings => settings with { ShowSkillTooltips = false });
+
+        var reloaded = new AppSettingsStore(SettingsPath, _log.Logger).Settings;
+        Assert.False(reloaded.ShowSkillTooltips);
+    }
+
+    [Fact]
     public void An_old_settings_file_without_the_new_fields_loads_with_their_defaults()
     {
         File.WriteAllText(SettingsPath, "{ \"GameDataRoot\": \"D:\\\\Old\", \"Language\": \"en-US\", \"SkipWriteHint\": true, \"NavPaneOpen\": false }");

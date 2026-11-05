@@ -58,9 +58,15 @@ public sealed partial class PreviewPage : Page
     public Style PillStyleFor(bool selected) =>
         (Style)Application.Current.Resources[selected ? "PillSelectedStyle" : "PillStyle"];
 
+    /// <summary>The header's "Apply" button: the combo is applied to the character from here.</summary>
+    private async void ApplyButton_Click(object sender, RoutedEventArgs e)
+    {
+        await RequestApplyAsync();
+    }
+
     /// <summary>
-    /// "Apply to character" (the button of the status bar): asks which parts are written (the bar, the memos, the quick slots)
-    /// and opens the review with that choice. Nothing is written here; the review card has the write button.
+    /// Asks which parts are written (the bar, the memos, the quick slots) and opens the review with that choice. Nothing is written
+    /// here; the review card has the write button.
     /// </summary>
     public async Task RequestApplyAsync()
     {
@@ -70,8 +76,8 @@ public sealed partial class PreviewPage : Page
         }
     }
 
-    /// <summary>The character is chosen in Combos only: this goes there.</summary>
-    private void ChangeCharacter_Click(object sender, RoutedEventArgs e) => (App.MainWindow as MainWindow)?.ShowCombos();
+    /// <summary>The character is chosen in Combos only, and the "Back" button goes there too: this shows the Combos page.</summary>
+    private void GoToCombos_Click(object sender, RoutedEventArgs e) => (App.MainWindow as MainWindow)?.ShowCombos();
 
     /// <summary>A pending skill starts to be dragged: its step takes the slot it is dropped on.</summary>
     private void PendingSkill_DragStarting(UIElement sender, DragStartingEventArgs args)

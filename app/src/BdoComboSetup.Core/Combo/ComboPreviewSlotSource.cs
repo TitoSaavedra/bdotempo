@@ -112,7 +112,8 @@ public sealed class ComboPreviewSlotSource : IPreviewSlotSource, ISlotSkillEdito
             CustomName: NullIfBlank(step.CustomName),
             CooldownNumber: step.CooldownSlot,
             QuickPosition: step.QuickPosition,
-            OpenIcon: skill?.OpenIcon);
+            OpenIcon: skill?.OpenIcon,
+            Skill: skill);
     }
 
     private void OnApplyChanged(object? sender, PropertyChangedEventArgs e)

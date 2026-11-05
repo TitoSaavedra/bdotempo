@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    x:Class="BdoComboSetup.Views.Controls.SkillTooltipTemplate"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:core="using:BdoComboSetup.Core.Combo"
+    xmlns:controls="using:BdoComboSetup.Views.Controls">
+
+    <!-- The content of every skill tooltip: the icon and the name, the description, then the game's lines (keys, level, costs,
+         cooldown, damage, PvP and the extra lines). Loaded by SkillTooltips; the tooltip is built only when it is shown. -->
+    <DataTemplate x:Key="SkillTooltipTemplate" x:DataType="core:SkillTooltipView">
+        <StackPanel Width="300" Spacing="8">
+            <Grid ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <controls:AssetIcon
+                    Width="40"
+                    Height="40"
+                    IconSource="{x:Bind OpenIcon, Mode=OneTime}"
+                    Glyph="{x:Bind Glyph, Mode=OneTime}" />
+                <TextBlock
+                    Grid.Column="1"
+                    Text="{x:Bind Name, Mode=OneTime}"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    VerticalAlignment="Center"
+                    TextWrapping="Wrap" />
+            </Grid>
+
+            <TextBlock
+                Text="{x:Bind Description, Mode=OneTime}"
+                FontSize="12"
+                TextWrapping="Wrap"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Visibility="{x:Bind controls:SkillTooltips.VisibilityOf(HasDescription), Mode=OneTime}" />
+
+            <StackPanel Spacing="2" Visibility="{x:Bind controls:SkillTooltips.VisibilityOf(HasLines), Mode=OneTime}">
+                <ItemsControl ItemsSource="{x:Bind Lines, Mode=OneTime}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <TextBlock
+                                Text="{x:Bind}"
+                                FontSize="12"
+                                TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </StackPanel>
+    </DataTemplate>
+</ResourceDictionary>

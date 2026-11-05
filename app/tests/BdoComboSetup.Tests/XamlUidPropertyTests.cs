@@ -28,6 +28,7 @@ public sealed class XamlUidPropertyTests
         ["InfoBar"] = ["Title", "Message"],
         ["TitleBar"] = ["Title", "Subtitle"],
         ["Border"] = [],
+        ["ProgressBar"] = [],
         ["SelectorBarItem"] = ["Text"],
     };
 

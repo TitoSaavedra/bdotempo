@@ -1,5 +1,6 @@
 using System.Globalization;
 using BdoComboSetup.Core.Combo;
+using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -69,10 +70,10 @@ public sealed partial class ComboStepViewModel : ObservableObject
     /// <summary>Key legend from the guide, for example "R 1" or "Hotkey".</summary>
     public string? Keys { get; }
 
-    /// <summary>Extra line from the guide, such as "opener".</summary>
+    /// <summary>Extra line of the guide in the page language, such as "opener".</summary>
     public string? Extra { get; }
 
-    /// <summary>Annotation from the guide.</summary>
+    /// <summary>Annotation of the guide in the page language.</summary>
     public string? Note { get; }
 
     /// <summary>The guide's extra line and annotation of this step, joined in one line. Empty when the guide has neither.</summary>
@@ -147,7 +148,7 @@ public sealed partial class ComboStepViewModel : ObservableObject
 
     /// <summary>The input of the quick position, such as "M2" or "5" for a key position. Empty when there is none.</summary>
     public string QuickLabel => QuickPosition is int position
-        ? QuickSlotMap.InputFor(position).MouseButton ?? position.ToString(CultureInfo.InvariantCulture)
+        ? QuickSlotKeys.ComboLabel(position)
         : string.Empty;
 
     /// <summary>"#n" for the cooldown slot, or empty.</summary>

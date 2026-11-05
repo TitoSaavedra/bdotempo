@@ -174,6 +174,7 @@ public sealed class AppServices : IDisposable
         var display = startup.DemoData ? DemoGameLayouts.Display : GameOptionLoader.Load(GameOptionLoader.DefaultPath, logger);
         var assets = new BundledAssetProvider(packResources, logger);
         var combos = JsonCombosCatalog.Load(packResources, assets, logger);
+        var guideTexts = GuideTexts.Load(packResources, logger);
 
         // The skills of every class at their top rank: the rows of the slot editor's picker, and what brings a skill the
         // user put in a slot back when the saved combo is opened again.
@@ -227,7 +228,8 @@ public sealed class AppServices : IDisposable
             logger,
             classSkills,
             settings.Settings.LastCharacterPcid,
-            pcid => settings.Update(current => current with { LastCharacterPcid = pcid }));
+            pcid => settings.Update(current => current with { LastCharacterPcid = pcid }),
+            guideTexts);
 
         // The character name scan: OCR of the selection screen with the green overlay. It reads the game, never writes it.
         var characterScan = new CharacterScanService(logger, roster, applyCombo.ClassChoices, localizer);
@@ -259,7 +261,7 @@ public sealed class AppServices : IDisposable
             gameScreen,
             layouts,
             settings,
-            new PreviewStartup(startup.Layout, startup.ShowHiddenSlots, startup.CooldownDemo, startup.Zoom),
+            new PreviewStartup(startup.Layout, startup.ShowHiddenSlots, startup.CooldownDemo, startup.Zoom, startup.NoCapture),
             localizer,
             logger,
             slots);
@@ -268,7 +270,7 @@ public sealed class AppServices : IDisposable
 
         // The updater reads the GitHub release of the app. The demo answers from memory (no network): "a newer version exists"
         // with --demo-update, else "you have the latest". The portable zip (marker file next to the exe) opens the release page.
-        var httpClient = HttpClientUpdateTransport.CreateClient();
+        var httpClient = HttpClientUpdateTransport.CreateClient(logger);
         var transport = new HttpClientUpdateTransport(httpClient);
         IReleaseFeed releases = startup.DemoData
             ? new DemoReleaseFeed(AppVersion.Current, startup.DemoUpdate)

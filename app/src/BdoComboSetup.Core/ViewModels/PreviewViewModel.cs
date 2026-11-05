@@ -81,6 +81,7 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
         _layoutId = startup.Layout ?? ParseLayout(settings.Settings.SelectedLayout) ?? GameUiLayoutId.General;
         _showHiddenSlots = startup.ShowHiddenSlots;
         _cooldownDemo = startup.CooldownDemo;
+        _captureGame = !startup.NoCapture;
         _zoom = CanvasZoom.ClampZoom(startup.Zoom ?? CanvasZoom.FitZoom);
         _fitMode = startup.Zoom is null ? CanvasFitMode.Slots : CanvasFitMode.Custom;
 

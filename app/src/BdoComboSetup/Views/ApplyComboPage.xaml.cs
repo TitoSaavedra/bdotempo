@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Globalization;
 using BdoComboSetup.Core.Characters;
 using BdoComboSetup.Core.Combo;
+using BdoComboSetup.Core.Game;
 using BdoComboSetup.Core.Search;
 using BdoComboSetup.Core.ViewModels;
 using BdoComboSetup.Views.Controls;
@@ -72,25 +73,6 @@ public sealed partial class ApplyComboPage : Page
     /// <summary>A class tile: accent when it is the selected class.</summary>
     public static Style ClassTileStyle(bool selected) =>
         (Style)App.Current.Resources[selected ? "ClassTileSelectedStyle" : "ClassTileStyle"];
-
-    /// <summary>
-    /// The line under the cooldown board: what the selected step holds ("#3 · name · key"), a hint to select a step, or a
-    /// note that the selected step has no cooldown slot.
-    /// </summary>
-    public static string SlotHintText(string? cooldownLabel, string? stepName, string? keys)
-    {
-        if (string.IsNullOrEmpty(stepName))
-        {
-            return App.Services.Localizer.Get("Apply.SlotHint.Pick");
-        }
-
-        if (string.IsNullOrEmpty(cooldownLabel))
-        {
-            return App.Services.Localizer.Get("Apply.SlotHint.NoSlot");
-        }
-
-        return string.Join(" · ", new[] { cooldownLabel, stepName, keys }.Where(text => !string.IsNullOrWhiteSpace(text)));
-    }
 
     /// <summary>The line under the guide title: class, source host and which copy is on screen, joined; empty parts are left out.</summary>
     public static string GuideMetaText(string? className, string? source, string? state) =>
@@ -231,9 +213,9 @@ public sealed partial class ApplyComboPage : Page
         }
 
         QuickCells.Clear();
-        for (var position = 1; position <= QuickSlotMap.Count; position++)
+        for (var position = 1; position <= QuickSlotKeys.ComboPositionCount; position++)
         {
-            var label = QuickSlotMap.InputFor(position).MouseButton ?? position.ToString(culture);
+            var label = QuickSlotKeys.ComboLabel(position);
             var step = steps.FirstOrDefault(item => item.QuickPosition == position);
             QuickCells.Add(BoardCellFor(label, label, step, selected));
         }

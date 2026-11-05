@@ -17,7 +17,7 @@ public enum SlotKind
 public static class GameSlotIndices
 {
     public const int CooldownSlotCount = 20;
-    public const int QuickSlotCount = 20;
+    public const int QuickSlotCount = QuickSlotKeys.SlotCount;
 
     public static int CooldownPanelIndex(int number)
     {

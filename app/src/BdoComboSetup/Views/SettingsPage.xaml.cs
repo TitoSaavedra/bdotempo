@@ -118,14 +118,14 @@ public sealed partial class SettingsPage : Page
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(SettingsViewModel.Theme) or nameof(SettingsViewModel.AccentColor) or nameof(SettingsViewModel.NavAutoHide))
+        if (e.PropertyName is nameof(SettingsViewModel.Theme) or nameof(SettingsViewModel.AccentColor))
         {
             RefreshAppearance();
         }
     }
 
     /// <summary>
-    /// Shows the saved theme, accent and side menu mode: the ring of the chosen swatch and the filled pills. The colors themselves are
+    /// Shows the saved theme and accent: the ring of the chosen swatch and the filled pills. The colors themselves are
     /// theme resources, and the window applies a change of theme (ThemeService), so only these states are set here.
     /// </summary>
     private void RefreshAppearance()
@@ -141,9 +141,6 @@ public sealed partial class SettingsPage : Page
         {
             button.Style = theme == ViewModel.Theme ? selectedStyle : pillStyle;
         }
-
-        NavAutoHideButton.Style = ViewModel.NavAutoHide ? selectedStyle : pillStyle;
-        NavAlwaysButton.Style = ViewModel.NavAutoHide ? pillStyle : selectedStyle;
     }
 
     /// <summary>Saves the theme of the pill clicked (the tag is the theme id). The window applies it at once.</summary>
@@ -162,16 +159,6 @@ public sealed partial class SettingsPage : Page
         if (sender is Button { Tag: string accent })
         {
             ViewModel.ChooseAccentColor(accent);
-            RefreshAppearance();
-        }
-    }
-
-    /// <summary>Saves the side menu mode of the pill clicked (the tag is "auto" or "always"). The window applies it at once.</summary>
-    private void NavPane_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string mode })
-        {
-            ViewModel.ChooseNavAutoHide(mode == "auto");
             RefreshAppearance();
         }
     }
@@ -446,6 +433,15 @@ public sealed partial class SettingsPage : Page
         }
     }
 
+    /// <summary>Turns the skill tooltips on or off. The switch only forwards the change; the view model saves it and the tooltips follow.</summary>
+    private void SkillTooltipsToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (sender is ToggleSwitch toggle && toggle.IsOn != ViewModel.ShowSkillTooltips)
+        {
+            ViewModel.ChooseShowSkillTooltips(toggle.IsOn);
+        }
+    }
+
     private void LanguageBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (e.AddedItems.Count > 0 && e.AddedItems[0] is LanguageChoice choice && !ReferenceEquals(choice, ViewModel.SelectedLanguage))
@@ -493,7 +489,6 @@ public sealed partial class SettingsPage : Page
         }
     }
 
-    /// <summary>Starts a new copy of the app and closes this one, so a language or folder change applies to every page.</summary>
     /// <summary>Shows the cards of the chosen tab and hides the others.</summary>
     private void SettingsTabs_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
@@ -504,6 +499,7 @@ public sealed partial class SettingsPage : Page
         TabUpdates.Visibility = tag == "updates" ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    /// <summary>Starts a new copy of the app and closes this one, so a language or folder change applies to every page.</summary>
     private void Restart_Click(object sender, RoutedEventArgs e)
     {
         var path = Environment.ProcessPath;
