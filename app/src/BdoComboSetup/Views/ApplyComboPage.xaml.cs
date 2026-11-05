@@ -284,6 +284,7 @@ public sealed partial class ApplyComboPage : Page
     /// </summary>
     private void BoardCell_DragOver(object sender, DragEventArgs e)
     {
+        DragLog("cell.drag_over", $"drag_set={_drag is not null} editor={ViewModel.Editor is not null} dc={(sender as FrameworkElement)?.DataContext?.GetType().Name}");
         if (_drag is null || ViewModel.Editor is not { } editor || sender is not FrameworkElement { DataContext: ApplyBoardCell cell })
         {
             e.AcceptedOperation = DataPackageOperation.None;
@@ -315,6 +316,7 @@ public sealed partial class ApplyComboPage : Page
 
     private void BoardCell_Drop(object sender, DragEventArgs e)
     {
+        DragLog("cell.drop", $"drag_set={_drag is not null}");
         SetDropCell(null);
         if (_drag is { } drag && sender is FrameworkElement { DataContext: ApplyBoardCell cell })
         {
@@ -447,7 +449,9 @@ public sealed partial class ApplyComboPage : Page
     {
         _drag = new BoardDrag(step, origin);
         args.AllowedOperations = DataPackageOperation.Move | DataPackageOperation.Copy;
-        args.Data.RequestedOperation = DataPackageOperation.Move;
+        // Both: a drop that makes a duplicate answers Copy, any other drop answers Move, and an answer outside the requested
+        // operations is refused by the system (the pointer shows the forbidden sign).
+        args.Data.RequestedOperation = DataPackageOperation.Move | DataPackageOperation.Copy;
         args.Data.SetText(step.DisplayName);
     }
 
@@ -564,8 +568,12 @@ public sealed partial class ApplyComboPage : Page
     /// Remembers which chain a dragged step belongs to, and that the step can be dropped on a board cell (from its card it has no
     /// cell of origin).
     /// </summary>
+    private static void DragLog(string what, string detail = "") =>
+        App.Services.Logger.Info("drag.trace", what, new Dictionary<string, object?> { ["detail"] = detail });
+
     private void Steps_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
+        DragLog("steps.drag_items_starting", $"items={e.Items.Count}");
         if (sender is ListView { Tag: ComboChainViewModel chain })
         {
             e.Data.Properties[SourceChainKey] = chain.Index;
@@ -574,6 +582,7 @@ public sealed partial class ApplyComboPage : Page
         if (e.Items.FirstOrDefault() is ComboStepViewModel step)
         {
             _drag = new BoardDrag(step, null);
+            e.Data.RequestedOperation = DataPackageOperation.Move | DataPackageOperation.Copy;
             e.Data.SetText(step.SkillName);
         }
     }

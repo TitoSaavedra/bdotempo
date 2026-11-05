@@ -154,3 +154,37 @@ README in English, marketing style, no build instructions (documenter agent); re
 
 ## Key paths
 Game data (read-mostly): `C:\Users\TitoS\OneDrive\Documentos\Black Desert` (GameOption.txt 3440x1440 windowed, uiScale 1.0; `UserCache\330\11\<pcid>\gameVariable.xml`; account file `UserCache\330\gamevariable.xml`). Game client (read-only!): `G:\SteamLibrary\steamapps\common\Black Desert Online`. Client export: `D:\extracted_bdo\client` (icons, ui_probe, class_skills.json at `D:\extracted_bdo`). Slot UI spec: scratchpad `slotui\slot-ui-spec.md` (temporary; summary above). App logs: `%LOCALAPPDATA%\BDOTempo\logs`. Memory dir: `C:\Users\TitoS\.claude\projects\C--Users-TitoS\memory\`.
+
+## Handoff 2026-11-05 (branch `feature/editor-tabs`, based on `main`)
+
+State: the app compiles (0 errors), everything below is committed on `feature/editor-tabs` except the temporary drag trace.
+The old test suites (C# and Python) were deleted on purpose; the new plan to rewrite them is `docs/TESTING_PLAN.md` (the user marks keep/drop/merge).
+
+### Open bug (first thing to do next)
+- **Combos page: dragging a skill from the chain list to a cooldown or quick board cell is still refused.** Two attempts failed
+  (cells changed from Button to transparent Grid with AllowDrop; RequestedOperation Move|Copy on both drag sources).
+  A temporary trace is in `Views\ApplyComboPage.xaml.cs` (`DragLog`, event `drag.trace`: steps.drag_items_starting,
+  cell.drag_over, cell.drop). Next step: start the app, drag once, read `%LOCALAPPDATA%\BDOTempo\logspp-*.log` for `drag.trace`
+  to see whether DragItemsStarting fires, whether the cells receive DragOver at all, and what `_drag` is. Suspects: the ListView
+  (CanReorderItems/AllowDrop) swallowing the drag, the Chains ScrollViewer `AllowDrop`, hit-testing of the cells (Border over the
+  Grid), `e.Handled`. Remove the trace when fixed.
+
+### Done in this round (all on the branch)
+- Shell without sidebar; Settings is a title-bar gear (thin Fluent glyph, flush with the caption buttons) and a Back button in Settings; no app name in the title bar.
+- Editor: right column in tabs (Slots with pending list, Settings), status strip under the capture, Apply and Back at the top.
+- Combos: fits the window height, saved combo slots in the center header (selector, Save, menu: Load, Delete, Use guide, Import), import from game (read-only), drag and drop to the 20 cooldown and 20 quick cells, duplicated skills allowed (each repeated guide step gets its own slot), quick positions 1..20 (QuickSlotKeys is the single source of truth; QuickSlotMap was removed).
+- Skill hover card (one shared popup, 300 ms, max 10 rows), switchable in Settings.
+- Settings: two tabs (General, Characters), grouped options, characters as a card grid with a ready counter.
+- Characters without `gameVariable.xml` (the game creates it per character) are shown dimmed as "no game data"; Combos shows a notice listing who must enter the game once. Friend's data: 33 character folders, only 3 with a file (hypothesis: the game writes it only when something of that character is saved; to be confirmed by moving a quick slot with one of them).
+- OCR scan: reports why it read nothing (black frame, no OCR language, not on the selection screen) and counts against the whole account.
+- No default game folder anywhere: if none is saved the setup asks; the Preview reads follow the configured folder.
+- Nova Succession "pvp" combo saved in `%LOCALAPPDATA%\BDOTempo\profiles\9.succession.json` (slot 1): main combo in cooldown slots 1-9, quick slots 1-5; everything else left pending.
+- Guides: Self Buffs overlay chain (Ancestral Contract / Axian) and Spanish guide texts (`src/bdo_combo/guides/guide_texts_es.json`).
+- Portable build: `mise run package-portable` (self-contained, `dist\BDOTempo-Portable-0.1.0.zip`). Single-file exe was not attempted.
+
+### Pending / ideas
+- Homologate visuals after functionality (settings columns use only part of the width; spacing and sizes across pages).
+- Remove the extra 'Fit' button next to the three fit pills in the Editor (redundant with 'Slots'); the user has not confirmed yet.
+- The guide importer still uses the "Sucesion:" skills (needs Ancestral Contract) in the PvE guide; the user says Succession uses Suprema or "S:" skills.
+- Ctrl-copy when dropping a cell needs a runtime check; the OCR black-frame threshold (97%) is untested on real captures.
+- `docs/PROJECT_STATE.md` older sections still mention `QuickSlotMap` and the old test counts.
