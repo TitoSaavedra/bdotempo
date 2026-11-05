@@ -24,6 +24,9 @@ from .client import clean_description
 
 # Languages in preference order. The English file is always read: it holds the map and the fallback entries.
 TOOLTIP_LANGS = ("es-mx", "es", "en")
+# A skill reference whose number changed after the page was read (the top rank, or a Succession swap) keeps the number
+# the page shows under this key until the tooltips are built: the site's data is keyed by the page's number.
+PAGE_SKILL_KEY = "pageSkillNo"
 SKILL_DATA_DIR = Path("data") / "skills"
 LABELS_FILE = "labels.json"
 OVERVIEW_KIND = "overview"
@@ -255,7 +258,8 @@ def build_tooltips(classhub_dir: Path, sources: list[GuideSource]) -> TooltipBui
 
         for ref in tooltip_refs(source.guide):
             skill_no = ref["skillNo"]
-            found = build_tooltip(data, source.page, skill_no) if data.available else TooltipResult(None, None)
+            page_no = ref.get(PAGE_SKILL_KEY, skill_no)
+            found = build_tooltip(data, source.page, page_no) if data.available else TooltipResult(None, None)
             if found.tooltip is None:
                 guides = no_data_guides.setdefault(skill_no, [])
                 if source.key not in guides:

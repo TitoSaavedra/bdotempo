@@ -13,12 +13,17 @@ Outputs (JSON, UTF-8, LF):
 
 Every skill reference is ``{"skillNo", "nameEn", "nameEs"}``. ``nameEs`` is null when the client export
 has no entry for the skill; the report lists those skills.
+
+Each skill reference then gets its final number, in this order: the Succession swap (overlays.py, Succession guides
+only), then the top rank of the skill (skill_ranks.py, every guide). A changed reference takes the English name of its
+new number from the class's English tooltip data.
 """
 
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
+import re
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -35,14 +40,30 @@ from .catalog import (
     spanish_class_name,
 )
 from .client import ClientExport, clean_name
-from .overlays import apply_overlays
+from .overlays import (
+    SUCCESSION_PREFIX,
+    SUCCESSION_SPEC,
+    apply_overlays,
+    succession_target,
+    succession_target_problems,
+)
 from .kinds import KINDS, LOW, MANUAL_ONLY_KINDS, Verdict, classify_chain
 from .pages import ParsedGuide
-from .tooltips import GuideSource, TooltipBuild, build_tooltips
+from .skill_ranks import build_top_ranks
+from .tooltips import (
+    PAGE_SKILL_KEY,
+    ClassSkillData,
+    GuideSource,
+    TooltipBuild,
+    build_tooltip,
+    build_tooltips,
+    load_class_skill_data,
+)
 
 SITE_URL = "https://bdoclasshub.com/"
 GUIDE_SCHEMA = 1
 TOOLTIPS_FILE = "tooltips.json"
+_ROMAN_SUFFIX_RE = re.compile(r"\s(I|II|III|IV|V|VI|VII|VIII)$")
 
 
 @dataclass
@@ -71,6 +92,7 @@ class ImportResult:
     problems: list[str]
     chain_rows: list[ChainRow] = field(default_factory=list)
     tooltips: TooltipBuild = field(default_factory=TooltipBuild)
+    rule_counts: dict[str, int] = field(default_factory=dict)
 
     def skill_refs(self) -> Iterator[dict[str, Any]]:
         for key in sorted(self.guides):
@@ -83,6 +105,7 @@ class ImportResult:
         for row in self.chain_rows:
             counts[f"chains_{row.verdict.kind}"] += 1
         return {
+            **self.rule_counts,
             "classes": len(self.catalog["classes"]),
             "specs": sum(len(entry["specs"]) for entry in self.catalog["classes"]),
             "guides": len(self.guides),
@@ -112,13 +135,18 @@ def iter_skill_refs(guide: dict[str, Any]) -> Iterator[dict[str, Any]]:
         yield addon["skill"]
 
 
-def import_guides(classhub_dir: Path, client: ClientExport) -> ImportResult:
+def import_guides(classhub_dir: Path, client: ClientExport, skill_table: Mapping[str, Any]) -> ImportResult:
     with log.span("guides.import.build", classhub_dir=str(classhub_dir), client_dir=str(client.root)):
         manifest = load_manifest(classhub_dir)
         client_classes = client.classes()
         client_skills = client.skill_names()
+        client_names = {skill_no: clean_name(skill.name) for skill_no, skill in client_skills.items()}
 
         problems: list[str] = []
+        problems.extend(succession_target_problems(client_names))
+        top_ranks = build_top_ranks(skill_table, client_names)
+        english: dict[str, ClassSkillData] = {}
+        rule_counts = {"succession_swapped": 0, "succession_kept": 0, "rank_lifted": 0}
         pages = PageCache(classhub_dir)
         plans = plan_specs(pages, manifest, problems)
         for problem in problems:
@@ -139,6 +167,20 @@ def import_guides(classhub_dir: Path, client: ClientExport) -> ImportResult:
             parsed = pages.guide(plan.guide.page)
             guide = _guide_json(plan, class_type, parsed)
             apply_overlays(plan.guide.key, guide)
+            if plan.class_slug not in english:
+                english[plan.class_slug] = load_class_skill_data(classhub_dir, plan.class_slug)
+            swapped, kept, lifted = _apply_skill_rules(
+                plan.guide.key,
+                plan.guide.page,
+                guide,
+                top_ranks,
+                client_names,
+                english[plan.class_slug],
+                problems,
+            )
+            rule_counts["succession_swapped"] += swapped
+            rule_counts["succession_kept"] += kept
+            rule_counts["rank_lifted"] += lifted
             chain_rows.extend(_classify_guide(plan.guide.key, guide))
             _record_problems(plan, parsed, problems)
             guides[plan.guide.key] = guide
@@ -157,6 +199,9 @@ def import_guides(classhub_dir: Path, client: ClientExport) -> ImportResult:
             guide["manualPool"] = manual_pool(guide)
         icon_missing = _check_icons(guides, client)
         tooltips = build_tooltips(classhub_dir, sources)
+        for guide in guides.values():
+            for ref in iter_skill_refs(guide):
+                ref.pop(PAGE_SKILL_KEY, None)
 
         # The player's game is the Latin American client, so its class names win; the site's Spanish is only a fallback.
         client_names_es = client.class_names_es()
@@ -182,6 +227,7 @@ def import_guides(classhub_dir: Path, client: ClientExport) -> ImportResult:
             problems=problems,
             chain_rows=chain_rows,
             tooltips=tooltips,
+            rule_counts=rule_counts,
         )
 
 
@@ -338,6 +384,63 @@ def _record_problems(plan: SpecPlan, parsed: ParsedGuide, problems: list[str]) -
     for problem in parsed.problems:
         problems.append(f"{plan.guide.key}: {problem}")
         log.warn("guide parse problem", detail=problem, key=plan.guide.key)
+
+
+def _apply_skill_rules(
+    key: str,
+    page: str,
+    guide: dict[str, Any],
+    top_ranks: Mapping[int, int],
+    client_names: Mapping[int, str],
+    english: ClassSkillData,
+    problems: list[str],
+) -> tuple[int, int, int]:
+    """Gives every skill reference of a guide its final number and returns (swapped, kept, lifted).
+
+    First the Succession swap, for Succession guides only. Then the top rank of the skill, for every guide. The site's
+    tooltip and English name data is keyed by the number the page shows, so a changed reference keeps that number under
+    ``PAGE_SKILL_KEY`` until the tooltips are built. ``kept`` counts the "Sucesión:" skills that have no S: or Suprema:
+    counterpart; they keep their number and are reported.
+    """
+    is_succession = guide["spec"] == SUCCESSION_SPEC
+    swapped = lifted = 0
+    kept: set[int] = set()
+    for ref in iter_skill_refs(guide):
+        original = ref["skillNo"]
+        target = succession_target(key, original) if is_succession else None
+        if target is not None:
+            swapped += 1
+        elif is_succession and client_names.get(original, "").startswith(SUCCESSION_PREFIX):
+            kept.add(original)
+        page_no = original if target is None else target
+        final = top_ranks.get(page_no, page_no)
+        if final != page_no:
+            lifted += 1
+        if final == original:
+            continue
+        ref["skillNo"] = final
+        if final != page_no:
+            ref[PAGE_SKILL_KEY] = page_no
+        name_en = build_tooltip(english, page, page_no).name_en
+        if name_en is None and target is not None:
+            problems.append(f"{key}: swapped skill {page_no} has no English name in the class data")
+        ref["nameEn"] = name_en or _name_with_rank(ref["nameEn"], client_names.get(final, ""))
+
+    for skill_no in sorted(kept):
+        problems.append(f"{key}: skill {skill_no} ({client_names[skill_no]}) has no S: or Suprema: skill; it is kept as it is")
+    if swapped or kept or lifted:
+        log.info("skill rules applied", key=key, swapped=swapped, kept=len(kept), lifted=lifted)
+    return swapped, len(kept), lifted
+
+
+def _name_with_rank(name_en: str, name_es: str) -> str:
+    """The old English name with the rank of the new skill, when the old name ends with a rank ("Counter I" -> "Counter IV")."""
+    if not _ROMAN_SUFFIX_RE.search(name_en):
+        return name_en
+    match = _ROMAN_SUFFIX_RE.search(name_es)
+    if match is None:
+        return name_en
+    return _ROMAN_SUFFIX_RE.sub(f" {match.group(1)}", name_en)
 
 
 def _resolve_skill_names(

@@ -46,6 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--combos-dir", type=Path, default=None, help="output folder (default data/combos)")
     p.add_argument("--report", type=Path, default=None, help="unresolved skills report (default reports/unresolved_skills.txt)")
     p.add_argument("--kinds-report", type=Path, default=None, help="chain kinds report (default reports/chain_kinds.txt)")
+    p.add_argument("--skill-table", type=Path, default=None, help="Scrappers class_skills.json for the top ranks (default: the file in the extracted_bdo folder on D:)")
 
     p = sub.add_parser("bundle", help="write the JSON staging bundle (input of the asset pack, not embedded directly)")
     p.add_argument("--combos-dir", type=Path, default=None, help="output folder of import (default data/combos)")
@@ -89,11 +90,16 @@ def _import(args: argparse.Namespace) -> int:
     report = args.report or DEFAULT_REPORT
     kinds_report = args.kinds_report or DEFAULT_KINDS_REPORT
 
-    result = import_guides(classhub_dir, ClientExport(client_dir))
+    skill_table = load_skill_table(args.skill_table or DEFAULT_SKILL_TABLE)
+    result = import_guides(classhub_dir, ClientExport(client_dir), skill_table)
     write_outputs(result, combos_dir, report, kinds_report)
     stats = result.stats()
     print(f"classes {stats['classes']}, specs {stats['specs']}, guides {stats['guides']}")
     print(f"chains {stats['chains']}, steps {stats['steps']}, unique skills {stats['unique_skills']}")
+    print(
+        f"skill rules: succession swapped {stats['succession_swapped']}, succession kept {stats['succession_kept']}, "
+        f"lifted to top rank {stats['rank_lifted']}"
+    )
     print(
         "chain kinds: "
         + ", ".join(f"{kind} {stats[f'chains_{kind}']}" for kind in ("buff", "combo", "mobility", "cancels", "other"))
