@@ -58,6 +58,15 @@ public sealed partial class PreviewPage : Page
     public Style PillStyleFor(bool selected) =>
         (Style)Application.Current.Resources[selected ? "PillSelectedStyle" : "PillStyle"];
 
+    /// <summary>Shows the content of the chosen tab and hides the others. Slots is the first tab.</summary>
+    private void EditorTabs_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        var tag = sender.SelectedItem?.Tag as string ?? "slots";
+        TabSlots.Visibility = tag == "slots" ? Visibility.Visible : Visibility.Collapsed;
+        PendingCard.Visibility = tag == "pending" ? Visibility.Visible : Visibility.Collapsed;
+        TabSettings.Visibility = tag == "settings" ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     /// <summary>The header's "Apply" button: the combo is applied to the character from here.</summary>
     private async void ApplyButton_Click(object sender, RoutedEventArgs e)
     {

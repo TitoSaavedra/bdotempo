@@ -43,7 +43,8 @@
   </resheader>
 
     <data name="AppTitle" xml:space="preserve"><value>BDOTempo</value></data>
-  <data name="Preview.CaptureToggle.Header" xml:space="preserve"><value>Capturar el juego</value></data>
+  <data name="Preview.CaptureToggle.OnContent" xml:space="preserve"><value>Capturar el juego</value></data>
+  <data name="Preview.CaptureToggle.OffContent" xml:space="preserve"><value>Capturar el juego</value></data>
   <data name="Preview.CaptureToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Muestra el juego en vivo detrás de los slots. Desactívalo para no capturar la ventana del juego.</value></data>
   <data name="Apply.Title.Text" xml:space="preserve">
     <value>Combos</value>
@@ -818,9 +819,6 @@
   <data name="Settings.Appearance.SwatchRose.ToolTipService.ToolTip" xml:space="preserve"><value>Rosa</value></data>
   <data name="Settings.Appearance.SwatchBlue.AutomationProperties.Name" xml:space="preserve"><value>Acento azul</value></data>
   <data name="Settings.Appearance.SwatchBlue.ToolTipService.ToolTip" xml:space="preserve"><value>Azul</value></data>
-  <data name="Preview.StateHeading.Text" xml:space="preserve">
-    <value>Estado</value>
-  </data>
   <data name="Preview.SettingsHeading.Text" xml:space="preserve">
     <value>Ajustes</value>
   </data>
@@ -897,6 +895,9 @@
   <data name="Apply.Remaining.GroupRepositioning" xml:space="preserve"><value>Reposicionamiento</value></data>
   <data name="Apply.Remaining.Done.Text" xml:space="preserve"><value>Todas las skills de la guía están en las casillas.</value></data>
   <data name="Preview.Slots.Header.Text" xml:space="preserve"><value>Casillas en uso</value></data>
+  <data name="Preview.TabSlots.Text" xml:space="preserve"><value>Casillas</value></data>
+  <data name="Preview.TabPending.Text" xml:space="preserve"><value>Pendientes</value></data>
+  <data name="Preview.TabSettings.Text" xml:space="preserve"><value>Ajustes</value></data>
   <data name="Preview.ChangeCharacterButton.Content" xml:space="preserve"><value>Cambiar en Combos</value></data>
   <data name="Apply.CharacterDialog.Title" xml:space="preserve"><value>¿A qué personaje aplicar?</value></data>
   <data name="Apply.CharacterDialog.Body" xml:space="preserve"><value>Tienes {0} personajes de {1} en esta cuenta. Se usará el que elijas en el editor y al aplicar.</value></data>

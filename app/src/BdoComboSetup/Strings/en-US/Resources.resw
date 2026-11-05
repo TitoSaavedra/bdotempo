@@ -43,7 +43,8 @@
   </resheader>
 
     <data name="AppTitle" xml:space="preserve"><value>BDOTempo</value></data>
-  <data name="Preview.CaptureToggle.Header" xml:space="preserve"><value>Capture the game</value></data>
+  <data name="Preview.CaptureToggle.OnContent" xml:space="preserve"><value>Capture the game</value></data>
+  <data name="Preview.CaptureToggle.OffContent" xml:space="preserve"><value>Capture the game</value></data>
   <data name="Preview.CaptureToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Shows the live game behind the slots. Turn it off to stop capturing the game window.</value></data>
   <data name="Apply.Title.Text" xml:space="preserve">
     <value>Combos</value>
@@ -818,9 +819,6 @@
   <data name="Settings.Appearance.SwatchRose.ToolTipService.ToolTip" xml:space="preserve"><value>Rose</value></data>
   <data name="Settings.Appearance.SwatchBlue.AutomationProperties.Name" xml:space="preserve"><value>Blue accent</value></data>
   <data name="Settings.Appearance.SwatchBlue.ToolTipService.ToolTip" xml:space="preserve"><value>Blue</value></data>
-  <data name="Preview.StateHeading.Text" xml:space="preserve">
-    <value>State</value>
-  </data>
   <data name="Preview.SettingsHeading.Text" xml:space="preserve">
     <value>Settings</value>
   </data>
@@ -897,6 +895,9 @@
   <data name="Apply.Remaining.GroupRepositioning" xml:space="preserve"><value>Repositioning</value></data>
   <data name="Apply.Remaining.Done.Text" xml:space="preserve"><value>Every skill of the guide is in the slots.</value></data>
   <data name="Preview.Slots.Header.Text" xml:space="preserve"><value>Slots in use</value></data>
+  <data name="Preview.TabSlots.Text" xml:space="preserve"><value>Slots</value></data>
+  <data name="Preview.TabPending.Text" xml:space="preserve"><value>Pending</value></data>
+  <data name="Preview.TabSettings.Text" xml:space="preserve"><value>Settings</value></data>
   <data name="Preview.ChangeCharacterButton.Content" xml:space="preserve"><value>Change in Combos</value></data>
   <data name="Apply.CharacterDialog.Title" xml:space="preserve"><value>Which character to apply to?</value></data>
   <data name="Apply.CharacterDialog.Body" xml:space="preserve"><value>You have {0} {1} characters in this account. The one you pick is used in the editor and when applying.</value></data>
