@@ -88,6 +88,12 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     /// <summary>The host of the guide page on bdoclasshub.com, shown as the source. Empty when the guide has none.</summary>
     public string SourceHost => Uri.TryCreate(_guide.Source, UriKind.Absolute, out var uri) ? uri.Host : string.Empty;
 
+    /// <summary>The guide page on bdoclasshub.com the guide came from (every guide has one), or null when it has none.</summary>
+    public Uri? SourceUri => Uri.TryCreate(_guide.Source, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https" ? uri : null;
+
+    /// <summary>True when the guide has a source page to link to.</summary>
+    public bool HasSource => SourceUri is not null;
+
     /// <summary>The buff and combo chains, buffs first. These are the steps of the combo.</summary>
     public ObservableCollection<ComboChainViewModel> Chains { get; }
 

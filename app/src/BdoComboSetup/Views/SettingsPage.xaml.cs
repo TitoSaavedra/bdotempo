@@ -236,6 +236,16 @@ public sealed partial class SettingsPage : Page
         _ = RefreshCharactersAsync();
     }
 
+    /// <summary>Closes the folder status when the page is left: the next visit starts without a message from this one.</summary>
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        base.OnNavigatedFrom(e);
+        ViewModel.DismissStatus();
+    }
+
+    /// <summary>A status line with no text takes no room: it is shown only when it has text.</summary>
+    public static Visibility VisibilityOfText(string? text) => string.IsNullOrEmpty(text) ? Visibility.Collapsed : Visibility.Visible;
+
     /// <summary>The class of a character in the current language, or the "unknown class" text when it has none.</summary>
     public static string ClassNameOf(int? classType)
     {

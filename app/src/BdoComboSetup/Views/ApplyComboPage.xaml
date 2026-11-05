@@ -610,11 +610,21 @@
                             Text="{x:Bind ViewModel.Editor.Title, Mode=OneWay}"
                             Style="{ThemeResource SubtitleTextBlockStyle}"
                             TextWrapping="Wrap" />
-                        <TextBlock
-                            Text="{x:Bind local:ApplyComboPage.GuideMetaText(ViewModel.ClassName, ViewModel.Editor.SourceHost, ViewModel.ProfileStateText), Mode=OneWay}"
-                            FontSize="12"
-                            TextTrimming="CharacterEllipsis"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <!-- Where the guide comes from: a link to its bdoclasshub page, then the state of the combo (guide or custom). -->
+                        <StackPanel Orientation="Horizontal" Spacing="0">
+                            <HyperlinkButton
+                                Padding="0"
+                                MinHeight="0"
+                                FontSize="12"
+                                Content="{x:Bind ViewModel.Editor.SourceHost, Mode=OneWay}"
+                                NavigateUri="{x:Bind ViewModel.Editor.SourceUri, Mode=OneWay}"
+                                Visibility="{x:Bind ViewModel.Editor.HasSource, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                            <TextBlock
+                                Text="{x:Bind local:ApplyComboPage.StateSuffixText(ViewModel.ProfileStateText, ViewModel.Editor.HasSource), Mode=OneWay}"
+                                FontSize="12"
+                                TextTrimming="CharacterEllipsis"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
 

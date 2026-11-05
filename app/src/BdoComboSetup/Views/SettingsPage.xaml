@@ -185,7 +185,7 @@
         </Grid.RowDefinitions>
 
         <!-- The page has no heading: Settings is shown from the gear of the title bar. -->
-        <StackPanel Padding="12,4,12,0" Spacing="8" MaxWidth="1080" HorizontalAlignment="Left">
+        <StackPanel Padding="12,4,12,0" Spacing="8">
 
             <!-- Changes that only take effect after a restart (language, data folder, Preview account). -->
             <InfoBar
@@ -214,8 +214,6 @@
             VerticalScrollBarVisibility="Auto">
             <Grid
                 x:Name="GeneralLayout"
-                MaxWidth="1080"
-                HorizontalAlignment="Left"
                 ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -581,7 +579,7 @@
                     <!-- Updates: the version, the last check and a manual check, the install button (only when a newer release exists),
                          the progress of a download, and the switch for the check at startup. Nothing is installed without the button. -->
                     <Border Style="{StaticResource CardBorderStyle}">
-                        <StackPanel Spacing="8">
+                        <StackPanel Spacing="10">
                             <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -596,7 +594,7 @@
                                     <TextBlock x:Uid="Settings/UpdatesCardHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
                                 </StackPanel>
                             </Grid>
-                            <Grid MinHeight="32" ColumnSpacing="12">
+                            <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
@@ -614,7 +612,7 @@
                                         Visibility="{x:Bind Updates.IsChecking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                 </StackPanel>
                             </Grid>
-                            <Grid MinHeight="32" ColumnSpacing="12">
+                            <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
@@ -641,8 +639,11 @@
                                 Maximum="100"
                                 Value="{x:Bind Updates.DownloadPercent, Mode=OneWay}"
                                 Visibility="{x:Bind Updates.IsDownloading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                            <TextBlock Text="{x:Bind Updates.StatusMessage, Mode=OneWay}" TextWrapping="Wrap" />
-                            <Grid MinHeight="32" ColumnSpacing="12">
+                            <TextBlock
+                                Text="{x:Bind Updates.StatusMessage, Mode=OneWay}"
+                                TextWrapping="Wrap"
+                                Visibility="{x:Bind local:SettingsPage.VisibilityOfText(Updates.StatusMessage), Mode=OneWay}" />
+                            <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />

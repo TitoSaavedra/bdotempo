@@ -89,8 +89,8 @@ public sealed partial class ApplyComboPage : Page
         (Style)App.Current.Resources[selected ? "ClassTileSelectedStyle" : "ClassTileStyle"];
 
     /// <summary>The line under the guide title: class, source host and which copy is on screen, joined; empty parts are left out.</summary>
-    public static string GuideMetaText(string? className, string? source, string? state) =>
-        string.Join(" · ", new[] { className, source, state }.Where(text => !string.IsNullOrWhiteSpace(text)));
+    public static string StateSuffixText(string? state, bool afterLink) =>
+        string.IsNullOrWhiteSpace(state) ? string.Empty : afterLink ? " · " + state : state;
 
     /// <summary>A step shows its memo on its own line, except a hotkey step, whose key legend is the memo already.</summary>
     public static Visibility MemoLineVisibility(bool hasMemo, bool isHotkey) =>

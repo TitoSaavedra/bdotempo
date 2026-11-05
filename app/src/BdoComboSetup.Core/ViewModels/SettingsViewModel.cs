@@ -121,8 +121,16 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// <summary>Raised when <see cref="ShowSkillTooltips"/> changes, so the skill tooltips already on screen follow it at once.</summary>
     public event EventHandler? SkillTooltipsChanged;
 
-    /// <summary>Reads the accounts of the saved data folder and selects the active one.</summary>
-    public void Refresh()
+    /// <summary>
+    /// Reads the accounts of the saved data folder and selects the active one. Silent when the folder is valid: only a
+    /// user action (choosing, saving or re-running the setup) announces a valid folder. Failures are always shown.
+    /// </summary>
+    public void Refresh() => Reload(announceValidFolder: false);
+
+    /// <summary>Closes the status line. The page calls it when it is left, so a message from an earlier visit does not come back.</summary>
+    public void DismissStatus() => IsStatusOpen = false;
+
+    private void Reload(bool announceValidFolder)
     {
         Accounts.Clear();
         var root = _settings.Settings.GameDataRoot;
@@ -158,7 +166,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             SelectedAccount = Accounts.FirstOrDefault(choice => choice.Account == _locator.TryResolveAccount());
         }
 
-        ShowFolderStatus(state);
+        ShowFolderStatus(state, announceValidFolder);
         UpdateRestartRequired();
     }
 
@@ -176,14 +184,14 @@ public sealed partial class SettingsViewModel : ObservableObject
                 ["state"] = state.ToString(),
             });
             DataRootText = trimmed;
-            ShowFolderStatus(state);
+            ShowFolderStatus(state, announceValidFolder: true);
             return false;
         }
 
         _settings.Update(current => current with { GameDataRoot = trimmed });
         DataRootText = trimmed;
         _logger.Info("settings.folder_saved", "Black Desert data folder saved");
-        Refresh();
+        Reload(announceValidFolder: true);
         return true;
     }
 
@@ -302,10 +310,11 @@ public sealed partial class SettingsViewModel : ObservableObject
         // The view model is built at startup, before the setup page saves the folder: the text box must show the saved one,
         // not the value it read when it was built.
         DataRootText = _settings.Settings.GameDataRoot;
+        // Silent: the setup can end on another page, and a message left here would show on the next visit to Settings.
         Refresh();
     }
 
-    private void ShowFolderStatus(DataRootState state)
+    private void ShowFolderStatus(DataRootState state, bool announceValidFolder)
     {
         switch (state)
         {
@@ -316,8 +325,15 @@ public sealed partial class SettingsViewModel : ObservableObject
                 ShowStatus(StatusSeverity.Warning, "Settings.FolderNoUserCache");
                 break;
             default:
-                ShowStatus(Accounts.Count == 0 ? StatusSeverity.Warning : StatusSeverity.Success,
-                    Accounts.Count == 0 ? "Settings.NoAccounts" : "Settings.FolderOk", Accounts.Count);
+                if (Accounts.Count == 0)
+                {
+                    ShowStatus(StatusSeverity.Warning, "Settings.NoAccounts", Accounts.Count);
+                }
+                else if (announceValidFolder)
+                {
+                    ShowStatus(StatusSeverity.Success, "Settings.FolderOk", Accounts.Count);
+                }
+
                 break;
         }
     }
