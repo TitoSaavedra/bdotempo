@@ -108,7 +108,7 @@ public sealed partial class PreviewViewModel : ObservableObject, IDisposable
     /// <summary>Cooldown slots 1 to 20.</summary>
     public ObservableCollection<SlotViewModel> CooldownSlots { get; }
 
-    /// <summary>Quick slots 1 to 20 (1-9 hold the combo's quick positions; slot 10 is the key 0).</summary>
+    /// <summary>Quick slots 1 to 20 (a combo can fill any of them; slot 10 is the key 0).</summary>
     public ObservableCollection<QuickSlotViewModel> QuickSlots { get; }
 
     /// <summary>The four layouts of the layout selector, General first.</summary>

@@ -30,8 +30,13 @@ A position holding an Item or Other record is refused: the player must clear it 
 
 ## Positions
 
-Quick slot position `P` (1 to 9) is the record with `Key = P - 1`. Each position may be assigned once per write.
-A skill number must be positive; `null` clears the position.
+Quick slot position `P` (1 to 20) is the record with `Key = P - 1`. Each position may be assigned once per write.
+A skill number must be positive; `null` clears the position. Positions outside 1 to 20 are refused.
+
+The key legend of a position (`QuickSlotKeys`): positions 1 to 4 are M1 to M4, 5 and 6 are the keys 5 and 6, 7 and 8
+are M5 and M6, 9 is the key 9, and 10 is the key 0 (`InputType` `QuickSlot0`). Positions 11 to 19 have `InputType`
+`QuickSlot11` to `QuickSlot19`; position 20 has `QuickSlot10`. Positions 11 to 20 have no default key: their legend is
+the key bound in the character file (`ShortcutKey_Action_Key`) when it is known, otherwise the plain number.
 
 ## Write rules
 
@@ -67,4 +72,7 @@ After the write, `QuickSlotData.Verify` checks that:
 - `SkillLevel="1"` and `KeyboardKey="0"` are the tool's choices for a placed or cleared skill. They are not confirmed
   in the game; check them in game before relying on them.
 - The mapping from `Key` to the bar the player sees (and to the bound keys) is a game-side rule. This document does not cover it.
+- Positions 11 to 20 are written and read back with the same rules as 1 to 9, but their `InputType` names (`QuickSlot11`
+  to `QuickSlot19`, and `QuickSlot10` for position 20) and their default keys are not confirmed in a saved file. Check them
+  in game before relying on the legends of those positions.
 - The tests are in `app/tests/BdoComboSetup.Tests/QuickSlotDataTests.cs`; the synthetic section is `SyntheticSave.QuickSection`.

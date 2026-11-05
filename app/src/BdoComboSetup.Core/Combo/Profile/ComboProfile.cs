@@ -15,7 +15,7 @@ public sealed record ComboProfileChain(int Chain, IReadOnlyList<ComboProfileStep
 /// and names its skill with <see cref="SkillNo"/>. Guide steps that are not listed were removed.
 /// </summary>
 /// <param name="CooldownSlot">1..20, or null when not on the cooldown bar.</param>
-/// <param name="QuickPosition">1..9, or null when not on the quick bar.</param>
+/// <param name="QuickPosition">1..20, or null when not on the quick bar.</param>
 public sealed record ComboProfileStep(
     int? BaseStep,
     int? SkillNo,

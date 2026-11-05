@@ -30,6 +30,11 @@
         <!-- Custom title bar: the window content extends into it (AppWindow.TitleBar). The logo chip and the title sit in its content;
              the Settings button sits in its right header, next to the caption buttons. -->
         <TitleBar x:Name="AppTitleBar" IsBackButtonVisible="False" IsPaneToggleButtonVisible="False">
+            <TitleBar.Resources>
+                <!-- The template keeps a minimum drag strip between the right header and the caption buttons; with it the Settings
+                     button floated away from them. The title content is a drag region anyway, so the strip is not needed. -->
+                <x:Double x:Key="TitleBarMinDragRegionWidth">0</x:Double>
+            </TitleBar.Resources>
             <TitleBar.Content>
                 <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="4,0,0,0">
                     <Border
@@ -57,17 +62,19 @@
                 <!-- Opens Settings; while Settings is shown it goes back to the page it was opened from. Name and tooltip are set in code-behind. -->
                 <Button
                     x:Name="SettingsButton"
-                    Margin="0,0,8,0"
-                    Width="32"
+                    Margin="0"
+                    Width="46"
                     Height="32"
                     MinWidth="0"
                     MinHeight="0"
                     Padding="0"
-                    VerticalAlignment="Center"
+                    CornerRadius="0"
+                    VerticalAlignment="Top"
                     Background="Transparent"
                     BorderThickness="0"
                     Click="Settings_Click">
-                    <SymbolIcon Symbol="Setting" />
+                    <!-- The thin gear of Segoe Fluent Icons at the size of the caption button glyphs, so it reads as one of them. -->
+                    <FontIcon Glyph="&#xE713;" FontSize="14" />
                 </Button>
             </TitleBar.RightHeader>
         </TitleBar>

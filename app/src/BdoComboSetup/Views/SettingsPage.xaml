@@ -7,6 +7,7 @@
     xmlns:combo="using:BdoComboSetup.Core.Combo"
     xmlns:local="using:BdoComboSetup.Views"
     xmlns:controls="using:BdoComboSetup.Views.Controls"
+    xmlns:mux="using:Microsoft.UI.Xaml.Controls"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
@@ -32,6 +33,9 @@
             <Setter Property="Width" Value="32" />
             <Setter Property="Height" Value="32" />
             <Setter Property="CornerRadius" Value="16" />
+            <!-- A Button defaults to the left of its cell; the swatch must sit in the middle of the ring cell. -->
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <!-- One account of the data folder: its label ("Cuenta 100000001"). -->
@@ -39,30 +43,66 @@
             <TextBlock Text="{x:Bind Label, Mode=OneTime}" VerticalAlignment="Center" />
         </DataTemplate>
 
-        <!-- One character of the active account: class icon, name, class, and the per-row Edit and Reset actions. -->
-        <DataTemplate x:Key="CharacterRowTemplate" x:DataType="combo:CharacterOption">
-            <Grid ColumnSpacing="10" Padding="4,4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <controls:AssetIcon Monochrome="True"
-                    Width="28"
-                    Height="28"
-                    IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
-                    Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
-                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                    <TextBlock Text="{x:Bind Name, Mode=OneTime}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                    <TextBlock
-                        Text="{x:Bind local:SettingsPage.ClassNameOf(ClassType), Mode=OneTime}"
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                </StackPanel>
-                <Button Grid.Column="2" x:Uid="Settings/EditCharacterButton" VerticalAlignment="Center" Click="EditCharacter_Click" />
-                <Button Grid.Column="3" x:Uid="Settings/ResetCharacterButton" VerticalAlignment="Center" Click="ResetCharacter_Click" />
-            </Grid>
+        <!-- Small icon-only buttons on a character card (the edit pencil and the more menu). -->
+        <Style x:Key="CharacterIconButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <!-- One character of the active account, as a card in the grid: class icon, name, class, the edit button and the
+             more menu that holds Reset. The item is the button's Tag, so the handlers get the character itself. -->
+        <DataTemplate x:Key="CharacterCardTemplate" x:DataType="combo:CharacterOption">
+            <Border
+                Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                BorderBrush="{ThemeResource GlassLineBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="10,8">
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <controls:AssetIcon Monochrome="True"
+                        Width="40"
+                        Height="40"
+                        IconSource="{x:Bind local:ApplyComboPage.ClassIconOf(ClassType), Mode=OneTime}"
+                        Glyph="{x:Bind local:ApplyComboPage.ClassGlyphOf(ClassType), Mode=OneTime}" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="{x:Bind Name, Mode=OneTime}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            Text="{x:Bind local:SettingsPage.ClassNameOf(ClassType), Mode=OneTime}"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                        <Button
+                            x:Uid="Settings/EditCharacterButton"
+                            Tag="{x:Bind}"
+                            Click="EditCharacter_Click"
+                            Style="{StaticResource CharacterIconButtonStyle}">
+                            <FontIcon Glyph="&#xE70F;" FontSize="14" />
+                        </Button>
+                        <Button x:Uid="Settings/CharacterMoreButton" Style="{StaticResource CharacterIconButtonStyle}">
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem
+                                        x:Uid="Settings/ResetCharacterMenuItem"
+                                        Tag="{x:Bind}"
+                                        Click="ResetCharacter_Click" />
+                                </MenuFlyout>
+                            </Button.Flyout>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
         </DataTemplate>
 
         <!-- One class of the edit flyout's picker: its icon and its name. -->
@@ -74,21 +114,45 @@
         </DataTemplate>
 
         <!-- One row of the OCR review: the name (editable), the level read, and the class (editable). -->
+        <!-- One row of the OCR review, two lines so it fits the narrow scan card: the order, the name (editable) and the level
+             read; then the class (a searchable picker) and the memo and previous name underneath. -->
         <DataTemplate x:Key="ScanRowTemplate" x:DataType="vm:CharacterScanRow">
-            <Grid ColumnSpacing="10" Padding="4,4">
+            <Grid ColumnSpacing="8" RowSpacing="4" Padding="4,4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="24" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="64" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
                 <TextBlock
                     Text="{x:Bind Order, Mode=OneTime}"
                     FontSize="12"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     VerticalAlignment="Center" />
-                <StackPanel Grid.Column="1" Spacing="2">
-                    <TextBox Text="{x:Bind Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" MaxLength="40" />
+                <TextBox Grid.Column="1" Text="{x:Bind Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" MaxLength="40" />
+                <TextBlock
+                    Grid.Column="2"
+                    Text="{x:Bind LevelText, Mode=OneTime}"
+                    FontSize="12"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <controls:SearchablePicker
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Grid.ColumnSpan="2"
+                    HorizontalAlignment="Stretch"
+                    Tag="{x:Bind}"
+                    ItemsSource="{x:Bind Classes, Mode=OneTime}"
+                    ItemTemplate="{StaticResource ClassChoiceTemplate}"
+                    SelectedItem="{x:Bind Class, Mode=OneWay}"
+                    SelectedTemplate="{StaticResource ClassChoiceTemplate}"
+                    FieldsOf="{x:Bind local:SettingsPage.ClassChoiceFields, Mode=OneTime}"
+                    Chosen="ScanClassPicker_Chosen" />
+                <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Spacing="2">
                     <TextBlock
                         Text="{x:Bind MemoText, Mode=OneTime}"
                         FontSize="11"
@@ -100,28 +164,20 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Visibility="{x:Bind HasPreviousName, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                 </StackPanel>
-                <TextBlock
-                    Grid.Column="2"
-                    Text="{x:Bind LevelText, Mode=OneTime}"
-                    FontSize="12"
-                    VerticalAlignment="Center"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <controls:SearchablePicker
-                    Grid.Column="3"
-                    MinWidth="190"
-                    Tag="{x:Bind}"
-                    ItemsSource="{x:Bind Classes, Mode=OneTime}"
-                    ItemTemplate="{StaticResource ClassChoiceTemplate}"
-                    SelectedItem="{x:Bind Class, Mode=OneWay}"
-                    SelectedTemplate="{StaticResource ClassChoiceTemplate}"
-                    FieldsOf="{x:Bind local:SettingsPage.ClassChoiceFields, Mode=OneTime}"
-                    Chosen="ScanClassPicker_Chosen" />
             </Grid>
         </DataTemplate>
     </Page.Resources>
 
-    <ScrollViewer Padding="24,16,24,24" VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="10" MaxWidth="1080" HorizontalAlignment="Left">
+    <!-- Rows: the heading and the tabs (fixed), the tab content (fills the height), the status line (fixed). Only the
+         General, Game and Updates tabs scroll; the Characters tab fits the window height. -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Padding="24,16,24,0" Spacing="10" MaxWidth="1080" HorizontalAlignment="Left">
 
             <!-- Heading -->
             <Grid ColumnSpacing="12" Margin="0,0,0,4">
@@ -156,6 +212,15 @@
                 <SelectorBarItem x:Name="TabCharactersItem" x:Uid="Settings/TabCharacters" Tag="characters" />
                 <SelectorBarItem x:Name="TabUpdatesItem" x:Uid="Settings/TabUpdates" Tag="updates" />
             </SelectorBar>
+        </StackPanel>
+
+        <!-- The tabs other than Characters scroll inside this ScrollViewer. -->
+        <ScrollViewer
+            x:Name="TabsScroll"
+            Grid.Row="1"
+            Padding="24,10,24,16"
+            VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="10" MaxWidth="1080" HorizontalAlignment="Left">
 
             <!-- General: appearance, language and the write reminder. -->
             <Grid x:Name="TabGeneral" ColumnSpacing="10" RowSpacing="10">
@@ -443,114 +508,6 @@
 
             </Grid>
 
-            <!-- Characters: the roster of the account and the OCR scan. -->
-            <Grid x:Name="TabCharacters" ColumnSpacing="10" RowSpacing="10" Visibility="Collapsed">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <!-- Characters of the active account: the name and class the app shows for each one. Edit and reset are per row. -->
-                <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="8">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="&#xE716;"
-                                FontSize="18"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                VerticalAlignment="Top"
-                                Margin="0,2,0,0" />
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock x:Uid="Settings/CharactersHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <TextBlock
-                                    x:Name="CharactersMessageText"
-                                    TextWrapping="Wrap"
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                        <controls:SearchableList x:Name="CharacterList" />
-                    </StackPanel>
-                </Border>
-
-                <!-- OCR scan of the character selection screen: reads names and classes, shows them over the game, and saves them. -->
-                <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource CardBorderStyle}">
-                    <StackPanel Spacing="8">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="&#xE890;"
-                                FontSize="18"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                VerticalAlignment="Top"
-                                Margin="0,2,0,0" />
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock x:Uid="Settings/ScanHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            </StackPanel>
-                        </Grid>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button
-                                x:Uid="Settings/ScanStartButton"
-                                Click="ScanStart_Click"
-                                IsEnabled="{x:Bind Scan.CanStart, Mode=OneWay}"
-                                Style="{StaticResource AccentButtonStyle}" />
-                            <Button
-                                x:Uid="Settings/ScanFinishButton"
-                                Click="ScanFinish_Click"
-                                IsEnabled="{x:Bind Scan.CanFinish, Mode=OneWay}" />
-                            <Button
-                                x:Uid="Settings/ScanCancelButton"
-                                Click="ScanCancel_Click"
-                                IsEnabled="{x:Bind Scan.CanCancel, Mode=OneWay}" />
-                            <TextBlock
-                                Text="{x:Bind Scan.CountText, Mode=OneWay}"
-                                FontSize="12"
-                                VerticalAlignment="Center"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        </StackPanel>
-                        <TextBlock
-                            Text="{x:Bind Scan.PageHint, Mode=OneWay}"
-                            FontSize="12"
-                            TextWrapping="Wrap"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Visibility="{x:Bind Scan.HasPageHint, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                        <InfoBar
-                            IsOpen="{x:Bind Scan.IsMessageOpen, Mode=TwoWay}"
-                            Severity="{x:Bind ToInfoBarSeverity(Scan.Severity), Mode=OneWay}"
-                            Message="{x:Bind Scan.Message, Mode=OneWay}"
-                            IsClosable="True" />
-                        <StackPanel
-                            Spacing="8"
-                            Visibility="{x:Bind Scan.HasReview, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock x:Uid="Settings/ScanReviewHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            <ScrollViewer MaxHeight="420" VerticalScrollBarVisibility="Auto">
-                                <ItemsControl
-                                    ItemsSource="{x:Bind Scan.Rows, Mode=OneWay}"
-                                    ItemTemplate="{StaticResource ScanRowTemplate}" />
-                            </ScrollViewer>
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button
-                                    x:Uid="Settings/ScanSaveButton"
-                                    Click="ScanSave_Click"
-                                    IsEnabled="{x:Bind Scan.CanSave, Mode=OneWay}"
-                                    Style="{StaticResource AccentButtonStyle}" />
-                                <Button x:Uid="Settings/ScanDiscardButton" Click="ScanCancel_Click" />
-                            </StackPanel>
-                        </StackPanel>
-                        <Button x:Uid="Settings/ResetCharactersButton" Click="ResetCharacters_Click" />
-                    </StackPanel>
-                </Border>
-            </Grid>
-
             <!-- Updates. -->
             <Grid x:Name="TabUpdates" ColumnSpacing="10" RowSpacing="10" Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
@@ -616,13 +573,225 @@
                 </Border>
 
             </Grid>
-
-            <InfoBar
-                x:Name="StatusBar"
-                IsOpen="{x:Bind ViewModel.IsStatusOpen, Mode=TwoWay}"
-                Severity="{x:Bind ToInfoBarSeverity(ViewModel.StatusSeverity), Mode=OneWay}"
-                Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
-                IsClosable="True" />
         </StackPanel>
-    </ScrollViewer>
+        </ScrollViewer>
+
+        <!-- Characters: the account's characters as a grid of cards (left) and the OCR scan card (right). The scan card
+             moves under the list when the window is narrow. The list scrolls inside its own card; the tab fills the height. -->
+        <Grid
+            x:Name="TabCharacters"
+            Grid.Row="1"
+            Margin="24,10,24,16"
+            ColumnSpacing="10"
+            RowSpacing="10"
+            Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="320" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup>
+                    <VisualState x:Name="WideCharactersLayout">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="960" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="CharactersCard.(Grid.Row)" Value="0" />
+                            <Setter Target="CharactersCard.(Grid.Column)" Value="0" />
+                            <Setter Target="CharactersCard.(Grid.ColumnSpan)" Value="1" />
+                            <Setter Target="ScanCard.(Grid.Row)" Value="0" />
+                            <Setter Target="ScanCard.(Grid.Column)" Value="1" />
+                            <Setter Target="ScanCard.(Grid.ColumnSpan)" Value="1" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="NarrowCharactersLayout">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="0" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="CharactersCard.(Grid.Row)" Value="0" />
+                            <Setter Target="CharactersCard.(Grid.Column)" Value="0" />
+                            <Setter Target="CharactersCard.(Grid.ColumnSpan)" Value="2" />
+                            <Setter Target="ScanCard.(Grid.Row)" Value="1" />
+                            <Setter Target="ScanCard.(Grid.Column)" Value="0" />
+                            <Setter Target="ScanCard.(Grid.ColumnSpan)" Value="2" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
+
+            <!-- The account's characters: the name and class the app shows for each one. Edit and reset are per card. -->
+            <Border x:Name="CharactersCard" Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                <Grid RowSpacing="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE716;"
+                            FontSize="18"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            VerticalAlignment="Top"
+                            Margin="0,2,0,0" />
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock x:Uid="Settings/CharactersHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Name="CharactersCountText"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock
+                                x:Name="CharactersMessageText"
+                                TextWrapping="Wrap"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Visibility="Collapsed" />
+                        </StackPanel>
+                        <Button
+                            Grid.Column="2"
+                            x:Uid="Settings/ResetCharactersButton"
+                            VerticalAlignment="Top"
+                            Click="ResetCharacters_Click" />
+                    </Grid>
+                    <TextBox
+                        Grid.Row="1"
+                        x:Name="CharacterSearchBox"
+                        x:Uid="Settings/CharactersSearchBox"
+                        TextChanged="CharacterSearchBox_TextChanged" />
+                    <Grid Grid.Row="2" RowSpacing="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <mux:ItemsRepeater x:Name="CharacterGrid" ItemTemplate="{StaticResource CharacterCardTemplate}">
+                                <mux:ItemsRepeater.Layout>
+                                    <mux:UniformGridLayout
+                                        MinItemWidth="240"
+                                        MinRowSpacing="10"
+                                        MinColumnSpacing="10"
+                                        ItemsStretch="Fill" />
+                                </mux:ItemsRepeater.Layout>
+                            </mux:ItemsRepeater>
+                        </ScrollViewer>
+                        <TextBlock
+                            x:Name="CharactersEmptyText"
+                            Grid.Row="1"
+                            x:Uid="SearchableList/Empty"
+                            Visibility="Collapsed"
+                            TextWrapping="Wrap"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- OCR scan of the character selection screen: reads names and classes, shows them over the game, and saves them. -->
+            <Border x:Name="ScanCard" Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorderStyle}">
+                <Grid RowSpacing="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Spacing="8">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <FontIcon Glyph="&#xE890;"
+                                FontSize="18"
+                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                VerticalAlignment="Top"
+                                Margin="0,2,0,0" />
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock x:Uid="Settings/ScanHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            </StackPanel>
+                        </Grid>
+                        <Button
+                            x:Uid="Settings/ScanStartButton"
+                            HorizontalAlignment="Stretch"
+                            Click="ScanStart_Click"
+                            IsEnabled="{x:Bind Scan.CanStart, Mode=OneWay}"
+                            Style="{StaticResource AccentButtonStyle}" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button
+                                Grid.Column="0"
+                                x:Uid="Settings/ScanFinishButton"
+                                HorizontalAlignment="Stretch"
+                                Click="ScanFinish_Click"
+                                IsEnabled="{x:Bind Scan.CanFinish, Mode=OneWay}" />
+                            <Button
+                                Grid.Column="1"
+                                x:Uid="Settings/ScanCancelButton"
+                                HorizontalAlignment="Stretch"
+                                Click="ScanCancel_Click"
+                                IsEnabled="{x:Bind Scan.CanCancel, Mode=OneWay}" />
+                        </Grid>
+                        <TextBlock
+                            Text="{x:Bind Scan.CountText, Mode=OneWay}"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock
+                            Text="{x:Bind Scan.PageHint, Mode=OneWay}"
+                            FontSize="12"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Visibility="{x:Bind Scan.HasPageHint, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                        <InfoBar
+                            IsOpen="{x:Bind Scan.IsMessageOpen, Mode=TwoWay}"
+                            Severity="{x:Bind ToInfoBarSeverity(Scan.Severity), Mode=OneWay}"
+                            Message="{x:Bind Scan.Message, Mode=OneWay}"
+                            IsClosable="True" />
+                    </StackPanel>
+                    <Grid
+                        Grid.Row="1"
+                        RowSpacing="8"
+                        Visibility="{x:Bind Scan.HasReview, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock x:Uid="Settings/ScanReviewHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                        <ScrollViewer Grid.Row="1" MaxHeight="420" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl
+                                ItemsSource="{x:Bind Scan.Rows, Mode=OneWay}"
+                                ItemTemplate="{StaticResource ScanRowTemplate}" />
+                        </ScrollViewer>
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
+                            <Button
+                                x:Uid="Settings/ScanSaveButton"
+                                Click="ScanSave_Click"
+                                IsEnabled="{x:Bind Scan.CanSave, Mode=OneWay}"
+                                Style="{StaticResource AccentButtonStyle}" />
+                            <Button x:Uid="Settings/ScanDiscardButton" Click="ScanCancel_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <InfoBar
+            x:Name="StatusBar"
+            Grid.Row="2"
+            Margin="24,0,24,16"
+            IsOpen="{x:Bind ViewModel.IsStatusOpen, Mode=TwoWay}"
+            Severity="{x:Bind ToInfoBarSeverity(ViewModel.StatusSeverity), Mode=OneWay}"
+            Message="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+            IsClosable="True" />
+    </Grid>
 </Page>

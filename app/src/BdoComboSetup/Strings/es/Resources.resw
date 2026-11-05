@@ -68,7 +68,10 @@
     <value>Continuar</value>
   </data>
   <data name="Apply.RestoreMenuItem.Text" xml:space="preserve">
-    <value>Restaurar guía</value>
+    <value>Usar guía</value>
+  </data>
+  <data name="Apply.ImportMenuItem.Text" xml:space="preserve">
+    <value>Importar</value>
   </data>
   <data name="Apply.SaveButton.Content" xml:space="preserve">
     <value>Guardar mi combo</value>
@@ -104,7 +107,7 @@
     <value>Esta guía todavía no está disponible.</value>
   </data>
   <data name="Apply.DetailEmpty.Text" xml:space="preserve">
-    <value>Selecciona un paso para ver su detalle y cambiar su nombre, memo o casillas.</value>
+    <value>Selecciona un paso para ver su detalle y escribir su memo. Arrastra las habilidades a las casillas para colocarlas.</value>
   </data>
   <data name="Apply.StepDetailHeader.Text" xml:space="preserve">
     <value>Paso seleccionado</value>
@@ -118,23 +121,11 @@
   <data name="Apply.CustomizationHeader.Text" xml:space="preserve">
     <value>Personalizar</value>
   </data>
-  <data name="Apply.CustomNameBox.Header" xml:space="preserve">
-    <value>Mi nombre</value>
-  </data>
-  <data name="Apply.CustomNameBox.PlaceholderText" xml:space="preserve">
-    <value>Vacío para usar el nombre de la habilidad</value>
-  </data>
   <data name="Apply.MemoBox.Header" xml:space="preserve">
     <value>Memo (se muestra en la barra de enfriamiento)</value>
   </data>
   <data name="Apply.MemoBox.PlaceholderText" xml:space="preserve">
     <value>Por ejemplo: SH + Q</value>
-  </data>
-  <data name="Apply.CooldownBox.Header" xml:space="preserve">
-    <value>Casilla de enfriamiento</value>
-  </data>
-  <data name="Apply.QuickBox.Header" xml:space="preserve">
-    <value>Acceso rápido</value>
   </data>
   <data name="Apply.MoveEarlierButton.Content" xml:space="preserve">
     <value>Subir</value>
@@ -198,12 +189,6 @@
   </data>
   <data name="Apply.ChainFallbackTitle" xml:space="preserve">
     <value>Cadena {0}</value>
-  </data>
-  <data name="Apply.OptionNone" xml:space="preserve">
-    <value>Ninguna</value>
-  </data>
-  <data name="Apply.QuickPositionOption" xml:space="preserve">
-    <value>Posición {0} ({1})</value>
   </data>
   <data name="Apply.Problem.None" xml:space="preserve">
     <value>Sin detalles</value>
@@ -468,6 +453,11 @@
   <data name="Apply.StatusCharacterInvalid" xml:space="preserve"><value>Esa clase no está en el catálogo. No se guardó nada.</value></data>
   <data name="Apply.StatusCharacterSaved" xml:space="preserve"><value>Personaje guardado.</value></data>
   <data name="Apply.StatusCharacterFailed" xml:space="preserve"><value>No se pudo guardar el personaje.</value></data>
+  <data name="Apply.StatusImported" xml:space="preserve"><value>{0} habilidades importadas. Guarda el combo en una ranura con Guardar si quieres conservarlo.</value></data>
+  <data name="Apply.StatusImportUnavailable" xml:space="preserve"><value>Elige un personaje y comprueba la carpeta del juego en Ajustes.</value></data>
+  <data name="Apply.StatusImportFailed" xml:space="preserve"><value>No se pudo leer el personaje. Es posible que el juego esté escribiendo su archivo; inténtalo de nuevo.</value></data>
+  <data name="Apply.StatusImportOtherClass" xml:space="preserve"><value>El personaje es de otra clase y esa clase no tiene guía.</value></data>
+  <data name="Apply.StatusImportNoClass" xml:space="preserve"><value>No se conoce la clase del personaje. Elígela en Ajustes, en Personajes.</value></data>
   <data name="Characters.UnknownFallback" xml:space="preserve"><value>Personaje {0}</value></data>
   <data name="Characters.ClassFallback" xml:space="preserve"><value>{0} {1}</value></data>
   <data name="Characters.EditTitle" xml:space="preserve"><value>Editar personaje</value></data>
@@ -528,11 +518,32 @@
   <data name="Settings.CharactersHeader.Text" xml:space="preserve">
     <value>Personajes</value>
   </data>
-  <data name="Settings.EditCharacterButton.Content" xml:space="preserve">
-    <value>Editar</value>
+  <data name="Settings.EditCharacterButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Editar personaje</value>
   </data>
-  <data name="Settings.ResetCharacterButton.Content" xml:space="preserve">
+  <data name="Settings.EditCharacterButton.AutomationProperties.Name" xml:space="preserve">
+    <value>Editar personaje</value>
+  </data>
+  <data name="Settings.CharacterMoreButton.Content" xml:space="preserve">
+    <value>⋯</value>
+  </data>
+  <data name="Settings.CharacterMoreButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Más acciones</value>
+  </data>
+  <data name="Settings.CharacterMoreButton.AutomationProperties.Name" xml:space="preserve">
+    <value>Más acciones</value>
+  </data>
+  <data name="Settings.ResetCharacterMenuItem.Text" xml:space="preserve">
     <value>Restablecer</value>
+  </data>
+  <data name="Settings.CharactersSearchBox.PlaceholderText" xml:space="preserve">
+    <value>Buscar por nombre o clase</value>
+  </data>
+  <data name="Settings.CharactersCount" xml:space="preserve">
+    <value>{0} personajes</value>
+  </data>
+  <data name="Settings.CharactersCountOne" xml:space="preserve">
+    <value>1 personaje</value>
   </data>
   <data name="Settings.CharacterClassUnknown" xml:space="preserve">
     <value>Clase desconocida</value>
@@ -878,6 +889,15 @@
   </data>
   <data name="Apply.CooldownCell" xml:space="preserve">
     <value>Casilla {0}</value>
+  </data>
+  <data name="Apply.QuickCell" xml:space="preserve">
+    <value>Acceso rápido {0}</value>
+  </data>
+  <data name="Apply.CooldownBoardHeader.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Arrastra un paso de la combinación a una casilla, o una casilla a otra para intercambiarlas. Suelta una casilla sobre los pasos para quitarla.</value>
+  </data>
+  <data name="Apply.QuickBoardHeader.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Arrastra un paso de la combinación a una casilla, o una casilla a otra para intercambiarlas. Suelta una casilla sobre los pasos para quitarla.</value>
   </data>
   <data name="Apply.BoardCell.Filled" xml:space="preserve">
     <value>{0}: {1}</value>

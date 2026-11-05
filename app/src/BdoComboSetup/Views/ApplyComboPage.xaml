@@ -84,7 +84,8 @@
             </StackPanel>
         </DataTemplate>
 
-        <!-- One cooldown slot of the board (1 to 20): its number, the skill in it, and the accent outline when selected. -->
+        <!-- One cooldown slot of the board (1 to 20): its number, the skill in it, and the accent outline when selected.
+             A click selects its step; a filled slot is dragged to another cell or out of the board, a step is dropped on it. -->
         <DataTemplate x:Key="CooldownCellTemplate" x:DataType="local:ApplyBoardCell">
             <Button
                 Click="BoardCell_Click"
@@ -96,6 +97,12 @@
                 VerticalContentAlignment="Stretch"
                 Background="Transparent"
                 BorderThickness="0"
+                AllowDrop="True"
+                CanDrag="{x:Bind HasStep, Mode=OneTime}"
+                DragStarting="BoardCell_DragStarting"
+                DragOver="BoardCell_DragOver"
+                Drop="BoardCell_Drop"
+                DropCompleted="Drag_Completed"
                 AutomationProperties.Name="{x:Bind Caption, Mode=OneTime}"
                 ToolTipService.ToolTip="{x:Bind Caption, Mode=OneTime}">
                 <Grid>
@@ -130,7 +137,8 @@
             </Button>
         </DataTemplate>
 
-        <!-- One quick position of the board (the nine positions of the bar): its input and the skill on it. -->
+        <!-- One quick position of the board: its number, its input label when it has one, and the skill on it. Dragged and dropped
+             like a cooldown cell. -->
         <DataTemplate x:Key="QuickCellTemplate" x:DataType="local:ApplyBoardCell">
             <Button
                 Click="BoardCell_Click"
@@ -142,6 +150,12 @@
                 VerticalContentAlignment="Stretch"
                 Background="Transparent"
                 BorderThickness="0"
+                AllowDrop="True"
+                CanDrag="{x:Bind HasStep, Mode=OneTime}"
+                DragStarting="BoardCell_DragStarting"
+                DragOver="BoardCell_DragOver"
+                Drop="BoardCell_Drop"
+                DropCompleted="Drag_Completed"
                 AutomationProperties.Name="{x:Bind Caption, Mode=OneTime}"
                 ToolTipService.ToolTip="{x:Bind Caption, Mode=OneTime}">
                 <Grid>
@@ -163,6 +177,15 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Top"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                    <TextBlock
+                        Text="{x:Bind Input, Mode=OneTime}"
+                        Margin="0,2,3,0"
+                        FontSize="9"
+                        FontWeight="SemiBold"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Visibility="{x:Bind HasInput, Mode=OneTime, Converter={StaticResource BoolToVisibility}}" />
                     <controls:AssetIcon
                         Width="20"
                         Height="20"
@@ -270,7 +293,10 @@
                 CornerRadius="14"
                 BorderThickness="1"
                 BorderBrush="{ThemeResource GlassLineBrush}"
-                Background="{ThemeResource ControlFillColorSecondaryBrush}">
+                Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                CanDrag="True"
+                DragStarting="ManualStep_DragStarting"
+                DropCompleted="Drag_Completed">
                 <Grid ColumnSpacing="10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -359,6 +385,7 @@
                     CanReorderItems="True"
                     AllowDrop="True"
                     DragItemsStarting="Steps_DragItemsStarting"
+                    DragItemsCompleted="Steps_DragItemsCompleted"
                     DragOver="Steps_DragOver"
                     Padding="0"
                     Background="Transparent">
@@ -602,6 +629,7 @@
                                 <MenuFlyoutItem x:Uid="Apply/DeleteSlotMenuItem" Command="{x:Bind ViewModel.DeleteProfileCommand}" />
                                 <MenuFlyoutSeparator />
                                 <MenuFlyoutItem x:Uid="Apply/RestoreMenuItem" Command="{x:Bind ViewModel.RestoreBaseCommand}" />
+                                <MenuFlyoutItem x:Uid="Apply/ImportMenuItem" Command="{x:Bind ViewModel.ImportCurrentComboCommand}" />
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>
@@ -624,7 +652,8 @@
                 </StackPanel>
 
                 <!-- The chains: buffs and combos in the guide's order, then the class add-ons and the mobility pool. -->
-                <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" Padding="18,4,18,16">
+                <!-- A board cell's step dropped anywhere on the chains takes it out of its cell (see ChainsArea_Drop). -->
+                <ScrollViewer x:Name="ChainsScroll" Grid.Row="3" VerticalScrollBarVisibility="Auto" Padding="18,4,18,16" AllowDrop="True">
                     <StackPanel Spacing="0" Padding="0,0,6,0">
                         <StackPanel
                             Spacing="8"
@@ -678,7 +707,7 @@
             </Grid>
         </Border>
 
-        <!-- Right panel: the 20 cooldown slots, the 9 quick positions and the selected step. It scrolls; the footer stays. -->
+        <!-- Right panel: the 20 cooldown slots, the quick positions and the selected step. It scrolls; the footer stays. -->
         <Border Grid.Column="2" Style="{StaticResource GlassCardStyle}" Padding="0">
             <Grid>
                 <Grid.RowDefinitions>
@@ -698,12 +727,12 @@
                             </mux:ItemsRepeater>
                         </StackPanel>
 
-                        <!-- The quick bar: its nine positions, with their inputs. -->
+                        <!-- The quick bar: every quick position, five by four like the cooldown bar, with their inputs. -->
                         <StackPanel Spacing="8">
                             <TextBlock x:Uid="Apply/QuickBoardHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
                             <mux:ItemsRepeater ItemsSource="{x:Bind QuickCells, Mode=OneWay}" ItemTemplate="{StaticResource QuickCellTemplate}">
                                 <mux:ItemsRepeater.Layout>
-                                    <mux:UniformGridLayout MaximumRowsOrColumns="9" MinRowSpacing="4" MinColumnSpacing="4" ItemsStretch="Fill" />
+                                    <mux:UniformGridLayout MaximumRowsOrColumns="5" MinRowSpacing="6" MinColumnSpacing="6" ItemsStretch="Fill" />
                                 </mux:ItemsRepeater.Layout>
                             </mux:ItemsRepeater>
                         </StackPanel>
@@ -766,23 +795,8 @@
 
                                 <TextBlock x:Uid="Apply/CustomizationHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" Margin="0,6,0,0" />
                                 <TextBox
-                                    x:Uid="Apply/CustomNameBox"
-                                    Text="{x:Bind ViewModel.Editor.SelectedStep.CustomName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox
                                     x:Uid="Apply/MemoBox"
                                     Text="{x:Bind ViewModel.Editor.SelectedStep.Memo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                <ComboBox
-                                    x:Uid="Apply/CooldownBox"
-                                    HorizontalAlignment="Stretch"
-                                    ItemsSource="{x:Bind ViewModel.Editor.CooldownOptions, Mode=OneWay}"
-                                    SelectedItem="{x:Bind ViewModel.Editor.SelectedCooldownOption, Mode=TwoWay}"
-                                    DisplayMemberPath="Label" />
-                                <ComboBox
-                                    x:Uid="Apply/QuickBox"
-                                    HorizontalAlignment="Stretch"
-                                    ItemsSource="{x:Bind ViewModel.Editor.QuickOptions, Mode=OneWay}"
-                                    SelectedItem="{x:Bind ViewModel.Editor.SelectedQuickOption, Mode=TwoWay}"
-                                    DisplayMemberPath="Label" />
 
                                 <Grid ColumnSpacing="6" Margin="0,4,0,0">
                                     <Grid.ColumnDefinitions>

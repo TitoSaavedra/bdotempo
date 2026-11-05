@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using BdoComboSetup.Core.Characters;
@@ -31,6 +33,9 @@ public sealed partial class SettingsPage : Page
     /// <summary>The filled circle of each accent swatch, by accent id.</summary>
     private readonly IReadOnlyDictionary<string, Ellipse> _swatchFills;
 
+    /// <summary>The characters the grid shows: the active account's characters that match the search box, in the game's order.</summary>
+    private readonly ObservableCollection<CharacterOption> _shownCharacters = [];
+
     public SettingsPage()
     {
         ViewModel = App.Services.SettingsView;
@@ -38,10 +43,7 @@ public sealed partial class SettingsPage : Page
         AccountPicker.SetFields(item => SearchFields.ForAccount(((AccountChoice)item).Account));
 
         // The characters are the Apply page's roster: the same list, the same edit and reset rules.
-        var apply = App.Services.ApplyCombo;
-        CharacterList.ItemsSource = apply.Characters;
-        CharacterList.ItemTemplate = (DataTemplate)Resources["CharacterRowTemplate"];
-        CharacterList.SetFields(item => apply.CharacterSearchTexts((CharacterOption)item));
+        CharacterGrid.ItemsSource = _shownCharacters;
 
         _accentRings = new Dictionary<string, UIElement>(StringComparer.Ordinal)
         {
@@ -94,6 +96,8 @@ public sealed partial class SettingsPage : Page
     private void Page_Loaded(object sender, RoutedEventArgs e)
     {
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        App.Services.ApplyCombo.Characters.CollectionChanged += OnCharactersChanged;
+        RefreshCharacterCards();
         RefreshAppearance();
         RefreshSwatches();
     }
@@ -114,7 +118,37 @@ public sealed partial class SettingsPage : Page
         }
     }
 
-    private void Page_Unloaded(object sender, RoutedEventArgs e) => ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+    private void Page_Unloaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        App.Services.ApplyCombo.Characters.CollectionChanged -= OnCharactersChanged;
+    }
+
+    private void OnCharactersChanged(object? sender, NotifyCollectionChangedEventArgs e) => RefreshCharacterCards();
+
+    private void CharacterSearchBox_TextChanged(object sender, TextChangedEventArgs e) => RefreshCharacterCards();
+
+    /// <summary>
+    /// Fills the grid with the characters that match the search box, and shows the count of the account's characters. The
+    /// match is the rule of the searchable lists (Core SearchText: accent- and case-insensitive, Spanish and English names).
+    /// </summary>
+    private void RefreshCharacterCards()
+    {
+        var apply = App.Services.ApplyCombo;
+        var localizer = App.Services.Localizer;
+        _shownCharacters.Clear();
+        foreach (var character in SearchText.Filter(apply.Characters, CharacterSearchBox.Text, apply.CharacterSearchTexts))
+        {
+            _shownCharacters.Add(character);
+        }
+
+        CharactersCountText.Text = apply.Characters.Count == 1
+            ? localizer.Get("Settings.CharactersCountOne")
+            : localizer.Format("Settings.CharactersCount", apply.Characters.Count);
+        CharactersEmptyText.Visibility = _shownCharacters.Count == 0 && !string.IsNullOrWhiteSpace(CharacterSearchBox.Text)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -213,7 +247,9 @@ public sealed partial class SettingsPage : Page
         try
         {
             await App.Services.ApplyCombo.RefreshCharactersAsync();
-            CharactersMessageText.Text = App.Services.ApplyCombo.CharactersMessage;
+            var message = App.Services.ApplyCombo.CharactersMessage;
+            CharactersMessageText.Text = message;
+            CharactersMessageText.Visibility = string.IsNullOrEmpty(message) ? Visibility.Collapsed : Visibility.Visible;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -221,10 +257,10 @@ public sealed partial class SettingsPage : Page
         }
     }
 
-    /// <summary>Resets the name and class the user set for a character: the game files decide them again.</summary>
+    /// <summary>Resets the name and class the user set for a character (the more menu of its card): the game files decide them again.</summary>
     private async void ResetCharacter_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { DataContext: CharacterOption option })
+        if (sender is MenuFlyoutItem { Tag: CharacterOption option })
         {
             await App.Services.ApplyCombo.ResetCharacterEditAsync(option);
         }
@@ -326,7 +362,7 @@ public sealed partial class SettingsPage : Page
     /// </summary>
     private void EditCharacter_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button { DataContext: CharacterOption option } button)
+        if (sender is not Button { Tag: CharacterOption option } button)
         {
             return;
         }
@@ -495,6 +531,7 @@ public sealed partial class SettingsPage : Page
         var tag = sender.SelectedItem?.Tag as string ?? "general";
         TabGeneral.Visibility = tag == "general" ? Visibility.Visible : Visibility.Collapsed;
         TabGame.Visibility = tag == "game" ? Visibility.Visible : Visibility.Collapsed;
+        TabsScroll.Visibility = tag == "characters" ? Visibility.Collapsed : Visibility.Visible;
         TabCharacters.Visibility = tag == "characters" ? Visibility.Visible : Visibility.Collapsed;
         TabUpdates.Visibility = tag == "updates" ? Visibility.Visible : Visibility.Collapsed;
     }

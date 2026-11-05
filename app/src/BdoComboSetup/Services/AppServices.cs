@@ -216,6 +216,8 @@ public sealed class AppServices : IDisposable
             new AppSettingsWriteHintSetting(settings),
             new WriteHintDialog(logger, localizer),
             logger);
+        // The combo a character has in the game, read for the Apply page's import. It reads the game files, never writes them.
+        var currentCombo = new CharacterComboReader(locator, new GameFileReader(logger), logger);
         var applyCombo = new ApplyComboViewModel(
             combos,
             assets,
@@ -229,7 +231,8 @@ public sealed class AppServices : IDisposable
             classSkills,
             settings.Settings.LastCharacterPcid,
             pcid => settings.Update(current => current with { LastCharacterPcid = pcid }),
-            guideTexts);
+            guideTexts,
+            currentCombo);
 
         // The character name scan: OCR of the selection screen with the green overlay. It reads the game, never writes it.
         var characterScan = new CharacterScanService(logger, roster, applyCombo.ClassChoices, localizer);

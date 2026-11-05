@@ -61,6 +61,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 
     private readonly Action<string>? _rememberCharacter;
     private readonly GuideTexts? _guideTexts;
+    private readonly CharacterComboReader? _currentCombo;
 
     public ApplyComboViewModel(
         ICombosCatalog catalog,
@@ -75,7 +76,8 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         ClassSkillSource? classSkills = null,
         string? lastCharacterPcid = null,
         Action<string>? rememberCharacter = null,
-        GuideTexts? guideTexts = null)
+        GuideTexts? guideTexts = null,
+        CharacterComboReader? currentCombo = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(assets);
@@ -99,6 +101,7 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         _logger = logger;
         _classSkills = classSkills;
         _guideTexts = guideTexts;
+        _currentCombo = currentCombo;
 
         Characters = new ObservableCollection<CharacterOption>();
         Classes = new ObservableCollection<ClassOptionViewModel>(
@@ -669,6 +672,85 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Imports the combo that the selected character has in the game into the working copy of its class guide. When the
+    /// character is of another class, that class's guide is opened first. The file is read off the UI thread and nothing is
+    /// written: the working copy is unsaved until the user saves it to a slot.
+    /// </summary>
+    [RelayCommand]
+    private async Task ImportCurrentCombo()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        var reader = _currentCombo;
+        var character = SelectedCharacter;
+        var account = ActiveAccount;
+        if (reader is null || character is null || account is null || !reader.IsDataFolderReady)
+        {
+            ShowStatus(StatusSeverity.Warning, "Apply.StatusImportUnavailable");
+            return;
+        }
+
+        using var scope = _logger.BeginOperation("apply.import", new Dictionary<string, object?>
+        {
+            ["class_type"] = character.ClassType,
+            ["selected_class"] = SelectedClass?.ClassType,
+        });
+        IsBusy = true;
+        try
+        {
+            var pcid = character.Pcid;
+            var combo = await Task.Run(() => reader.Read(account, pcid));
+            if (combo is null)
+            {
+                ShowStatus(StatusSeverity.Error, "Apply.StatusImportFailed");
+                return;
+            }
+
+            if (character.ClassType is not int classType)
+            {
+                ShowStatus(StatusSeverity.Warning, "Apply.StatusImportNoClass");
+                return;
+            }
+
+            var option = Classes.FirstOrDefault(item => item.ClassType == classType);
+            if (option is null)
+            {
+                ShowStatus(StatusSeverity.Warning, "Apply.StatusImportOtherClass");
+                return;
+            }
+
+            if (!ReferenceEquals(option, SelectedClass))
+            {
+                await SelectClassAsync(option);
+            }
+
+            var editor = Editor;
+            if (editor is null)
+            {
+                ShowStatus(StatusSeverity.Error, "Apply.StatusFailed");
+                return;
+            }
+
+            var count = editor.ImportCharacterCombo(combo);
+            CloseReview();
+            ShowStatus(StatusSeverity.Success, "Apply.StatusImported", count);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            scope.Fail(ex);
+            _logger.Error("apply.import.failed", "The character's combo could not be imported", ex);
+            ShowStatus(StatusSeverity.Error, "Apply.StatusFailed");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     /// <summary>Throws away the working copy changes and shows the bdoclasshub guide again. The saved slots are kept.</summary>
     [RelayCommand(CanExecute = nameof(HasEditor))]
     private void RestoreBase()
@@ -1199,9 +1281,9 @@ public sealed partial class ApplyComboViewModel : ObservableObject
         return option?.Name ?? _localizer.Format("Apply.Review.UnknownSkill", skillNo);
     }
 
-    private void ShowStatus(StatusSeverity severity, string messageKey)
+    private void ShowStatus(StatusSeverity severity, string messageKey, params object[] args)
     {
-        StatusMessage = _localizer.Get(messageKey);
+        StatusMessage = args.Length == 0 ? _localizer.Get(messageKey) : _localizer.Format(messageKey, args);
         StatusSeverity = severity;
         IsStatusOpen = true;
     }

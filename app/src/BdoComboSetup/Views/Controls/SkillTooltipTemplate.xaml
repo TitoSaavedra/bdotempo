@@ -6,48 +6,71 @@
     xmlns:core="using:BdoComboSetup.Core.Combo"
     xmlns:controls="using:BdoComboSetup.Views.Controls">
 
-    <!-- The content of every skill tooltip: the icon and the name, the description, then the game's lines (keys, level, costs,
-         cooldown, damage, PvP and the extra lines). Loaded by SkillTooltips; the tooltip is built only when it is shown. -->
+    <!-- The card of every skill tooltip: the icon and the name, the description, then the game's lines (keys, level, costs,
+         cooldown, damage, PvP and the extra lines). The card draws its own rounded frame from the theme's tooltip brushes, so it
+         reads the same on the light and the dark glass. Empty fields take no space. Loaded by SkillTooltips; built only when shown. -->
     <DataTemplate x:Key="SkillTooltipTemplate" x:DataType="core:SkillTooltipView">
-        <StackPanel Width="300" Spacing="8">
-            <Grid ColumnSpacing="10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <controls:AssetIcon
-                    Width="40"
-                    Height="40"
-                    IconSource="{x:Bind OpenIcon, Mode=OneTime}"
-                    Glyph="{x:Bind Glyph, Mode=OneTime}" />
+        <Border
+            MinWidth="200"
+            MaxWidth="320"
+            Padding="12"
+            CornerRadius="10"
+            BorderThickness="1"
+            Background="{ThemeResource ToolTipBackground}"
+            BorderBrush="{ThemeResource ToolTipBorderBrush}">
+            <StackPanel Spacing="8">
+                <Grid ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <controls:AssetIcon
+                        Width="40"
+                        Height="40"
+                        VerticalAlignment="Center"
+                        IconSource="{x:Bind OpenIcon, Mode=OneTime}"
+                        Glyph="{x:Bind Glyph, Mode=OneTime}" />
+                    <TextBlock
+                        Grid.Column="1"
+                        Text="{x:Bind Name, Mode=OneTime}"
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        VerticalAlignment="Center"
+                        TextWrapping="Wrap"
+                        Foreground="{ThemeResource ToolTipForeground}" />
+                </Grid>
+
                 <TextBlock
-                    Grid.Column="1"
-                    Text="{x:Bind Name, Mode=OneTime}"
-                    FontSize="14"
-                    FontWeight="SemiBold"
-                    VerticalAlignment="Center"
-                    TextWrapping="Wrap" />
-            </Grid>
+                    Text="{x:Bind Description, Mode=OneTime}"
+                    FontSize="12"
+                    TextWrapping="Wrap"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Visibility="{x:Bind controls:SkillTooltips.VisibilityOf(HasDescription), Mode=OneTime}" />
 
-            <TextBlock
-                Text="{x:Bind Description, Mode=OneTime}"
-                FontSize="12"
-                TextWrapping="Wrap"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Visibility="{x:Bind controls:SkillTooltips.VisibilityOf(HasDescription), Mode=OneTime}" />
-
-            <StackPanel Spacing="2" Visibility="{x:Bind controls:SkillTooltips.VisibilityOf(HasLines), Mode=OneTime}">
-                <ItemsControl ItemsSource="{x:Bind Lines, Mode=OneTime}">
+                <ItemsControl
+                    ItemsSource="{x:Bind Lines, Mode=OneTime}"
+                    Visibility="{x:Bind controls:SkillTooltips.VisibilityOf(HasLines), Mode=OneTime}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="x:String">
+                        <DataTemplate x:DataType="core:SkillTooltipLine">
+                            <!-- A labeled line is "Label: value"; the label is in the secondary color. A plain line has no label run. -->
                             <TextBlock
-                                Text="{x:Bind}"
                                 FontSize="12"
-                                TextWrapping="Wrap" />
+                                TextWrapping="Wrap"
+                                Foreground="{ThemeResource ToolTipForeground}">
+                                <Run
+                                    Text="{x:Bind Label, Mode=OneTime}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <Run Text="{x:Bind Value, Mode=OneTime}" />
+                            </TextBlock>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
-        </StackPanel>
+        </Border>
     </DataTemplate>
 </ResourceDictionary>

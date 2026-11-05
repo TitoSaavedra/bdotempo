@@ -7,9 +7,6 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace BdoComboSetup.Core.ViewModels;
 
-/// <summary>An entry of a slot ComboBox. Slot is null for "none".</summary>
-public sealed record SlotOption(int? Slot, string Label);
-
 /// <summary>A skill of the guide, offered by the "Add skill" list. Name is in the page language.</summary>
 public sealed record SkillOption(ComboSkill Skill, string Name)
 {

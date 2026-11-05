@@ -17,7 +17,7 @@ namespace BdoComboSetup.Views;
 /// <summary>
 /// The "Apply combo" page. The page only translates clicks and drags into view model calls; the rules (what a step
 /// is, which slot it takes, what is written) live in the view models. The page also draws the two slot boards from the
-/// working copy: it reads the steps and never changes a slot itself.
+/// working copy and keeps the drag in progress.
 /// </summary>
 public sealed partial class ApplyComboPage : Page
 {
@@ -26,6 +26,12 @@ public sealed partial class ApplyComboPage : Page
 
     /// <summary>The working copy the boards are drawn from. Null while no guide is open.</summary>
     private ComboEditorViewModel? _observedContent;
+
+    /// <summary>
+    /// The drag in progress: the step and the board it comes from (null when it is dragged from a chain card or the mobility
+    /// pool). It is set when a drag starts and cleared when it ends; the drop targets read it.
+    /// </summary>
+    private BoardDrag? _drag;
 
     public ApplyComboPage()
     {
@@ -36,6 +42,10 @@ public sealed partial class ApplyComboPage : Page
         Loaded += Page_Loaded;
         Unloaded += Page_Unloaded;
         ViewModel.CharacterChooser = ChooseCharacterAsync;
+
+        // The handlers see the events even when the chain list already handled them (a drop on a card, a reorder).
+        ChainsScroll.AddHandler(UIElement.DragOverEvent, new DragEventHandler(ChainsArea_DragOver), handledEventsToo: true);
+        ChainsScroll.AddHandler(UIElement.DropEvent, new DragEventHandler(ChainsArea_Drop), handledEventsToo: true);
     }
 
     /// <summary>The texts a skill is searched by in the "Add skill" list: both names and the number.</summary>
@@ -50,7 +60,7 @@ public sealed partial class ApplyComboPage : Page
     /// <summary>The 20 cooldown slots of the working copy, in slot order.</summary>
     public ObservableCollection<ApplyBoardCell> CooldownCells { get; } = [];
 
-    /// <summary>The nine quick positions of the working copy, in position order.</summary>
+    /// <summary>The quick positions of the working copy (1 to <see cref="QuickSlotKeys.ComboPositionCount"/>), in position order.</summary>
     public ObservableCollection<ApplyBoardCell> QuickCells { get; } = [];
 
     /// <summary>Maps the view model's severity to the InfoBar's enum (the view models do not reference WinUI).</summary>
@@ -195,40 +205,45 @@ public sealed partial class ApplyComboPage : Page
     }
 
     /// <summary>
-    /// Draws the cooldown board (slots 1 to 20) and the quick board (the nine positions) from the working copy: which step
+    /// Draws the cooldown board (slots 1 to 20) and the quick board (every quick position) from the working copy: which step
     /// holds each one, and which step is selected.
     /// </summary>
     private void RebuildBoards()
     {
         var steps = _observedContent?.AllSteps().ToList() ?? [];
         var selected = _observedContent?.SelectedStep;
+        var localizer = App.Services.Localizer;
         var culture = CultureInfo.InvariantCulture;
 
         CooldownCells.Clear();
         for (var slot = 1; slot <= SlotAssignment.CooldownSlotCount; slot++)
         {
             var step = steps.FirstOrDefault(item => item.CooldownSlot == slot);
-            var name = App.Services.Localizer.Format("Apply.CooldownCell", slot.ToString(culture));
-            CooldownCells.Add(BoardCellFor(slot.ToString(culture), name, step, selected));
+            var number = slot.ToString(culture);
+            var name = localizer.Format("Apply.CooldownCell", number);
+            CooldownCells.Add(BoardCellFor(ApplyBoardKind.Cooldown, slot, string.Empty, name, step, selected));
         }
 
         QuickCells.Clear();
         for (var position = 1; position <= QuickSlotKeys.ComboPositionCount; position++)
         {
-            var label = QuickSlotKeys.ComboLabel(position);
             var step = steps.FirstOrDefault(item => item.QuickPosition == position);
-            QuickCells.Add(BoardCellFor(label, label, step, selected));
+            var name = localizer.Format("Apply.QuickCell", position.ToString(culture));
+
+            // Only the positions with a default key have an input label; the others show their number alone.
+            var input = QuickSlotKeys.DefaultKey(position) is null ? string.Empty : QuickSlotKeys.ComboLabel(position);
+            QuickCells.Add(BoardCellFor(ApplyBoardKind.Quick, position, input, name, step, selected));
         }
     }
 
     /// <summary>One board cell: its caption names the slot and, when it holds a step, the step's name.</summary>
-    private static ApplyBoardCell BoardCellFor(string label, string name, ComboStepViewModel? step, ComboStepViewModel? selected)
+    private static ApplyBoardCell BoardCellFor(ApplyBoardKind kind, int number, string input, string name, ComboStepViewModel? step, ComboStepViewModel? selected)
     {
         var localizer = App.Services.Localizer;
         var caption = step is null
             ? localizer.Format("Apply.BoardCell.Empty", name)
             : localizer.Format("Apply.BoardCell.Filled", name, step.DisplayName);
-        return new ApplyBoardCell(label, caption, step, step is not null && ReferenceEquals(step, selected));
+        return new ApplyBoardCell(kind, number, input, caption, step, step is not null && ReferenceEquals(step, selected));
     }
 
     /// <summary>A board cell is clicked: its step becomes the selected step, where the details are edited.</summary>
@@ -238,6 +253,86 @@ public sealed partial class ApplyComboPage : Page
         {
             ViewModel.Editor?.SelectStep(step);
         }
+    }
+
+    /// <summary>A filled board cell starts to be dragged: its step can take another cell, or be taken out of this one.</summary>
+    private void BoardCell_DragStarting(UIElement sender, DragStartingEventArgs args)
+    {
+        if (sender is FrameworkElement { DataContext: ApplyBoardCell { Step: { } step } cell })
+        {
+            StartDrag(step, cell.Kind, args);
+        }
+        else
+        {
+            args.Cancel = true;
+        }
+    }
+
+    /// <summary>A cell accepts a dragged step: the step takes the cell, and the editor's swap rule moves the step that was there.</summary>
+    private void BoardCell_DragOver(object sender, DragEventArgs e) =>
+        e.AcceptedOperation = _drag is not null ? DataPackageOperation.Move : DataPackageOperation.None;
+
+    private void BoardCell_Drop(object sender, DragEventArgs e)
+    {
+        if (_drag is { } drag && sender is FrameworkElement { DataContext: ApplyBoardCell cell })
+        {
+            SetBoardPosition(drag.Step, cell.Kind, cell.Number);
+        }
+
+        _drag = null;
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// The chain list accepts a board cell's step: dropping it on the chains (or on its own card) takes it out of that cell.
+    /// A step dragged from a chain card is left to the list's own reorder.
+    /// </summary>
+    private void ChainsArea_DragOver(object sender, DragEventArgs e)
+    {
+        if (_drag?.Origin is not null)
+        {
+            e.AcceptedOperation = DataPackageOperation.Move;
+        }
+    }
+
+    private void ChainsArea_Drop(object sender, DragEventArgs e)
+    {
+        if (_drag is { Origin: { } origin } drag)
+        {
+            SetBoardPosition(drag.Step, origin, null);
+            _drag = null;
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>A drag ended (dropped or cancelled): nothing is dragged any more.</summary>
+    private void Drag_Completed(UIElement sender, DropCompletedEventArgs args) => _drag = null;
+
+    /// <summary>Puts a step on a board position of the given kind; a null position takes it out. The view model applies the swap rule.</summary>
+    private void SetBoardPosition(ComboStepViewModel step, ApplyBoardKind kind, int? position)
+    {
+        var editor = ViewModel.Editor;
+        if (editor is null)
+        {
+            return;
+        }
+
+        switch (kind)
+        {
+            case ApplyBoardKind.Cooldown:
+                editor.AssignCooldown(step, position);
+                break;
+            case ApplyBoardKind.Quick:
+                editor.AssignQuick(step, position);
+                break;
+        }
+    }
+
+    /// <summary>Starts a drag of a step: its name is the drag caption, as in the Editor.</summary>
+    private void StartDrag(ComboStepViewModel step, ApplyBoardKind? origin, DragStartingEventArgs args)
+    {
+        _drag = new BoardDrag(step, origin);
+        args.Data.SetText(step.SkillName);
     }
 
     /// <summary>Combos are written from Preview: this opens it, with the same character and combo.</summary>
@@ -342,12 +437,36 @@ public sealed partial class ApplyComboPage : Page
         }
     }
 
-    /// <summary>Remembers which chain a dragged step belongs to.</summary>
+    /// <summary>
+    /// Remembers which chain a dragged step belongs to, and that the step can be dropped on a board cell (from its card it has no
+    /// cell of origin).
+    /// </summary>
     private void Steps_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
         if (sender is ListView { Tag: ComboChainViewModel chain })
         {
             e.Data.Properties[SourceChainKey] = chain.Index;
+        }
+
+        if (e.Items.FirstOrDefault() is ComboStepViewModel step)
+        {
+            _drag = new BoardDrag(step, null);
+            e.Data.SetText(step.SkillName);
+        }
+    }
+
+    private void Steps_DragItemsCompleted(ListViewBase sender, DragItemsCompletedEventArgs args) => _drag = null;
+
+    /// <summary>A mobility step can be dragged to a board cell, as the pending skills of the Editor can.</summary>
+    private void ManualStep_DragStarting(UIElement sender, DragStartingEventArgs args)
+    {
+        if (sender is FrameworkElement { DataContext: ComboStepViewModel step })
+        {
+            StartDrag(step, null, args);
+        }
+        else
+        {
+            args.Cancel = true;
         }
     }
 
@@ -369,13 +488,28 @@ public sealed partial class ApplyComboPage : Page
     }
 }
 
-/// <summary>
-/// One cell of a slot board: a cooldown slot or a quick position, its label, the step in it (null when empty), its caption
-/// for screen readers and tooltips, and whether that step is the selected one.
-/// </summary>
-public sealed class ApplyBoardCell(string label, string caption, ComboStepViewModel? step, bool isSelected)
+/// <summary>The two boards of the page: the cooldown slots and the quick positions.</summary>
+public enum ApplyBoardKind
 {
-    public string Label { get; } = label;
+    Cooldown,
+    Quick,
+}
+
+/// <summary>
+/// One cell of a slot board: its board and number (a cooldown slot or a quick position), its input label (empty when it has
+/// none), the step in it (null when empty), its caption for screen readers and tooltips, and whether that step is the selected one.
+/// </summary>
+public sealed class ApplyBoardCell(ApplyBoardKind kind, int number, string input, string caption, ComboStepViewModel? step, bool isSelected)
+{
+    public ApplyBoardKind Kind { get; } = kind;
+
+    public int Number { get; } = number;
+
+    public string Label { get; } = number.ToString(CultureInfo.InvariantCulture);
+
+    public string Input { get; } = input;
+
+    public bool HasInput => Input.Length > 0;
 
     public string Caption { get; } = caption;
 
@@ -385,3 +519,6 @@ public sealed class ApplyBoardCell(string label, string caption, ComboStepViewMo
 
     public bool IsSelected { get; } = isSelected;
 }
+
+/// <summary>What is being dragged on the Combos page: a step, and the board cell it comes from (null from a chain card or the mobility pool).</summary>
+internal sealed record BoardDrag(ComboStepViewModel Step, ApplyBoardKind? Origin);

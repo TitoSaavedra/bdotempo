@@ -24,7 +24,7 @@ public static class QuickSlotKeys
     /// <summary>Quick slots 1-20. Slots 1-10 are the main set (key 0 is slot 10).</summary>
     public const int SlotCount = 20;
 
-    /// <summary>Quick bar positions a combo fills: the user's own bar, 1-9. QuickSlotData refuses any other position.</summary>
+    /// <summary>Quick bar positions a combo fills: 1-20, like the quick slots. QuickSlotData refuses any other position.</summary>
     public const int ComboPositionCount = QuickSlotData.PositionCount;
 
     private static readonly IReadOnlyDictionary<int, string> MouseLabels = new Dictionary<int, string>
@@ -59,15 +59,20 @@ public static class QuickSlotKeys
         return Defaults.TryGetValue(slot, out var keyCode) ? FromKeyCode(keyCode) : null;
     }
 
-    /// <summary>The input shown for a combo quick position with its default key: "M1" to "M6" for mouse buttons, the digit for keys.</summary>
-    public static string ComboLabel(int position)
+    /// <summary>
+    /// The input shown for a combo quick position: the character's bound key when <paramref name="bound"/> has one, else the
+    /// default key, else the plain number (positions 11-20 have no default key). "M1" to "M6" for mouse buttons, the digit or letter for keys.
+    /// </summary>
+    /// <param name="position">Quick position 1-20.</param>
+    /// <param name="bound">Slot to keyCode read from a character file, or null for the defaults only.</param>
+    public static string ComboLabel(int position, IReadOnlyDictionary<int, int>? bound = null)
     {
         if (position is < 1 or > ComboPositionCount)
         {
             throw new ArgumentOutOfRangeException(nameof(position), position, $"Quick positions are 1 to {ComboPositionCount}.");
         }
 
-        return (DefaultKey(position) ?? throw new InvalidOperationException("Every combo position has a default key.")).Label;
+        return QuickSlotLegend.Resolve(position, bound)?.Label ?? position.ToString(CultureInfo.InvariantCulture);
     }
 
     /// <summary>The key for a stored keyCode, or null when the code is unbound (0) or not a key this table knows.</summary>

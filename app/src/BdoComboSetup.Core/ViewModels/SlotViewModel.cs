@@ -40,7 +40,7 @@ public sealed partial class SlotViewModel : PanelViewModel
 
     public string CustomName => Data?.CustomName ?? string.Empty;
 
-    /// <summary>Quick slot (1-9) that holds this skill, or 0 when the skill is not on the quick bar.</summary>
+    /// <summary>Quick slot (1-20) that holds this skill, or 0 when the skill is not on the quick bar.</summary>
     public int QuickPosition => Data?.QuickPosition ?? 0;
 
     /// <summary>Two letters of the skill name, shown when the icon is missing.</summary>

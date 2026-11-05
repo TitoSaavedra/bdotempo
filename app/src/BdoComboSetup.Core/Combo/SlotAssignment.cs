@@ -3,7 +3,7 @@ using BdoComboSetup.Core.Game;
 namespace BdoComboSetup.Core.Combo;
 
 /// <summary>
-/// Rules for the two slot kinds of a combo: a cooldown slot (1..20) and a quick bar position (1..9).
+/// Rules for the two slot kinds of a combo: a cooldown slot (1..20) and a quick bar position (1..20).
 /// Each value belongs to one step at a time. Giving a value that another step holds swaps the two.
 /// </summary>
 public static class SlotAssignment

@@ -68,7 +68,10 @@
     <value>Continue</value>
   </data>
   <data name="Apply.RestoreMenuItem.Text" xml:space="preserve">
-    <value>Restore guide</value>
+    <value>Use guide</value>
+  </data>
+  <data name="Apply.ImportMenuItem.Text" xml:space="preserve">
+    <value>Import</value>
   </data>
   <data name="Apply.SaveButton.Content" xml:space="preserve">
     <value>Save my combo</value>
@@ -104,7 +107,7 @@
     <value>This guide is not available yet.</value>
   </data>
   <data name="Apply.DetailEmpty.Text" xml:space="preserve">
-    <value>Select a step to see its details and change its name, memo or slots.</value>
+    <value>Select a step to see its details and write its memo. Drag the skills onto the slots to place them.</value>
   </data>
   <data name="Apply.StepDetailHeader.Text" xml:space="preserve">
     <value>Selected step</value>
@@ -118,23 +121,11 @@
   <data name="Apply.CustomizationHeader.Text" xml:space="preserve">
     <value>Customize</value>
   </data>
-  <data name="Apply.CustomNameBox.Header" xml:space="preserve">
-    <value>My name</value>
-  </data>
-  <data name="Apply.CustomNameBox.PlaceholderText" xml:space="preserve">
-    <value>Leave empty to use the skill name</value>
-  </data>
   <data name="Apply.MemoBox.Header" xml:space="preserve">
     <value>Memo (shown on the cooldown bar)</value>
   </data>
   <data name="Apply.MemoBox.PlaceholderText" xml:space="preserve">
     <value>For example: SH + Q</value>
-  </data>
-  <data name="Apply.CooldownBox.Header" xml:space="preserve">
-    <value>Cooldown slot</value>
-  </data>
-  <data name="Apply.QuickBox.Header" xml:space="preserve">
-    <value>Quick slot</value>
   </data>
   <data name="Apply.MoveEarlierButton.Content" xml:space="preserve">
     <value>Move up</value>
@@ -198,12 +189,6 @@
   </data>
   <data name="Apply.ChainFallbackTitle" xml:space="preserve">
     <value>Chain {0}</value>
-  </data>
-  <data name="Apply.OptionNone" xml:space="preserve">
-    <value>None</value>
-  </data>
-  <data name="Apply.QuickPositionOption" xml:space="preserve">
-    <value>Position {0} ({1})</value>
   </data>
   <data name="Apply.Problem.None" xml:space="preserve">
     <value>No details</value>
@@ -468,6 +453,11 @@
   <data name="Apply.StatusCharacterInvalid" xml:space="preserve"><value>That class is not in the catalog. Nothing was saved.</value></data>
   <data name="Apply.StatusCharacterSaved" xml:space="preserve"><value>Character saved.</value></data>
   <data name="Apply.StatusCharacterFailed" xml:space="preserve"><value>The character could not be saved.</value></data>
+  <data name="Apply.StatusImported" xml:space="preserve"><value>{0} skills imported. Save the combo to a slot with Save to keep it.</value></data>
+  <data name="Apply.StatusImportUnavailable" xml:space="preserve"><value>Choose a character and check the game folder in Settings.</value></data>
+  <data name="Apply.StatusImportFailed" xml:space="preserve"><value>The character could not be read. The game may be writing its file; try again.</value></data>
+  <data name="Apply.StatusImportOtherClass" xml:space="preserve"><value>The character is of another class, and that class has no guide.</value></data>
+  <data name="Apply.StatusImportNoClass" xml:space="preserve"><value>The character's class is unknown. Set it in Settings, under Characters.</value></data>
   <data name="Characters.UnknownFallback" xml:space="preserve"><value>Character {0}</value></data>
   <data name="Characters.ClassFallback" xml:space="preserve"><value>{0} {1}</value></data>
   <data name="Characters.EditTitle" xml:space="preserve"><value>Edit character</value></data>
@@ -528,11 +518,32 @@
   <data name="Settings.CharactersHeader.Text" xml:space="preserve">
     <value>Characters</value>
   </data>
-  <data name="Settings.EditCharacterButton.Content" xml:space="preserve">
-    <value>Edit</value>
+  <data name="Settings.EditCharacterButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Edit character</value>
   </data>
-  <data name="Settings.ResetCharacterButton.Content" xml:space="preserve">
+  <data name="Settings.EditCharacterButton.AutomationProperties.Name" xml:space="preserve">
+    <value>Edit character</value>
+  </data>
+  <data name="Settings.CharacterMoreButton.Content" xml:space="preserve">
+    <value>⋯</value>
+  </data>
+  <data name="Settings.CharacterMoreButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>More actions</value>
+  </data>
+  <data name="Settings.CharacterMoreButton.AutomationProperties.Name" xml:space="preserve">
+    <value>More actions</value>
+  </data>
+  <data name="Settings.ResetCharacterMenuItem.Text" xml:space="preserve">
     <value>Reset</value>
+  </data>
+  <data name="Settings.CharactersSearchBox.PlaceholderText" xml:space="preserve">
+    <value>Search by name or class</value>
+  </data>
+  <data name="Settings.CharactersCount" xml:space="preserve">
+    <value>{0} characters</value>
+  </data>
+  <data name="Settings.CharactersCountOne" xml:space="preserve">
+    <value>1 character</value>
   </data>
   <data name="Settings.CharacterClassUnknown" xml:space="preserve">
     <value>Unknown class</value>
@@ -878,6 +889,15 @@
   </data>
   <data name="Apply.CooldownCell" xml:space="preserve">
     <value>Slot {0}</value>
+  </data>
+  <data name="Apply.QuickCell" xml:space="preserve">
+    <value>Quick slot {0}</value>
+  </data>
+  <data name="Apply.CooldownBoardHeader.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Drag a step of the combo onto a slot, or a slot onto another to swap them. Drop a slot onto the steps to take it out.</value>
+  </data>
+  <data name="Apply.QuickBoardHeader.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Drag a step of the combo onto a slot, or a slot onto another to swap them. Drop a slot onto the steps to take it out.</value>
   </data>
   <data name="Apply.BoardCell.Filled" xml:space="preserve">
     <value>{0}: {1}</value>

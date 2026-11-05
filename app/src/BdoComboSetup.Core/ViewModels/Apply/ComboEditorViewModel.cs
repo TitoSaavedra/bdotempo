@@ -64,8 +64,6 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         AvailableSkills = BuildAvailableSkills(guide, culture);
         _skillsByNo = AvailableSkills.ToDictionary(option => option.SkillNo, option => option.Skill);
         Addons = guide.Addons.Select(addon => new ComboAddonViewModel(addon, culture, translation)).ToList();
-        CooldownOptions = BuildCooldownOptions(localizer);
-        QuickOptions = BuildQuickOptions(localizer);
         Chains = new ObservableCollection<ComboChainViewModel>();
         ManualChains = new ObservableCollection<ComboChainViewModel>();
         ContentChanged += (_, _) => RaiseRemainingChanged();
@@ -185,14 +183,8 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     /// <summary>Every skill of the guide, for "Add skill".</summary>
     public IReadOnlyList<SkillOption> AvailableSkills { get; }
 
-    /// <summary>The cooldown slot choices: none, then 1..20.</summary>
-    public IReadOnlyList<SlotOption> CooldownOptions { get; }
-
-    /// <summary>The quick position choices: none, then the nine positions with their input labels.</summary>
-    public IReadOnlyList<SlotOption> QuickOptions { get; }
-
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasSelection), nameof(SelectedCooldownOption), nameof(SelectedQuickOption))]
+    [NotifyPropertyChangedFor(nameof(HasSelection))]
     private ComboStepViewModel? _selectedStep;
 
     public bool HasSelection => SelectedStep is not null;
@@ -207,44 +199,6 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     /// <summary>True when there are changes that are not saved yet.</summary>
     [ObservableProperty]
     private bool _hasUnsavedChanges;
-
-    /// <summary>
-    /// The cooldown slot of the selected step, as the ComboBox sees it. Setting it applies the swap rule. The ComboBox two-way
-    /// binding writes back what it shows, so a write is applied only when it is a real choice (a null is the ComboBox having no
-    /// item yet, and "none" is an item of its own) and the value differs: otherwise the change notification would set the
-    /// ComboBox again and loop.
-    /// </summary>
-    public SlotOption? SelectedCooldownOption
-    {
-        get => SelectedStep is null ? null : CooldownOptions.First(option => option.Slot == SelectedStep.CooldownSlot);
-        set
-        {
-            if (value is null || SelectedStep is not { } step || value.Slot == step.CooldownSlot)
-            {
-                return;
-            }
-
-            AssignCooldown(step, value.Slot);
-        }
-    }
-
-    /// <summary>
-    /// The quick position of the selected step, as the ComboBox sees it. Setting it applies the swap rule. Same write-back
-    /// rule as <see cref="SelectedCooldownOption"/>: null and an unchanged value are ignored.
-    /// </summary>
-    public SlotOption? SelectedQuickOption
-    {
-        get => SelectedStep is null ? null : QuickOptions.First(option => option.Slot == SelectedStep.QuickPosition);
-        set
-        {
-            if (value is null || SelectedStep is not { } step || value.Slot == step.QuickPosition)
-            {
-                return;
-            }
-
-            AssignQuick(step, value.Slot);
-        }
-    }
 
     /// <summary>
     /// Builds the working copy of a guide. The profile, when given, orders the steps, drops the removed ones, adds the
@@ -312,8 +266,8 @@ public sealed partial class ComboEditorViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Call when the saved slot this working copy came from was deleted: what is on screen is no longer saved anywhere.
-    /// The working copy itself is kept, so the user can save it again or keep editing it.
+    /// Call when the working copy no longer equals a saved combo: the saved slot it came from was deleted, or it was replaced
+    /// by the combo of a character. What is on screen is kept, so the user can save it again or keep editing it.
     /// </summary>
     public void MarkNotSaved()
     {
@@ -337,6 +291,82 @@ public sealed partial class ComboEditorViewModel : ObservableObject
             ["chains"] = profile.Chains.Count,
             ["steps"] = profile.Chains.Sum(chain => chain.Steps.Count),
         });
+    }
+
+    /// <summary>
+    /// Replaces the working copy with the combo that a character has in the game. The cooldown slots become steps of the
+    /// guide's first combo chain in slot order; a skill that that chain has in the guide keeps the guide's step (its keys and
+    /// notes), any other skill becomes a free step. Quick positions join the step of their skill, or become steps without a
+    /// cooldown slot. A skill that neither the guide nor the class catalog knows is skipped and logged. The working copy is
+    /// then unsaved, and the guide is untouched.
+    /// </summary>
+    /// <returns>How many steps were imported.</returns>
+    public int ImportCharacterCombo(CharacterCombo combo)
+    {
+        ArgumentNullException.ThrowIfNull(combo);
+        var target = FirstImportChain();
+        var linked = new HashSet<int>();
+        var imported = new List<ImportedStep>();
+        var skipped = 0;
+
+        foreach (var entry in combo.Cooldown.OrderBy(item => item.Slot))
+        {
+            if (ImportedStepFor(entry.SkillNo, target, linked, entry.Memo, entry.Slot, quickPosition: null) is { } step)
+            {
+                imported.Add(step);
+            }
+            else
+            {
+                skipped++;
+            }
+        }
+
+        foreach (var entry in combo.Quick.OrderBy(item => item.Slot))
+        {
+            var holder = imported.FindIndex(item => item.SkillNo == entry.SkillNo && item.QuickPosition is null);
+            if (holder >= 0)
+            {
+                imported[holder] = imported[holder] with { QuickPosition = entry.Slot };
+            }
+            else if (ImportedStepFor(entry.SkillNo, target, linked, entry.Memo, cooldownSlot: null, quickPosition: entry.Slot) is { } step)
+            {
+                imported.Add(step);
+            }
+            else
+            {
+                skipped++;
+            }
+        }
+
+        var steps = imported
+            .Select(item => new ComboProfileStep(
+                item.BaseStep,
+                item.BaseStep is null ? item.SkillNo : null,
+                null,
+                item.Memo,
+                item.CooldownSlot,
+                item.QuickPosition))
+            .ToList();
+        var chains = new List<ComboProfileChain>();
+        if (target is int chainIndex)
+        {
+            chains.Add(new ComboProfileChain(chainIndex, steps));
+        }
+
+        ApplyProfile(new ComboProfile(ClassType, SpecId, chains));
+        MarkNotSaved();
+
+        _logger.Info("apply.import.applied", "The character's combo was imported into the working copy", new Dictionary<string, object?>
+        {
+            ["class_type"] = ClassType,
+            ["spec"] = SpecId,
+            ["cooldown_slots"] = combo.Cooldown.Count,
+            ["quick_slots"] = combo.Quick.Count,
+            ["steps"] = imported.Count,
+            ["linked_steps"] = linked.Count,
+            ["skipped"] = skipped,
+        });
+        return imported.Count;
     }
 
     /// <summary>Throws away every change and goes back to the guide. The saved profile, if any, is not touched here.</summary>
@@ -487,20 +517,18 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         }
 
         SlotAssignment.Assign(AllSteps(), step, slot, item => item.CooldownSlot, (item, value) => item.CooldownSlot = value);
-        OnPropertyChanged(nameof(SelectedCooldownOption));
     }
 
-    /// <summary>Sets a quick bar position (1..9, or null) with the swap rule.</summary>
+    /// <summary>Sets a quick bar position (1 to <see cref="QuickSlotKeys.ComboPositionCount"/>, or null) with the swap rule.</summary>
     public void AssignQuick(ComboStepViewModel step, int? position)
     {
         ArgumentNullException.ThrowIfNull(step);
         if (position is { } value && !SlotAssignment.IsQuickPosition(value))
         {
-            throw new ArgumentOutOfRangeException(nameof(position), value, "Quick positions are 1 to 9.");
+            throw new ArgumentOutOfRangeException(nameof(position), value, $"Quick positions are 1 to {QuickSlotKeys.ComboPositionCount}.");
         }
 
         SlotAssignment.Assign(AllSteps(), step, position, item => item.QuickPosition, (item, value) => item.QuickPosition = value);
-        OnPropertyChanged(nameof(SelectedQuickOption));
     }
 
     /// <summary>
@@ -884,6 +912,70 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         });
     }
 
+    /// <summary>A step built by the import, before it becomes a profile step.</summary>
+    private sealed record ImportedStep(int SkillNo, int? BaseStep, string? Memo, int? CooldownSlot, int? QuickPosition);
+
+    /// <summary>
+    /// The chain the imported steps go to: the guide's first combo chain, or its first buff chain when it has no combo chain.
+    /// Null when the guide has neither, so nothing can be placed.
+    /// </summary>
+    private int? FirstImportChain()
+    {
+        var kinds = _guide.Chains.Select(chain => _kinds.Resolve(chain)).ToList();
+        var combo = kinds.IndexOf(ComboChainKind.Combo);
+        if (combo >= 0)
+        {
+            return combo;
+        }
+
+        var buff = kinds.IndexOf(ComboChainKind.Buff);
+        return buff >= 0 ? buff : null;
+    }
+
+    /// <summary>
+    /// The step for one skill of the character, or null when the skill is unknown (it is logged and skipped). A guide step of
+    /// the target chain with that skill is linked (the step keeps its keys and notes) unless an earlier import step took it.
+    /// </summary>
+    private ImportedStep? ImportedStepFor(int skillNo, int? target, HashSet<int> linked, string? memo, int? cooldownSlot, int? quickPosition)
+    {
+        var baseStep = FindImportBaseStep(target, skillNo, linked);
+        if (baseStep is null && ResolveSkill(skillNo) is null)
+        {
+            _logger.Warn("apply.import.skill_unknown", "A skill of the character is in neither the guide nor the class catalog; it is skipped", new Dictionary<string, object?>
+            {
+                ["skill_no"] = skillNo,
+            });
+            return null;
+        }
+
+        if (baseStep is int index)
+        {
+            linked.Add(index);
+        }
+
+        return new ImportedStep(skillNo, baseStep, NullIfBlank(memo), cooldownSlot, quickPosition);
+    }
+
+    /// <summary>The index of the guide step of the target chain whose skill is <paramref name="skillNo"/>, not taken yet. Null when none.</summary>
+    private int? FindImportBaseStep(int? target, int skillNo, HashSet<int> linked)
+    {
+        if (target is not int chainIndex)
+        {
+            return null;
+        }
+
+        var steps = _guide.Chains[chainIndex].Steps;
+        for (var index = 0; index < steps.Count; index++)
+        {
+            if (!linked.Contains(index) && steps[index].Skills.Count > 0 && steps[index].Skills[0].SkillNo == skillNo)
+            {
+                return index;
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>The skill of the guide or, failing that, of the class catalog of this class. Null when both do not know it.</summary>
     private ComboSkill? ResolveSkill(int skillNo)
     {
@@ -968,27 +1060,5 @@ public sealed partial class ComboEditorViewModel : ObservableObject
         return byNo.Values
             .OrderBy(option => option.Name, StringComparer.Create(culture, ignoreCase: true))
             .ToList();
-    }
-
-    private static IReadOnlyList<SlotOption> BuildCooldownOptions(ILocalizer localizer)
-    {
-        var options = new List<SlotOption> { new(null, localizer.Get("Apply.OptionNone")) };
-        for (var slot = 1; slot <= SlotAssignment.CooldownSlotCount; slot++)
-        {
-            options.Add(new SlotOption(slot, slot.ToString(CultureInfo.InvariantCulture)));
-        }
-
-        return options;
-    }
-
-    private static IReadOnlyList<SlotOption> BuildQuickOptions(ILocalizer localizer)
-    {
-        var options = new List<SlotOption> { new(null, localizer.Get("Apply.OptionNone")) };
-        for (var position = 1; position <= QuickSlotKeys.ComboPositionCount; position++)
-        {
-            options.Add(new SlotOption(position, localizer.Format("Apply.QuickPositionOption", position, QuickSlotKeys.ComboLabel(position))));
-        }
-
-        return options;
     }
 }

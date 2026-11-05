@@ -41,20 +41,22 @@ public sealed record QuickRecord(
     string Indent,
     string LineEnding);
 
-/// <summary>Put skill <paramref name="SkillNo"/> into quick bar position 1..9, or clear the position when null.</summary>
+/// <summary>Put skill <paramref name="SkillNo"/> into quick bar position 1..20, or clear the position when null.</summary>
 public sealed record QuickSlotAssignment(int Position, int? SkillNo);
 
 public sealed record QuickSlotChange(int Position, int? OldSkillNo, int? NewSkillNo);
 
 /// <summary>
-/// Reads and writes the &lt;QuickSlotData Version="3"&gt; section of gameVariable.xml as text. Position N (1..9) is record
+/// Reads and writes the &lt;QuickSlotData Version="3"&gt; section of gameVariable.xml as text. Position N (1..20) is record
 /// Key N-1. Records are edited line by line; every line that is not assigned keeps its exact bytes.
 /// See app/docs/quickslotdata-format.md for the format and its evidence.
 /// </summary>
 public static class QuickSlotData
 {
     public const int RecordCount = 20;
-    public const int PositionCount = 9;
+
+    /// <summary>Quick bar positions 1..20: one per record, the same count as the game's quick slots.</summary>
+    public const int PositionCount = RecordCount;
     public const string RequiredVersion = "3";
 
     private const string Placeholder = "\0QUICK\0";
