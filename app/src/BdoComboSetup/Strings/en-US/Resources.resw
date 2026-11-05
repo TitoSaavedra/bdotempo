@@ -148,9 +148,6 @@
   <data name="Apply.StateSaved" xml:space="preserve">
     <value>My combo</value>
   </data>
-  <data name="Apply.StateBase" xml:space="preserve">
-    <value>Guide (bdoclasshub)</value>
-  </data>
   <data name="Apply.StatusSaved" xml:space="preserve">
     <value>Your combo was saved.</value>
   </data>

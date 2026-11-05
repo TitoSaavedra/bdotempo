@@ -314,19 +314,20 @@ public sealed partial class ApplyComboViewModel : ObservableObject
 
     public string SpecName => SelectedSpec?.Label ?? string.Empty;
 
-    /// <summary>Which copy is on screen: unsaved changes, the user's saved combo, or the bdoclasshub guide. Empty without a guide.</summary>
+    /// <summary>
+    /// Which copy is on screen: unsaved changes or the user's saved combo. Empty for the plain bdoclasshub guide (the source link
+    /// already says it) and without a guide.
+    /// </summary>
     public string ProfileStateText
     {
         get
         {
-            if (Editor is null)
+            if (Editor is null || (!Editor.HasUnsavedChanges && !Editor.HasSavedProfile))
             {
                 return string.Empty;
             }
 
-            return _localizer.Get(Editor.HasUnsavedChanges
-                ? "Apply.StateUnsaved"
-                : Editor.HasSavedProfile ? "Apply.StateSaved" : "Apply.StateBase");
+            return _localizer.Get(Editor.HasUnsavedChanges ? "Apply.StateUnsaved" : "Apply.StateSaved");
         }
     }
 
