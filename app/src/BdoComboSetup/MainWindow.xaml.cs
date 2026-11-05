@@ -7,6 +7,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Graphics;
 
 namespace BdoComboSetup;
@@ -27,6 +28,18 @@ public sealed partial class MainWindow : Window
 
     /// <summary>The "Next" action of the tour's tip: its availability follows the step (a waiting step disables it).</summary>
     private readonly TourCommand _tourNext;
+
+    /// <summary>The side of the ghost tile of the drag cue, in device-independent pixels (see the XAML).</summary>
+    private const double DragCueSize = 36;
+
+    /// <summary>One loop of the drag cue: fade in, travel, hold, fade out, then a hidden pause.</summary>
+    private static readonly TimeSpan DragCueCycle = TimeSpan.FromSeconds(2.5);
+
+    /// <summary>The storyboard of the drag cue while it runs; null when the cue is hidden.</summary>
+    private Storyboard? _dragCue;
+
+    /// <summary>Where the running drag cue starts and ends (the ghost's top-left corner), to restart it only when they move.</summary>
+    private DragCuePath? _dragCuePath;
 
     public MainWindow()
     {
@@ -71,6 +84,8 @@ public sealed partial class MainWindow : Window
         _tourNext = new TourCommand(TourNext, () => App.Services.Tour.CanAdvance);
         ContentFrame.Navigated += (_, _) => RefreshTourTip();
         services.Tour.Changed += (_, _) => RefreshTourTip();
+        // A resize moves the cue's targets, but not the tip: only the cue is placed again, so the tip is not rebuilt on every resize.
+        RootGrid.SizeChanged += (_, _) => RefreshTourDragCue();
         services.ApplyCombo.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(ApplyComboViewModel.HasEditor))
@@ -233,11 +248,139 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private void RefreshTourTip() => DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, PositionTourTip);
 
+    /// <summary>Places the drag cue again on the dispatcher, after a resize. The tip is not touched.</summary>
+    private void RefreshTourDragCue() => DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, UpdateTourDragCue);
+
+    /// <summary>
+    /// Runs the drag cue while the drag step waits for the user's drop: a ghost tile travels from the first skill card of the chain
+    /// list to the first empty cooldown cell. It is stopped and hidden on any other step, once the drop is done, and when the Combos
+    /// page is not shown. A target that is not laid out yet skips the cue quietly; the next refresh tries again.
+    /// </summary>
+    private void UpdateTourDragCue()
+    {
+        var services = App.Services;
+        var tour = services.Tour;
+        var page = ContentFrame.Content as ApplyComboPage;
+        if (tour.Current?.Id != "drag" || !tour.IsWaitingForAction || page is null)
+        {
+            StopTourDragCue();
+            return;
+        }
+
+        try
+        {
+            var start = CenterInRoot(page.TourDragSourceTarget);
+            var end = CenterInRoot(page.TourDropCellTarget);
+            if (start is null || end is null)
+            {
+                services.Logger.Debug("tour.drag_cue.skipped", "Drag cue skipped: a target is not laid out yet", new Dictionary<string, object?>
+                {
+                    ["source_ready"] = start is not null,
+                    ["target_ready"] = end is not null,
+                });
+                StopTourDragCue();
+                return;
+            }
+
+            // The ghost's top-left corner travels, so its center lands on the center of each target.
+            var half = DragCueSize / 2;
+            var path = new DragCuePath(start.Value.X - half, start.Value.Y - half, end.Value.X - half, end.Value.Y - half);
+            if (_dragCue is null || _dragCuePath != path)
+            {
+                StartTourDragCue(path);
+            }
+        }
+        catch (Exception ex)
+        {
+            services.Logger.Error("tour.drag_cue.failed", "The drag cue could not be placed", ex);
+            StopTourDragCue();
+        }
+    }
+
+    /// <summary>The center of an element in the coordinates of RootGrid; null when the element is not laid out yet.</summary>
+    private (double X, double Y)? CenterInRoot(FrameworkElement? element)
+    {
+        if (element is not { IsLoaded: true, ActualWidth: > 0, ActualHeight: > 0 })
+        {
+            return null;
+        }
+
+        var center = element.TransformToVisual(RootGrid).TransformPoint(new Windows.Foundation.Point(element.ActualWidth / 2, element.ActualHeight / 2));
+        return (center.X, center.Y);
+    }
+
+    /// <summary>
+    /// Starts the drag cue's loop (2.5 s per cycle): the tile fades in on the first card (0.2 s), travels to the empty cell in 1.2 s
+    /// (cubic ease-in-out), stays 0.3 s, fades out (0.3 s), and waits 0.7 s hidden before it repeats.
+    /// </summary>
+    private void StartTourDragCue(DragCuePath path)
+    {
+        _dragCue?.Stop();
+        var travel = new CubicEase { EasingMode = EasingMode.EaseInOut };
+        var fade = new CubicEase { EasingMode = EasingMode.EaseIn };
+        var board = new Storyboard { RepeatBehavior = new RepeatBehavior { Type = RepeatBehaviorType.Forever } };
+        board.Children.Add(KeyFramed(DragCueMove, "X", (0, path.StartX, null), (1.2, path.EndX, travel), (2.5, path.EndX, null)));
+        board.Children.Add(KeyFramed(DragCueMove, "Y", (0, path.StartY, null), (1.2, path.EndY, travel), (2.5, path.EndY, null)));
+        board.Children.Add(KeyFramed(DragCueGhost, "Opacity", (0, 0, null), (0.2, 1, null), (1.5, 1, null), (1.8, 0, fade), (2.5, 0, null)));
+        DragCueLayer.Visibility = Visibility.Visible;
+        board.Begin();
+        _dragCue = board;
+        _dragCuePath = path;
+        App.Services.Logger.Debug("tour.drag_cue.started", "Drag cue started");
+    }
+
+    /// <summary>One animated property over the cycle: each key is (seconds, value, the easing into it, null for a straight line).</summary>
+    private static Timeline KeyFramed(DependencyObject target, string property, params (double Seconds, double Value, EasingFunctionBase? Ease)[] keys)
+    {
+        var track = new DoubleAnimationUsingKeyFrames { Duration = new Duration(DragCueCycle) };
+        foreach (var key in keys)
+        {
+            var time = KeyTime.FromTimeSpan(TimeSpan.FromSeconds(key.Seconds));
+            if (key.Ease is null)
+            {
+                track.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = time, Value = key.Value });
+            }
+            else
+            {
+                track.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = time, Value = key.Value, EasingFunction = key.Ease });
+            }
+        }
+
+        Storyboard.SetTarget(track, target);
+        Storyboard.SetTargetProperty(track, property);
+        return track;
+    }
+
+    /// <summary>Stops and hides the drag cue. Does nothing more when it is not running.</summary>
+    private void StopTourDragCue()
+    {
+        if (_dragCue is not null)
+        {
+            _dragCue.Stop();
+            _dragCue = null;
+            _dragCuePath = null;
+            App.Services.Logger.Debug("tour.drag_cue.stopped", "Drag cue stopped");
+        }
+
+        DragCueLayer.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>Where the drag cue's ghost starts and ends: the top-left corners, in RootGrid coordinates.</summary>
+    private readonly record struct DragCuePath(double StartX, double StartY, double EndX, double EndY);
+
     /// <summary>
     /// Moves the tip to the target of the current step. When the tour is not active, or the page of the step is not the one
     /// shown (the user went elsewhere), the tip is closed and the tour keeps its step: the tip returns when the page does.
+    /// The drag cue is placed after the tip, so it follows the same refreshes.
     /// </summary>
     private void PositionTourTip()
+    {
+        PlaceTourTip();
+        UpdateTourDragCue();
+    }
+
+    /// <summary>Opens the tip at the current step's target, or closes it when the step has no target on the page shown.</summary>
+    private void PlaceTourTip()
     {
         var services = App.Services;
         services.Tour.UpdateCombo(services.ApplyCombo.HasEditor);

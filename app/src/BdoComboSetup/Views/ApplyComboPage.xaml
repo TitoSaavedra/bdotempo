@@ -775,7 +775,10 @@
                         <!-- The cooldown bar: 20 slots, five by four. Tap a slot to select its step. -->
                         <StackPanel x:Name="CooldownBoard" Spacing="8">
                             <TextBlock x:Uid="Apply/CooldownBoardHeader" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                            <mux:ItemsRepeater ItemsSource="{x:Bind CooldownCells, Mode=OneWay}" ItemTemplate="{StaticResource CooldownCellTemplate}">
+                            <mux:ItemsRepeater
+                                x:Name="CooldownRepeater"
+                                ItemsSource="{x:Bind CooldownCells, Mode=OneWay}"
+                                ItemTemplate="{StaticResource CooldownCellTemplate}">
                                 <mux:ItemsRepeater.Layout>
                                     <mux:UniformGridLayout MaximumRowsOrColumns="5" MinRowSpacing="6" MinColumnSpacing="6" ItemsStretch="Fill" />
                                 </mux:ItemsRepeater.Layout>

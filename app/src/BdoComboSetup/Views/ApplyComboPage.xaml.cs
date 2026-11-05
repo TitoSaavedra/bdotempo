@@ -64,6 +64,47 @@ public sealed partial class ApplyComboPage : Page
     /// <summary>The guided tour step 2 target: the cooldown slot board, where the skill is dropped (the tip sits under it, so the chain list stays visible).</summary>
     public FrameworkElement TourChainsTarget => CooldownBoard;
 
+    /// <summary>
+    /// The guided tour's drag cue starts here: the first skill card of the chain list (the first ListViewItem of the first chain's
+    /// step list), or null while no chain card is realized yet.
+    /// </summary>
+    public FrameworkElement? TourDragSourceTarget
+    {
+        get
+        {
+            var chainList = FindDescendant<ListView>(ChainsScroll, list => list.Tag is ComboChainViewModel);
+            return chainList is null ? null : FindDescendant<ListViewItem>(chainList);
+        }
+    }
+
+    /// <summary>
+    /// The guided tour's drag cue ends here: the first empty cooldown cell, or cell 1 when every cell holds a skill. Null while the
+    /// board has no cells. The cell is realized here when the board has not drawn it yet.
+    /// </summary>
+    public FrameworkElement? TourDropCellTarget
+    {
+        get
+        {
+            if (CooldownCells.Count == 0)
+            {
+                return null;
+            }
+
+            var index = 0;
+            for (var i = 0; i < CooldownCells.Count; i++)
+            {
+                if (CooldownCells[i].Step is null)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            var element = CooldownRepeater.TryGetElement(index) ?? CooldownRepeater.GetOrCreateElement(index);
+            return element as FrameworkElement;
+        }
+    }
+
     /// <summary>The app's settings view model. The footer's reminder switch is the same setting as in the Settings page.</summary>
     public SettingsViewModel SettingsView => App.Services.SettingsView;
 
@@ -643,6 +684,28 @@ public sealed partial class ApplyComboPage : Page
         {
             e.AcceptedOperation = DataPackageOperation.None;
         }
+    }
+
+    /// <summary>The first descendant of a type, in visual tree order, that the predicate accepts; null when there is none.</summary>
+    private static T? FindDescendant<T>(DependencyObject root, Func<T, bool>? predicate = null)
+        where T : DependencyObject
+    {
+        var count = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
+        {
+            var child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is T match && (predicate is null || predicate(match)))
+            {
+                return match;
+            }
+
+            if (FindDescendant(child, predicate) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 }
 

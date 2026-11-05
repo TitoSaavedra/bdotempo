@@ -186,5 +186,30 @@
                 </StackPanel>
             </Grid>
         </Border>
+
+        <!-- The guided tour's drag cue: a ghost skill tile that travels from the first chain card to the first empty cooldown cell.
+             It is above the pages and below the tour's tip (the tip is added to RootGrid later), and it takes no input. -->
+        <Canvas
+            x:Name="DragCueLayer"
+            Grid.RowSpan="4"
+            IsHitTestVisible="False"
+            Visibility="Collapsed">
+            <Border
+                x:Name="DragCueGhost"
+                Width="36"
+                Height="36"
+                CornerRadius="8"
+                BorderThickness="2"
+                BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                Opacity="0">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="DragCueMove" />
+                </Border.RenderTransform>
+                <Border
+                    CornerRadius="6"
+                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                    Opacity="0.7" />
+            </Border>
+        </Canvas>
     </Grid>
 </Window>
