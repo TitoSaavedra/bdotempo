@@ -184,28 +184,8 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <StackPanel Padding="24,16,24,0" Spacing="10" MaxWidth="1080" HorizontalAlignment="Left">
-
-            <!-- Heading: the title, and Back to the page Settings was opened from. -->
-            <Grid ColumnSpacing="12" Margin="0,0,0,4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <FontIcon Glyph="&#xE713;"
-                    FontSize="26"
-                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                    VerticalAlignment="Center" />
-                <StackPanel Grid.Column="1" Spacing="2">
-                    <TextBlock x:Uid="Settings/Title" Style="{ThemeResource TitleTextBlockStyle}" />
-                </StackPanel>
-                <Button
-                    Grid.Column="2"
-                    x:Uid="Settings/BackButton"
-                    VerticalAlignment="Center"
-                    Click="Back_Click" />
-            </Grid>
+        <!-- The page has no heading: Settings is shown from the gear of the title bar. -->
+        <StackPanel Padding="12,4,12,0" Spacing="8" MaxWidth="1080" HorizontalAlignment="Left">
 
             <!-- Changes that only take effect after a restart (language, data folder, Preview account). -->
             <InfoBar
@@ -219,7 +199,7 @@
             </InfoBar>
 
             <!-- The two tabs: General (the settings) and Characters (the account's characters and the OCR scan). -->
-            <SelectorBar SelectionChanged="SettingsTabs_SelectionChanged">
+            <SelectorBar Margin="-12,0,0,0" SelectionChanged="SettingsTabs_SelectionChanged">
                 <SelectorBarItem x:Uid="Settings/TabGeneral" Tag="general" IsSelected="True" />
                 <SelectorBarItem x:Uid="Settings/TabCharacters" Tag="characters" />
             </SelectorBar>
@@ -230,7 +210,7 @@
         <ScrollViewer
             x:Name="GeneralScroll"
             Grid.Row="1"
-            Padding="24,10,24,16"
+            Padding="12,8,12,12"
             VerticalScrollBarVisibility="Auto">
             <Grid
                 x:Name="GeneralLayout"

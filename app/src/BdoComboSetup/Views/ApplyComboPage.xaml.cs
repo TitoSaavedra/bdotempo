@@ -258,7 +258,7 @@ public sealed partial class ApplyComboPage : Page
     /// <summary>A board cell is tapped (a press without a drag): its step becomes the selected step, where the details are edited.</summary>
     private void BoardCell_Tapped(object sender, TappedRoutedEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: ApplyBoardCell { Step: { } step } })
+        if (sender is FrameworkElement { Tag: ApplyBoardCell { Step: { } step } })
         {
             ViewModel.Editor?.SelectStep(step);
         }
@@ -267,7 +267,7 @@ public sealed partial class ApplyComboPage : Page
     /// <summary>A filled board cell starts to be dragged: its step can take another cell, or be taken out of this one.</summary>
     private void BoardCell_DragStarting(UIElement sender, DragStartingEventArgs args)
     {
-        if (sender is FrameworkElement { DataContext: ApplyBoardCell { Step: { } step } cell })
+        if (sender is FrameworkElement { Tag: ApplyBoardCell { Step: { } step } cell })
         {
             StartDrag(step, cell.Kind, args);
         }
@@ -284,8 +284,7 @@ public sealed partial class ApplyComboPage : Page
     /// </summary>
     private void BoardCell_DragOver(object sender, DragEventArgs e)
     {
-        DragLog("cell.drag_over", $"drag_set={_drag is not null} editor={ViewModel.Editor is not null} dc={(sender as FrameworkElement)?.DataContext?.GetType().Name}");
-        if (_drag is null || ViewModel.Editor is not { } editor || sender is not FrameworkElement { DataContext: ApplyBoardCell cell })
+        if (_drag is null || ViewModel.Editor is not { } editor || sender is not FrameworkElement { Tag: ApplyBoardCell cell })
         {
             e.AcceptedOperation = DataPackageOperation.None;
             SetDropCell(null);
@@ -308,7 +307,7 @@ public sealed partial class ApplyComboPage : Page
     /// <summary>The pointer left a cell: its highlight goes off (the next cell it enters lights up on its own DragOver).</summary>
     private void BoardCell_DragLeave(object sender, DragEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: ApplyBoardCell cell } && ReferenceEquals(cell, _dropCell))
+        if (sender is FrameworkElement { Tag: ApplyBoardCell cell } && ReferenceEquals(cell, _dropCell))
         {
             SetDropCell(null);
         }
@@ -316,9 +315,8 @@ public sealed partial class ApplyComboPage : Page
 
     private void BoardCell_Drop(object sender, DragEventArgs e)
     {
-        DragLog("cell.drop", $"drag_set={_drag is not null}");
         SetDropCell(null);
-        if (_drag is { } drag && sender is FrameworkElement { DataContext: ApplyBoardCell cell })
+        if (_drag is { } drag && sender is FrameworkElement { Tag: ApplyBoardCell cell })
         {
             PlaceDrag(drag, cell.Kind, cell.Number, HowOf(drag, e.Modifiers));
         }
@@ -534,18 +532,6 @@ public sealed partial class ApplyComboPage : Page
         }
     }
 
-    /// <summary>
-    /// "Open the editor": the combo is not applied from here. The Editor shows the slots of this combo, lets the skills be
-    /// changed there, and applies from its own button.
-    /// </summary>
-    private void OpenEditor_Click(object sender, RoutedEventArgs e)
-    {
-        if (App.MainWindow is MainWindow window)
-        {
-            window.OpenEditor();
-        }
-    }
-
     private void AddToSlot_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: ComboStepViewModel step })
@@ -568,12 +554,8 @@ public sealed partial class ApplyComboPage : Page
     /// Remembers which chain a dragged step belongs to, and that the step can be dropped on a board cell (from its card it has no
     /// cell of origin).
     /// </summary>
-    private static void DragLog(string what, string detail = "") =>
-        App.Services.Logger.Info("drag.trace", what, new Dictionary<string, object?> { ["detail"] = detail });
-
     private void Steps_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        DragLog("steps.drag_items_starting", $"items={e.Items.Count}");
         if (sender is ListView { Tag: ComboChainViewModel chain })
         {
             e.Data.Properties[SourceChainKey] = chain.Index;

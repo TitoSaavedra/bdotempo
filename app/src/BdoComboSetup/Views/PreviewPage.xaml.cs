@@ -31,6 +31,12 @@ public sealed partial class PreviewPage : Page
     /// <summary>The write side: the combo of the Combos page, its review and the write.</summary>
     public ApplyComboViewModel Apply { get; }
 
+    /// <summary>The status line under the game takes room only when at least one of its texts has something to say.</summary>
+    public static Visibility AnyTextVisibility(string? first, string? second, string? third) =>
+        string.IsNullOrWhiteSpace(first) && string.IsNullOrWhiteSpace(second) && string.IsNullOrWhiteSpace(third)
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
@@ -46,8 +52,6 @@ public sealed partial class PreviewPage : Page
     }
 
     /// <summary>The fit button: the slots fill the window (the same as the "fit to slots" pill).</summary>
-    private void Fit_Click(object sender, RoutedEventArgs e) => ViewModel.FitToView();
-
     private void FitWindow_Click(object sender, RoutedEventArgs e) => ViewModel.SetFitMode(CanvasFitMode.Window);
 
     private void FitSlots_Click(object sender, RoutedEventArgs e) => ViewModel.SetFitMode(CanvasFitMode.Slots);
@@ -66,15 +70,9 @@ public sealed partial class PreviewPage : Page
         TabSettings.Visibility = tag == "settings" ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    /// <summary>The header's "Apply" button: the combo is applied to the character from here.</summary>
-    private async void ApplyButton_Click(object sender, RoutedEventArgs e)
-    {
-        await RequestApplyAsync();
-    }
-
     /// <summary>
     /// Asks which parts are written (the bar, the memos, the quick slots) and opens the review with that choice. Nothing is written
-    /// here; the review card has the write button.
+    /// here; the review card has the write button. The title bar's "Apply" button calls it.
     /// </summary>
     public async Task RequestApplyAsync()
     {
@@ -84,8 +82,10 @@ public sealed partial class PreviewPage : Page
         }
     }
 
-    /// <summary>The character is chosen in Combos only, and the "Back" button goes there too: this shows the Combos page.</summary>
-    private void GoToCombos_Click(object sender, RoutedEventArgs e) => (App.MainWindow as MainWindow)?.ShowCombos();
+    private async void ApplyButton_Click(object sender, RoutedEventArgs e) => await RequestApplyAsync();
+
+    /// <summary>The character is chosen in Combos only: the "Change in Combos" link shows the Combos page.</summary>
+    private void ChangeCharacter_Click(object sender, RoutedEventArgs e) => (App.MainWindow as MainWindow)?.ShowCombos();
 
     /// <summary>A pending skill starts to be dragged: its step takes the slot it is dropped on.</summary>
     private void PendingSkill_DragStarting(UIElement sender, DragStartingEventArgs args)

@@ -43,12 +43,9 @@
   </resheader>
 
     <data name="AppTitle" xml:space="preserve"><value>BDOTempo</value></data>
-  <data name="Preview.CaptureToggle.OnContent" xml:space="preserve"><value>Capture the game</value></data>
-  <data name="Preview.CaptureToggle.OffContent" xml:space="preserve"><value>Capture the game</value></data>
+  <data name="Preview.CaptureToggle.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="Preview.CaptureToggle.OffContent" xml:space="preserve"><value>Off</value></data>
   <data name="Preview.CaptureToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Shows the live game behind the slots. Turn it off to stop capturing the game window.</value></data>
-  <data name="Apply.Title.Text" xml:space="preserve">
-    <value>Combos</value>
-  </data>
   <data name="Apply.IncludeCooldownBarCheck.Content" xml:space="preserve">
     <value>Cooldown bar</value>
   </data>
@@ -328,27 +325,17 @@
   <data name="Apply.SectionAddons.Text" xml:space="preserve">
     <value>Class add-ons</value>
   </data>
-  <data name="Preview.Title.Text" xml:space="preserve">
-    <value>Editor</value>
-  </data>
   <data name="Preview.ApplyButton.Content" xml:space="preserve">
     <value>Apply</value>
   </data>
-  <data name="Preview.BackButton.Content" xml:space="preserve">
-    <value>Back</value>
-  </data>
-  <data name="Apply.OpenEditorButton.Content" xml:space="preserve">
-    <value>Open the editor</value>
-  </data>
-  <data name="Preview.LayoutBox.Header" xml:space="preserve">
-    <value>Layout</value>
-  </data>
-  <data name="Preview.HiddenToggle.Header" xml:space="preserve">
-    <value>Show hidden slots</value>
-  </data>
-  <data name="Preview.FitButton.Content" xml:space="preserve">
-    <value>Fit</value>
-  </data>
+  <data name="Preview.LayoutBox.AutomationProperties.Name" xml:space="preserve"><value>Layout</value></data>
+  <data name="Preview.HiddenToggle.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="Preview.HiddenToggle.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="Preview.SectionLayout.Text" xml:space="preserve"><value>LAYOUT</value></data>
+  <data name="Preview.SectionSlots.Text" xml:space="preserve"><value>SLOTS</value></data>
+  <data name="Preview.SectionGame.Text" xml:space="preserve"><value>GAME</value></data>
+  <data name="Preview.HiddenLabel.Text" xml:space="preserve"><value>Show hidden slots</value></data>
+  <data name="Preview.CaptureLabel.Text" xml:space="preserve"><value>Capture the game</value></data>
   <data name="Preview.Layout.Tooltip" xml:space="preserve">
     <value>The game interface the preview draws: the current one or one of the three saved ones (UI 1 to UI 3).</value>
   </data>
@@ -412,12 +399,6 @@
   <data name="Preview.Capture.Failed" xml:space="preserve">
     <value>The game window could not be captured: black background.</value>
   </data>
-  <data name="Preview.LegendCooldown.Text" xml:space="preserve">
-    <value>Cooldown slots: click to change the skill</value>
-  </data>
-  <data name="Preview.LegendQuick.Text" xml:space="preserve">
-    <value>Quick slots: read-only</value>
-  </data>
   <data name="Preview.SlotEdit.NoCombo" xml:space="preserve">
     <value>Choose a class and a guide in Combos to change skills.</value>
   </data>
@@ -425,8 +406,6 @@
     <value>Slot {0} has no step in the combo. Add the skill from Combos.</value>
   </data>
   <data name="NavSettingsItem.Content" xml:space="preserve"><value>Settings</value></data>
-  <data name="Settings.Title.Text" xml:space="preserve"><value>Settings</value></data>
-  <data name="Settings.BackButton.Content" xml:space="preserve"><value>Back</value></data>
   <data name="Settings.SectionAppHeader.Text" xml:space="preserve"><value>Application</value></data>
   <data name="Settings.SectionGameHeader.Text" xml:space="preserve"><value>Game</value></data>
   <data name="Settings.GameCardHeader.Text" xml:space="preserve"><value>Folder and account</value></data>
@@ -855,7 +834,7 @@
     <value>Character</value>
   </data>
   <data name="Preview.FitHeading.Text" xml:space="preserve">
-    <value>View fit</value>
+    <value>VIEW FIT</value>
   </data>
   <data name="Preview.FitWindow.Content" xml:space="preserve">
     <value>Window</value>
@@ -929,7 +908,7 @@
   <data name="Settings.TabGeneral.Text" xml:space="preserve"><value>General</value></data>
   <data name="Settings.TabCharacters.Text" xml:space="preserve"><value>Characters</value></data>
   <data name="Apply.ClassMismatch" xml:space="preserve"><value>The combo is for {1}, but {0} is another class. Choose a character of that class to apply it.</value></data>
-  <data name="Apply.GoToPreviewButton.Content" xml:space="preserve"><value>Go to Preview to apply</value></data>
+  <data name="Apply.GoToPreviewButton.Content" xml:space="preserve"><value>Preview</value></data>
   <data name="Apply.Remaining.Title.Text" xml:space="preserve"><value>Still to place</value></data>
   <data name="Apply.Remaining.GroupBuffs" xml:space="preserve"><value>Buffs</value></data>
   <data name="Apply.Remaining.GroupCombo" xml:space="preserve"><value>Combo</value></data>
@@ -940,6 +919,8 @@
   <data name="Preview.TabSlots.Text" xml:space="preserve"><value>Slots</value></data>
   <data name="Preview.TabSettings.Text" xml:space="preserve"><value>Settings</value></data>
   <data name="Preview.ChangeCharacterButton.Content" xml:space="preserve"><value>Change in Combos</value></data>
+  <data name="Shell.TabCombos.Text" xml:space="preserve"><value>Combos</value></data>
+  <data name="Shell.TabEditor.Text" xml:space="preserve"><value>Editor</value></data>
   <data name="Apply.UnreadyCount" xml:space="preserve">
     <value>{0} characters need to log in once in the game</value>
   </data>
@@ -977,5 +958,4 @@
   <data name="Preview.FitWindow.ToolTipService.ToolTip" xml:space="preserve"><value>Fit the view to the window</value></data>
   <data name="Preview.FitSlots.ToolTipService.ToolTip" xml:space="preserve"><value>Fit the view to the slots</value></data>
   <data name="Preview.FitReal.ToolTipService.ToolTip" xml:space="preserve"><value>Actual game size (100%)</value></data>
-  <data name="Preview.FitButton.ToolTipService.ToolTip" xml:space="preserve"><value>Back to fitting the slots</value></data>
 </root>

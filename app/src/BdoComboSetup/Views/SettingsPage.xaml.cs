@@ -539,9 +539,6 @@ public sealed partial class SettingsPage : Page
         TabCharacters.Visibility = characters ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    /// <summary>Leaves Settings for the page it was opened from (the Back button of the heading).</summary>
-    private void Back_Click(object sender, RoutedEventArgs e) => (App.MainWindow as MainWindow)?.CloseSettings();
-
     /// <summary>Starts a new copy of the app and closes this one, so a language or folder change applies to every page.</summary>
     private void Restart_Click(object sender, RoutedEventArgs e)
     {

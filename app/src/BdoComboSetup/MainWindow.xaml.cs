@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using BdoComboSetup.Core.ViewModels;
 using BdoComboSetup.Services;
 using BdoComboSetup.Views;
@@ -14,8 +15,8 @@ public sealed partial class MainWindow : Window
     /// <summary>The update state for the banner. A getter, because the x:Bind bindings are evaluated inside InitializeComponent.</summary>
     public UpdateViewModel Updates => App.Services.Updates;
 
-    /// <summary>The page the Settings button left when it opened Settings. The button goes back there; Combos until a page is left for Settings.</summary>
-    private Type _pageBeforeSettings = typeof(ApplyComboPage);
+    /// <summary>True while a tab is selected from code after a navigation: its SelectionChanged is not a click, so it does nothing.</summary>
+    private bool _syncingTabs;
 
     public MainWindow()
     {
@@ -44,6 +45,8 @@ public sealed partial class MainWindow : Window
         // The window and its title bar are drawn by the app; the TitleBar control hosts the drag region.
         ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
+        // One bar: the tall title bar makes the caption buttons, the gear and the tabs share the same height and center line.
+        AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
         SetTitleBar(AppTitleBar);
         AppWindow.Resize(new SizeInt32(1440, 900));
         WindowIcon.Apply(AppWindow, AppTitleBar, services.Logger);
@@ -92,38 +95,43 @@ public sealed partial class MainWindow : Window
         GameNotDetectedGroup.Visibility = detected ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    /// <summary>Shows the Preview page (the combos are written from there).</summary>
+    /// <summary>Shows the Editor page (the Preview page): the combos are written from there.</summary>
     public void ShowPreview() => ShowPage(typeof(PreviewPage));
 
     /// <summary>Shows the Combos page (the character is chosen there).</summary>
     public void ShowCombos() => ShowPage(typeof(ApplyComboPage));
 
-    /// <summary>Opens the Editor page (the Preview page), from the button of the Combos page.</summary>
-    public void OpenEditor() => ShowPreview();
-
     /// <summary>
-    /// The Settings button of the title bar: opens Settings, or, while Settings is shown, goes back to the page it was opened from.
+    /// A tab of the title bar is clicked: Combos or Editor. A tab that is already shown does nothing (ShowPage returns early); the
+    /// tab selected from code after a navigation is ignored.
     /// </summary>
-    private void Settings_Click(object sender, RoutedEventArgs e)
+    private void MainTabs_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
-        if (ContentFrame.CurrentSourcePageType == typeof(SettingsPage))
+        if (_syncingTabs)
         {
-            CloseSettings();
             return;
         }
 
-        _pageBeforeSettings = ContentFrame.CurrentSourcePageType ?? typeof(ApplyComboPage);
-        ShowPage(typeof(SettingsPage));
+        if (ReferenceEquals(sender.SelectedItem, CombosTab))
+        {
+            ShowCombos();
+        }
+        else if (ReferenceEquals(sender.SelectedItem, EditorTab))
+        {
+            ShowPreview();
+        }
     }
 
-    /// <summary>Leaves Settings for the page it was opened from (the Back button of the Settings page and the title bar button).</summary>
-    public void CloseSettings() => ShowPage(_pageBeforeSettings);
+    /// <summary>
+    /// The Settings gear of the title bar: opens Settings. Settings is a third destination, so while it is shown the click does nothing.
+    /// </summary>
+    private void Settings_Click(object sender, RoutedEventArgs e) => ShowPage(typeof(SettingsPage));
 
     /// <summary>Closing the banner (its X) is the same as "Later": hidden for this session.</summary>
     private void UpdateBar_Closed(InfoBar sender, InfoBarClosedEventArgs args) => Updates.DismissCommand.Execute(null);
 
     /// <summary>
-    /// Shows the initial setup page: first run, or from Settings (finishing returns there). The setup has no Settings button.
+    /// Shows the initial setup page: first run, or from Settings (finishing returns there). The setup has no tabs and no Settings gear.
     /// </summary>
     public void ShowSetup(bool firstRun) => Navigate(typeof(SetupPage), firstRun);
 
@@ -152,15 +160,9 @@ public sealed partial class MainWindow : Window
         Navigate(page);
     }
 
-    /// <summary>
-    /// Navigates the content frame. The setup and the asset pack error page are shown without the Settings button; every other
-    /// page has it.
-    /// </summary>
+    /// <summary>Navigates the content frame, then brings the title bar in line with the page that is now shown.</summary>
     private void Navigate(Type page, object? parameter = null)
     {
-        SettingsButton.Visibility = page == typeof(SetupPage) || page == typeof(AssetPackErrorPage)
-            ? Visibility.Collapsed
-            : Visibility.Visible;
         if (parameter is null)
         {
             ContentFrame.Navigate(page);
@@ -168,6 +170,45 @@ public sealed partial class MainWindow : Window
         else
         {
             ContentFrame.Navigate(page, parameter);
+        }
+
+        ShowNavigationState();
+    }
+
+    /// <summary>
+    /// Brings the title bar in line with the shown page. The tabs and the gear are hidden on the setup and the asset pack error page;
+    /// otherwise the tab of Combos or Editor is selected, or the gear while Settings is shown. The context and the Apply button belong to
+    /// Combos and Editor, and the combo state is watched only while one of those two is shown.
+    /// </summary>
+    private void ShowNavigationState()
+    {
+        var page = ContentFrame.CurrentSourcePageType;
+        var hasNavigation = page != typeof(SetupPage) && page != typeof(AssetPackErrorPage);
+        MainTabs.Visibility = hasNavigation ? Visibility.Visible : Visibility.Collapsed;
+        SettingsSlot.Visibility = hasNavigation ? Visibility.Visible : Visibility.Collapsed;
+
+        _syncingTabs = true;
+        try
+        {
+            MainTabs.SelectedItem = page == typeof(ApplyComboPage) ? CombosTab
+                : page == typeof(PreviewPage) ? EditorTab
+                : null;
+        }
+        finally
+        {
+            _syncingTabs = false;
+        }
+
+        // The gear is marked while Settings is shown: accent glyph and the small accent underline.
+        var settingsShown = page == typeof(SettingsPage);
+        SettingsUnderline.Visibility = settingsShown ? Visibility.Visible : Visibility.Collapsed;
+        if (settingsShown)
+        {
+            SettingsIcon.Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["AccentTextFillColorPrimaryBrush"];
+        }
+        else
+        {
+            SettingsIcon.ClearValue(Microsoft.UI.Xaml.Controls.IconElement.ForegroundProperty);
         }
     }
 

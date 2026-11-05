@@ -43,12 +43,9 @@
   </resheader>
 
     <data name="AppTitle" xml:space="preserve"><value>BDOTempo</value></data>
-  <data name="Preview.CaptureToggle.OnContent" xml:space="preserve"><value>Capturar el juego</value></data>
-  <data name="Preview.CaptureToggle.OffContent" xml:space="preserve"><value>Capturar el juego</value></data>
+  <data name="Preview.CaptureToggle.OnContent" xml:space="preserve"><value>Activado</value></data>
+  <data name="Preview.CaptureToggle.OffContent" xml:space="preserve"><value>Desactivado</value></data>
   <data name="Preview.CaptureToggle.ToolTipService.ToolTip" xml:space="preserve"><value>Muestra el juego en vivo detrás de los slots. Desactívalo para no capturar la ventana del juego.</value></data>
-  <data name="Apply.Title.Text" xml:space="preserve">
-    <value>Combos</value>
-  </data>
   <data name="Apply.IncludeCooldownBarCheck.Content" xml:space="preserve">
     <value>Barra de enfriamiento</value>
   </data>
@@ -328,27 +325,17 @@
   <data name="Apply.SectionAddons.Text" xml:space="preserve">
     <value>Adicionales de la clase</value>
   </data>
-  <data name="Preview.Title.Text" xml:space="preserve">
-    <value>Editor</value>
-  </data>
   <data name="Preview.ApplyButton.Content" xml:space="preserve">
     <value>Aplicar</value>
   </data>
-  <data name="Preview.BackButton.Content" xml:space="preserve">
-    <value>Atrás</value>
-  </data>
-  <data name="Apply.OpenEditorButton.Content" xml:space="preserve">
-    <value>Abrir el editor</value>
-  </data>
-  <data name="Preview.LayoutBox.Header" xml:space="preserve">
-    <value>Disposición</value>
-  </data>
-  <data name="Preview.HiddenToggle.Header" xml:space="preserve">
-    <value>Mostrar slots ocultos</value>
-  </data>
-  <data name="Preview.FitButton.Content" xml:space="preserve">
-    <value>Ajustar</value>
-  </data>
+  <data name="Preview.LayoutBox.AutomationProperties.Name" xml:space="preserve"><value>Disposición</value></data>
+  <data name="Preview.HiddenToggle.OnContent" xml:space="preserve"><value>Activado</value></data>
+  <data name="Preview.HiddenToggle.OffContent" xml:space="preserve"><value>Desactivado</value></data>
+  <data name="Preview.SectionLayout.Text" xml:space="preserve"><value>DISPOSICIÓN</value></data>
+  <data name="Preview.SectionSlots.Text" xml:space="preserve"><value>SLOTS</value></data>
+  <data name="Preview.SectionGame.Text" xml:space="preserve"><value>JUEGO</value></data>
+  <data name="Preview.HiddenLabel.Text" xml:space="preserve"><value>Mostrar slots ocultos</value></data>
+  <data name="Preview.CaptureLabel.Text" xml:space="preserve"><value>Capturar el juego</value></data>
   <data name="Preview.Layout.Tooltip" xml:space="preserve">
     <value>Interfaz del juego que dibuja la vista previa: la actual o una de las tres guardadas (UI 1 a UI 3).</value>
   </data>
@@ -412,12 +399,6 @@
   <data name="Preview.Capture.Failed" xml:space="preserve">
     <value>No se pudo capturar la ventana del juego: fondo negro.</value>
   </data>
-  <data name="Preview.LegendCooldown.Text" xml:space="preserve">
-    <value>Casillas de enfriamiento: haz clic para cambiar la habilidad</value>
-  </data>
-  <data name="Preview.LegendQuick.Text" xml:space="preserve">
-    <value>Accesos rápidos: solo lectura</value>
-  </data>
   <data name="Preview.SlotEdit.NoCombo" xml:space="preserve">
     <value>Elige una clase y una guía en Combos para cambiar habilidades.</value>
   </data>
@@ -425,8 +406,6 @@
     <value>El slot {0} no tiene ningún paso en el combo. Añade la habilidad desde Combos.</value>
   </data>
   <data name="NavSettingsItem.Content" xml:space="preserve"><value>Configuración</value></data>
-  <data name="Settings.Title.Text" xml:space="preserve"><value>Configuración</value></data>
-  <data name="Settings.BackButton.Content" xml:space="preserve"><value>Atrás</value></data>
   <data name="Settings.SectionAppHeader.Text" xml:space="preserve"><value>Aplicación</value></data>
   <data name="Settings.SectionGameHeader.Text" xml:space="preserve"><value>Juego</value></data>
   <data name="Settings.GameCardHeader.Text" xml:space="preserve"><value>Carpeta y cuenta</value></data>
@@ -855,7 +834,7 @@
     <value>Personaje</value>
   </data>
   <data name="Preview.FitHeading.Text" xml:space="preserve">
-    <value>Ajuste de la vista</value>
+    <value>AJUSTE DE LA VISTA</value>
   </data>
   <data name="Preview.FitWindow.Content" xml:space="preserve">
     <value>Ventana</value>
@@ -929,7 +908,7 @@
   <data name="Settings.TabGeneral.Text" xml:space="preserve"><value>General</value></data>
   <data name="Settings.TabCharacters.Text" xml:space="preserve"><value>Personajes</value></data>
   <data name="Apply.ClassMismatch" xml:space="preserve"><value>El combo es de {1}, pero {0} es de otra clase. Elige un personaje de esa clase para aplicarlo.</value></data>
-  <data name="Apply.GoToPreviewButton.Content" xml:space="preserve"><value>Ir a Vista previa para aplicar</value></data>
+  <data name="Apply.GoToPreviewButton.Content" xml:space="preserve"><value>Vista Previa</value></data>
   <data name="Apply.Remaining.Title.Text" xml:space="preserve"><value>Te falta poner</value></data>
   <data name="Apply.Remaining.GroupBuffs" xml:space="preserve"><value>Buffs</value></data>
   <data name="Apply.Remaining.GroupCombo" xml:space="preserve"><value>Combo</value></data>
@@ -940,6 +919,8 @@
   <data name="Preview.TabSlots.Text" xml:space="preserve"><value>Casillas</value></data>
   <data name="Preview.TabSettings.Text" xml:space="preserve"><value>Ajustes</value></data>
   <data name="Preview.ChangeCharacterButton.Content" xml:space="preserve"><value>Cambiar en Combos</value></data>
+  <data name="Shell.TabCombos.Text" xml:space="preserve"><value>Combos</value></data>
+  <data name="Shell.TabEditor.Text" xml:space="preserve"><value>Editor</value></data>
   <data name="Apply.UnreadyCount" xml:space="preserve">
     <value>{0} personajes necesitan entrar una vez al juego</value>
   </data>
@@ -977,5 +958,4 @@
   <data name="Preview.FitWindow.ToolTipService.ToolTip" xml:space="preserve"><value>Ajustar la vista a la ventana</value></data>
   <data name="Preview.FitSlots.ToolTipService.ToolTip" xml:space="preserve"><value>Ajustar la vista a las casillas</value></data>
   <data name="Preview.FitReal.ToolTipService.ToolTip" xml:space="preserve"><value>Tamaño real del juego (100%)</value></data>
-  <data name="Preview.FitButton.ToolTipService.ToolTip" xml:space="preserve"><value>Volver al ajuste a las casillas</value></data>
 </root>

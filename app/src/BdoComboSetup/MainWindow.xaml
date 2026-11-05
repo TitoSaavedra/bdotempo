@@ -27,8 +27,8 @@
         </Grid>
         <Border Grid.RowSpan="4" Background="{ThemeResource GlassWindowTintBrush}" />
 
-        <!-- Custom title bar: the window content extends into it (AppWindow.TitleBar). The logo chip sits in its content (no app name is drawn in the bar);
-             the Settings button sits in its right header, next to the caption buttons. -->
+        <!-- Custom title bar: the window content extends into it (AppWindow.TitleBar). Its content holds the logo chip, the tabs (Combos, Editor)
+             and, at the right, the context of the page with its primary action; the Settings gear sits in the right header, next to the caption buttons. -->
         <TitleBar x:Name="AppTitleBar" IsBackButtonVisible="False" IsPaneToggleButtonVisible="False">
             <TitleBar.Resources>
                 <!-- The template keeps a minimum drag strip between the right header and the caption buttons; with it the Settings
@@ -36,15 +36,22 @@
                 <x:Double x:Key="TitleBarMinDragRegionWidth">0</x:Double>
                 <!-- The right header is centered in the title bar row by default, which puts the Settings button lower than the caption
                      buttons; top-aligned, its 32 px height lines up with them. -->
-                <VerticalAlignment x:Key="TitleBarRightHeaderVerticalAlignment">Top</VerticalAlignment>
-                <!-- The template centers the title content; the logo chip belongs at the left edge. -->
-                <HorizontalAlignment x:Key="TitleBarContentHorizontalAlignment">Left</HorizontalAlignment>
+                <VerticalAlignment x:Key="TitleBarRightHeaderVerticalAlignment">Stretch</VerticalAlignment>
+                <!-- The content fills the bar: the logo chip and the tabs at the left edge, the page context and its action at the right. -->
+                <HorizontalAlignment x:Key="TitleBarContentHorizontalAlignment">Stretch</HorizontalAlignment>
             </TitleBar.Resources>
             <TitleBar.Content>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0,0,0">
+                <Grid Margin="4,0,8,0" ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
                     <Border
                         Width="26"
                         Height="26"
+                        VerticalAlignment="Center"
                         CornerRadius="9"
                         Background="{ThemeResource AccentGradientBrush}">
                         <TextBlock
@@ -55,26 +62,52 @@
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center" />
                     </Border>
-                </StackPanel>
+
+                    <!-- The two destinations of the app. The selected one has the accent underline. The tabs are interactive, so they are
+                         taken out of the drag region explicitly. Their selection follows the page (see ShowNavigationState). -->
+                    <SelectorBar
+                        x:Name="MainTabs"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        TitleBar.IsDragRegion="False"
+                        SelectionChanged="MainTabs_SelectionChanged">
+                        <SelectorBarItem x:Name="CombosTab" x:Uid="Shell/TabCombos" />
+                        <SelectorBarItem x:Name="EditorTab" x:Uid="Shell/TabEditor" />
+                    </SelectorBar>
+                </Grid>
             </TitleBar.Content>
             <TitleBar.RightHeader>
-                <!-- Opens Settings; while Settings is shown it goes back to the page it was opened from. Name and tooltip are set in code-behind. -->
-                <Button
-                    x:Name="SettingsButton"
-                    Margin="0"
-                    Width="46"
-                    Height="32"
-                    MinWidth="0"
-                    MinHeight="0"
-                    Padding="0"
-                    CornerRadius="0"
-                    VerticalAlignment="Top"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Click="Settings_Click">
-                    <!-- The thin gear of Segoe Fluent Icons at the size of the caption button glyphs, so it reads as one of them. -->
-                    <FontIcon Glyph="&#xE713;" FontSize="14" />
-                </Button>
+                <!-- The Settings gear: a third destination. While Settings is shown it is marked (the Selected state: accent glyph and underline).
+                     Its name and tooltip are set in code-behind. -->
+                <Grid x:Name="SettingsSlot" Width="46" Height="48">
+                    <Button
+                        x:Name="SettingsButton"
+                        Margin="0"
+                        Width="46"
+                        Height="48"
+                        MinWidth="0"
+                        MinHeight="0"
+                        Padding="0"
+                        CornerRadius="0"
+                        VerticalAlignment="Stretch"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="Settings_Click">
+                        <!-- The thin gear of Segoe Fluent Icons at the size of the caption button glyphs, so it reads as one of them. -->
+                        <FontIcon x:Name="SettingsIcon" Glyph="&#xE713;" FontSize="14" />
+                    </Button>
+                    <Border
+                        x:Name="SettingsUnderline"
+                        Width="16"
+                        Height="3"
+                        Margin="0,0,0,1"
+                        CornerRadius="2"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Bottom"
+                        Background="{ThemeResource AccentFillColorDefaultBrush}"
+                        IsHitTestVisible="False"
+                        Visibility="Collapsed" />
+                </Grid>
             </TitleBar.RightHeader>
         </TitleBar>
 

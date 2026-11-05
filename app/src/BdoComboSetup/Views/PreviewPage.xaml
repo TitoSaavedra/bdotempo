@@ -99,53 +99,16 @@
 
     </Page.Resources>
 
-    <Grid Padding="20,12" RowSpacing="8">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <!-- Header: the combo in the editor, and the two actions: back to Combos, and apply the combo to the character. -->
-        <Grid ColumnSpacing="16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Spacing="2">
-                <TextBlock x:Uid="Preview/Title" Style="{ThemeResource TitleTextBlockStyle}" />
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock
-                        Text="{x:Bind Apply.ClassName, Mode=OneWay}"
-                        Style="{ThemeResource SubtitleTextBlockStyle}"
-                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
-                    <TextBlock
-                        Text="{x:Bind Apply.Editor.Title, Mode=OneWay}"
-                        FontSize="13"
-                        VerticalAlignment="Center"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                </StackPanel>
-            </StackPanel>
-
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <Button x:Uid="Preview/BackButton" Click="GoToCombos_Click" />
-                <!-- Writes the combo to the character: it asks which parts, then opens the review. -->
-                <Button
-                    x:Uid="Preview/ApplyButton"
-                    Style="{StaticResource AccentButtonStyle}"
-                    IsEnabled="{x:Bind Apply.CanRun, Mode=OneWay}"
-                    Click="ApplyButton_Click" />
-            </StackPanel>
-        </Grid>
-
-        <Grid Grid.Row="1" ColumnSpacing="16">
+    <!-- The Editor has no page header: its title and the Apply button are in the title bar. -->
+    <Grid Padding="12,4,12,12">
+        <Grid ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="300" />
             </Grid.ColumnDefinitions>
 
             <!-- The game and what is drawn on it: the review, the live surface, the state strip with the legend, and the status line. -->
-            <Grid RowSpacing="8">
+            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -155,6 +118,7 @@
 
                 <!-- The review of the character file: opened by "Apply" with the chosen parts. -->
                 <Border
+                    Margin="0,0,0,12"
                     Style="{StaticResource EditorCard}"
                     BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
                     Visibility="{x:Bind Apply.IsReviewOpen, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
@@ -225,61 +189,14 @@
                     </Grid>
                 </Border>
 
-                <!-- One compact row under the game: whether the game is detected, its resolution and the capture switch,
-                     and on the right the two kinds of slots as the game surface draws them. -->
-                <Border Grid.Row="2" Style="{StaticResource GlassPanelStyle}" Padding="12,6">
-                    <Grid ColumnSpacing="16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                            <Grid Width="8" Height="8" VerticalAlignment="Center">
-                                <Ellipse
-                                    Width="8"
-                                    Height="8"
-                                    Fill="{ThemeResource GlassSuccessBrush}"
-                                    Visibility="{x:Bind ViewModel.IsCapturing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                                <Ellipse
-                                    Width="8"
-                                    Height="8"
-                                    Fill="{ThemeResource GlassMutedTextBrush}"
-                                    Visibility="{x:Bind ViewModel.IsCapturing, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
-                            </Grid>
-                            <TextBlock
-                                Text="{x:Bind ViewModel.StateText, Mode=OneWay}"
-                                FontSize="13"
-                                VerticalAlignment="Center" />
-                            <TextBlock
-                                Text="{x:Bind ViewModel.GameSizeText, Mode=OneWay}"
-                                FontSize="12"
-                                VerticalAlignment="Center"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <ToggleSwitch
-                                x:Name="CaptureToggle"
-                                x:Uid="Preview/CaptureToggle"
-                                VerticalAlignment="Center"
-                                IsOn="{x:Bind ViewModel.CaptureGame, Mode=TwoWay}" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <Rectangle Width="10" Height="10" Fill="{ThemeResource AccentFillColorDefaultBrush}" RadiusX="2" RadiusY="2" />
-                                <TextBlock x:Uid="Preview/LegendCooldown" FontSize="12" VerticalAlignment="Center" />
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <Rectangle Width="10" Height="10" Fill="{ThemeResource PreviewQuickSlotFrameBrush}" RadiusX="2" RadiusY="2" />
-                                <TextBlock x:Uid="Preview/LegendQuick" FontSize="12" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
                 <!-- Status: one caption line with only what the user needs to know (how the editor works and why the last pick
                      did nothing, a missing layout, why the background is black). Empty texts take no room. -->
-                <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="14">
+                <StackPanel
+                    Grid.Row="3"
+                    Margin="0,8,0,0"
+                    Orientation="Horizontal"
+                    Spacing="14"
+                    Visibility="{x:Bind local:PreviewPage.AnyTextVisibility(ViewModel.SlotEditMessage, ViewModel.LayoutStatusText, ViewModel.CaptureStatusText), Mode=OneWay}">
                     <TextBlock
                         Text="{x:Bind ViewModel.SlotEditMessage, Mode=OneWay}"
                         Style="{StaticResource CaptionTextBlockStyle}"
@@ -300,11 +217,12 @@
             </Grid>
 
             <!-- The side panel: the character stays on top, and one tab shows at a time below it: Casillas or Ajustes. -->
-            <Grid Grid.Column="1" RowSpacing="8">
+            <Grid Grid.Column="1" RowSpacing="12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <!-- Personaje: who the combo is applied to. It is chosen in Combos, so here it can only be changed there. -->
@@ -317,7 +235,7 @@
                         <HyperlinkButton
                             x:Uid="Preview/ChangeCharacterButton"
                             Padding="0,2"
-                            Click="GoToCombos_Click" />
+                            Click="ChangeCharacter_Click" />
                         <TextBlock
                             Text="{x:Bind Apply.ClassMismatchText, Mode=OneWay}"
                             Visibility="{x:Bind Apply.IsClassMismatch, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -339,7 +257,7 @@
                 <!-- The content of the selected tab. Casillas fills the rest of the panel; Ajustes scrolls on its own when it is taller. -->
                 <Grid Grid.Row="2">
 
-                    <Grid x:Name="TabSlots" RowSpacing="8">
+                    <Grid x:Name="TabSlots" RowSpacing="16">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
@@ -408,22 +326,77 @@
                         VerticalScrollBarVisibility="Auto"
                         Visibility="Collapsed">
                         <Border Style="{StaticResource GlassPanelStyle}">
-                            <StackPanel Spacing="10">
-                                <TextBlock x:Uid="Preview/SettingsHeading" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                                <ComboBox
-                                    x:Name="LayoutBox"
-                                    x:Uid="Preview/LayoutBox"
-                                    HorizontalAlignment="Stretch"
-                                    ItemsSource="{x:Bind ViewModel.LayoutOptions, Mode=OneTime}"
-                                    DisplayMemberPath="Label"
-                                    SelectedItem="{x:Bind ViewModel.SelectedLayoutOption, Mode=TwoWay}" />
-                                <ToggleSwitch
-                                    x:Name="HiddenToggle"
-                                    x:Uid="Preview/HiddenToggle"
-                                    IsOn="{x:Bind ViewModel.ShowHiddenSlots, Mode=TwoWay}" />
+                            <!-- Four sections separated by thin lines: layout, hidden slots, the game capture, the view. Each has a small
+                                 title; the switches sit at the right of their label. -->
+                            <StackPanel Spacing="0">
+                                <StackPanel Spacing="8">
+                                    <TextBlock x:Uid="Preview/SectionLayout" Style="{StaticResource CaptionTextBlockStyle}" CharacterSpacing="60" Opacity="0.7" />
+                                    <ComboBox
+                                        x:Name="LayoutBox"
+                                        x:Uid="Preview/LayoutBox"
+                                        HorizontalAlignment="Stretch"
+                                        ItemsSource="{x:Bind ViewModel.LayoutOptions, Mode=OneTime}"
+                                        DisplayMemberPath="Label"
+                                        SelectedItem="{x:Bind ViewModel.SelectedLayoutOption, Mode=TwoWay}" />
+                                </StackPanel>
 
-                                <StackPanel Spacing="6">
-                                    <TextBlock x:Uid="Preview/FitHeading" Style="{StaticResource CaptionTextBlockStyle}" Opacity="0.7" />
+                                <Border Height="1" Margin="0,14" Background="{ThemeResource GlassLineBrush}" />
+
+                                <StackPanel Spacing="8">
+                                    <TextBlock x:Uid="Preview/SectionSlots" Style="{StaticResource CaptionTextBlockStyle}" CharacterSpacing="60" Opacity="0.7" />
+                                    <Grid MinHeight="32" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock x:Uid="Preview/HiddenLabel" VerticalAlignment="Center" TextWrapping="Wrap" />
+                                        <ToggleSwitch
+                                            Grid.Column="1"
+                                            x:Name="HiddenToggle"
+                                            x:Uid="Preview/HiddenToggle"
+                                            VerticalAlignment="Center"
+                                            IsOn="{x:Bind ViewModel.ShowHiddenSlots, Mode=TwoWay}" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <Border Height="1" Margin="0,14" Background="{ThemeResource GlassLineBrush}" />
+
+                                <!-- The game capture: the switch and the game's resolution. (The state itself is the pill on the surface.) -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock x:Uid="Preview/SectionGame" Style="{StaticResource CaptionTextBlockStyle}" CharacterSpacing="60" Opacity="0.7" />
+                                    <Grid MinHeight="32" ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock x:Uid="Preview/CaptureLabel" TextWrapping="Wrap" />
+                                            <TextBlock
+                                                Text="{x:Bind ViewModel.GameSizeText, Mode=OneWay}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Opacity="0.7" />
+                                        </StackPanel>
+                                        <ToggleSwitch
+                                            Grid.Column="1"
+                                            x:Name="CaptureToggle"
+                                            x:Uid="Preview/CaptureToggle"
+                                            VerticalAlignment="Center"
+                                            IsOn="{x:Bind ViewModel.CaptureGame, Mode=TwoWay}" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <Border Height="1" Margin="0,14" Background="{ThemeResource GlassLineBrush}" />
+
+                                <StackPanel Spacing="8">
+                                    <!-- The section title and, on its right, the current zoom. -->
+                                    <Grid>
+                                        <TextBlock x:Uid="Preview/FitHeading" Style="{StaticResource CaptionTextBlockStyle}" CharacterSpacing="60" Opacity="0.7" />
+                                        <TextBlock
+                                            Text="{x:Bind ViewModel.ZoomText, Mode=OneWay}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            HorizontalAlignment="Right"
+                                            Opacity="0.7" />
+                                    </Grid>
                                     <!-- The three fits: a segmented row of pills. None is selected after a manual zoom or pan. -->
                                     <Grid ColumnSpacing="6">
                                         <Grid.ColumnDefinitions>
@@ -452,26 +425,22 @@
                                             HorizontalContentAlignment="Center"
                                             Style="{x:Bind PillStyleFor(ViewModel.IsRealFit), Mode=OneWay}" />
                                     </Grid>
-                                    <Grid ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Button
-                                            x:Uid="Preview/FitButton"
-                                            Click="Fit_Click" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            Text="{x:Bind ViewModel.ZoomText, Mode=OneWay}"
-                                            VerticalAlignment="Center"
-                                            Opacity="0.8" />
-                                    </Grid>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
                     </ScrollViewer>
 
                 </Grid>
+
+                <!-- The footer, always visible and in the same place as the Combos footer: writes the combo to the character. -->
+                <Border Grid.Row="3" Style="{StaticResource GlassPanelStyle}" Padding="16,10,16,12">
+                    <Button
+                        x:Uid="Preview/ApplyButton"
+                        Style="{StaticResource AccentButtonStyle}"
+                        HorizontalAlignment="Stretch"
+                        IsEnabled="{x:Bind Apply.CanRun, Mode=OneWay}"
+                        Click="ApplyButton_Click" />
+                </Border>
             </Grid>
         </Grid>
     </Grid>
