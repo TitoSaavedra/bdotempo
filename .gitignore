@@ -26,3 +26,6 @@ app/src/BdoComboSetup/Assets/**/*.jpg
 
 # Release artifacts (installer, portable zip, SHA256SUMS.txt): built by `mise run package`, never committed.
 dist/
+
+# Session continue prompts (local only)
+*.continue.md
