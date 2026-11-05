@@ -1,106 +1,82 @@
 # BDOTempo
 
-**Set up your Black Desert Online skill bar in minutes, not hours.**
+Your Black Desert skill bar, set up for you.
 
-BDOTempo is a Windows companion app for Black Desert Online players. Pick your class, choose a proven combo from
-bdoclasshub.com, make it your own, and write it straight to your character. Then check your bar over the live game
-window before you play.
+![BDOTempo's Combos page: a class guide next to the cooldown bar and quick slots](docs/screenshots/combos.png)
 
-No more copying skills one by one from a guide into your cooldown bar and memos. BDOTempo does the tedious part for
-you, and it takes a verified backup before every change.
+*The Combos page. The app is shown in Spanish; you can switch to English in Settings.*
 
-## Three modules, one app
+## What is it?
 
-### Apply combo
+BDOTempo is a free Windows app for Black Desert Online players. Pick a class guide from the community, and BDOTempo
+sets up your skill bar, your quick slots and your memos on your character for you, in a few clicks instead of by hand.
 
-Pick your class, pick a guide, and see the whole combo with the real game icons: buffs, combo skills and their
-names in Spanish or English. Rename skills, add memos, reorder them and adjust your quick slots until the combo feels
-right. Save it as your own combo and apply it to a character in one step.
+- **Cooldown bar:** 20 slots that show when each skill is ready again.
+- **Quick slots:** 20 more slots, each tied to a key for fast use.
+- **Memos:** short notes shown on the cooldown bar.
 
-- Skip the manual work: your cooldown bar, memos and quick slots are written at once.
-- Start from a proven rotation: every guide comes from bdoclasshub.com.
-- Your changes stay yours: edits are saved as your own combo, separate from the original guide.
-- Mobility and cancel skills are kept as a manual pool, so you place them yourself where you want them.
+## Download
 
-### Preview
+Get the latest version from the [Releases page](https://github.com/TitoSaavedra/bdotempo/releases). You can choose:
 
-See your bar on top of the live game. Preview draws your 20 cooldown slots and your 20 quick slots over the game
-window, at the positions you saved, using the real skill art. Pick the layout that matches your setup (General or
-Presets 1 to 3) and choose whether hidden slots are shown.
+- **Installer (recommended):** `BDOTempo-Setup-<version>.exe`. It adds a Start menu shortcut and does not need
+  administrator rights by default.
+- **Portable:** `BDOTempo-Portable-<version>.zip`. Unzip it anywhere and run `BDOTempo.exe`. Nothing is installed.
 
-- Check your rotation without alt-tabbing out of the game.
-- Stay focused: Preview goes black when the game is closed, minimized or cannot be captured, so it never gets in
-  your way.
-- Display only: Preview shows what is on your screen and sends nothing to the game.
+You need Windows 10 (version 1809 or later) or Windows 11, 64-bit. The installer also needs Microsoft's free
+**.NET 10 Desktop Runtime**; if it does not find it, it can install it for you (Windows asks for permission first).
+The portable zip already includes everything it needs.
 
-### Settings
+## How to use it
 
-Set up BDOTempo once and forget about it.
+1. **Choose your character and class.** If a character needs a login, log in with it once in the game and reopen
+   BDOTempo.
+2. **Choose a guide.** The **Combo** tab shows the buffs and the combo with the real game icons. The **Add-ons** tab
+   shows the skills that come with the class.
 
-- **Account:** detected automatically. If you have several accounts, choose the one you play.
-- **Game folder:** BDOTempo finds your Black Desert data folder, and you can change it.
-- **Language:** switch between Spanish and English at any time.
-- **Characters:** see every character on your account and edit its name and class. Names are yours.
-- **Updates:** check for new versions from inside the app. Downloads are verified before they install.
-- **Confirmation:** turn on a confirmation dialog before every write, or leave it off once you trust the flow.
+   ![The Add-ons tab with the skills that come with the class](docs/screenshots/addons.png)
 
-## Features at a glance
+   *The Add-ons tab: the class skills, with their effects.*
 
-- Browse classes with their icons, with a searchable list.
-- Load the guides of bdoclasshub.com for each class and spec.
-- Review buffs and combos with the real game icons and skill tooltips.
-- Customize names, memos, slot order and quick slots.
-- Write 20 cooldown slots, memos and quick slots to a character in one step.
-- Preview your bar over the live game window.
-- Manage characters, language, game folder, updates and confirmations from Settings.
+3. **Drag skills onto your slots.** Place them on your cooldown bar and quick slots, and change what you like. Save your
+   version with **Save my combo**. You can keep up to 10 versions for each class and spec. Changed your mind? Open the
+   **...** menu and choose **Use guide** to go back to the original.
+4. **Check it in the Editor.** The Editor draws your slots over the live game window and lists what is still missing.
+   If the game is closed, the background is black.
 
-## Safety first
+   ![The Editor with your slots drawn over the game window](docs/screenshots/editor.png)
 
-- **A backup before every write.** Every file BDOTempo is about to change is copied first, and each copy is checked
-  with a SHA-256 checksum. If the backup cannot be verified, nothing is written.
-- **Checked after writing.** The result is read back and validated. If something is wrong, the original is restored
-  automatically.
-- **Never touches the game.** BDOTempo does not close, restart or modify the game, does not inject code into it,
-  and sends no keystrokes or mouse input to it.
-- **You decide when.** Changes happen only when you apply a combo, and you can require a confirmation before each
-  write.
-- **Local logs.** The app keeps its logs on your computer. They contain no passwords or tokens.
+   *The Editor: your slots over the game, and what is still to place.*
 
-## Languages
+5. **Press Apply.** Close the game first, because the app does not write while it runs. Choose what to write (cooldown
+   bar, memos or quick slots), review the changes and confirm. BDOTempo backs up your character before it writes.
+   Then go to the character selection screen in the game so it can read the changes.
 
-The interface is available in **Spanish** and **English**. Skill and class names are searchable in both languages,
-so you can type the name you know best.
+After the first setup, a short guided tour shows you the main pages. It never writes to your character, and you can
+repeat it from Settings (the gear icon at the top right).
 
-## FAQ
+## Is it safe?
 
-**Do I need to install anything else?**
-No. BDOTempo runs on Windows and brings everything it needs with it, so you do not have to install .NET or any other runtime.
+- **A checked backup before every change.** BDOTempo copies your character file and checks the copy first. If the copy
+  cannot be checked, nothing is written.
+- **Automatic restore.** If the check after writing fails, your backup is put back.
+- **It never touches the game.** BDOTempo does not open, close or change the game, and it sends it no keys or clicks.
+  The Editor only shows what is on your screen.
+- **Nothing changes until you press Apply.** Saving combos and checking them in the Editor does not touch your
+  character.
 
-**Will BDOTempo change my character without asking?**
-No. Nothing is written until you apply a combo. You can also turn on a confirmation dialog before every write.
+## Updates
 
-**Can I undo a change?**
-Yes. Each write is preceded by a verified backup in your game's data folder, so you can always go back to the state
-before the change.
+BDOTempo tells you when a new version is out, and you choose whether to update now. You can turn off the check at
+startup in Settings. With the portable zip, an update opens the download page in your browser instead.
 
-**When do I see the changes in game?**
-Apply the combo while you are on the character selection screen, then enter the character to see your new bar.
+## Questions or problems?
 
-**Why is Preview black?**
-Preview only shows the game when the game window is open, visible and can be captured. If the game is closed or
-minimized, Preview stays black until you bring it back.
+Tell us what happened on the [Issues page](https://github.com/TitoSaavedra/bdotempo/issues). Include what you were
+doing and what you saw.
 
-**Which classes are supported?**
-Every class and spec that has a guide on bdoclasshub.com.
-
-**Is BDOTempo finished?**
-It is an early version that is still being tested and polished. Expect updates as the app improves.
-
-## Disclaimer
+## Credits
 
 BDOTempo is an unofficial fan project. It is not affiliated with, endorsed by or sponsored by Pearl Abyss.
-Black Desert and Black Desert Online belong to Pearl Abyss.
-
-The repository does not distribute game art as loose image files. The skill and class icons used by the app are
-stored in an encrypted asset pack, which is obfuscation, not copy protection. All rights to that art belong to
+Black Desert, Black Desert Online and all their art, including the skill and class icons shown in the app, belong to
 Pearl Abyss.
