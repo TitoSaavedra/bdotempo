@@ -2,7 +2,8 @@
 
 To add an asset (for example the cooldown or quick slot art of the next task), add one ``SlotArt`` line to
 ``SLOT_ART`` or one more rule to ``collect_inputs``. Keys must match the names the C# reader asks for
-(``skill-<no>.png``, ``class-<type>.png``, ``catalog.json``, ``skills.json``, ``guide-<key>.json``).
+(``skill-<no>.png``, ``class-<type>.png``, ``catalog.json``, ``skills.json``, ``guide-<key>.json``,
+``guide-texts-es.json``). Every ``*.json`` of the staging folder is packed as it is, so a new JSON document needs no code here.
 """
 
 from __future__ import annotations

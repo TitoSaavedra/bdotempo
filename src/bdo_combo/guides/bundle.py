@@ -10,6 +10,8 @@ Output folder, the JSON staging of the asset pack (flat: each file becomes one p
 * ``skill-<skillNo>.png``: the skill icons, copied as they are (the client icons are 40 to 50 px).
 * ``class-<classType>.png``: the 32 class icons.
 * ``skill_classes.json``: skill number -> classes that can use it (see ``skill_classes.py``), when a skill table is given.
+* ``guide-texts-es.json``: the Spanish text of the English guide prose (``{english: spanish}``), copied from
+  ``guide_texts_es.json`` next to this file. Optional: without it the app shows the guides in English.
 * ``slot-quickslot-bg.png`` and ``slot-cooldown-sweep.png``: the slot art of the game UI, copied from the client's
   ``ui_probe/slot_art`` folder when a slot art folder is given. Their sizes are checked exactly (44 x 44 and 520 x 520).
   A missing file is reported and left out: the app then draws no background and the procedural sweep.
@@ -35,6 +37,8 @@ from .skill_classes import build_skill_class_table
 
 CATALOG_RESOURCE = "catalog.json"
 SKILLS_RESOURCE = "skills.json"
+GUIDE_TEXTS_RESOURCE = "guide-texts-es.json"
+GUIDE_TEXTS_SOURCE = Path(__file__).with_name("guide_texts_es.json")
 ICON_MAX_SIDE = 64
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
@@ -61,6 +65,7 @@ class BundleStats:
     missing_skill_icons: list[int] = field(default_factory=list)
     slot_art: int = 0
     missing_slot_art: list[str] = field(default_factory=list)
+    guide_texts: int = 0
 
 
 def guide_resource(key: str) -> str:
@@ -108,6 +113,7 @@ def build_bundle(
             _copy_slot_art(out_dir, slot_art_dir, stats)
         if skill_table is not None:
             _write_json(out_dir / SKILL_CLASSES_RESOURCE, build_skill_class_table(skill_table), stats)
+        _write_guide_texts(out_dir, stats)
 
         log.info(
             "asset bundle written",
@@ -119,6 +125,7 @@ def build_bundle(
             missing_skill_icons=len(stats.missing_skill_icons),
             slot_art=stats.slot_art,
             missing_slot_art=len(stats.missing_slot_art),
+            guide_texts=stats.guide_texts,
         )
         return stats
 
@@ -149,6 +156,16 @@ def _read_optional_tooltips(combos_dir: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise BundleError(f"{path} must hold a JSON object")
     return data
+
+
+def _write_guide_texts(out_dir: Path, stats: BundleStats) -> None:
+    """Copies the Spanish guide texts. A missing file is logged and left out: the app then shows the guides in English."""
+    if not GUIDE_TEXTS_SOURCE.is_file():
+        log.warn("no guide texts file; the guides stay in English", path=str(GUIDE_TEXTS_SOURCE))
+        return
+    texts = _read_json(GUIDE_TEXTS_SOURCE)
+    _write_json(out_dir / GUIDE_TEXTS_RESOURCE, texts, stats)
+    stats.guide_texts = len(texts)
 
 
 def _write_skills_lookup(

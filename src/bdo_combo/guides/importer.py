@@ -35,6 +35,7 @@ from .catalog import (
     spanish_class_name,
 )
 from .client import ClientExport, clean_name
+from .overlays import apply_overlays
 from .kinds import KINDS, LOW, MANUAL_ONLY_KINDS, Verdict, classify_chain
 from .pages import ParsedGuide
 from .tooltips import GuideSource, TooltipBuild, build_tooltips
@@ -137,6 +138,7 @@ def import_guides(classhub_dir: Path, client: ClientExport) -> ImportResult:
                 continue
             parsed = pages.guide(plan.guide.page)
             guide = _guide_json(plan, class_type, parsed)
+            apply_overlays(plan.guide.key, guide)
             chain_rows.extend(_classify_guide(plan.guide.key, guide))
             _record_problems(plan, parsed, problems)
             guides[plan.guide.key] = guide
